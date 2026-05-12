@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python *)",
+      "Bash(apt-get install *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(wait)",
+      "Bash(python -c \"import json; d=json.load\\(open\\('output/latest_report.json'\\)\\); print\\(f'Verdict: {d.get\\(\\\\\"verdict\\\\\"\\)}, 종목수: {len\\(d.get\\(\\\\\"picks\\\\\", []\\)\\)}'\\)\")",
+      "Bash(curl -s http://localhost:3000/api/data/regime)",
+      "Bash(python3 -m json.tool)",
+      "Bash(.venv/bin/pip install *)"
+    ]
+  }
+}

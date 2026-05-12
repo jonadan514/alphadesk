@@ -1,0 +1,29 @@
+{
+  "name": "us-stock-dashboard",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.3",
+    "autoprefixer": "^10.4.20",
+    "better-sqlite3": "^12.9.0",
+    "country-flag-icons": "^1.6.17",
+    "lucide-react": "^1.11.0",
+    "next": "^15.1.6",
+    "next-themes": "^0.4.6",
+    "postcss": "^8.5.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.8.1",
+    "tailwindcss": "^3.4.17"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
+}

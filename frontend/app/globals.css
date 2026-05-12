@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surface */
+  --bg-base:    #111111;
+  --bg-card:    #1c1c1c;
+  --bg-inset:   #222222;
+  --bg-raised:  #282828;
+
+  /* Border */
+  --border:     #2e2e2e;
+  --border-dim: #252525;
+
+  /* Text */
+  --text-primary:   #e8e8e8;
+  --text-secondary: #a8a8a8;
+  --text-muted:     #6e6e6e;
+  --text-faint:     #4a4a4a;
+
+  /* Accent */
+  --accent:     #39ff8f;
+  --warn:       #facc15;
+  --danger:     #ef4444;
+  --orange:     #f97316;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+    color-scheme: dark;
+    font-size: 13px;
+  }
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  * { box-sizing: border-box; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+}
+
+@layer utilities {
+  .bg-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+  }
+  .bg-inset {
+    background-color: var(--bg-inset);
+    border: 1px solid var(--border);
+    border-radius: 0.625rem;
+  }
+  .text-accent   { color: var(--accent); }
+  .text-muted    { color: var(--text-muted); }
+  .text-faint    { color: var(--text-faint); }
+  .border-dim    { border-color: var(--border); }
+
+  /* Signal badges */
+  .badge-go      { background: #39ff8f1a; color: #39ff8f; border: 1px solid #39ff8f33; }
+  .badge-caution { background: #facc151a; color: #facc15; border: 1px solid #facc1533; }
+  .badge-stop    { background: #ef44441a; color: #ef4444; border: 1px solid #ef444433; }
+
+  /* Label above a stat */
+  .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+}
