@@ -98,6 +98,15 @@ _SNAPSHOT_TABLES = {
 # --------------------------------------------------------------------------
 
 def get_db(path: str = DB_PATH) -> sqlite3.Connection:
+    turso_url   = os.getenv("TURSO_DATA_URL")
+    turso_token = os.getenv("TURSO_DATA_TOKEN")
+    if turso_url and turso_token:
+        try:
+            import libsql_experimental as libsql  # type: ignore
+            return libsql.connect(turso_url, auth_token=turso_token)
+        except ImportError:
+            print("[data_store] libsql_experimental 없음 — 로컬 SQLite 사용")
+
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -196,11 +205,13 @@ def get_latest_report(conn: sqlite3.Connection) -> dict:
     ).fetchone()
     if row is None:
         return {}
-    return json.loads(row["payload"])
+    payload = row[0] if not hasattr(row, "keys") else row["payload"]
+    return json.loads(payload)
 
 
 def get_snapshot(conn: sqlite3.Connection, table: str) -> dict:
     row = conn.execute(f"SELECT payload FROM {table} WHERE id = 1").fetchone()
     if row is None:
         return {}
-    return json.loads(row["payload"])
+    payload = row[0] if not hasattr(row, "keys") else row["payload"]
+    return json.loads(payload)
