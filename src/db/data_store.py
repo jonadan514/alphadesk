@@ -97,17 +97,74 @@ _SNAPSHOT_TABLES = {
 # Connection
 # --------------------------------------------------------------------------
 
+class _TursoConn:
+    """Turso HTTP Pipeline API — sqlite3 호환 최소 래퍼."""
+
+    def __init__(self, url: str, token: str):
+        base = url.replace("libsql://", "https://")
+        self._url = f"{base}/v2/pipeline"
+        self._headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+        self._rows: list = []
+
+    def _arg(self, v):
+        if v is None:
+            return {"type": "null"}
+        if isinstance(v, bool):
+            return {"type": "integer", "value": "1" if v else "0"}
+        if isinstance(v, int):
+            return {"type": "integer", "value": str(v)}
+        if isinstance(v, float):
+            return {"type": "float", "value": str(v)}
+        return {"type": "text", "value": str(v)}
+
+    def execute(self, sql: str, params=()):
+        import requests as _req
+        stmt: dict = {"sql": sql}
+        if params:
+            stmt["args"] = [self._arg(p) for p in params]
+        payload = {"requests": [
+            {"type": "execute", "stmt": stmt},
+            {"type": "close"},
+        ]}
+        r = _req.post(self._url, headers=self._headers, json=payload, timeout=30)
+        r.raise_for_status()
+        data = r.json()
+        res = data["results"][0]
+        if res["type"] == "error":
+            raise ValueError(res["error"]["message"])
+        rs = res.get("response", {}).get("result", {})
+        self._rows = rs.get("rows", [])
+        return self
+
+    def fetchone(self):
+        if not self._rows:
+            return None
+        return tuple(
+            v.get("value") if v.get("type") != "null" else None
+            for v in self._rows[0]
+        )
+
+    def fetchall(self):
+        return [
+            tuple(v.get("value") if v.get("type") != "null" else None for v in row)
+            for row in self._rows
+        ]
+
+    def commit(self):
+        pass
+
+    def close(self):
+        pass
+
+
 def get_db(path: str = DB_PATH) -> sqlite3.Connection:
     turso_url   = os.getenv("TURSO_DATA_URL")
     turso_token = os.getenv("TURSO_DATA_TOKEN")
     if turso_url and turso_token:
-        try:
-            import libsql_experimental as libsql  # type: ignore
-            # libsql-experimental은 https:// 스킴 필요
-            https_url = turso_url.replace("libsql://", "https://")
-            return libsql.connect(https_url, auth_token=turso_token)
-        except ImportError:
-            print("[data_store] libsql_experimental 없음 — 로컬 SQLite 사용")
+        return _TursoConn(turso_url, turso_token)  # type: ignore
 
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, check_same_thread=False)
