@@ -105,6 +105,9 @@ export default function HomePage() {
   // ── 모바일 요약 뷰 ──────────────────────────────────────
   const MobileView = () => (
     <div className="md:hidden space-y-3 pb-6">
+      {/* 내 포트폴리오 */}
+      <MiniPortfolio />
+
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

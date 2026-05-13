@@ -1362,73 +1362,123 @@ function RealPortfolioSection({ market }: { market: string }) {
             </button>
           </div>
         ) : (
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #2e2e2e" }}>
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr style={{ background: "#1c1c1c", borderBottom: "1px solid #2e2e2e" }}>
-                  {["종목", "수량", "평단가", "현재가", "평가액", "손익", ""].map((h) => (
-                    <th key={h} className="px-3 py-2.5 text-left text-[12px] font-bold uppercase tracking-widest" style={{ color: "#6e6e6e" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {positions.map((p) => {
-                  const hasCurrent = p.current_price != null;
-                  const pnlColor = !hasCurrent ? "#4b5563" : (p.unrealized_pnl ?? 0) >= 0 ? "#39ff8f" : "#ef4444";
-                  return (
-                    <tr key={p.symbol} style={{ borderBottom: "1px solid #151515" }}>
-                      <td className="px-3 py-2.5">
+          <>
+            {/* 모바일 카드 뷰 */}
+            <div className="md:hidden space-y-2">
+              {positions.map((p) => {
+                const hasCurrent = p.current_price != null;
+                const pnlColor = !hasCurrent ? "#4b5563" : (p.unrealized_pnl ?? 0) >= 0 ? "#39ff8f" : "#ef4444";
+                return (
+                  <div key={p.symbol} className="rounded-xl p-4" style={{ background: "#1c1c1c", border: "1px solid #2e2e2e" }}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
                         <p className="font-black text-white">{p.symbol}</p>
-                        <p className="text-[12px]" style={{ color: "#6e6e6e" }}>{p.name ?? ""}</p>
-                        {p.note && <p className="text-[12px] mt-0.5" style={{ color: "#4a4a4a" }}>{p.note}</p>}
-                      </td>
-                      <td className="px-3 py-2.5 text-white">{p.shares}</td>
-                      <td className="px-3 py-2.5" style={{ color: "#a8a8a8" }}>{fmtLocal(p.avg_price)}</td>
-                      <td className="px-3 py-2.5">
-                        {hasCurrent ? (
-                          <div>
-                            <span className="text-white font-semibold">{fmtLocal(p.current_price)}</span>
-                            {p.price_source === "yahoo" && (
-                              <span className="ml-1 text-[8px] font-bold" style={{ color: "#6e6e6e" }}>YF</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-[12px]" style={{ color: "#4a4a4a" }}>가격 없음</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5" style={{ color: "#a8a8a8" }}>
-                        {p.market_value != null ? fmtLocal(p.market_value) : fmtLocal(p.cost_basis)}
-                      </td>
-                      <td className="px-3 py-2.5 font-bold" style={{ color: pnlColor }}>
+                        {p.name && <p className="text-[12px]" style={{ color: "#6e6e6e" }}>{p.name}</p>}
+                      </div>
+                      <p className="text-xl font-black" style={{ color: pnlColor }}>
                         {p.unrealized_pnl_pct != null
                           ? `${p.unrealized_pnl_pct >= 0 ? "+" : ""}${(p.unrealized_pnl_pct * 100).toFixed(2)}%`
                           : "—"}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => setSellTarget(p)}
-                            className="text-[12px] font-bold px-2 py-1 rounded"
-                            style={{ background: "#ef444418", color: "#ef4444", border: "1px solid #ef444430" }}
-                          >
-                            매도
-                          </button>
-                          <button
-                            onClick={() => handleDelete(p.symbol)}
-                            className="p-1 rounded"
-                            style={{ color: "#4a4a4a" }}
-                            title="데이터 삭제 (거래 미기록)"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 mb-3 text-[12px]">
+                      <div>
+                        <p style={{ color: "#6e6e6e" }}>보유수량</p>
+                        <p className="font-bold text-white mt-0.5">{p.shares}</p>
+                      </div>
+                      <div>
+                        <p style={{ color: "#6e6e6e" }}>평단가</p>
+                        <p className="font-bold text-white mt-0.5">{fmtLocal(p.avg_price)}</p>
+                      </div>
+                      <div>
+                        <p style={{ color: "#6e6e6e" }}>현재가</p>
+                        <p className="font-bold mt-0.5" style={{ color: hasCurrent ? "#fff" : "#4a4a4a" }}>
+                          {hasCurrent ? fmtLocal(p.current_price) : "—"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px]" style={{ color: "#6e6e6e" }}>
+                        평가액 <span className="font-semibold text-white">
+                          {p.market_value != null ? fmtLocal(p.market_value) : fmtLocal(p.cost_basis)}
+                        </span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setSellTarget(p)} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
+                          style={{ background: "#ef444418", color: "#ef4444", border: "1px solid #ef444430" }}>
+                          매도
+                        </button>
+                        <button onClick={() => handleDelete(p.symbol)} className="p-1.5 rounded" style={{ color: "#4a4a4a" }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 데스크톱 테이블 */}
+            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: "1px solid #2e2e2e" }}>
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr style={{ background: "#1c1c1c", borderBottom: "1px solid #2e2e2e" }}>
+                    {["종목", "수량", "평단가", "현재가", "평가액", "손익", ""].map((h) => (
+                      <th key={h} className="px-3 py-2.5 text-left text-[12px] font-bold uppercase tracking-widest" style={{ color: "#6e6e6e" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {positions.map((p) => {
+                    const hasCurrent = p.current_price != null;
+                    const pnlColor = !hasCurrent ? "#4b5563" : (p.unrealized_pnl ?? 0) >= 0 ? "#39ff8f" : "#ef4444";
+                    return (
+                      <tr key={p.symbol} style={{ borderBottom: "1px solid #151515" }}>
+                        <td className="px-3 py-2.5">
+                          <p className="font-black text-white">{p.symbol}</p>
+                          <p className="text-[12px]" style={{ color: "#6e6e6e" }}>{p.name ?? ""}</p>
+                          {p.note && <p className="text-[12px] mt-0.5" style={{ color: "#4a4a4a" }}>{p.note}</p>}
+                        </td>
+                        <td className="px-3 py-2.5 text-white">{p.shares}</td>
+                        <td className="px-3 py-2.5" style={{ color: "#a8a8a8" }}>{fmtLocal(p.avg_price)}</td>
+                        <td className="px-3 py-2.5">
+                          {hasCurrent ? (
+                            <div>
+                              <span className="text-white font-semibold">{fmtLocal(p.current_price)}</span>
+                              {p.price_source === "yahoo" && (
+                                <span className="ml-1 text-[8px] font-bold" style={{ color: "#6e6e6e" }}>YF</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[12px]" style={{ color: "#4a4a4a" }}>가격 없음</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5" style={{ color: "#a8a8a8" }}>
+                          {p.market_value != null ? fmtLocal(p.market_value) : fmtLocal(p.cost_basis)}
+                        </td>
+                        <td className="px-3 py-2.5 font-bold" style={{ color: pnlColor }}>
+                          {p.unrealized_pnl_pct != null
+                            ? `${p.unrealized_pnl_pct >= 0 ? "+" : ""}${(p.unrealized_pnl_pct * 100).toFixed(2)}%`
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <button onClick={() => setSellTarget(p)} className="text-[12px] font-bold px-2 py-1 rounded"
+                              style={{ background: "#ef444418", color: "#ef4444", border: "1px solid #ef444430" }}>
+                              매도
+                            </button>
+                            <button onClick={() => handleDelete(p.symbol)} className="p-1 rounded" style={{ color: "#4a4a4a" }} title="데이터 삭제 (거래 미기록)">
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )
       )}
 
