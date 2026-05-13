@@ -12,6 +12,15 @@ const notoKr = Noto_Sans_KR({ subsets: ["latin"], variable: "--font-noto-kr", we
 export const metadata: Metadata = {
   title: "AlphaDesk",
   description: "S&P 500 스마트머니 분석 대시보드",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AlphaDesk",
+  },
+  icons: {
+    apple: "/icon-192.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
