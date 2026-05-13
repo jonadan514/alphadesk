@@ -180,8 +180,10 @@ export default function HomePage() {
                   style={{ background: "#39ff8f22", color: "#39ff8f", border: "1px solid #39ff8f44" }}>
                   {p.grade}
                 </span>
-                <span className="text-sm font-bold text-white flex-1 min-w-0 truncate">{p.symbol}</span>
-                {p.sector && <span className="text-[10px] truncate max-w-[80px]" style={{ color: "#6b7280" }}>{p.sector}</span>}
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-bold text-white truncate block">{p.name ?? p.symbol}</span>
+                  {p.name && <span className="text-[10px] font-mono" style={{ color: "#6b7280" }}>{p.symbol}</span>}
+                </div>
                 <span className="text-sm font-bold shrink-0" style={{ color: "#39ff8f" }}>{p.composite_score?.toFixed(1)}</span>
               </div>
             ))}
