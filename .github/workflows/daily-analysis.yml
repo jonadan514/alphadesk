@@ -2,59 +2,44 @@ name: Daily Analysis
 
 on:
   schedule:
-    - cron: '0 22 * * 1-5'   # 평일 22:00 UTC (미국 장 마감 후, KST 07:00)
-    - cron: '30 7 * * 1-5'   # 평일 07:30 UTC (한국 장 마감 후, KST 16:30)
-  workflow_dispatch:           # 수동 실행 버튼
+    - cron: '0 22 * * 1-5'   # 평일 22:00 UTC (미국 장 마감 후)
+    - cron: '30 7 * * 1-5'   # 평일 07:30 UTC (한국 장 마감 후)
+  workflow_dispatch:           # 수동 실행
+
+env:
+  TURSO_DATA_URL:     ${{ secrets.TURSO_DATA_URL }}
+  TURSO_DATA_TOKEN:   ${{ secrets.TURSO_DATA_TOKEN }}
+  GOOGLE_API_KEY:     ${{ secrets.GOOGLE_API_KEY }}
+  FRED_API_KEY:       ${{ secrets.FRED_API_KEY }}
+  FINNHUB_API_KEY:    ${{ secrets.FINNHUB_API_KEY }}
+  OPENAI_API_KEY:     ${{ secrets.OPENAI_API_KEY }}
+  PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
 jobs:
   us-analysis:
     name: US Market Analysis
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 22 * * 1-5'
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-
       - name: Install dependencies
         run: pip install -r requirements.txt libsql-experimental
-
       - name: Run US analysis
-        env:
-          TURSO_DATA_URL:      ${{ secrets.TURSO_DATA_URL }}
-          TURSO_DATA_TOKEN:    ${{ secrets.TURSO_DATA_TOKEN }}
-          GOOGLE_API_KEY:      ${{ secrets.GOOGLE_API_KEY }}
-          FRED_API_KEY:        ${{ secrets.FRED_API_KEY }}
-          FINNHUB_API_KEY:     ${{ secrets.FINNHUB_API_KEY }}
-          OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
-          PERPLEXITY_API_KEY:  ${{ secrets.PERPLEXITY_API_KEY }}
         run: python scripts/run_integrated_analysis.py
 
   kr-analysis:
     name: KR Market Analysis
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 7 * * 1-5'
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-
       - name: Install dependencies
         run: pip install -r requirements.txt libsql-experimental
-
       - name: Run KR analysis
-        env:
-          TURSO_DATA_URL:      ${{ secrets.TURSO_DATA_URL }}
-          TURSO_DATA_TOKEN:    ${{ secrets.TURSO_DATA_TOKEN }}
-          GOOGLE_API_KEY:      ${{ secrets.GOOGLE_API_KEY }}
-          FRED_API_KEY:        ${{ secrets.FRED_API_KEY }}
-          FINNHUB_API_KEY:     ${{ secrets.FINNHUB_API_KEY }}
-          OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
-          PERPLEXITY_API_KEY:  ${{ secrets.PERPLEXITY_API_KEY }}
         run: python scripts/run_kr_analysis.py
