@@ -103,7 +103,9 @@ def get_db(path: str = DB_PATH) -> sqlite3.Connection:
     if turso_url and turso_token:
         try:
             import libsql_experimental as libsql  # type: ignore
-            return libsql.connect(turso_url, auth_token=turso_token)
+            # libsql-experimental은 https:// 스킴 필요
+            https_url = turso_url.replace("libsql://", "https://")
+            return libsql.connect(https_url, auth_token=turso_token)
         except ImportError:
             print("[data_store] libsql_experimental 없음 — 로컬 SQLite 사용")
 
