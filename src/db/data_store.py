@@ -101,7 +101,7 @@ class _TursoConn:
     """Turso HTTP Pipeline API — sqlite3 호환 최소 래퍼."""
 
     def __init__(self, url: str, token: str):
-        base = url.replace("libsql://", "https://")
+        base = url.strip().replace("libsql://", "https://")
         self._url = f"{base}/v2/pipeline"
         self._headers = {
             "Authorization": f"Bearer {token}",
