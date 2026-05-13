@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Right side: header + content */}
           <div className="flex flex-1 flex-col overflow-hidden">
             {/* Top header bar */}
-            <header className="flex h-20 shrink-0 items-center gap-4 border-b px-4" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
+            <header className="flex h-20 shrink-0 items-center gap-4 border-b px-4 pl-14 md:pl-4" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
               <DailyQuote />
               <div className="flex items-center gap-3 shrink-0 ml-auto">
                 <MarketSwitcher />

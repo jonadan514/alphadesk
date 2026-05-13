@@ -43,47 +43,54 @@ function staleness(dateStr: string | null): { label: string; color: string } {
   return { label: `${days}일 전 업데이트`, color: "#ef4444" };
 }
 
-export default function Navigation() {
+function SidebarInner({
+  onClose,
+  lastDate,
+  market,
+}: {
+  onClose?: () => void;
+  lastDate: string | null;
+  market: string;
+}) {
   const pathname = usePathname();
-  const { market } = useMarket();
-  const [lastDate, setLastDate] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/data/status")
-      .then((r) => r.json())
-      .then((d) => {
-        const date = market === "KR" ? (d.lastKrAnalysis ?? null) : (d.lastAnalysis ?? null);
-        setLastDate(date);
-      })
-      .catch(() => {});
-  }, [market]);
+  const { label: freshnessLabel, color: freshnessColor } = staleness(lastDate);
+  const isStale = lastDate
+    ? Math.floor((Date.now() - new Date(lastDate).getTime()) / 86_400_000) > 1
+    : true;
 
   return (
-    <aside
-      className="flex w-56 shrink-0 flex-col border-r h-full overflow-hidden"
-      style={{ background: "#0e0e0e", borderColor: "var(--border)" }}
-    >
+    <>
       {/* Logo */}
-      <div className="flex h-20 items-center border-b px-5" style={{ borderColor: "var(--border)" }}>
+      <div
+        className="flex h-20 shrink-0 items-center border-b px-5"
+        style={{ borderColor: "var(--border)" }}
+      >
         <span className="text-2xl font-black tracking-tight" style={{ color: "#39ff8f" }}>
           Alpha<span className="text-white">Desk</span>
         </span>
+        {onClose && (
+          <button
+            className="ml-auto p-2 rounded"
+            onClick={onClose}
+            style={{ color: "#6b7280" }}
+            aria-label="메뉴 닫기"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Nav groups */}
       <nav className="flex-1 overflow-y-auto min-h-0 py-3 px-2">
         {NAV_GROUPS.map((group, gi) => (
           <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
-            {/* Section label */}
             <p
               className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest"
               style={{ color: "#3f3f3f" }}
             >
               {group.label}
             </p>
-
-            {/* Items */}
-            {group.items.map(({ href, label, emoji, color }) => {
+            {group.items.map(({ href, label: itemLabel, emoji, color: itemColor }) => {
               const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
               return (
                 <Link
@@ -92,7 +99,7 @@ export default function Navigation() {
                   className="flex items-center gap-2.5 px-3 py-1.5 text-[13px] transition-all duration-150 relative rounded-lg my-0.5"
                   style={{
                     color: isActive ? "#e5e7eb" : "#6b7280",
-                    background: isActive ? `${color}15` : "transparent",
+                    background: isActive ? `${itemColor}15` : "transparent",
                     fontWeight: isActive ? 600 : 400,
                   }}
                   onMouseEnter={(e) => {
@@ -105,7 +112,7 @@ export default function Navigation() {
                   {isActive && (
                     <span
                       className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full"
-                      style={{ background: color }}
+                      style={{ background: itemColor }}
                     />
                   )}
                   <span
@@ -114,7 +121,7 @@ export default function Navigation() {
                   >
                     {emoji}
                   </span>
-                  <span style={{ letterSpacing: "0.01em" }}>{label}</span>
+                  <span style={{ letterSpacing: "0.01em" }}>{itemLabel}</span>
                 </Link>
               );
             })}
@@ -124,30 +131,91 @@ export default function Navigation() {
 
       {/* Bottom: data freshness */}
       <div className="shrink-0 border-t px-3 py-3" style={{ borderColor: "var(--border)" }}>
-        {(() => {
-          const { label, color } = staleness(lastDate);
-          const isStale = lastDate ? Math.floor((Date.now() - new Date(lastDate).getTime()) / 86_400_000) > 1 : true;
-          return (
-            <div
-              className="rounded-lg px-3 py-2 flex items-center gap-2"
-              style={{ background: "#141414", border: "1px solid #222" }}
-            >
-              <span
-                className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ background: color, boxShadow: `0 0 5px ${color}` }}
-              />
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium truncate" style={{ color }}>{label}</p>
-                {isStale && (
-                  <p className="text-[11px] truncate" style={{ color: "#f97316" }}>
-                    {market === "KR" ? "run_kr_analysis 권장" : "alpharun 실행 권장"}
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })()}
+        <div
+          className="rounded-lg px-3 py-2 flex items-center gap-2"
+          style={{ background: "#141414", border: "1px solid #222" }}
+        >
+          <span
+            className="h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ background: freshnessColor, boxShadow: `0 0 5px ${freshnessColor}` }}
+          />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium truncate" style={{ color: freshnessColor }}>
+              {freshnessLabel}
+            </p>
+            {isStale && (
+              <p className="text-[11px] truncate" style={{ color: "#f97316" }}>
+                {market === "KR" ? "run_kr_analysis 권장" : "alpharun 실행 권장"}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export default function Navigation() {
+  const pathname = usePathname();
+  const { market } = useMarket();
+  const [lastDate, setLastDate] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/data/status")
+      .then((r) => r.json())
+      .then((d) => {
+        const date = market === "KR" ? (d.lastKrAnalysis ?? null) : (d.lastAnalysis ?? null);
+        setLastDate(date);
+      })
+      .catch(() => {});
+  }, [market]);
+
+  // 페이지 이동 시 모바일 메뉴 닫기
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  return (
+    <>
+      {/* ── 데스크톱: 고정 사이드바 ── */}
+      <aside
+        className="hidden md:flex w-56 shrink-0 flex-col border-r h-full overflow-hidden"
+        style={{ background: "#0e0e0e", borderColor: "var(--border)" }}
+      >
+        <SidebarInner lastDate={lastDate} market={market} />
+      </aside>
+
+      {/* ── 모바일: 햄버거 버튼 ── */}
+      <button
+        className="md:hidden fixed top-0 left-0 z-[60] flex items-center justify-center w-14 h-20"
+        onClick={() => setIsOpen(true)}
+        aria-label="메뉴 열기"
+      >
+        <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
+          <rect y="0"  width="20" height="2" rx="1" fill="#e5e7eb" />
+          <rect y="7"  width="20" height="2" rx="1" fill="#e5e7eb" />
+          <rect y="14" width="20" height="2" rx="1" fill="#e5e7eb" />
+        </svg>
+      </button>
+
+      {/* ── 모바일: 백드롭 ── */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-[50] bg-black/60"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* ── 모바일: 슬라이드 드로어 ── */}
+      <aside
+        className={`md:hidden fixed inset-y-0 left-0 z-[55] flex flex-col w-64 border-r overflow-hidden transition-transform duration-200 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ background: "#0e0e0e", borderColor: "var(--border)" }}
+      >
+        <SidebarInner onClose={() => setIsOpen(false)} lastDate={lastDate} market={market} />
+      </aside>
+    </>
   );
 }
