@@ -29,8 +29,8 @@ const ALLOWED_TABLES = new Set([
 const MAX_LIMIT = 500;
 
 export function getClient() {
-  const url = process.env.TURSO_DATA_URL;
-  const authToken = process.env.TURSO_DATA_TOKEN;
+  const url = process.env.TURSO_DATA_URL?.trim();
+  const authToken = process.env.TURSO_DATA_TOKEN?.trim();
   if (!url || !authToken) {
     throw new Error("TURSO_DATA_URL / TURSO_DATA_TOKEN 환경변수가 설정되지 않았습니다.");
   }
