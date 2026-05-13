@@ -102,8 +102,105 @@ export default function HomePage() {
   const sensorLabel = isKR ? KR_SENSOR_LABEL : US_SENSOR_LABEL;
   const indexName = isKR ? "KOSPI" : "S&P 500";
 
+  // ── 모바일 요약 뷰 ──────────────────────────────────────
+  const MobileView = () => (
+    <div className="md:hidden space-y-3 pb-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FlagIcon market={isKR ? "KR" : "US"} size={16} />
+          <span className="text-sm font-bold text-white">{isKR ? "한국 주식" : "미국 주식"}</span>
+        </div>
+        <span className="rounded px-2 py-0.5 text-[11px] font-bold" style={{ background: "#39ff8f22", color: "#39ff8f", border: "1px solid #39ff8f44" }}>
+          LIVE
+        </span>
+      </div>
+
+      {/* 종합 판단 */}
+      <div
+        className="rounded-xl p-5 flex flex-col items-center gap-1 text-center"
+        style={{
+          background: verdict === "GO" ? "#39ff8f18" : verdict === "CAUTION" ? "#facc1518" : "#ef444418",
+          border: `1px solid ${verdictColor}44`,
+        }}
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: verdictColor }}>종합 판단</p>
+        <p className="text-5xl font-black" style={{ color: verdictColor }}>{verdict}</p>
+        <p className="text-[12px] mt-1" style={{ color: "#9ca3af" }}>
+          {verdict === "GO" ? "진입 가능" : verdict === "CAUTION" ? "경계 — 신중하게" : verdict === "STOP" ? "신규 진입 자제" : "—"}
+        </p>
+      </div>
+
+      {/* 핵심 지표 3개 */}
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: "체제 점수", value: regime.weighted_score != null ? regime.weighted_score.toFixed(2) : "—", sub: regime.regime_label ?? regime.regime ?? "—", color: "#39ff8f" },
+          { label: "스크리닝", value: String(picks.length), sub: isKR ? "KOSPI 종목" : "S&P 종목", color: "#fff" },
+          { label: "마켓 게이트", value: gate.gate ?? "—", sub: isKR ? (gate.reason ?? "") : `avg ${gate.avg_score?.toFixed(1) ?? "—"}`, color: VERDICT_COLOR[gate.gate] ?? "#fff" },
+        ].map(({ label, value, sub, color }) => (
+          <div key={label} className="rounded-xl p-3 flex flex-col gap-1" style={{ background: "var(--bg-card)" }}>
+            <p className="text-[10px] uppercase tracking-wide" style={{ color: "#6b7280" }}>{label}</p>
+            <p className="text-xl font-black leading-none" style={{ color }}>{value}</p>
+            <p className="text-[10px] truncate" style={{ color: "#6b7280" }}>{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* SPY / KOSPI 예측 */}
+      {!isKR && spy && (
+        <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: "var(--bg-card)" }}>
+          <div>
+            <p className="text-[11px] uppercase tracking-wide mb-1" style={{ color: "#6b7280" }}>SPY 예측</p>
+            <p className="text-lg font-black" style={{ color: spy.direction === "bullish" ? "#39ff8f" : "#ef4444" }}>
+              {spy.direction === "bullish" ? "강세" : "약세"}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[11px]" style={{ color: "#6b7280" }}>확률</p>
+            <p className="text-lg font-bold text-white">
+              {spy.probability != null ? `${Math.round(spy.probability * 100)}%` : "—"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 상위 픽 */}
+      {top5.length > 0 && (
+        <div className="rounded-xl p-3" style={{ background: "var(--bg-card)" }}>
+          <p className="text-[11px] uppercase tracking-wide mb-2" style={{ color: "#6b7280" }}>
+            상위 {isKR ? "KOSPI" : "알파"} 픽
+          </p>
+          <div className="space-y-2">
+            {top5.map((p: any) => (
+              <div key={p.symbol} className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded text-[10px] font-black flex items-center justify-center shrink-0"
+                  style={{ background: "#39ff8f22", color: "#39ff8f", border: "1px solid #39ff8f44" }}>
+                  {p.grade}
+                </span>
+                <span className="text-sm font-bold text-white flex-1 min-w-0 truncate">{p.symbol}</span>
+                {p.sector && <span className="text-[10px] truncate max-w-[80px]" style={{ color: "#6b7280" }}>{p.sector}</span>}
+                <span className="text-sm font-bold shrink-0" style={{ color: "#39ff8f" }}>{p.composite_score?.toFixed(1)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {picks.length === 0 && Object.keys(sensors).length === 0 && (
+        <div className="rounded-xl p-4 text-center text-sm" style={{ background: "var(--bg-card)", color: "#6b7280" }}>
+          데이터 없음. 분석 실행 후 재확인하세요.
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-3">
+      <MobileView />
+
+      {/* 데스크톱 전용 ─────────────────────────────────── */}
+      <div className="hidden md:block space-y-3">
+
       {/* Title */}
       <div className="flex items-center gap-3">
         <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#222222", color: "#6e6e6e" }}>
@@ -314,6 +411,8 @@ export default function HomePage() {
           <MiniPortfolio />
         </div>
       </div>
+
+      </div> {/* end hidden md:block */}
     </div>
   );
 }
