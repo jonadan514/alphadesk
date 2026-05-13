@@ -21,7 +21,6 @@ const NAV_GROUPS = [
     items: [
       { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#fbbf24" },
       { href: "/workbook",  label: "투자 워크북", emoji: "📒", color: "#2dd4bf" },
-      { href: "/news",      label: "뉴스",        emoji: "🗞️", color: "#38bdf8" },
     ],
   },
   {

@@ -23,7 +23,6 @@ const ALLOWED_TABLES = new Set([
   "kr_daily_reports",
   "kr_sector_analysis",
   "kr_ai_summaries",
-  "news_items",
 ]);
 
 const MAX_LIMIT = 500;
