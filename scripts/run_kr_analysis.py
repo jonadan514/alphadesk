@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT))
 
-DB_PATH = ROOT / "output" / "data.db"
+from src.db.data_store import get_db
 
 
 def _log(phase: str, msg: str, t0: float | None = None) -> None:
@@ -21,47 +21,44 @@ def _log(phase: str, msg: str, t0: float | None = None) -> None:
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {phase}{elapsed}  {msg}")
 
 
-def _get_db() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+_KR_TABLES = [
+    """CREATE TABLE IF NOT EXISTS kr_daily_reports (
+        date        TEXT PRIMARY KEY,
+        payload     TEXT NOT NULL,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    )""",
+    """CREATE TABLE IF NOT EXISTS kr_regime (
+        id          INTEGER PRIMARY KEY CHECK (id = 1),
+        payload     TEXT NOT NULL,
+        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    )""",
+    """CREATE TABLE IF NOT EXISTS kr_market_gate (
+        id          INTEGER PRIMARY KEY CHECK (id = 1),
+        payload     TEXT NOT NULL,
+        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    )""",
+    """CREATE TABLE IF NOT EXISTS kr_sector_analysis (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        date       TEXT NOT NULL UNIQUE,
+        payload    TEXT NOT NULL,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )""",
+    """CREATE TABLE IF NOT EXISTS kr_ai_summaries (
+        id          INTEGER PRIMARY KEY CHECK (id = 1),
+        payload     TEXT NOT NULL,
+        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    )""",
+    """CREATE TABLE IF NOT EXISTS kr_index_prediction (
+        id          INTEGER PRIMARY KEY CHECK (id = 1),
+        payload     TEXT NOT NULL,
+        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    )""",
+]
 
 
-def _init_kr_tables(conn: sqlite3.Connection) -> None:
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS kr_daily_reports (
-            date        TEXT PRIMARY KEY,
-            payload     TEXT NOT NULL,
-            created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS kr_regime (
-            id          INTEGER PRIMARY KEY CHECK (id = 1),
-            payload     TEXT NOT NULL,
-            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS kr_market_gate (
-            id          INTEGER PRIMARY KEY CHECK (id = 1),
-            payload     TEXT NOT NULL,
-            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS kr_sector_analysis (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            date       TEXT NOT NULL UNIQUE,
-            payload    TEXT NOT NULL,
-            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS kr_ai_summaries (
-            id          INTEGER PRIMARY KEY CHECK (id = 1),
-            payload     TEXT NOT NULL,
-            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS kr_index_prediction (
-            id          INTEGER PRIMARY KEY CHECK (id = 1),
-            payload     TEXT NOT NULL,
-            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-    """)
+def _init_kr_tables(conn) -> None:
+    for ddl in _KR_TABLES:
+        conn.execute(ddl)
     conn.commit()
 
 
@@ -294,7 +291,7 @@ def main() -> None:
     print(f"  KR Stock 통합 분석  |  date={analysis_date}")
     print("=" * 60)
 
-    conn = _get_db()
+    conn = get_db()
     _init_kr_tables(conn)
 
     try:
