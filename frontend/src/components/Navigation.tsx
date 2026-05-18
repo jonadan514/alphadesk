@@ -19,6 +19,7 @@ const NAV_GROUPS = [
   {
     label: "관리",
     items: [
+      { href: "/assets",    label: "자산현황",    emoji: "💰", color: "#34d399" },
       { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#fbbf24" },
       { href: "/workbook",  label: "투자 워크북", emoji: "📒", color: "#2dd4bf" },
     ],
