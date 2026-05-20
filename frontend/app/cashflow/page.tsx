@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+interface YearlyData {
+  month: string;
+  income: number;
+  expense: number;
+  net: number;
+}
+
 interface FixedItem {
   id: number;
   type: "income" | "expense";
@@ -21,6 +28,119 @@ interface Entry {
 
 function krwFull(v: number) {
   return `₩${Math.round(v).toLocaleString("ko-KR")}`;
+}
+
+function krwShort(v: number) {
+  const abs = Math.abs(v);
+  if (abs >= 1_0000_0000) return `${(v / 1_0000_0000).toFixed(1)}억`;
+  if (abs >= 1_0000) return `${Math.round(v / 1_0000)}만`;
+  return `${Math.round(v).toLocaleString("ko-KR")}`;
+}
+
+// ── 연간 바 차트 ───────────────────────────────────────────────────────────────
+function YearlyChart({ data, year, onYearChange }: {
+  data: YearlyData[];
+  year: number;
+  onYearChange: (y: number) => void;
+}) {
+  const W = 520, H = 220, PL = 46, PR = 8, PT = 12, PB = 36;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+  const MONTH_LABELS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
+
+  const maxVal = Math.max(...data.map(d => Math.max(d.income, d.expense)), 1);
+  const minNet = Math.min(...data.map(d => d.net), 0);
+  const maxNet = Math.max(...data.map(d => d.net), 0);
+  // unified scale: bars and line share same axis if net fits; expand if needed
+  const yMax = Math.max(maxVal, maxNet) * 1.1 || 1;
+  const yMin = Math.min(0, minNet * 1.1);
+  const yRange = yMax - yMin;
+
+  function scaleY(v: number) {
+    return PT + chartH - ((v - yMin) / yRange) * chartH;
+  }
+
+  const slotW = chartW / 12;
+  const barW = slotW * 0.28;
+  const gap = barW * 0.4;
+
+  // y-axis ticks
+  const tickCount = 4;
+  const ticks = Array.from({ length: tickCount + 1 }, (_, i) => yMin + (yRange / tickCount) * i);
+
+  // net line points
+  const linePoints = data.map((d, i) => {
+    const x = PL + slotW * i + slotW / 2;
+    const y = scaleY(d.net);
+    return `${x},${y}`;
+  }).join(" ");
+
+  const zeroY = scaleY(0);
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "#1c1c1c", border: "1px solid #2e2e2e" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #2e2e2e" }}>
+        <span className="text-sm font-bold text-white">연간 현금흐름</span>
+        <div className="flex items-center gap-2">
+          <button onClick={() => onYearChange(year - 1)} className="px-2 py-1 rounded text-[12px]" style={{ background: "#222", color: "#6e6e6e" }}>◀</button>
+          <span className="text-[13px] font-bold text-white w-12 text-center">{year}</span>
+          <button onClick={() => onYearChange(year + 1)} className="px-2 py-1 rounded text-[12px]" style={{ background: "#222", color: "#6e6e6e" }}>▶</button>
+        </div>
+      </div>
+      {/* legend */}
+      <div className="flex gap-4 px-4 pt-3 pb-1">
+        {[["#39ff8f","수입"],["#ef4444","지출"],["#60a5fa","순현금흐름"]].map(([c, l]) => (
+          <div key={l} className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: c }} />
+            <span className="text-[11px]" style={{ color: "#6e6e6e" }}>{l}</span>
+          </div>
+        ))}
+      </div>
+      <div className="overflow-x-auto">
+        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block", minWidth: W }}>
+          {/* y-axis grid + labels */}
+          {ticks.map((t, i) => {
+            const y = scaleY(t);
+            return (
+              <g key={i}>
+                <line x1={PL} x2={W - PR} y1={y} y2={y} stroke="#2e2e2e" strokeWidth={1} />
+                <text x={PL - 4} y={y + 4} textAnchor="end" fontSize={9} fill="#4b5563">{krwShort(t)}</text>
+              </g>
+            );
+          })}
+          {/* zero line (bold if negative values exist) */}
+          {yMin < 0 && (
+            <line x1={PL} x2={W - PR} y1={zeroY} y2={zeroY} stroke="#444" strokeWidth={1} strokeDasharray="3,2" />
+          )}
+          {/* bars */}
+          {data.map((d, i) => {
+            const slotX = PL + slotW * i;
+            const cx = slotX + slotW / 2;
+            const incX = cx - gap / 2 - barW;
+            const expX = cx + gap / 2;
+            const incH = Math.max(1, ((d.income - Math.max(0, yMin)) / yRange) * chartH);
+            const expH = Math.max(1, ((d.expense - Math.max(0, yMin)) / yRange) * chartH);
+            const incY = scaleY(d.income);
+            const expY = scaleY(d.expense);
+            return (
+              <g key={i}>
+                <rect x={incX} y={incY} width={barW} height={incH} fill="#39ff8f" opacity={0.75} rx={2} />
+                <rect x={expX} y={expY} width={barW} height={expH} fill="#ef4444" opacity={0.75} rx={2} />
+                <text x={slotX + slotW / 2} y={H - PB + 14} textAnchor="middle" fontSize={9} fill="#4b5563">{MONTH_LABELS[i]}</text>
+              </g>
+            );
+          })}
+          {/* net cashflow line */}
+          <polyline points={linePoints} fill="none" stroke="#60a5fa" strokeWidth={2} strokeLinejoin="round" />
+          {data.map((d, i) => {
+            const x = PL + slotW * i + slotW / 2;
+            const y = scaleY(d.net);
+            return <circle key={i} cx={x} cy={y} r={3} fill="#60a5fa" />;
+          })}
+        </svg>
+      </div>
+    </div>
+  );
 }
 
 function currentMonth() {
@@ -282,6 +402,8 @@ export default function CashflowPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [showFixed, setShowFixed] = useState(false);
+  const [yearlyData, setYearlyData] = useState<YearlyData[]>([]);
+  const [chartYear, setChartYear] = useState(new Date().getFullYear());
 
   async function loadFixed() {
     const res = await fetch("/api/cashflow/fixed").then(r => r.json()).catch(() => []);
@@ -293,8 +415,14 @@ export default function CashflowPage() {
     setEntries(Array.isArray(res) ? res : []);
   }
 
+  async function loadYearly(y: number) {
+    const res = await fetch(`/api/cashflow/yearly?year=${y}`).then(r => r.json()).catch(() => []);
+    setYearlyData(Array.isArray(res) ? res : []);
+  }
+
   useEffect(() => { loadFixed(); }, []);
   useEffect(() => { loadEntries(month); }, [month]);
+  useEffect(() => { loadYearly(chartYear); }, [chartYear]);
 
   async function deleteFixed(id: number) {
     await fetch(`/api/cashflow/fixed/${id}`, { method: "DELETE" });
@@ -310,6 +438,7 @@ export default function CashflowPage() {
     setModal(null);
     loadFixed();
     loadEntries(month);
+    loadYearly(chartYear);
   }
 
   const fixedIncome = fixedItems.filter(i => i.type === "income");
@@ -417,6 +546,15 @@ export default function CashflowPage() {
             onAdd={() => setModal({ kind: "entry-add", type: "expense" })}
             onDelete={deleteEntry}
           />
+
+          {/* ── 연간 차트 ── */}
+          {yearlyData.length > 0 && (
+            <YearlyChart
+              data={yearlyData}
+              year={chartYear}
+              onYearChange={y => setChartYear(y)}
+            />
+          )}
         </>
       )}
 
