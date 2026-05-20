@@ -20,8 +20,8 @@ export async function GET() {
     await ensureTable(client);
     const res = await client.execute("SELECT content, snapshot, created_at FROM ai_advice ORDER BY id DESC LIMIT 1");
     if (res.rows.length === 0) return NextResponse.json(null);
-    const [content, snapshot, created_at] = res.rows[0];
-    return NextResponse.json({ content, snapshot: JSON.parse(snapshot as string), created_at });
+    const row = res.rows[0];
+    return NextResponse.json({ content: row[0], snapshot: JSON.parse(row[1] as string), created_at: row[2] });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
