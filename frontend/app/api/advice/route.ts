@@ -109,7 +109,7 @@ ${assets.map(a => `- ${a.category}/${a.name}: ${Math.round(a.amount as number / 
     const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro"];
     const body = JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 2048 },
+      generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
     });
 
     let geminiRes: Response | null = null;
