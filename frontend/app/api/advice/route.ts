@@ -59,9 +59,16 @@ export async function POST() {
 
     const snapshot = { assets, fixed, entries: entries.slice(0, 20), totalAssets, totalDebts, netWorth, fixedIncome, fixedExpense, savingsRate };
 
-    const prompt = `당신은 한국의 개인 재무 컨설턴트입니다. 아래 사용자의 실제 재무 데이터를 분석하고 구체적인 조언을 제공해주세요.
+    const prompt = `당신은 냉철하고 직설적인 한국의 개인 재무 분석가입니다. 사용자의 실제 재무 데이터를 보고 듣기 좋은 말 대신 사실 그대로 분석해주세요.
 
-## 자산 현황
+## 사용자 투자 철학
+- 한 번에 큰 돈을 버는 것보다 꾸준히 모으고 투자해서 장기적으로 자산 규모를 키우는 것이 목표
+- 근거 없는 투기는 하지 않고, 데이터와 논리에 기반한 투자를 지향
+- 투자와 절약 두 축을 모두 중요하게 생각함
+
+## 현재 재무 데이터
+
+### 자산 현황
 - 총 자산: ${(totalAssets / 1e4).toFixed(0)}만원
 - 총 부채: ${(totalDebts / 1e4).toFixed(0)}만원
 - 순 자산: ${(netWorth / 1e4).toFixed(0)}만원
@@ -70,31 +77,34 @@ export async function POST() {
 자산 구성:
 ${assets.map(a => `- ${a.category}/${a.name}: ${Math.round(a.amount as number / 1e4)}만원`).join("\n") || "데이터 없음"}
 
-## 현금흐름
+### 현금흐름
 - 월 고정 수입: ${(fixedIncome / 1e4).toFixed(0)}만원
 - 월 고정 지출: ${(fixedExpense / 1e4).toFixed(0)}만원
 - 월 순 저축: ${((fixedIncome - fixedExpense) / 1e4).toFixed(0)}만원
 - 저축률: ${savingsRate}%
 
-고정 수입: ${fixed.filter(f => f.type === "income").map(f => `${f.name}(${Math.round(f.amount as number / 1e4)}만원)`).join(", ") || "없음"}
-고정 지출: ${fixed.filter(f => f.type === "expense").map(f => `${f.name}(${Math.round(f.amount as number / 1e4)}만원)`).join(", ") || "없음"}
+고정 수입 항목: ${fixed.filter(f => f.type === "income").map(f => `${f.name}(${Math.round(f.amount as number / 1e4)}만원)`).join(", ") || "없음"}
+고정 지출 항목: ${fixed.filter(f => f.type === "expense").map(f => `${f.name}(${Math.round(f.amount as number / 1e4)}만원)`).join(", ") || "없음"}
 
 ---
-다음 4가지 항목으로 분석해주세요. 각 항목은 **볼드 제목**으로 구분하고, 구체적인 수치를 포함하세요:
+아래 5가지 항목으로 분석해주세요. 각 항목은 **볼드 제목**으로 구분하고, 구체적인 수치와 근거를 포함하세요. 문제가 있으면 솔직하게 지적하고, 잘 하고 있는 부분도 명확히 짚어주세요.
 
 **1. 자산 배분 진단**
-현재 자산 구성의 특징과 문제점을 분석해주세요.
+현재 자산 구성 비율을 분석하세요. 특정 자산에 지나치게 집중돼 있거나 빠진 자산 클래스가 있으면 직접적으로 말해주세요. 장기 복리 성장 관점에서 이 구성이 적절한지 평가해주세요.
 
-**2. 현금흐름 분석**
-저축률 및 수입/지출 구조의 강점과 개선 포인트를 분석해주세요.
+**2. 현금흐름 & 절약 분석**
+저축률이 충분한지, 지출 구조에서 줄일 수 있는 부분이 있는지 수치 기반으로 평가해주세요. 월 저축액이 목표 자산 성장 속도에 기여하고 있는지도 함께 분석해주세요.
 
-**3. 리스크 평가**
-부채 수준, 자산 집중도, 유동성 측면에서 리스크를 평가해주세요.
+**3. 투자 전략 평가**
+현재 투자 자산(주식, 비트코인 등)이 '꾸준한 적립식 장기투자' 철학과 맞는 구성인지 평가해주세요. 근거 없는 자산이 포함돼 있다면 지적해주세요.
 
-**4. 우선순위 행동 제안 3가지**
-지금 당장 실행 가능한 구체적인 행동 3가지를 제안해주세요.
+**4. 리스크 진단**
+부채 수준, 유동성(비상금), 자산 집중도 측면에서 현재 재무 구조의 취약점을 짚어주세요.
 
-분석은 한국어로, 친절하고 전문적으로, 500자 이내로 간결하게 작성해주세요.`;
+**5. 지금 당장 해야 할 행동 3가지**
+우선순위 순서로, 실행 가능한 구체적인 행동을 제시해주세요. "검토해보세요" 같은 모호한 표현은 쓰지 말고, 무엇을 얼마나 어떻게 할지 명확히 말해주세요.
+
+분석은 한국어로 작성하되, 직설적이고 솔직하게 써주세요. 분량 제한 없이 충분히 분석해주세요.`;
 
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -103,7 +113,7 @@ ${assets.map(a => `- ${a.category}/${a.name}: ${Math.round(a.amount as number / 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 1024 },
+          generationConfig: { temperature: 0.4, maxOutputTokens: 2048 },
         }),
       }
     );
