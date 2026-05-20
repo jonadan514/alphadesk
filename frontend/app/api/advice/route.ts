@@ -106,28 +106,23 @@ ${assets.map(a => `- ${a.category}/${a.name}: ${Math.round(a.amount as number / 
 
 분석은 한국어로 작성하되, 직설적이고 솔직하게 써주세요. 분량 제한 없이 충분히 분석해주세요.`;
 
-    const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro"];
     const body = JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
     });
 
+    const DELAYS = [0, 3000, 6000];
     let geminiRes: Response | null = null;
     let lastErr = "";
-    for (const model of MODELS) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          { method: "POST", headers: { "Content-Type": "application/json" }, body }
-        );
-        if (res.ok) { geminiRes = res; break; }
-        const errText = await res.text();
-        lastErr = errText;
-        // only retry on 503, skip to next model on 404
-        if (res.status === 404) break;
-      }
-      if (geminiRes) break;
+    for (const delay of DELAYS) {
+      if (delay > 0) await new Promise(r => setTimeout(r, delay));
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body }
+      );
+      if (res.ok) { geminiRes = res; break; }
+      lastErr = await res.text();
+      if (res.status !== 503) break;
     }
 
     if (!geminiRes) {
