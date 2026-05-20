@@ -97,7 +97,7 @@ ${assets.map(a => `- ${a.category}/${a.name}: ${Math.round(a.amount as number / 
 분석은 한국어로, 친절하고 전문적으로, 500자 이내로 간결하게 작성해주세요.`;
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
