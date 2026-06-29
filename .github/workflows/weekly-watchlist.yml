@@ -23,6 +23,9 @@ jobs:
           pip install yfinance pykrx pandas
 
       - name: Run watchlist screening
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
         run: python scripts/run_watchlist_screen.py --market ALL
 
       - name: Upload data.db artifact
