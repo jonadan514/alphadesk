@@ -1,4 +1,4 @@
-import { getDataDb, dbUnavailable } from "@/lib/db";
+import { getDataDb, dbUnavailable } from "@/src/lib/db";
 
 export const dynamic = "force-dynamic";
 

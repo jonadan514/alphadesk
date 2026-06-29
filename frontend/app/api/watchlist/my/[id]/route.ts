@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/board-db";
+import { getDb } from "@/src/lib/board-db";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
