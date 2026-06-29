@@ -12,15 +12,15 @@ const PAGE_TABS = [
 type GuideTab = typeof PAGE_TABS[number]["id"];
 
 const GUIDE_SECTIONS = [
-  { href: "/workflow",  icon: "▶", label: "워크플로우",      desc: "6개 시장 신호 자동 분석 + 매수 전 10가지 체크리스트. 종목 티커 입력 시 GO/CAUTION/STOP 자동 판정. 매수 전 반드시 거치는 탭." },
-  { href: "/",          icon: "⊡", label: "개요",            desc: "마켓 게이트·체제·상위 픽을 한 화면 요약. 오늘 시장 상태를 5초에 파악하는 시작점." },
-  { href: "/regime",    icon: "▦", label: "시장 체제",       desc: "지금 시장이 강세/약세/위기 중 어느 단계인지 판단. 미국 5센서·한국 4센서 가중 합산으로 체제 판별. 체제별 권장 주식 비중과 손절선 제공." },
-  { href: "/sector",    icon: "⊞", label: "섹터 분석",       desc: "경기 사이클(회복기·확장기·후기·침체기) 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향 잡기." },
-  { href: "/top-picks", icon: "★", label: "종목 분석",       desc: "팩터 점수로 자동 선별된 종목 목록. 종목 클릭 시 AI 투자 근거·목표가·PER·PBR·리스크 요인을 팝업으로 바로 확인." },
-  { href: "/risk",      icon: "⛨", label: "리스크",          desc: "포지션 계산기 — 얼마나 살지 수학적으로 계산. VaR·MDD로 내 포트폴리오 위험도 점검." },
-  { href: "/portfolio", icon: "◈", label: "포트폴리오",      desc: "실제 보유 종목 등록·현재가 자동 조회·손익 계산. 페이퍼 트레이딩으로 AI 추천 종목을 가상 운용하며 전략 검증." },
-  { href: "/workbook",  icon: "◉", label: "투자 워크북",     desc: "목표 자산 설정·월별 적립 계획·복리 시뮬레이션. 장기 투자 로드맵 관리." },
-  { href: "/guide",     icon: "?", label: "가이드",           desc: "지금 보고 있는 이 페이지. 처음 시작할 때와 기능이 헷갈릴 때 참고." },
+  { href: "/workflow",  icon: "▶", label: "매수 체크",   desc: "종목 티커 입력 시 6개 시장 신호를 자동 점검해 GO/CAUTION/STOP 판정. 실제 매수 전 반드시 거치는 관문." },
+  { href: "/",          icon: "⊡", label: "개요",        desc: "마켓 게이트·체제·상위 픽을 한 화면 요약. 오늘 시장 상태를 5초에 파악하는 시작점." },
+  { href: "/regime",    icon: "▦", label: "시장 체제",   desc: "지금 시장이 강세/약세/위기 중 어느 단계인지 판단. 체제별 권장 주식 비중과 손절선 제공." },
+  { href: "/sector",    icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
+  { href: "/top-picks", icon: "★", label: "종목 분석",   desc: "팩터 점수로 자동 선별된 종목 목록. 종목 클릭 시 AI 투자 근거·목표가·리스크 요인 확인." },
+  { href: "/risk",      icon: "⛨", label: "리스크",      desc: "포지션 계산기 — 얼마나 살지 수학적으로 계산. VaR·MDD로 위험도 점검." },
+  { href: "/watchlist", icon: "🔖", label: "워치리스트",  desc: "재무 함정 필터(Piotroski·부채비율·이자보상배율 등)를 통과한 후보 종목 목록. 주간 자동 스크리닝." },
+  { href: "/portfolio", icon: "◈", label: "포트폴리오",  desc: "내 실제 매수/매도 기록 관리. 첫 거래 시점을 100으로 기준점 삼아 벤치마크 대비 누적 성과를 추적." },
+  { href: "/workbook",  icon: "◉", label: "투자 워크북", desc: "투자 전략 체크리스트·섹터/종목 선택 기준을 직접 관리. 매수 전 내 기준 점검 노트." },
 ];
 
 const REGIME_ROWS = [

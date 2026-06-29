@@ -7,7 +7,7 @@ import { useMarket } from "@/src/contexts/MarketContext";
 
 const NAV_GROUPS = [
   {
-    label: "분석",
+    label: "시장 분석",
     items: [
       { href: "/",          label: "개요",      emoji: "🏠", color: "#60a5fa" },
       { href: "/regime",    label: "시장 체제", emoji: "📡", color: "#a78bfa" },
@@ -17,21 +17,18 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "관리",
+    label: "내 투자",
     items: [
-      { href: "/assets",    label: "자산현황",    emoji: "💰", color: "#34d399" },
       { href: "/watchlist", label: "워치리스트",  emoji: "🔖", color: "#60a5fa" },
-      { href: "/advice",    label: "AI 조언",     emoji: "✨", color: "#a78bfa" },
       { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#fbbf24" },
       { href: "/workbook",  label: "투자 워크북", emoji: "📒", color: "#2dd4bf" },
     ],
   },
   {
-    label: "기타",
+    label: "도구",
     items: [
-      { href: "/workflow",  label: "워크플로우", emoji: "⚡", color: "#39ff8f" },
+      { href: "/workflow",  label: "매수 체크",  emoji: "⚡", color: "#39ff8f" },
       { href: "/guide",     label: "가이드",     emoji: "📖", color: "#818cf8" },
-      { href: "/intro",     label: "소개",       emoji: "✨", color: "#f472b6" },
     ],
   },
 ] as const;
