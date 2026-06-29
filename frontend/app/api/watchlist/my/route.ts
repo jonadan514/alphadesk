@@ -1,10 +1,14 @@
-import { getDb } from "@/src/lib/board-db";
 import { NextResponse } from "next/server";
+import Database from "better-sqlite3";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
-function ensureTable() {
-  getDb().exec(`
+function getDb(): Database.Database {
+  const dbPath = process.env.PAPER_DB_PATH ?? path.resolve(process.cwd(), "../output/paper_trading.db");
+  const db = new Database(dbPath, { fileMustExist: false });
+  db.pragma("journal_mode = WAL");
+  db.exec(`
     CREATE TABLE IF NOT EXISTS my_watchlist (
       id       INTEGER PRIMARY KEY AUTOINCREMENT,
       market   TEXT NOT NULL,
@@ -15,6 +19,7 @@ function ensureTable() {
       UNIQUE(market, symbol)
     )
   `);
+  return db;
 }
 
 export async function GET() {
