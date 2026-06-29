@@ -1,0 +1,33 @@
+name: Weekly Watchlist Screen
+
+on:
+  schedule:
+    - cron: "0 22 * * 0"   # 매주 일요일 22:00 UTC (월요일 07:00 KST)
+  workflow_dispatch:         # 수동 실행
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install yfinance pykrx pandas
+
+      - name: Run watchlist screening
+        run: python scripts/run_watchlist_screen.py --market ALL
+
+      - name: Upload data.db artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: watchlist-db
+          path: output/data.db
+          retention-days: 7

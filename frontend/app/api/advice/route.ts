@@ -29,8 +29,8 @@ export async function GET() {
 
 export async function POST() {
   try {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "GOOGLE_API_KEY not configured" }, { status: 500 });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return NextResponse.json({ error: "OPENAI_API_KEY not configured" }, { status: 500 });
 
     const client = getClient();
     await ensureTable(client);
@@ -160,31 +160,24 @@ ${holdingAnalysis.length > 0
 
 분석은 한국어로 작성하되, 직설적이고 솔직하게 써주세요. 분량 제한 없이 충분히 분석해주세요.`;
 
-    const body = JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
+    const gptRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 4096,
+        temperature: 0.4,
+      }),
     });
 
-    const DELAYS = [0, 3000, 6000];
-    let geminiRes: Response | null = null;
-    let lastErr = "";
-    for (const delay of DELAYS) {
-      if (delay > 0) await new Promise(r => setTimeout(r, delay));
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        { method: "POST", headers: { "Content-Type": "application/json" }, body }
-      );
-      if (res.ok) { geminiRes = res; break; }
-      lastErr = await res.text();
-      if (res.status !== 503) break;
+    if (!gptRes.ok) {
+      const err = await gptRes.text();
+      return NextResponse.json({ error: `OpenAI API error: ${err}` }, { status: 500 });
     }
 
-    if (!geminiRes) {
-      return NextResponse.json({ error: `Gemini API error: ${lastErr}` }, { status: 500 });
-    }
-
-    const geminiData = await geminiRes.json();
-    const content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "분석 결과를 받지 못했습니다.";
+    const gptData = await gptRes.json();
+    const content = gptData.choices?.[0]?.message?.content ?? "분석 결과를 받지 못했습니다.";
 
     await client.execute({
       sql: "INSERT INTO ai_advice (content, snapshot) VALUES (?, ?)",
