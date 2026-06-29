@@ -141,7 +141,7 @@ export default function AdvicePage() {
       {/* 안내 */}
       <div className="rounded-xl px-4 py-3" style={{ background: "#141414", border: "1px solid #1e1e1e" }}>
         <p className="text-[11px]" style={{ color: "#4b5563" }}>
-          입력된 자산현황·현금흐름 데이터를 기반으로 Gemini AI가 분석합니다. 투자 의사결정은 본인 판단 하에 이루어져야 합니다.
+          입력된 자산현황·현금흐름 데이터를 기반으로 GPT-4o가 분석합니다. 투자 의사결정은 본인 판단 하에 이루어져야 합니다.
         </p>
       </div>
     </div>
