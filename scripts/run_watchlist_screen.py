@@ -97,14 +97,17 @@ def save_candidates(conn: sqlite3.Connection, candidates: list[dict]) -> None:
 
 
 def _turso_val(v):
-    """Python 값 → Turso HTTP API args 형식."""
+    """Python 값 → Turso Hrana v2 args 형식."""
     if v is None:
         return {"type": "null"}
     if isinstance(v, bool):
-        return {"type": "integer", "value": int(v)}
+        return {"type": "integer", "value": str(int(v))}
     if isinstance(v, int):
-        return {"type": "integer", "value": v}
+        return {"type": "integer", "value": str(v)}
     if isinstance(v, float):
+        import math
+        if math.isnan(v) or math.isinf(v):
+            return {"type": "null"}
         return {"type": "float", "value": v}
     return {"type": "text", "value": str(v)}
 
@@ -192,8 +195,6 @@ def push_to_turso(candidates: list[dict]) -> None:
                     ],
                 },
             })
-        requests_list.append({"type": "close"})
-
         body = json.dumps({"requests": requests_list}).encode()
         req = urllib.request.Request(
             f"{url}/v2/pipeline",
@@ -201,8 +202,13 @@ def push_to_turso(candidates: list[dict]) -> None:
             headers=headers,
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            resp.read()
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                resp.read()
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode(errors="replace")
+            logger.error("Turso 업로드 실패 (HTTP %s): %s", e.code, detail)
+            raise
 
         logger.info("Turso 업로드: %d/%d 완료", min(i + BATCH, len(candidates)), len(candidates))
 
