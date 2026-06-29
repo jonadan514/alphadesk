@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
-import Database from "better-sqlite3";
-import path from "path";
+import { getClient } from "@/src/lib/db";
 
 export const dynamic = "force-dynamic";
 
-function getDb(): Database.Database {
-  const dbPath = process.env.PAPER_DB_PATH ?? path.resolve(process.cwd(), "../output/paper_trading.db");
-  const db = new Database(dbPath, { fileMustExist: false });
-  db.pragma("journal_mode = WAL");
-  db.exec(`
+async function ensureTable() {
+  const client = getClient();
+  await client.execute(`
     CREATE TABLE IF NOT EXISTS my_watchlist (
       id       INTEGER PRIMARY KEY AUTOINCREMENT,
       market   TEXT NOT NULL,
@@ -19,15 +16,18 @@ function getDb(): Database.Database {
       UNIQUE(market, symbol)
     )
   `);
-  return db;
+  return client;
 }
 
 export async function GET() {
   try {
-    ensureTable();
-    const rows = getDb()
-      .prepare("SELECT * FROM my_watchlist ORDER BY added_at DESC")
-      .all();
+    const client = await ensureTable();
+    const res = await client.execute("SELECT * FROM my_watchlist ORDER BY added_at DESC");
+    const rows = res.rows.map((r: any) => {
+      const obj: Record<string, unknown> = {};
+      res.columns.forEach((col, i) => { obj[col] = r[i]; });
+      return obj;
+    });
     return NextResponse.json(rows);
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
@@ -40,14 +40,13 @@ export async function POST(request: Request) {
     if (!market || !symbol) {
       return NextResponse.json({ error: "market, symbol 필수" }, { status: 400 });
     }
-    ensureTable();
-    getDb()
-      .prepare(
-        `INSERT INTO my_watchlist (market, symbol, name, note)
-         VALUES (?, ?, ?, ?)
-         ON CONFLICT(market, symbol) DO UPDATE SET name=excluded.name, note=excluded.note`
-      )
-      .run(market, symbol.toUpperCase(), name ?? null, note ?? null);
+    const client = await ensureTable();
+    await client.execute({
+      sql: `INSERT INTO my_watchlist (market, symbol, name, note)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(market, symbol) DO UPDATE SET name=excluded.name, note=excluded.note`,
+      args: [market, symbol.toUpperCase(), name ?? null, note ?? null],
+    });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

@@ -1,48 +1,40 @@
-import { getDataDb, dbUnavailable } from "@/src/lib/db";
+import { NextResponse } from "next/server";
+import { getClient } from "@/src/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const db = getDataDb();
-  if (!db) return dbUnavailable();
+  try {
+    const { searchParams } = new URL(request.url);
+    const market    = searchParams.get("market");
+    const regimeFit = searchParams.get("regime_fit");
 
-  const { searchParams } = new URL(request.url);
-  const market    = searchParams.get("market");    // US | KR | null(전체)
-  const regimeFit = searchParams.get("regime_fit"); // growth | dividend | neutral | null
+    const client = getClient();
 
-  // watchlist_candidates 테이블이 없으면 빈 배열 반환
-  const tableExists = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='watchlist_candidates'")
-    .get();
-  if (!tableExists) return Response.json({ candidates: [], screened_at: null });
+    const args: (string | null)[] = [];
+    let sql = `
+      SELECT market, symbol, name, market_cap, sector,
+             piotroski, debt_ratio, interest_coverage,
+             cfo_positive_count, red_flags, regime_fit, screened_at
+      FROM watchlist_candidates
+      WHERE 1=1
+    `;
+    if (market)    { sql += " AND market = ?";     args.push(market); }
+    if (regimeFit) { sql += " AND regime_fit = ?"; args.push(regimeFit); }
+    sql += " ORDER BY piotroski DESC, market_cap DESC";
 
-  let sql = `
-    SELECT market, symbol, name, market_cap, sector,
-           piotroski, debt_ratio, interest_coverage,
-           cfo_positive_count, red_flags, regime_fit, screened_at
-    FROM watchlist_candidates
-    WHERE 1=1
-  `;
-  const params: string[] = [];
+    const res = await client.execute({ sql, args }).catch(() => ({ rows: [], columns: [] }));
 
-  if (market) {
-    sql += " AND market = ?";
-    params.push(market);
+    const candidates = res.rows.map((r: any) => {
+      const obj: Record<string, unknown> = {};
+      (res as any).columns?.forEach((col: string, i: number) => { obj[col] = r[i]; });
+      obj.red_flags = (() => { try { return JSON.parse((obj.red_flags as string) || "[]"); } catch { return []; } })();
+      return obj;
+    });
+
+    const lastScreened = (candidates[0] as any)?.screened_at ?? null;
+    return NextResponse.json({ candidates, screened_at: lastScreened });
+  } catch {
+    return NextResponse.json({ candidates: [], screened_at: null });
   }
-  if (regimeFit) {
-    sql += " AND regime_fit = ?";
-    params.push(regimeFit);
-  }
-  sql += " ORDER BY piotroski DESC, market_cap DESC";
-
-  const rows = db.prepare(sql).all(...params) as any[];
-
-  const candidates = rows.map((r) => ({
-    ...r,
-    red_flags: (() => { try { return JSON.parse(r.red_flags || "[]"); } catch { return []; } })(),
-  }));
-
-  const lastScreened = rows[0]?.screened_at ?? null;
-
-  return Response.json({ candidates, screened_at: lastScreened });
 }
