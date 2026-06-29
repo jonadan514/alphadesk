@@ -1,15 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import FlagIcon from "@/src/components/FlagIcon";
-import PlaybookPage from "@/app/playbook/page";
-
-const PAGE_TABS = [
-  { id: "guide",    label: "사용 설명서" },
-  { id: "playbook", label: "전략 플레이북" },
-] as const;
-type GuideTab = typeof PAGE_TABS[number]["id"];
 
 const GUIDE_SECTIONS = [
   { href: "/workflow",  icon: "▶", label: "매수 체크",   desc: "종목 티커 입력 시 6개 시장 신호를 자동 점검해 GO/CAUTION/STOP 판정. 실제 매수 전 반드시 거치는 관문." },
@@ -65,25 +57,8 @@ function Badge({ text, color }: { text: string; color: string }) {
 }
 
 export default function GuidePage() {
-  const [tab, setTab] = useState<GuideTab>("guide");
-
-  const tabBar = (
-    <div className="flex gap-0.5 p-0.5 rounded-lg mb-3" style={{ background: "#1a1a1a", width: "fit-content" }}>
-      {PAGE_TABS.map(t => (
-        <button key={t.id} onClick={() => setTab(t.id)}
-          className="px-3 py-1 rounded text-[13px] transition-all"
-          style={{ background: t.id === tab ? "#2e2e2e" : "transparent", color: t.id === tab ? "#fff" : "#6b7280", fontWeight: t.id === tab ? 600 : 400 }}>
-          {t.label}
-        </button>
-      ))}
-    </div>
-  );
-
-  if (tab === "playbook") return <div><div>{tabBar}</div><PlaybookPage /></div>;
-
   return (
     <div className="space-y-6 max-w-5xl">
-      {tabBar}
 
       {/* Header */}
       <div>
