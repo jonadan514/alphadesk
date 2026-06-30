@@ -13,14 +13,15 @@ const DEFAULTS: Record<string, { text: string; checked: boolean }[]> = {
     { text: "매수 후 최소 6개월 보유 가능한 자금인가?", checked: false },
   ],
   sector: [
+    { text: "워치리스트 스크리닝을 통과한 종목인가?", checked: false },
     { text: "섹터 분석에서 RS(상대강도) 상위권인가?", checked: false },
     { text: "해당 섹터 ETF가 상승 추세인가?", checked: false },
     { text: "Piotroski F-Score ≥ 5인가?", checked: false },
+    { text: "ROE ≥ 8%인가? (자본 효율성)", checked: false },
     { text: "이자보상배율 ≥ 1.5인가? (부채 부담 없음)", checked: false },
-    { text: "최근 3년 매출 성장 추세인가?", checked: false },
+    { text: "최근 2년 중 1년 이상 매출 성장인가?", checked: false },
     { text: "부채비율 ≤ 150%인가? (금융업 제외)", checked: false },
     { text: "영업현금흐름이 2년 연속 플러스인가?", checked: false },
-    { text: "워치리스트 함정 필터를 통과했는가?", checked: false },
   ],
 };
 

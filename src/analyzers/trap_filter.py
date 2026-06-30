@@ -156,10 +156,24 @@ def apply_trap_filters(item: dict) -> dict:
         if rev_declining and income_declining:
             red_flags.append("매출+순이익 3년 연속 감소")
 
+    # ── 매출 2년 연속 감소 (단독) ──
+    if (all(v is not None for v in revenues[:3]) and
+            revenues[0] < revenues[1] and revenues[1] < revenues[2]):
+        if "매출+순이익 3년 연속 감소" not in red_flags:
+            red_flags.append("매출 2년 연속 감소")
+
+    # ── ROE < 8% ──
+    net_income_cur = g_fin("Net Income")
+    equity = g_bs("Stockholders Equity") or g_bs("Total Stockholder Equity")
+    if net_income_cur is not None and equity and equity > 0:
+        roe = net_income_cur / equity
+        if roe < 0.08:
+            red_flags.append(f"ROE {roe*100:.1f}% (<8%)")
+
     # ── Piotroski F-Score ──
     piotroski, _ = calc_piotroski(fin, bs, cf)
-    if piotroski is not None and piotroski <= 3:
-        red_flags.append(f"Piotroski {piotroski}/9 (재무 취약)")
+    if piotroski is not None and piotroski < 5:
+        red_flags.append(f"Piotroski {piotroski}/9 (<5 재무 취약)")
 
     # ── 시장 체제별 적합도 판단 ──
     div_yield = info.get("dividendYield") or 0
