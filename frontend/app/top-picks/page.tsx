@@ -135,7 +135,7 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
 
           {/* KR 펀더멘털 지표 */}
           {isKR && (pick.per != null || pick.pbr != null || pick.roe != null || pick.dividend_yield != null) && (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
                 { label: "PER", val: pick.per != null ? `${pick.per}x` : null },
                 { label: "PBR", val: pick.pbr != null ? `${pick.pbr}x` : null },
@@ -163,7 +163,7 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                 <p className="text-[12px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#6e6e6e" }}>
                   Lynch / O'Neil 지표
                 </p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {pegVal != null && (
                     <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${pegColor}33` }}>
                       <p className="text-[12px]" style={{ color: "#6e6e6e" }}>PEG 비율</p>
@@ -411,6 +411,7 @@ export default function TopPicksPage() {
 
       {picks.length > 0 && (
         <div className="bg-card rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
               <tr style={{ borderBottom: "1px solid #2a2a2a" }}>
@@ -503,6 +504,7 @@ export default function TopPicksPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

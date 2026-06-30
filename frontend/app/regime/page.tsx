@@ -116,11 +116,11 @@ export default function RegimePage() {
   return (
     <div className="space-y-2">
       {/* ── 상단: 체제 히어로 + 리스크 파라미터 ── */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
 
         {/* 체제 상태 (2열) */}
         <div
-          className="col-span-2 rounded-xl p-3 flex flex-col gap-2"
+          className="md:col-span-2 rounded-xl p-3 flex flex-col gap-2"
           style={{ background: REGIME_BG[regime] ?? "var(--bg-card)", border: `1px solid ${regimeColor}33` }}
         >
           {/* 상단: 이름 + 점수 */}

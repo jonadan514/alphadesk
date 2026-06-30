@@ -100,7 +100,7 @@ export default function SectorPage() {
       </div>
 
       {/* 경기 사이클 */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
 
         {/* 사이클 판단 */}
         <div className="bg-card rounded-xl p-3">
@@ -208,6 +208,7 @@ export default function SectorPage() {
           <p className="text-[14px] font-bold text-white">주간 상대강도 추이 <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(최근 4주)</span></p>
           <InfoTooltip content={`${isKR ? "KOSPI" : "SPY"} 대비 초과 수익률입니다. 양수(+)면 시장보다 더 올랐고, 음수(-)면 시장보다 덜 올랐다는 의미입니다. 여러 주에 걸쳐 양수를 유지하면 선행 섹터로 분류됩니다.`} />
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-[12px]">
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border)" }}>
@@ -238,6 +239,7 @@ export default function SectorPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* 섹터 히트맵 */}

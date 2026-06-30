@@ -51,8 +51,8 @@ function PositionCalculator({ currency = "USD" }: { currency?: "USD" | "KRW" }) 
         <h2 className="stat-label">포지션 계산기</h2>
         <InfoTooltip content="총 자산에서 허용 손실 비중과 손절선을 입력하면 적정 매수 수량을 알려줍니다." />
       </div>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 grid grid-cols-2 gap-3">
           {[
             { label: `총 자산 ${currency === "KRW" ? "(₩)" : "($)"}`, val: portfolio, set: setPortfolio, step: undefined },
             { label: `종목 주가 ${currency === "KRW" ? "(₩)" : "($)"}`, val: price, set: setPrice, step: undefined },
@@ -110,8 +110,8 @@ function KRRiskView() {
   return (
     <div className="space-y-3">
       {/* 히어로 */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2 rounded-xl p-4" style={{ background: `${rlColor}0d`, border: `1px solid ${rlColor}33` }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="md:col-span-2 rounded-xl p-4" style={{ background: `${rlColor}0d`, border: `1px solid ${rlColor}33` }}>
           <p className="text-[12px] font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}><FlagIcon market="KR" size={13} />{" "}KOSPI 리스크 모니터</p>
           <div className="flex items-center gap-3 mb-2">
             <span className="text-4xl font-black" style={{ color: rlColor }}>{rlKo}</span>
@@ -253,9 +253,9 @@ export default function RiskPage() {
     <div className="space-y-3">
 
       {/* ── 1. 포트폴리오 건강도 히어로 ── */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* 종합 상태 */}
-        <div className="col-span-2 rounded-xl p-4" style={{ background: `${statusColor}0d`, border: `1px solid ${statusColor}33` }}>
+        <div className="md:col-span-2 rounded-xl p-4" style={{ background: `${statusColor}0d`, border: `1px solid ${statusColor}33` }}>
           <p className="text-[12px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>
             <FlagIcon market="US" size={13} />{" "}S&P 500 포트폴리오 건강도
           </p>
@@ -348,10 +348,10 @@ export default function RiskPage() {
       )}
 
       {/* ── 3. 보유 종목 현황 + 섹터 분산 ── */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* 보유 종목별 비중 & 손익 */}
         {positions.length > 0 && (
-          <div className="col-span-2 bg-card rounded-xl p-4">
+          <div className="md:col-span-2 bg-card rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <h2 className="stat-label">보유 종목 현황</h2>
               <InfoTooltip content="각 종목의 포트폴리오 내 비중과 현재 손익률입니다." />
