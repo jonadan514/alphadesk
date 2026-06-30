@@ -300,16 +300,18 @@ function PreTradeChecklist({
   const recLossAmt     = recShares && entryPrice > 0 ? recShares * (entryPrice - stopNum2) : null;
 
   const CHECKLIST = [
-    { id: "gate",   label: "시장 게이트 GO",                          auto: true,   pass: gateOk,   tip: "시장 진입 신호가 GO여야 합니다." },
-    { id: "regime", label: "체제 Risk-on / Neutral",                  auto: true,   pass: regimeOk, tip: "Risk-off·Crisis 체제에서는 신규 매수를 자제하세요." },
-    { id: "risk",   label: "리스크 수준 허용 범위",                     auto: true,   pass: riskOk,   tip: "VaR·MDD 경고 없을 때 진입하세요." },
-    { id: "buy",    label: `${tickerUp || "종목"} BUY 액션 확인`,      auto: !!pick, pass: isBuy,    tip: "스크리닝 BUY 액션 종목만 선택하세요." },
-    { id: "grade",  label: `${tickerUp || "종목"} Grade A·B 확인`,    auto: !!pick, pass: gradeOk,  tip: "C등급 이하는 진입 자제를 권장합니다." },
-    { id: "score",  label: `${tickerUp || "종목"} 점수 ≥ 60`,         auto: !!pick, pass: scoreOk,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
-    { id: "sector", label: "선행 섹터 종목 확인",                       auto: !!pick && leadingList.length > 0, pass: sectorOk, tip: `선행: ${leadingList.join(", ") || "데이터 없음"}` },
-    { id: "ai",     label: "AI 분석 thesis 확인",                      auto: true,   pass: aiOk,    tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
-    { id: "stop",   label: "손절가 설정",                              auto: true,   pass: stopOk,  tip: `권장 손절선: ${stopLossPct} (현재 체제 기준)` },
-    { id: "size",   label: "매수 수량 확정",                           auto: true,   pass: sharesOk, tip: "위 포지션 사이징 계산기로 자금·손실한도 입력 후 수량을 역산하세요." },
+    { id: "gate",      label: "시장 게이트 GO",                        auto: true,   pass: gateOk,   tip: "시장 진입 신호가 GO여야 합니다." },
+    { id: "regime",    label: "체제 Risk-on / Neutral",                auto: true,   pass: regimeOk, tip: "Risk-off·Crisis 체제에서는 신규 매수를 자제하세요." },
+    { id: "watchlist", label: "워치리스트 스크리닝 통과 종목인가?",      auto: false,  pass: false,    tip: "Piotroski≥5·ROE≥8%·함정 필터 통과 종목인지 워치리스트 탭에서 확인하세요." },
+    { id: "risk",      label: "리스크 수준 허용 범위",                   auto: true,   pass: riskOk,   tip: "VaR·MDD 경고 없을 때 진입하세요." },
+    { id: "buy",       label: `${tickerUp || "종목"} BUY 액션 확인`,   auto: !!pick, pass: isBuy,    tip: "스크리닝 BUY 액션 종목만 선택하세요." },
+    { id: "grade",     label: `${tickerUp || "종목"} Grade A·B 확인`, auto: !!pick, pass: gradeOk,  tip: "C등급 이하는 진입 자제를 권장합니다." },
+    { id: "score",     label: `${tickerUp || "종목"} 점수 ≥ 60`,      auto: !!pick, pass: scoreOk,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
+    { id: "sector",    label: "선행 섹터 종목 확인",                    auto: !!pick && leadingList.length > 0, pass: sectorOk, tip: `선행: ${leadingList.join(", ") || "데이터 없음"}` },
+    { id: "ai",        label: "AI 분석 thesis 확인",                   auto: true,   pass: aiOk,    tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
+    { id: "workbook",  label: "투자 워크북 체크리스트 통과",              auto: false,  pass: false,    tip: "투자 워크북 탭의 전략·섹터 체크리스트를 점검하세요." },
+    { id: "stop",      label: "손절가 설정",                            auto: true,   pass: stopOk,  tip: `권장 손절선: ${stopLossPct} (현재 체제 기준)` },
+    { id: "size",      label: "매수 수량 확정",                         auto: true,   pass: sharesOk, tip: "위 포지션 사이징 계산기로 자금·손실한도 입력 후 수량을 역산하세요." },
   ];
 
   const passCount    = CHECKLIST.filter((c) => c.pass).length;
@@ -397,7 +399,7 @@ function PreTradeChecklist({
           {canCalc && recShares !== null && recShares > 0 ? (
             <div className="rounded-lg p-2.5 space-y-1.5" style={{ background: "#facc1508", border: "1px solid #facc1522" }}>
               <p className="text-[12px] font-bold" style={{ color: "#facc15" }}>계산 결과</p>
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-[12px]" style={{ color: "#6e6e6e" }}>권장 수량</p>
                   <p className="text-sm font-black text-white">{recShares}주</p>
@@ -619,7 +621,7 @@ export default function WorkflowPage() {
             ? `AI BUY 추천 ${krBuySummaries.length}개 · 전체 ${krAiList.length}개`
             : "AI 분석 데이터 없음 — 직접 재무제표 확인 권장",
           detail: krAiList.length > 0
-            ? `Gemini AI가 분석한 ${krAiList.length}개 종목 중 BUY 추천은 ${krBuySummaries.length}개입니다. thesis(투자 근거)가 납득되고, bear cases(하락 리스크)를 감수할 수 있는 종목만 최종 선정하세요.`
+            ? `GPT-4o가 분석한 ${krAiList.length}개 종목 중 BUY 추천은 ${krBuySummaries.length}개입니다. thesis(투자 근거)가 납득되고, bear cases(하락 리스크)를 감수할 수 있는 종목만 최종 선정하세요.`
             : "AI 분석 데이터가 없습니다. 재분석 실행 후 재확인하거나 PER·PBR·ROE를 직접 확인하세요.",
           action: krAiList.length > 0 ? "thesis 납득 + bear case 감수 가능 종목만 최종 선정" : "종목 클릭 → 재무제표 직접 확인 후 최종 선정",
           proceed: true,
@@ -787,7 +789,7 @@ export default function WorkflowPage() {
         signal: buySummaries.length >= 2 ? "GO" : "CAUTION",
         title: "AI 검증",
         summary: `AI BUY 추천 ${buySummaries.length}개 · 전체 ${summaries.length}개`,
-        detail: `Gemini AI가 분석한 ${summaries.length}개 종목 중 BUY 추천은 ${buySummaries.length}개입니다. thesis(투자 근거)가 납득되고, bear cases(하락 리스크)를 감수할 수 있는 종목만 최종 선정하세요.`,
+        detail: `GPT-4o가 분석한 ${summaries.length}개 종목 중 BUY 추천은 ${buySummaries.length}개입니다. thesis(투자 근거)가 납득되고, bear cases(하락 리스크)를 감수할 수 있는 종목만 최종 선정하세요.`,
         action: "thesis 납득 + bear case 감수 가능 종목만 최종 선정",
         proceed: true,
       };
@@ -902,7 +904,7 @@ export default function WorkflowPage() {
 
       {/* 6개 신호 그리드 */}
       {!loading && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {steps.map((step, i) => (
             <SignalCard
               key={i}
