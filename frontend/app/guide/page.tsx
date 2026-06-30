@@ -123,36 +123,34 @@ export default function GuidePage() {
         </div>
       </Card>
 
-      {/* 시작하는 방법 */}
+      {/* 데이터 업데이트 */}
       <Card>
-        <SectionTitle>시작하는 방법 — 바탕화면 배치 파일</SectionTitle>
+        <SectionTitle>데이터 업데이트 방식</SectionTitle>
         <div className="space-y-2 mb-4">
           {[
-            { file: "AlphaDesk_전체시작.bat", color: "#39ff8f", desc: "권장 — 대시보드 + 미국 분석 완료 후 한국 분석 자동 시작 + 브라우저 오픈", tag: "추천" },
-            { file: "AlphaDesk_대시보드.bat",  color: "#60a5fa", desc: "프론트엔드만 실행. 이전 분석 데이터 조회용 (분석 없음)", tag: "" },
-            { file: "AlphaDesk_미국분석.bat",  color: "#a8a8a8", desc: "미국 분석만 단독 재실행", tag: "" },
-            { file: "AlphaDesk_한국분석.bat",  color: "#a8a8a8", desc: "한국 분석만 단독 재실행", tag: "" },
-          ].map(({ file, color, desc, tag }) => (
-            <div key={file} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
+            { label: "일간 분석 (자동)",    color: "#39ff8f", desc: "GitHub Actions가 평일 매일 자동 실행 — 미국(장 마감 후 07:00 KST) · 한국(장 마감 후 16:30 KST)", tag: "자동" },
+            { label: "워치리스트 (주 1회)", color: "#60a5fa", desc: "매주 월요일 자동 스크리닝. Piotroski·ROE·함정 필터 적용 후 Turso DB에 업로드", tag: "자동" },
+            { label: "포트폴리오·워크북",  color: "#a8a8a8", desc: "매수/매도 기록 및 체크리스트는 내가 직접 입력", tag: "수동" },
+          ].map(({ label, color, desc, tag }) => (
+            <div key={label} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <code className="text-[12px] font-mono font-bold" style={{ color }}>{file}</code>
-                  {tag && <Badge text={tag} color={color} />}
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[12px] font-bold" style={{ color }}>{label}</span>
+                  <Badge text={tag} color={color} />
                 </div>
-                <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{desc}</p>
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
               </div>
             </div>
           ))}
         </div>
 
-        <SectionTitle>전체시작 실행 순서</SectionTitle>
+        <SectionTitle>데이터 신선도 확인</SectionTitle>
         <div className="space-y-1">
           {[
-            "전체시작.bat 더블클릭",
-            "탭 1: AlphaDesk Dashboard — Next.js 프론트엔드 (http://localhost:3000)",
-            "탭 2: US then KR Analysis — 미국 분석 완료 후 한국 자동 시작",
-            "6초 후 브라우저 자동 오픈 → 분석 중에도 이전 데이터 조회 가능",
-            "분석 완료 후 F5 새로고침하면 최신 데이터 반영",
+            "사이드바 하단 색상 점 — 초록(오늘 업데이트) · 노랑(어제) · 주황/빨강(오래됨)",
+            "주황/빨강이면 GitHub Actions 실행 결과를 확인하세요",
+            "수동 재실행: GitHub → Actions → Daily Analysis → Run workflow",
+            "워치리스트 재스크리닝: GitHub → Actions → Weekly Watchlist Screen → Run workflow",
           ].map((step, i) => (
             <div key={i} className="flex items-start gap-3 py-1.5" style={{ borderBottom: "1px solid #1a1a1a" }}>
               <span className="text-[12px] font-black w-4 text-center shrink-0 mt-0.5" style={{ color: "#39ff8f" }}>{i + 1}</span>
@@ -160,10 +158,6 @@ export default function GuidePage() {
             </div>
           ))}
         </div>
-        <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--text-faint)" }}>
-          ※ 미국 → 한국 순서로 실행하는 이유: Gemini AI API 요청 한도(분당 요청 수) 때문입니다.
-          동시 실행 시 60개 이상의 요청이 한꺼번에 몰려 503 오류가 발생할 수 있습니다.
-        </p>
       </Card>
 
       {/* What this tool does */}
@@ -173,12 +167,13 @@ export default function GuidePage() {
           {[
             ["시장 체제 감지",   "미국(5센서)·한국(4센서) 가중 합산 → risk_on / neutral / risk_off / crisis 판별"],
             ["종목 스크리닝",    "미국(5팩터)·한국(4팩터) 복합 점수로 순위 산정. 등급 A~F + BUY/WATCH/HOLD 액션 부여"],
-            ["AI 요약 생성",    "Gemini 2.5 Flash — 한국은 KOSPI 전문 프롬프트 사용. 목표주가(원화·달러) + 촉매·리스크"],
+            ["AI 요약 생성",    "GPT-4o — 투자 thesis · 상승 촉매 · 하락 리스크를 종목별로 자동 생성"],
             ["섹터 분석",       "경기 사이클 단계 판단 + 섹터별 KOSPI/SPY 대비 상대강도"],
+            ["워치리스트",      "Piotroski≥5·ROE≥8%·함정 필터 통과 종목을 주 1회 자동 스크리닝"],
             ["포지션 계산기",   "고정 비율(Fixed Fraction)·켈리 공식으로 적정 매수 수량 자동 계산"],
             ["리스크 관리",     "VaR95·MDD 모니터링 + 체제별 손절선 제공"],
-            ["페이퍼 포트폴리오", "BUY 추천 종목 가상 운용. 매수·매도·손익 추적으로 전략 검증"],
-            ["실제 포트폴리오",  "보유 종목 등록·현재가 자동 조회·손익 계산. 실제 포지션 손절가 경보"],
+            ["포트폴리오",      "내 실제 매수/매도 기록 관리. 첫 거래 시점 기준 벤치마크 대비 성과 추적"],
+            ["투자 워크북",     "전략·섹터 체크리스트 직접 관리. 매수 전 내 기준 점검 노트"],
           ].map(([title, desc]) => (
             <div key={title} className="rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <p className="text-[12px] font-semibold text-white mb-0.5">{title}</p>
@@ -214,7 +209,7 @@ export default function GuidePage() {
         </div>
 
         <SectionTitle>마켓 게이트 신호별 대응</SectionTitle>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {[
             { signal: "GO",      color: "#39ff8f", desc: "상위 종목 BUY 검토 → 워크플로우 5단계 통과 후 매수." },
             { signal: "CAUTION", color: "#facc15", desc: "신규 진입 시 포지션 50% 이하 축소. 손절선 1~2% 좁게." },
@@ -275,7 +270,7 @@ export default function GuidePage() {
         <SectionTitle>종합 점수(Composite Score) 구조</SectionTitle>
 
         {/* US 6 factors */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-[12px] font-bold mb-2" style={{ color: "#60a5fa" }}><FlagIcon market="US" size={13} />{" "}미국 (6팩터)</p>
             <div className="space-y-1">
@@ -328,7 +323,7 @@ export default function GuidePage() {
         {/* 등급 기준 */}
         <div className="mt-2">
           <p className="text-[12px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>등급 기준</p>
-          <div className="grid grid-cols-5 gap-1">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-1">
             {[
               { grade: "A", score: "80+",   color: "#39ff8f" },
               { grade: "B", score: "70~79", color: "#86efac" },
@@ -354,7 +349,7 @@ export default function GuidePage() {
           <div>
             <p className="text-[12px] font-bold text-white mb-1">AI 신뢰도(Confidence)란?</p>
             <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              Gemini AI가 자신의 분석에 스스로 매긴 확신 점수입니다 (0-100 정수).
+              GPT-4o가 자신의 분석에 스스로 매긴 확신 점수입니다 (0-100 정수).
               데이터가 충분하고 투자 논리가 일관되면 높게, 데이터가 불완전하거나 논리가 애매하면 낮게 냅니다.
               객관적 지표가 아닌 <span className="text-white">AI의 주관적 자기평가</span>입니다.
             </p>
@@ -370,7 +365,7 @@ export default function GuidePage() {
                 </div>
               ))}
             </div>
-            <p className="text-[12px] mt-1.5" style={{ color: "#6e6e6e" }}>※ AI 신뢰도는 참고용입니다. Gemini가 틀려도 책임은 없으므로 과신 금물.</p>
+            <p className="text-[12px] mt-1.5" style={{ color: "#6e6e6e" }}>※ AI 신뢰도는 참고용입니다. GPT-4o가 틀려도 책임은 없으므로 과신 금물.</p>
           </div>
 
           <div style={{ borderTop: "1px solid #2e2e2e", paddingTop: "1rem" }}>
@@ -417,16 +412,12 @@ export default function GuidePage() {
         <div className="space-y-3">
           {[
             {
-              q: "분석 중 '503 서버 과부하' 오류가 나왔어요.",
-              a: "Gemini AI API의 요청 한도 초과입니다. 자동 재시도 로직(최대 4회)이 있으므로 기다리면 됩니다. AlphaDesk_전체시작.bat으로 실행하면 미국 완료 후 한국이 시작되어 오류 확률이 크게 줄어듭니다.",
-            },
-            {
-              q: "페이퍼 포트폴리오 편입가는 어떻게 정해지나요?",
-              a: "분석 당일 종가(close) 기준입니다.",
-            },
-            {
               q: "AI 분석이 없는 종목이 있어요.",
-              a: "AI 요약은 BUY 액션 종목에 대해서만 생성됩니다(한국 상위 15개, 미국 상위 50개). WATCH·HOLD 종목은 생성되지 않습니다.",
+              a: "AI 요약은 BUY 액션 종목에 대해서만 생성됩니다(한국 상위 15개, 미국 상위 50개). WATCH·HOLD 종목은 생성되지 않습니다. 일간 분석 실행 후 업데이트됩니다.",
+            },
+            {
+              q: "워치리스트 종목이 너무 많거나 적어요.",
+              a: "워치리스트는 주 1회 자동 스크리닝됩니다. 필터 기준은 Piotroski F-Score≥5, ROE≥8%, 이자보상배율≥1, 부채비율≤200%, 영업현금흐름·매출 감소 없음입니다.",
             },
             {
               q: "한국 종목에 PER·PBR 데이터가 없어요.",

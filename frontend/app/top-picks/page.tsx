@@ -259,7 +259,7 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
           )}
 
           {!ai && (
-            <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>AI 분석 데이터 없음 — AI 탭에서 확인하세요.</p>
+            <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>AI 분석 데이터 없음 — 다음 일간 분석 실행 후 업데이트됩니다.</p>
           )}
         </div>
       </div>
