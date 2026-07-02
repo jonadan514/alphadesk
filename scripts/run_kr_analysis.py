@@ -177,15 +177,15 @@ def phase3_screening(regime: str, analysis_date: str, t0: float) -> dict:
 
 
 def phase3_5_ai_summary(report: dict, regime_result: dict, sector_result: dict | None, t0: float) -> list:
-    _log("Phase3.5", "KR AI 요약 생성 (Gemini)")
+    _log("Phase3.5", "KR AI 요약 생성 (GPT-4o mini)")
     try:
-        from src.analyzers.ai_summary_generator import GeminiSummaryGenerator
+        from src.analyzers.ai_summary_generator import OpenAISummaryGenerator
     except ImportError:
-        _log("Phase3.5", "GeminiSummaryGenerator import 실패 — 건너뜀")
+        _log("Phase3.5", "OpenAISummaryGenerator import 실패 — 건너뜀")
         return []
 
     picks = [p for p in report.get("picks", []) if p.get("action") == "BUY"][:15]
-    generator = GeminiSummaryGenerator()
+    generator = OpenAISummaryGenerator()
     summaries = []
 
     # 시장 컨텍스트 문자열 구성

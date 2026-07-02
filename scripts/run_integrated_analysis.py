@@ -18,7 +18,7 @@ from src.collectors.us_price_fetcher import USPriceFetcher
 from src.analyzers.market_regime import MarketRegimeDetector
 from src.analyzers.market_gate import USMarketGate
 from src.analyzers.smart_money_screener_v2 import EnhancedSmartMoneyScreener
-from src.analyzers.ai_summary_generator import GeminiSummaryGenerator
+from src.analyzers.ai_summary_generator import OpenAISummaryGenerator
 from src.analyzers.final_report_generator import FinalReportGenerator
 from src.us_market.index_predictor import IndexPredictor
 from src.db.data_store import get_db, init_db, upsert_daily_report, upsert_regime, upsert_market_gate, upsert_index_prediction, upsert_ai_summaries, upsert_risk, upsert_costs
@@ -112,8 +112,8 @@ def phase2_screening(sp500_df, price_map, t0: float):
 
 
 def phase2_5_ai_summary(picks_df, t0: float):
-    _log("Phase2.5", "AI 요약 생성 시작 (Gemini)")
-    generator = GeminiSummaryGenerator()
+    _log("Phase2.5", "AI 요약 생성 시작 (GPT-4o mini)")
+    generator = OpenAISummaryGenerator()
     ai_results = {}
     for _, row in picks_df.iterrows():
         symbol = row.get("symbol", "")
