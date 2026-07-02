@@ -526,6 +526,21 @@ class OpenAISummaryGenerator:
             logger.warning("%s OpenAI 요청 실패: %s", ticker, type(e).__name__)
             return json.dumps(_get_fallback_json(ticker), ensure_ascii=False)
 
+    def generate(self, ticker: str, data: dict, *,
+                 market: str = "US", market_context=None,
+                 name: str = "", sector: str = "") -> dict:
+        merged = dict(data)
+        if name:
+            merged.setdefault("company_name", name)
+        if sector:
+            merged.setdefault("sector", sector)
+        raw = self.generate_summary(ticker, merged, news=[], macro_context=None)
+        try:
+            result = json.loads(raw) if isinstance(raw, str) else raw
+            return result or _get_fallback_json(ticker)
+        except Exception:
+            return _get_fallback_json(ticker)
+
 
 class PerplexitySummaryGenerator:
     def __init__(self, api_key: str = None):
