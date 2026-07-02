@@ -50,6 +50,22 @@ def _validate(data: dict) -> dict:
     return data
 
 
+def validate_ai_response(data: dict) -> tuple:
+    errors: list[str] = []
+    for field, expected_type in REQUIRED_FIELDS.items():
+        if field not in data:
+            errors.append(f"missing field: {field}")
+            continue
+        if not isinstance(data[field], expected_type):
+            errors.append(f"{field} wrong type: expected {expected_type}, got {type(data[field])}")
+
+    confidence = data.get("confidence")
+    if isinstance(confidence, (int, float)) and not (0 <= confidence <= 100):
+        errors.append(f"confidence out of range: {confidence}")
+
+    return len(errors) == 0, errors
+
+
 def parse_ai_response(text: str) -> dict:
     if not text or not text.strip():
         return {**FALLBACK, "_reason": "empty response"}
