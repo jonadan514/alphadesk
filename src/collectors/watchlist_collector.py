@@ -40,57 +40,91 @@ def get_us_universe() -> list[dict]:
     return [{"market": "US", "symbol": t, "yf_symbol": t} for t in tickers]
 
 
-def get_kr_universe() -> list[dict]:
-    """KOSPI + KOSDAQ 유니버스 (pykrx 사용).
+def _kr_universe_pykrx() -> list[dict]:
+    """KOSPI + KOSDAQ 전체 유니버스 (pykrx).
 
-    주의: 크론이 주말/휴일에 돌 수 있으므로 반드시 최근 영업일 기준으로 조회.
-    시가총액은 시장 전체를 한 번에 조회 (종목별 조회는 주말에 빈 값 + 매우 느림).
+    주의: KRX가 데이터 API에 로그인을 요구하므로 KRX_ID / KRX_PW 환경변수가
+    필요하다 (data.krx.co.kr 계정). 없으면 빈 리스트 반환 → 폴백 사용.
+    크론이 주말에 돌 수 있으므로 최근 영업일 기준, 시장 전체 일괄 조회.
     """
     try:
         from pykrx import stock as pykrx_stock
-
-        try:
-            base_date = pykrx_stock.get_nearest_business_day_in_a_week()
-        except Exception:
-            from datetime import date, timedelta
-            d = date.today()
-            while d.weekday() >= 5:  # 토/일 → 금요일로
-                d -= timedelta(days=1)
-            base_date = d.strftime("%Y%m%d")
-
-        result = []
-        for exchange in ["KOSPI", "KOSDAQ"]:
-            try:
-                cap_df = pykrx_stock.get_market_cap(base_date, market=exchange)
-            except Exception as e:
-                logger.error("KR %s 시가총액 조회 실패: %s", exchange, e)
-                continue
-            if cap_df is None or cap_df.empty:
-                logger.warning("KR %s 시가총액 데이터 없음 (기준일 %s)", exchange, base_date)
-                continue
-
-            big = cap_df[cap_df["시가총액"] >= KR_MIN_CAP]
-            suffix = ".KS" if exchange == "KOSPI" else ".KQ"
-            for ticker, row in big.iterrows():
-                try:
-                    name = pykrx_stock.get_market_ticker_name(ticker)
-                except Exception:
-                    name = str(ticker)
-                result.append({
-                    "market": "KR",
-                    "symbol": str(ticker),
-                    "yf_symbol": str(ticker) + suffix,
-                    "name": name,
-                    "market_cap": int(row["시가총액"]),
-                    "exchange": exchange,
-                })
-
-        logger.info("KR 유니버스: %d 종목 (기준일 %s, 2000억+ 필터 후)", len(result), base_date)
-        return result
-
     except ImportError:
-        logger.warning("pykrx 미설치 — KR 유니버스 수집 불가. pip install pykrx")
+        logger.warning("pykrx 미설치 — pip install pykrx")
         return []
+
+    try:
+        base_date = pykrx_stock.get_nearest_business_day_in_a_week()
+    except Exception:
+        from datetime import date, timedelta
+        d = date.today()
+        while d.weekday() >= 5:  # 토/일 → 금요일로
+            d -= timedelta(days=1)
+        base_date = d.strftime("%Y%m%d")
+
+    result = []
+    for exchange in ["KOSPI", "KOSDAQ"]:
+        try:
+            cap_df = pykrx_stock.get_market_cap(base_date, market=exchange)
+        except Exception as e:
+            logger.error("KR %s 시가총액 조회 실패: %s", exchange, type(e).__name__)
+            continue
+        if cap_df is None or cap_df.empty:
+            logger.warning("KR %s 시가총액 데이터 없음 (기준일 %s)", exchange, base_date)
+            continue
+
+        big = cap_df[cap_df["시가총액"] >= KR_MIN_CAP]
+        suffix = ".KS" if exchange == "KOSPI" else ".KQ"
+        for ticker, row in big.iterrows():
+            try:
+                name = pykrx_stock.get_market_ticker_name(ticker)
+            except Exception:
+                name = str(ticker)
+            result.append({
+                "market": "KR",
+                "symbol": str(ticker),
+                "yf_symbol": str(ticker) + suffix,
+                "name": name,
+                "market_cap": int(row["시가총액"]),
+                "exchange": exchange,
+            })
+
+    logger.info("KR 유니버스(pykrx): %d 종목 (기준일 %s, 2000억+)", len(result), base_date)
+    return result
+
+
+def _kr_universe_fallback() -> list[dict]:
+    """pykrx 실패 시 폴백: 일간 분석과 동일한 KOSPI 대형주 정적 리스트.
+
+    시가총액은 이후 collect_universe의 yfinance 조회에서 채워진다.
+    """
+    from src.collectors.kr_kospi_list import KOSPI_STOCKS
+
+    result = [
+        {
+            "market": "KR",
+            "symbol": code,
+            "yf_symbol": f"{code}.KS",
+            "name": name,
+            "exchange": "KOSPI",
+        }
+        for code, name, _sector in KOSPI_STOCKS
+    ]
+    logger.info("KR 유니버스(폴백 정적 리스트): %d 종목", len(result))
+    return result
+
+
+def get_kr_universe() -> list[dict]:
+    """KR 유니버스. pykrx(전체) 우선, 실패 시 정적 대형주 리스트 폴백."""
+    universe = _kr_universe_pykrx()
+    if universe:
+        return universe
+    logger.warning(
+        "pykrx 유니버스 수집 실패 — 정적 리스트로 폴백. "
+        "전체 KOSPI+KOSDAQ을 원하면 data.krx.co.kr 계정 생성 후 "
+        "KRX_ID/KRX_PW를 GitHub secrets에 등록하세요."
+    )
+    return _kr_universe_fallback()
 
 
 def fetch_financials(yf_symbol: str, retries: int = 2) -> dict | None:
@@ -144,6 +178,13 @@ def collect_universe(markets: list[str] = ("US", "KR")) -> list[dict]:
             logger.info("진행: %d / %d", i, len(items))
 
         data = fetch_financials(item["yf_symbol"])
+        # KR: .KS 실패 시 코스닥(.KQ) 재시도
+        if data is None and item["market"] == "KR" and item["yf_symbol"].endswith(".KS"):
+            kq_symbol = item["yf_symbol"].replace(".KS", ".KQ")
+            data = fetch_financials(kq_symbol)
+            if data is not None:
+                item["yf_symbol"] = kq_symbol
+                item["exchange"] = "KOSDAQ"
         if data is None:
             continue
 

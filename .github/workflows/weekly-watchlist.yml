@@ -26,6 +26,9 @@ jobs:
         env:
           TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          # data.krx.co.kr 계정 (선택) — 없으면 KR은 KOSPI 대형주 정적 리스트로 폴백
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
         run: python scripts/run_watchlist_screen.py --market ALL
 
       - name: Upload data.db artifact
