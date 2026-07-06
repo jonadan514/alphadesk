@@ -277,6 +277,18 @@ export default function TopPicksPage() {
   const [loading, setLoading]         = useState(true);
   const [selectedPick, setSelectedPick] = useState<any>(null);
   const [aiMap, setAiMap]             = useState<Record<string, any>>({});
+  const [myWatch, setMyWatch]         = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch("/api/watchlist/my")
+      .then((r) => r.json())
+      .then((rows) => {
+        if (Array.isArray(rows)) {
+          setMyWatch(new Set(rows.map((w: any) => `${w.market}:${w.symbol}`)));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -462,11 +474,20 @@ export default function TopPicksPage() {
                       {String(i + 1).padStart(2, "0")}
                     </td>
                     <td className="px-3 py-3">
-                      {p.name
-                        ? <><div className="font-black text-white">{p.name}</div>
-                            <div className="text-[12px] font-mono" style={{ color: "var(--text-muted)" }}>{p.symbol}</div></>
-                        : <div className="font-black text-white">{p.symbol}</div>
-                      }
+                      {(() => {
+                        const inWatch = myWatch.has(`${market}:${p.symbol}`);
+                        const badge = inWatch && (
+                          <span title="내 워치리스트에 담긴 종목"
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0"
+                            style={{ background: "#60a5fa20", color: "#60a5fa", border: "1px solid #60a5fa40" }}>
+                            🔖 워치
+                          </span>
+                        );
+                        return p.name
+                          ? <><div className="font-black text-white flex items-center gap-1.5">{p.name}{badge}</div>
+                              <div className="text-[12px] font-mono" style={{ color: "var(--text-muted)" }}>{p.symbol}</div></>
+                          : <div className="font-black text-white flex items-center gap-1.5">{p.symbol}{badge}</div>;
+                      })()}
                       <div className="text-[12px]" style={{ color: "var(--text-faint)" }}>{p.sector}</div>
                     </td>
                     <td className="px-3 py-3">

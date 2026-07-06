@@ -7,28 +7,35 @@ export type YahooQuote = {
   price: number | null;
 };
 
-function toYahooSymbol(symbol: string, market: string): string {
-  if (market === "KR" && /^\d{6}$/.test(symbol)) return `${symbol}.KS`;
-  return symbol;
-}
-
-export async function fetchYahooPrice(symbol: string, market: string): Promise<YahooQuote> {
-  const ySym = toYahooSymbol(symbol, market);
+async function fetchChart(ySym: string): Promise<{ price: number | null; name: string | null }> {
   try {
     const res = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ySym)}?interval=1d&range=1d`,
       { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(5000) }
     );
-    if (!res.ok) return { symbol, name: null, price: null };
+    if (!res.ok) return { price: null, name: null };
     const json = await res.json();
     const meta = json?.chart?.result?.[0]?.meta;
-    if (!meta) return { symbol, name: null, price: null };
-    const price = meta.regularMarketPrice ?? null;
-    const name = meta.longName ?? meta.shortName ?? null;
-    return { symbol, name, price };
+    if (!meta) return { price: null, name: null };
+    return {
+      price: meta.regularMarketPrice ?? null,
+      name: meta.longName ?? meta.shortName ?? null,
+    };
   } catch {
-    return { symbol, name: null, price: null };
+    return { price: null, name: null };
   }
+}
+
+export async function fetchYahooPrice(symbol: string, market: string): Promise<YahooQuote> {
+  if (market === "KR" && /^\d{6}$/.test(symbol)) {
+    // KOSPI(.KS) 우선, 실패하면 KOSDAQ(.KQ)
+    const ks = await fetchChart(`${symbol}.KS`);
+    if (ks.price !== null) return { symbol, ...ks };
+    const kq = await fetchChart(`${symbol}.KQ`);
+    return { symbol, ...kq };
+  }
+  const r = await fetchChart(symbol);
+  return { symbol, ...r };
 }
 
 export async function fetchYahooPrices(

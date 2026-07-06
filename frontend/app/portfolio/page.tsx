@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Trash2, Plus, TrendingUp, TrendingDown } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -114,7 +114,7 @@ export default function PortfolioPage() {
   }
 
   // Compute holdings summary from trades
-  const holdings = (() => {
+  const holdings = useMemo(() => {
     const map = new Map<string, { market: string; name: string | null; shares: number; cost: number }>();
     [...trades].reverse().forEach((t) => {
       const key = `${t.market}:${t.symbol}`;
@@ -130,7 +130,34 @@ export default function PortfolioPage() {
     return Array.from(map.entries())
       .filter(([, v]) => v.shares > 0)
       .map(([key, v]) => ({ symbol: key.split(":")[1], ...v }));
-  })();
+  }, [trades]);
+
+  // 보유 종목 현재가 조회
+  const [prices, setPrices] = useState<Record<string, number | null>>({});
+  useEffect(() => {
+    const keys = holdings.map((h) => `${h.market}:${h.symbol}`);
+    if (keys.length === 0) { setPrices({}); return; }
+    fetch(`/api/portfolio/prices?symbols=${keys.join(",")}`)
+      .then((r) => r.json())
+      .then(setPrices)
+      .catch(() => {});
+  }, [holdings]);
+
+  const fmtMoney = (market: string, v: number) =>
+    market === "US" ? `$${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : `₩${Math.round(v).toLocaleString()}`;
+
+  // 시장별 합계 (가격 조회된 종목만)
+  const totals = useMemo(() => {
+    const acc: Record<string, { cost: number; value: number }> = {};
+    for (const h of holdings) {
+      const price = prices[`${h.market}:${h.symbol}`];
+      if (price == null) continue;
+      const a = (acc[h.market] ??= { cost: 0, value: 0 });
+      a.cost += h.cost * h.shares;
+      a.value += price * h.shares;
+    }
+    return acc;
+  }, [holdings, prices]);
 
   const lastChart = chart?.points.at(-1);
   const myReturn = lastChart?.myPortfolio != null ? lastChart.myPortfolio - 100 : null;
@@ -165,18 +192,61 @@ export default function PortfolioPage() {
           {holdings.length > 0 && (
             <div className="rounded-xl p-3 space-y-2" style={{ background: "#1c1c1c", border: "1px solid #2e2e2e" }}>
               <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#4b5563" }}>현재 보유</p>
-              {holdings.map((h) => (
-                <div key={h.symbol} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: "#2e2e2e", color: "#9ca3af" }}>{h.market}</span>
-                    <span className="text-[13px] font-bold text-white">{h.symbol}</span>
-                    {h.name && <span className="text-[11px]" style={{ color: "#6b7280" }}>{h.name}</span>}
+              {holdings.map((h) => {
+                const price = prices[`${h.market}:${h.symbol}`];
+                const pl    = price != null ? (price - h.cost) * h.shares : null;
+                const plPct = price != null && h.cost > 0 ? (price / h.cost - 1) * 100 : null;
+                const plColor = pl == null ? "#4b5563" : pl >= 0 ? "#39ff8f" : "#f87171";
+                return (
+                  <div key={`${h.market}:${h.symbol}`} className="flex items-center justify-between py-1" style={{ borderTop: "1px solid #222" }}>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0" style={{ background: "#2e2e2e", color: "#9ca3af" }}>{h.market}</span>
+                        <span className="text-[13px] font-bold text-white">{h.symbol}</span>
+                        {h.name && <span className="text-[11px] truncate" style={{ color: "#6b7280" }}>{h.name}</span>}
+                      </div>
+                      <p className="text-[11px] mt-0.5" style={{ color: "#4b5563" }}>
+                        {h.shares.toLocaleString()}주 · 평단 {fmtMoney(h.market, h.cost)}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      {price != null ? (
+                        <>
+                          <p className="text-[13px] font-bold text-white">{fmtMoney(h.market, price)}</p>
+                          <p className="text-[11px] font-bold" style={{ color: plColor }}>
+                            {plPct != null ? `${plPct >= 0 ? "+" : ""}${plPct.toFixed(1)}%` : ""}
+                            {pl != null ? ` (${pl >= 0 ? "+" : "-"}${fmtMoney(h.market, Math.abs(pl))})` : ""}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-[11px]" style={{ color: "#4b5563" }}>가격 조회 중…</p>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-[12px]" style={{ color: "#9ca3af" }}>
-                    {h.shares.toLocaleString()}주 · 평균 {h.market === "US" ? `$${h.cost.toFixed(2)}` : `₩${Math.round(h.cost).toLocaleString()}`}
-                  </span>
+                );
+              })}
+
+              {/* 시장별 합계 */}
+              {Object.keys(totals).length > 0 && (
+                <div className="pt-2 space-y-1" style={{ borderTop: "1px solid #2e2e2e" }}>
+                  {Object.entries(totals).map(([market, t]) => {
+                    const pl = t.value - t.cost;
+                    const pct = t.cost > 0 ? (pl / t.cost) * 100 : 0;
+                    const color = pl >= 0 ? "#39ff8f" : "#f87171";
+                    return (
+                      <div key={market} className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold" style={{ color: "#6b7280" }}>{market} 합계</span>
+                        <span className="text-[12px]">
+                          <span className="font-bold text-white">{fmtMoney(market, t.value)}</span>
+                          <span className="ml-2 font-bold" style={{ color }}>
+                            {pl >= 0 ? "+" : "-"}{fmtMoney(market, Math.abs(pl))} ({pct >= 0 ? "+" : ""}{pct.toFixed(1)}%)
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              )}
             </div>
           )}
 

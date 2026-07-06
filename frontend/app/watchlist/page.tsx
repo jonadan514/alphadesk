@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { X, Info } from "lucide-react";
+import { X, Info, Pencil } from "lucide-react";
 
 interface Candidate {
   market: string;
@@ -420,6 +420,8 @@ export default function WatchlistPage() {
   const [selected, setSelected]     = useState<Candidate | null>(null);
   const [infoKey, setInfoKey]       = useState<keyof typeof INDICATOR_INFO | null>(null);
 
+  const [topPicks, setTopPicks] = useState<Set<string>>(new Set());
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -438,6 +440,27 @@ export default function WatchlistPage() {
     }
   }, []);
 
+  // 오늘의 종목 분석(top-picks) 등장 여부
+  useEffect(() => {
+    Promise.allSettled([
+      fetch("/api/data/reports?limit=1").then((r) => r.json()),
+      fetch("/api/data/kr/reports?limit=1").then((r) => r.json()),
+    ]).then(([usRes, krRes]) => {
+      const set = new Set<string>();
+      if (usRes.status === "fulfilled") {
+        ((usRes.value?.[0]?.picks ?? []) as { symbol?: string }[]).forEach((p) => {
+          if (p.symbol) set.add(`US:${p.symbol}`);
+        });
+      }
+      if (krRes.status === "fulfilled") {
+        ((krRes.value?.[0]?.picks ?? []) as { symbol?: string }[]).forEach((p) => {
+          if (p.symbol) set.add(`KR:${p.symbol}`);
+        });
+      }
+      setTopPicks(set);
+    });
+  }, []);
+
   useEffect(() => { load(); }, [load]);
 
   const addToWatchlist = async (c: Candidate) => {
@@ -450,6 +473,19 @@ export default function WatchlistPage() {
   };
   const removeFromWatchlist = async (id: number) => {
     await fetch(`/api/watchlist/my/${id}`, { method: "DELETE" });
+    load();
+  };
+
+  // 메모 인라인 편집
+  const [editingNote, setEditingNote] = useState<number | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const saveNote = async (item: WatchItem) => {
+    await fetch("/api/watchlist/my", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ market: item.market, symbol: item.symbol, name: item.name, note: noteDraft.trim() || null }),
+    });
+    setEditingNote(null);
     load();
   };
 
@@ -581,7 +617,15 @@ export default function WatchlistPage() {
                         <td style={{ padding: "8px 10px" }}>
                           <span style={{ color: c.market === "US" ? "#60a5fa" : "#f87171", fontSize: 11, fontWeight: 600 }}>{c.market}</span>
                         </td>
-                        <td style={{ padding: "8px 10px", fontWeight: 600, color: "#e5e7eb" }}>{c.symbol}</td>
+                        <td style={{ padding: "8px 10px", fontWeight: 600, color: "#e5e7eb", whiteSpace: "nowrap" }}>
+                          {c.symbol}
+                          {topPicks.has(key) && (
+                            <span title="오늘 종목 분석 상위 종목에 포함"
+                              style={{ marginLeft: 6, background: "#39ff8f20", color: "#39ff8f", border: "1px solid #39ff8f40", borderRadius: 4, padding: "1px 5px", fontSize: 10, fontWeight: 700 }}>
+                              오늘픽
+                            </span>
+                          )}
+                        </td>
                         <td style={{ padding: "8px 10px", color: "#9ca3af", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name ?? "-"}</td>
                         <td style={{ padding: "8px 10px" }}><FitScoreBadge score={c.fit_score} /></td>
                         <td style={{ padding: "8px 10px", color: "#9ca3af" }}>{formatCap(c.market, c.market_cap)}</td>
@@ -621,13 +665,47 @@ export default function WatchlistPage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {myList.map((item) => (
-              <div key={item.id} style={{ background: "#111", border: "1px solid #222", borderRadius: 8, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ color: item.market === "US" ? "#60a5fa" : "#f87171", fontSize: 11, fontWeight: 600, minWidth: 24 }}>{item.market}</span>
-                <span style={{ fontWeight: 700, fontSize: 15, minWidth: 60 }}>{item.symbol}</span>
-                <span style={{ color: "#9ca3af", flex: 1 }}>{item.name ?? ""}</span>
-                {item.note && <span style={{ color: "#6b7280", fontSize: 12 }}>{item.note}</span>}
-                <span style={{ color: "#374151", fontSize: 11 }}>{item.added_at.slice(0, 10)}</span>
-                <button onClick={() => removeFromWatchlist(item.id)} style={{ background: "transparent", color: "#6b7280", border: "1px solid #374151", borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>삭제</button>
+              <div key={item.id} style={{ background: "#111", border: "1px solid #222", borderRadius: 8, padding: "12px 16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ color: item.market === "US" ? "#60a5fa" : "#f87171", fontSize: 11, fontWeight: 600, minWidth: 24 }}>{item.market}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, minWidth: 60 }}>{item.symbol}</span>
+                  {topPicks.has(`${item.market}:${item.symbol}`) && (
+                    <span title="오늘 종목 분석 상위 종목에 포함"
+                      style={{ background: "#39ff8f20", color: "#39ff8f", border: "1px solid #39ff8f40", borderRadius: 4, padding: "1px 6px", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
+                      오늘픽
+                    </span>
+                  )}
+                  <span style={{ color: "#9ca3af", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name ?? ""}</span>
+                  <span style={{ color: "#374151", fontSize: 11 }}>{item.added_at.slice(0, 10)}</span>
+                  <button onClick={() => removeFromWatchlist(item.id)} style={{ background: "transparent", color: "#6b7280", border: "1px solid #374151", borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>삭제</button>
+                </div>
+                {/* 메모 */}
+                <div style={{ marginTop: 8 }}>
+                  {editingNote === item.id ? (
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        value={noteDraft}
+                        onChange={(e) => setNoteDraft(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") saveNote(item); if (e.key === "Escape") setEditingNote(null); }}
+                        placeholder="담은 이유, 지켜볼 포인트… (예: AI 전력 수요 수혜, 2분기 실적 확인)"
+                        autoFocus
+                        style={{ flex: 1, background: "#0e0e0e", color: "#e5e7eb", border: "1px solid #333", borderRadius: 6, padding: "6px 10px", fontSize: 12, outline: "none" }}
+                      />
+                      <button onClick={() => saveNote(item)} style={{ background: "#39ff8f18", color: "#39ff8f", border: "1px solid #39ff8f33", borderRadius: 6, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>저장</button>
+                      <button onClick={() => setEditingNote(null)} style={{ background: "#1c1c1c", color: "#6b7280", border: "1px solid #333", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}>취소</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingNote(item.id); setNoteDraft(item.note ?? ""); }}
+                      style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", cursor: "pointer", padding: 0, textAlign: "left" }}
+                    >
+                      <Pencil size={11} style={{ color: "#374151", flexShrink: 0 }} />
+                      <span style={{ color: item.note ? "#9ca3af" : "#374151", fontSize: 12 }}>
+                        {item.note || "메모 추가 — 왜 담았는지 기록해두세요"}
+                      </span>
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
