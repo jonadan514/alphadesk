@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans_KR, Inter } from "next/font/google";
 import Navigation from "@/src/components/Navigation";
 import DailyQuote from "@/src/components/DailyQuote";
-import MarketSwitcher from "@/src/components/MarketSwitcher";
+import PageMarketTabs from "@/src/components/PageMarketTabs";
 import { MarketProvider } from "@/src/contexts/MarketContext";
 import "./globals.css";
 
@@ -34,12 +34,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Top header bar */}
             <header className="flex h-20 shrink-0 items-center gap-4 border-b px-4 pl-14 md:pl-4" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
               <DailyQuote />
-              <div className="flex items-center gap-3 shrink-0 ml-auto">
-                <MarketSwitcher />
-              </div>
             </header>
             {/* Page content */}
             <main className="flex-1 overflow-y-auto px-7 pt-8 pb-6">
+              <PageMarketTabs />
               {children}
             </main>
           </div>
