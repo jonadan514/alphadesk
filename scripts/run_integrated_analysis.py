@@ -211,20 +211,20 @@ def phase4_risk_and_costs(ai_results: dict, analysis_date: str, t0: float) -> No
         risk_data = {"var_95": None, "mdd": None, "error": str(e)}
     _log("Phase4", f"Risk: VaR95={risk_data.get('var_95')}  MDD={risk_data.get('mdd')}", t0)
 
-    # ── Costs: Gemini 토큰 집계 ────────────────────────────────────────────
-    # gemini-2.5-flash: $0.15/M input tokens, $0.60/M output tokens
+    # ── Costs: OpenAI 토큰 집계 ────────────────────────────────────────────
+    # gpt-4o-mini: $0.15/M input tokens, $0.60/M output tokens
+    # 토큰 수는 API 응답의 usage를 기록하는 usage_tracker 싱글턴에서 읽는다
+    from src.analyzers.ai_summary_generator import usage_tracker
     PRICE_IN  = 0.15 / 1_000_000
     PRICE_OUT = 0.60 / 1_000_000
-    total_in = total_out = 0
-    for result in ai_results.values():
-        total_in  += result.get("_tokens_in", 0) or 0
-        total_out += result.get("_tokens_out", 0) or 0
+    total_in  = usage_tracker.total_input_tokens
+    total_out = usage_tracker.total_output_tokens
     cost_usd = round(total_in * PRICE_IN + total_out * PRICE_OUT, 6)
 
     entry = {
         "date":       analysis_date,
-        "service":    "Gemini",
-        "model":      "gemini-2.5-flash",
+        "service":    "OpenAI",
+        "model":      "gpt-4o-mini",
         "tokens_in":  total_in,
         "tokens_out": total_out,
         "cost_usd":   cost_usd,

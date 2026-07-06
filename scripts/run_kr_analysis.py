@@ -321,7 +321,7 @@ def main() -> None:
     # WAL → 메인 DB 체크포인트 (Next.js readonly 연결이 즉시 읽을 수 있도록)
     try:
         import sqlite3 as _sqlite3
-        _conn = _sqlite3.connect(str(DB_PATH))
+        _conn = _sqlite3.connect(str(ROOT / "output" / "data.db"))
         _conn.execute("PRAGMA wal_checkpoint(FULL)")
         _conn.close()
         _log("Final", "WAL 체크포인트 완료")
