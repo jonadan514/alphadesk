@@ -236,45 +236,64 @@ UPSERT_SQL = (
 )
 
 
-def get_targets() -> list[dict]:
-    """내 워치리스트(우선) + 스크리닝 후보 종목 목록. (market, symbol, name)"""
-    targets: dict[str, dict] = {}
-    for row in turso_query("SELECT market, symbol, name FROM my_watchlist"):
-        targets[f"{row['market']}:{row['symbol']}"] = row
-    for row in turso_query("SELECT market, symbol, name FROM watchlist_candidates"):
-        targets.setdefault(f"{row['market']}:{row['symbol']}", row)
-    return list(targets.values())
+def get_todo(max_age_hours: int, batch: int, force: bool) -> tuple[list[dict], int]:
+    """생성 대상 종목 결정.
 
+    - 내 워치리스트: 항상 최우선 (매일 갱신)
+    - 스크리닝 후보: 브리프가 없거나 오래된 것부터, 회차당 batch개까지 순환
+    반환: (todo 리스트, 전체 대상 수)
+    """
+    my_rows = turso_query("SELECT market, symbol, name FROM my_watchlist")
+    cand_rows = turso_query("SELECT market, symbol, name FROM watchlist_candidates")
 
-def get_fresh_symbols(max_age_hours: int) -> set[str]:
-    rows = turso_query(
-        f"SELECT market, symbol FROM narrative_briefs "
-        f"WHERE updated_at > datetime('now', '-{int(max_age_hours)} hours')"
-    )
-    return {f"{r['market']}:{r['symbol']}" for r in rows}
+    updated: dict[str, str] = {}
+    for r in turso_query("SELECT market, symbol, updated_at FROM narrative_briefs"):
+        updated[f"{r['market']}:{r['symbol']}"] = r["updated_at"] or ""
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=max_age_hours)).strftime("%Y-%m-%d %H:%M:%S")
+
+    def is_stale(t: dict) -> bool:
+        if force:
+            return True
+        return updated.get(f"{t['market']}:{t['symbol']}", "") < cutoff
+
+    seen: set[str] = set()
+    my_todo, cand_todo = [], []
+    for t in my_rows:
+        key = f"{t['market']}:{t['symbol']}"
+        seen.add(key)
+        if is_stale(t):
+            my_todo.append(t)
+    for t in cand_rows:
+        key = f"{t['market']}:{t['symbol']}"
+        if key not in seen and is_stale(t):
+            cand_todo.append(t)
+
+    # 후보는 오래된(또는 브리프 없는) 순으로 — 매 회차 다른 종목이 갱신되며 순환
+    cand_todo.sort(key=lambda t: updated.get(f"{t['market']}:{t['symbol']}", ""))
+    todo = my_todo + cand_todo
+    if batch > 0:
+        todo = todo[:batch]
+    return todo, len(my_rows) + len(cand_rows)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="워치리스트 네러티브 브리프 생성")
-    parser.add_argument("--limit", type=int, default=0, help="처리 종목 수 제한 (0=전체)")
+    parser.add_argument("--limit", type=int, default=0, help="처리 종목 수 제한 (0=배치 기본값)")
+    parser.add_argument("--batch", type=int, default=150, help="회차당 최대 생성 수 (기본 150)")
     parser.add_argument("--force", action="store_true", help="신선도 무시하고 전부 재생성")
     args = parser.parse_args()
 
     t0 = time.time()
     turso_pipeline([{"type": "execute", "stmt": {"sql": CREATE_SQL}}])
 
-    targets = get_targets()
-    if not targets:
-        logger.warning("대상 종목 없음 (my_watchlist / watchlist_candidates 비어 있음)")
+    batch = args.limit if args.limit > 0 else args.batch
+    todo, total = get_todo(MAX_AGE_HOURS, batch, args.force)
+    if not todo:
+        logger.info("생성할 종목 없음 (전체 %d종목 모두 신선)", total)
         return
 
-    fresh = set() if args.force else get_fresh_symbols(MAX_AGE_HOURS)
-    todo = [t for t in targets if f"{t['market']}:{t['symbol']}" not in fresh]
-    if args.limit > 0:
-        todo = todo[: args.limit]
-
-    logger.info("대상 %d종목 중 %d종목 생성 (신선한 %d종목 건너뜀)",
-                len(targets), len(todo), len(targets) - len(todo))
+    logger.info("전체 %d종목 중 이번 회차 %d종목 생성", total, len(todo))
 
     ok = fail = 0
     for i, t in enumerate(todo, 1):

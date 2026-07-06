@@ -41,38 +41,51 @@ def get_us_universe() -> list[dict]:
 
 
 def get_kr_universe() -> list[dict]:
-    """KOSPI + KOSDAQ 유니버스 (pykrx 사용)."""
+    """KOSPI + KOSDAQ 유니버스 (pykrx 사용).
+
+    주의: 크론이 주말/휴일에 돌 수 있으므로 반드시 최근 영업일 기준으로 조회.
+    시가총액은 시장 전체를 한 번에 조회 (종목별 조회는 주말에 빈 값 + 매우 느림).
+    """
     try:
         from pykrx import stock as pykrx_stock
-        from datetime import date
 
-        today = date.today().strftime("%Y%m%d")
+        try:
+            base_date = pykrx_stock.get_nearest_business_day_in_a_week()
+        except Exception:
+            from datetime import date, timedelta
+            d = date.today()
+            while d.weekday() >= 5:  # 토/일 → 금요일로
+                d -= timedelta(days=1)
+            base_date = d.strftime("%Y%m%d")
+
         result = []
-
         for exchange in ["KOSPI", "KOSDAQ"]:
-            tickers = pykrx_stock.get_market_ticker_list(today, market=exchange)
-            for ticker in tickers:
+            try:
+                cap_df = pykrx_stock.get_market_cap(base_date, market=exchange)
+            except Exception as e:
+                logger.error("KR %s 시가총액 조회 실패: %s", exchange, e)
+                continue
+            if cap_df is None or cap_df.empty:
+                logger.warning("KR %s 시가총액 데이터 없음 (기준일 %s)", exchange, base_date)
+                continue
+
+            big = cap_df[cap_df["시가총액"] >= KR_MIN_CAP]
+            suffix = ".KS" if exchange == "KOSPI" else ".KQ"
+            for ticker, row in big.iterrows():
                 try:
                     name = pykrx_stock.get_market_ticker_name(ticker)
-                    cap_df = pykrx_stock.get_market_cap(today, today, ticker)
-                    if cap_df.empty:
-                        continue
-                    market_cap = int(cap_df["시가총액"].iloc[-1])
-                    if market_cap < KR_MIN_CAP:
-                        continue
-                    suffix = ".KS" if exchange == "KOSPI" else ".KQ"
-                    result.append({
-                        "market": "KR",
-                        "symbol": ticker,
-                        "yf_symbol": ticker + suffix,
-                        "name": name,
-                        "market_cap": market_cap,
-                        "exchange": exchange,
-                    })
                 except Exception:
-                    continue
+                    name = str(ticker)
+                result.append({
+                    "market": "KR",
+                    "symbol": str(ticker),
+                    "yf_symbol": str(ticker) + suffix,
+                    "name": name,
+                    "market_cap": int(row["시가총액"]),
+                    "exchange": exchange,
+                })
 
-        logger.info("KR 유니버스: %d 종목 (2000억+ 필터 후)", len(result))
+        logger.info("KR 유니버스: %d 종목 (기준일 %s, 2000억+ 필터 후)", len(result), base_date)
         return result
 
     except ImportError:

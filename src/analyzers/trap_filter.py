@@ -114,6 +114,18 @@ def apply_trap_filters(item: dict) -> dict:
     red_flags: list[str] = []
     sector = item.get("sector", "")
 
+    # 재무제표가 아예 없으면 지표 계산 불가 — 명시적으로 탈락
+    if fin.empty and bs.empty and cf.empty:
+        return {
+            "pass": False,
+            "red_flags": ["재무 데이터 없음"],
+            "piotroski": None,
+            "debt_ratio": None,
+            "interest_coverage": None,
+            "cfo_positive_count": 0,
+            "regime_fit": "neutral",
+        }
+
     def g_fin(col, idx=0): return _safe(fin, col, idx)
     def g_bs(col, idx=0):  return _safe(bs, col, idx)
     def g_cf(col, idx=0):  return _safe(cf, col, idx)
