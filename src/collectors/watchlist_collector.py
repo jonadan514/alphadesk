@@ -98,7 +98,10 @@ def _kr_universe_fallback() -> list[dict]:
 
     시가총액은 이후 collect_universe의 yfinance 조회에서 채워진다.
     """
-    from src.collectors.kr_kospi_list import KOSPI_STOCKS
+    try:
+        from collectors.kr_kospi_list import KOSPI_STOCKS
+    except ImportError:
+        from src.collectors.kr_kospi_list import KOSPI_STOCKS
 
     result = [
         {
