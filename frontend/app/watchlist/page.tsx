@@ -141,45 +141,46 @@ const SENTIMENT_STYLE: Record<string, { label: string; color: string; emoji: str
 
 function NarrativeSection({ c }: { c: Candidate }) {
   const [brief, setBrief]     = useState<NarrativeBrief | null>(null);
+  const [pending, setPending] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchBrief = useCallback(async (refresh: boolean) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams({ market: c.market, symbol: c.symbol, name: c.name ?? "" });
-      if (refresh) params.set("refresh", "1");
-      const res = await fetch(`/api/watchlist/narrative?${params}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "요청 실패");
-      setBrief(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "네러티브를 불러오지 못했어요");
-    } finally {
-      setLoading(false);
-    }
-  }, [c.market, c.symbol, c.name]);
-
-  useEffect(() => { fetchBrief(false); }, [fetchBrief]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      setPending(false);
+      try {
+        const params = new URLSearchParams({ market: c.market, symbol: c.symbol });
+        const res = await fetch(`/api/watchlist/narrative?${params}`);
+        const data = await res.json();
+        if (cancelled) return;
+        if (res.status === 404 && data.pending) { setPending(true); return; }
+        if (!res.ok) throw new Error(data.error ?? "요청 실패");
+        setBrief(data);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "네러티브를 불러오지 못했어요");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [c.market, c.symbol]);
 
   const sent = brief ? (SENTIMENT_STYLE[brief.sentiment] ?? SENTIMENT_STYLE.WARM) : null;
 
   return (
     <div className="px-5">
       <div className="rounded-xl p-3 space-y-2.5" style={{ background: "#141414", border: "1px solid #2e2e2e" }}>
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] uppercase tracking-widest" style={{ color: "#4b5563" }}>네러티브 브리프</p>
-          {brief && (
-            <button onClick={() => fetchBrief(true)} className="text-[10px]" style={{ color: "#374151" }}>
-              새로고침
-            </button>
-          )}
-        </div>
+        <p className="text-[10px] uppercase tracking-widest" style={{ color: "#4b5563" }}>네러티브 브리프</p>
 
         {loading && (
-          <p className="text-[12px] animate-pulse" style={{ color: "#6b7280" }}>
-            시장 스토리 검색 중... (실시간 웹 검색, 몇 초 걸려요)
+          <p className="text-[12px] animate-pulse" style={{ color: "#6b7280" }}>불러오는 중...</p>
+        )}
+        {pending && !loading && (
+          <p className="text-[12px]" style={{ color: "#6b7280" }}>
+            아직 네러티브가 생성되지 않았어요. 다음 일간 분석(매일 아침 자동 실행) 후 표시돼요.
           </p>
         )}
         {error && !loading && (
@@ -220,7 +221,7 @@ function NarrativeSection({ c }: { c: Candidate }) {
 
             <div className="flex items-center justify-between pt-1" style={{ borderTop: "1px solid #222" }}>
               <span className="text-[10px]" style={{ color: "#374151" }}>
-                Perplexity 실시간 검색 · 참고용 · {brief.cached_at.slice(0, 10)} 기준
+                최근 1주 뉴스 기반 GPT 분석 · 참고용 · {brief.cached_at.slice(0, 10)} 갱신
               </span>
               {brief.sources.length > 0 && (
                 <span className="flex gap-1.5">
