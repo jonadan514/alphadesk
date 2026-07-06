@@ -15,13 +15,14 @@ export async function GET(request: Request) {
     let sql = `
       SELECT market, symbol, name, market_cap, sector,
              piotroski, debt_ratio, interest_coverage,
-             cfo_positive_count, red_flags, regime_fit, screened_at
+             cfo_positive_count, red_flags, regime_fit,
+             roe, rel_3m, rel_6m, fit_score, screened_at
       FROM watchlist_candidates
       WHERE 1=1
     `;
     if (market)    { sql += " AND market = ?";     args.push(market); }
     if (regimeFit) { sql += " AND regime_fit = ?"; args.push(regimeFit); }
-    sql += " ORDER BY piotroski DESC, market_cap DESC";
+    sql += " ORDER BY fit_score IS NULL, fit_score DESC, piotroski DESC";
 
     const res = await client.execute({ sql, args }).catch(() => ({ rows: [], columns: [] }));
 

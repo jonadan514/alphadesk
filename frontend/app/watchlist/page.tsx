@@ -15,6 +15,10 @@ interface Candidate {
   cfo_positive_count: number;
   red_flags: string[];
   regime_fit: "growth" | "dividend" | "neutral";
+  roe: number | null;
+  rel_3m: number | null;
+  rel_6m: number | null;
+  fit_score: number | null;
 }
 interface WatchItem {
   id: number;
@@ -36,6 +40,15 @@ interface NarrativeBrief {
 
 // ── 지표 설명 ─────────────────────────────────────────────────────────────────
 const INDICATOR_INFO = {
+  fit: {
+    title: "시장 적합 점수 (0~100)",
+    desc: "함정 필터 통과 종목을 '지금 시장에서 살 만한 순서'로 줄 세운 점수입니다. 품질 40점(Piotroski·ROE·이자보상) + 모멘텀 35점(3·6개월 지수 대비 상대수익률) + 체제 정합 25점(현재 장세와 종목 성격의 궁합)으로 구성되며, 시장별 상위 50종목만 후보에 올라옵니다.",
+    levels: [
+      { range: "70점~", color: "#4ade80", label: "우수 — 재무 탄탄 + 시장이 사주는 중" },
+      { range: "55~70점", color: "#facc15", label: "양호 — 일부 축이 아쉬움" },
+      { range: "~55점", color: "#9ca3af", label: "보통 — 후보 중 하위권" },
+    ],
+  },
   fscore: {
     title: "Piotroski F-Score (0~9)",
     desc: "수익성·레버리지·운영효율 9가지 항목을 각 1점씩 채점한 재무 건전성 점수입니다.",
@@ -92,6 +105,15 @@ function PiotroskiBadge({ score }: { score: number | null }) {
   return (
     <span style={{ background: color + "20", color, border: `1px solid ${color}40`, borderRadius: 4, padding: "1px 6px", fontSize: 12, fontWeight: 600 }}>
       {score}/9
+    </span>
+  );
+}
+function FitScoreBadge({ score }: { score: number | null }) {
+  if (score === null) return <span style={{ color: "#4b5563" }}>-</span>;
+  const color = score >= 70 ? "#4ade80" : score >= 55 ? "#facc15" : "#9ca3af";
+  return (
+    <span style={{ background: color + "20", color, border: `1px solid ${color}40`, borderRadius: 4, padding: "1px 7px", fontSize: 12, fontWeight: 700 }}>
+      {score.toFixed(0)}
     </span>
   );
 }
@@ -270,6 +292,27 @@ function DetailModal({ c, inList, onAdd, onClose }: {
           <button onClick={onClose} className="p-1" style={{ color: "#6b7280" }}><X size={16} /></button>
         </div>
 
+        {/* 적합점수 + 모멘텀 */}
+        <div className="px-5">
+          <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #2e2e2e" }}>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "#4b5563" }}>시장 적합 점수</p>
+              <p className="text-2xl font-black" style={{ color: c.fit_score != null ? (c.fit_score >= 70 ? "#4ade80" : c.fit_score >= 55 ? "#facc15" : "#9ca3af") : "#4b5563" }}>
+                {c.fit_score != null ? c.fit_score.toFixed(0) : "-"}<span className="text-sm font-normal" style={{ color: "#4b5563" }}>/100</span>
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "#4b5563" }}>지수 대비 상대수익률</p>
+              <p className="text-[12px]" style={{ color: "#9ca3af" }}>
+                3개월 <span style={{ color: c.rel_3m != null ? (c.rel_3m >= 0 ? "#4ade80" : "#f87171") : "#4b5563", fontWeight: 700 }}>{c.rel_3m != null ? `${c.rel_3m > 0 ? "+" : ""}${c.rel_3m}%` : "-"}</span>
+              </p>
+              <p className="text-[12px]" style={{ color: "#9ca3af" }}>
+                6개월 <span style={{ color: c.rel_6m != null ? (c.rel_6m >= 0 ? "#4ade80" : "#f87171") : "#4b5563", fontWeight: 700 }}>{c.rel_6m != null ? `${c.rel_6m > 0 ? "+" : ""}${c.rel_6m}%` : "-"}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* 지표 그리드 */}
         <div className="px-5 grid grid-cols-2 gap-3">
           {/* F-Score */}
@@ -440,7 +483,7 @@ export default function WatchlistPage() {
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>워치리스트</h1>
         <p style={{ color: "#6b7280", fontSize: 13, marginTop: 4 }}>
-          함정 필터 통과 종목 · Piotroski ≥5 · ROE ≥8% · 매출 성장
+          함정 필터 통과 → 시장 적합 점수(품질·모멘텀·체제) 시장별 상위 50종목
           {screened_at && (
             <span style={{ marginLeft: 8, color: "#374151" }}>(스크리닝: {screened_at.slice(0, 10)})</span>
           )}
@@ -514,6 +557,7 @@ export default function WatchlistPage() {
                     <ColHeader label="마켓" />
                     <ColHeader label="티커" />
                     <ColHeader label="종목명" />
+                    <ColHeader label="적합점수" infoKey="fit" onInfo={setInfoKey} />
                     <ColHeader label="시가총액" />
                     <ColHeader label="섹터" />
                     <ColHeader label="F-Score" infoKey="fscore" onInfo={setInfoKey} />
@@ -539,6 +583,7 @@ export default function WatchlistPage() {
                         </td>
                         <td style={{ padding: "8px 10px", fontWeight: 600, color: "#e5e7eb" }}>{c.symbol}</td>
                         <td style={{ padding: "8px 10px", color: "#9ca3af", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name ?? "-"}</td>
+                        <td style={{ padding: "8px 10px" }}><FitScoreBadge score={c.fit_score} /></td>
                         <td style={{ padding: "8px 10px", color: "#9ca3af" }}>{formatCap(c.market, c.market_cap)}</td>
                         <td style={{ padding: "8px 10px", color: "#6b7280", fontSize: 11 }}>{c.sector ?? "-"}</td>
                         <td style={{ padding: "8px 10px" }}><PiotroskiBadge score={c.piotroski} /></td>

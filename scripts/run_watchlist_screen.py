@@ -27,8 +27,7 @@ logger = logging.getLogger(__name__)
 
 DB_PATH = ROOT / "output" / "data.db"
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS watchlist_candidates (
+CREATE_TABLE_SQL = """CREATE TABLE IF NOT EXISTS watchlist_candidates (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,
   market              TEXT NOT NULL,
   symbol              TEXT NOT NULL,
@@ -41,9 +40,18 @@ CREATE TABLE IF NOT EXISTS watchlist_candidates (
   cfo_positive_count  INTEGER,
   red_flags           TEXT,
   regime_fit          TEXT,
+  roe                 REAL,
+  rel_3m              REAL,
+  rel_6m              REAL,
+  fit_score           REAL,
   screened_at         TEXT NOT NULL,
   UNIQUE(market, symbol)
-);
+)"""
+
+# 매주 전체 교체 (상위 N개만 유지하므로 이전 회차 잔존 방지)
+SCHEMA = f"""
+DROP TABLE IF EXISTS watchlist_candidates;
+{CREATE_TABLE_SQL};
 CREATE INDEX IF NOT EXISTS idx_wl_market ON watchlist_candidates(market);
 CREATE INDEX IF NOT EXISTS idx_wl_regime ON watchlist_candidates(regime_fit);
 """
@@ -69,6 +77,10 @@ def save_candidates(conn: sqlite3.Connection, candidates: list[dict]) -> None:
             c["cfo_positive_count"],
             json.dumps(c["red_flags"], ensure_ascii=False),
             c["regime_fit"],
+            c.get("roe"),
+            c.get("rel_3m"),
+            c.get("rel_6m"),
+            c.get("fit_score"),
             now,
         )
         for c in candidates
@@ -78,17 +90,8 @@ def save_candidates(conn: sqlite3.Connection, candidates: list[dict]) -> None:
         INSERT INTO watchlist_candidates
           (market, symbol, name, market_cap, sector, piotroski,
            debt_ratio, interest_coverage, cfo_positive_count,
-           red_flags, regime_fit, screened_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-        ON CONFLICT(market, symbol) DO UPDATE SET
-          name=excluded.name, market_cap=excluded.market_cap,
-          sector=excluded.sector, piotroski=excluded.piotroski,
-          debt_ratio=excluded.debt_ratio,
-          interest_coverage=excluded.interest_coverage,
-          cfo_positive_count=excluded.cfo_positive_count,
-          red_flags=excluded.red_flags,
-          regime_fit=excluded.regime_fit,
-          screened_at=excluded.screened_at
+           red_flags, regime_fit, roe, rel_3m, rel_6m, fit_score, screened_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """,
         rows,
     )
@@ -124,45 +127,12 @@ def push_to_turso(candidates: list[dict]) -> None:
 
     now = datetime.utcnow().isoformat()
 
-    create_stmt = {
-        "type": "execute",
-        "stmt": {
-            "sql": (
-                "CREATE TABLE IF NOT EXISTS watchlist_candidates ("
-                "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "  market TEXT NOT NULL,"
-                "  symbol TEXT NOT NULL,"
-                "  name TEXT,"
-                "  market_cap REAL,"
-                "  sector TEXT,"
-                "  piotroski INTEGER,"
-                "  debt_ratio REAL,"
-                "  interest_coverage REAL,"
-                "  cfo_positive_count INTEGER,"
-                "  red_flags TEXT,"
-                "  regime_fit TEXT,"
-                "  screened_at TEXT NOT NULL,"
-                "  UNIQUE(market, symbol)"
-                ")"
-            )
-        },
-    }
-
-    upsert_sql = (
+    insert_sql = (
         "INSERT INTO watchlist_candidates "
         "(market, symbol, name, market_cap, sector, piotroski, "
         " debt_ratio, interest_coverage, cfo_positive_count, "
-        " red_flags, regime_fit, screened_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-        "ON CONFLICT(market, symbol) DO UPDATE SET "
-        "name=excluded.name, market_cap=excluded.market_cap, "
-        "sector=excluded.sector, piotroski=excluded.piotroski, "
-        "debt_ratio=excluded.debt_ratio, "
-        "interest_coverage=excluded.interest_coverage, "
-        "cfo_positive_count=excluded.cfo_positive_count, "
-        "red_flags=excluded.red_flags, "
-        "regime_fit=excluded.regime_fit, "
-        "screened_at=excluded.screened_at"
+        " red_flags, regime_fit, roe, rel_3m, rel_6m, fit_score, screened_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
 
     BATCH = 50
@@ -171,14 +141,20 @@ def push_to_turso(candidates: list[dict]) -> None:
         "Content-Type": "application/json",
     }
 
+    # 상위 N개만 유지하므로 매주 전체 교체 (DROP → CREATE → INSERT)
+    init_requests = [
+        {"type": "execute", "stmt": {"sql": "DROP TABLE IF EXISTS watchlist_candidates"}},
+        {"type": "execute", "stmt": {"sql": CREATE_TABLE_SQL}},
+    ]
+
     for i in range(0, len(candidates), BATCH):
         chunk = candidates[i : i + BATCH]
-        requests_list = [create_stmt]
+        requests_list = list(init_requests) if i == 0 else []
         for c in chunk:
             requests_list.append({
                 "type": "execute",
                 "stmt": {
-                    "sql": upsert_sql,
+                    "sql": insert_sql,
                     "args": [
                         _turso_val(c["market"]),
                         _turso_val(c["symbol"]),
@@ -191,6 +167,10 @@ def push_to_turso(candidates: list[dict]) -> None:
                         _turso_val(c.get("cfo_positive_count")),
                         _turso_val(json.dumps(c.get("red_flags") or [], ensure_ascii=False)),
                         _turso_val(c.get("regime_fit")),
+                        _turso_val(c.get("roe")),
+                        _turso_val(c.get("rel_3m")),
+                        _turso_val(c.get("rel_6m")),
+                        _turso_val(c.get("fit_score")),
                         _turso_val(now),
                     ],
                 },
@@ -234,6 +214,11 @@ def main():
     # 2. 함정 필터 적용
     passed, failed = run_screen(universe)
 
+    # 2.5. 시장 적합 점수 → 시장별 상위 50개만 후보로
+    from analyzers.market_fit_scorer import score_and_rank
+    total_passed = len(passed)
+    passed = score_and_rank(passed, top_n=50)
+
     # 3. SQLite 저장 (로컬 백업)
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
@@ -250,20 +235,18 @@ def main():
     print("\n" + "=" * 60)
     print(f"  워치리스트 스크리닝 결과")
     print("=" * 60)
-    print(f"  유니버스:  {len(universe):>4} 종목")
-    print(f"  통과:      {len(passed):>4} 종목")
-    print(f"  탈락:      {len(failed):>4} 종목")
-    print(f"  탈락률:    {len(failed)/len(universe)*100:.1f}%")
+    print(f"  유니버스:      {len(universe):>4} 종목")
+    print(f"  필터 통과:     {total_passed:>4} 종목")
+    print(f"  탈락:          {len(failed):>4} 종목 ({len(failed)/len(universe)*100:.1f}%)")
+    print(f"  최종 후보:     {len(passed):>4} 종목 (시장 적합 점수 시장별 상위 50)")
 
-    by_regime = {}
-    for c in passed:
-        by_regime.setdefault(c["regime_fit"], []).append(c["symbol"])
-    for regime, syms in by_regime.items():
-        print(f"\n  [{regime.upper()}] {len(syms)}종목")
-        for s in syms[:10]:
-            print(f"    {s}")
-        if len(syms) > 10:
-            print(f"    ... 외 {len(syms)-10}종목")
+    for market in ("US", "KR"):
+        group = [c for c in passed if c["market"] == market]
+        if not group:
+            continue
+        print(f"\n  [{market}] 상위 10종목 (적합점수)")
+        for c in group[:10]:
+            print(f"    {c['symbol']:<8} {c.get('fit_score', 0):>5.1f}  {c.get('regime_fit','')}")
 
     print("=" * 60)
 

@@ -124,6 +124,7 @@ def apply_trap_filters(item: dict) -> dict:
             "interest_coverage": None,
             "cfo_positive_count": 0,
             "regime_fit": "neutral",
+            "roe": None,
         }
 
     def g_fin(col, idx=0): return _safe(fin, col, idx)
@@ -175,10 +176,12 @@ def apply_trap_filters(item: dict) -> dict:
             red_flags.append("매출 2년 연속 감소")
 
     # ── ROE < 8% ──
+    roe_pct: float | None = None
     net_income_cur = g_fin("Net Income")
     equity = g_bs("Stockholders Equity") or g_bs("Total Stockholder Equity")
     if net_income_cur is not None and equity and equity > 0:
         roe = net_income_cur / equity
+        roe_pct = round(roe * 100, 1)
         if roe < 0.08:
             red_flags.append(f"ROE {roe*100:.1f}% (<8%)")
 
@@ -207,6 +210,7 @@ def apply_trap_filters(item: dict) -> dict:
         "interest_coverage": round(interest_coverage, 2) if interest_coverage else None,
         "cfo_positive_count": cfo_positive_count,
         "regime_fit": regime_fit,
+        "roe": roe_pct,
     }
 
 
@@ -219,6 +223,7 @@ def run_screen(items: list[dict]) -> tuple[list[dict], list[dict]]:
         entry = {
             "market":      item.get("market"),
             "symbol":      item.get("symbol"),
+            "yf_symbol":   item.get("yf_symbol"),
             "name":        item.get("name"),
             "market_cap":  item.get("market_cap"),
             "sector":      item.get("sector"),
@@ -228,6 +233,7 @@ def run_screen(items: list[dict]) -> tuple[list[dict], list[dict]]:
             "cfo_positive_count": result["cfo_positive_count"],
             "red_flags":   result["red_flags"],
             "regime_fit":  result["regime_fit"],
+            "roe":         result["roe"],
         }
         if result["pass"]:
             passed.append(entry)
