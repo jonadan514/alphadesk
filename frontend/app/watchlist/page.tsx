@@ -24,6 +24,15 @@ interface WatchItem {
   note: string | null;
   added_at: string;
 }
+interface NarrativeBrief {
+  story: string;
+  catalysts: string[];
+  risks: string[];
+  sentiment: "HOT" | "WARM" | "COLD";
+  sentiment_reason: string;
+  sources: string[];
+  cached_at: string;
+}
 
 // ── 지표 설명 ─────────────────────────────────────────────────────────────────
 const INDICATOR_INFO = {
@@ -123,6 +132,113 @@ function InfoModal({ info, onClose }: { info: typeof INDICATOR_INFO[keyof typeof
   );
 }
 
+// ── 네러티브 브리프 (Perplexity 실시간 검색) ─────────────────────────────────
+const SENTIMENT_STYLE: Record<string, { label: string; color: string; emoji: string }> = {
+  HOT:  { label: "시장 관심 높음", color: "#f87171", emoji: "🔥" },
+  WARM: { label: "꾸준한 관심",    color: "#facc15", emoji: "🌤" },
+  COLD: { label: "시장 관심 밖",   color: "#60a5fa", emoji: "❄️" },
+};
+
+function NarrativeSection({ c }: { c: Candidate }) {
+  const [brief, setBrief]     = useState<NarrativeBrief | null>(null);
+  const [error, setError]     = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchBrief = useCallback(async (refresh: boolean) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ market: c.market, symbol: c.symbol, name: c.name ?? "" });
+      if (refresh) params.set("refresh", "1");
+      const res = await fetch(`/api/watchlist/narrative?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "요청 실패");
+      setBrief(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "네러티브를 불러오지 못했어요");
+    } finally {
+      setLoading(false);
+    }
+  }, [c.market, c.symbol, c.name]);
+
+  useEffect(() => { fetchBrief(false); }, [fetchBrief]);
+
+  const sent = brief ? (SENTIMENT_STYLE[brief.sentiment] ?? SENTIMENT_STYLE.WARM) : null;
+
+  return (
+    <div className="px-5">
+      <div className="rounded-xl p-3 space-y-2.5" style={{ background: "#141414", border: "1px solid #2e2e2e" }}>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] uppercase tracking-widest" style={{ color: "#4b5563" }}>네러티브 브리프</p>
+          {brief && (
+            <button onClick={() => fetchBrief(true)} className="text-[10px]" style={{ color: "#374151" }}>
+              새로고침
+            </button>
+          )}
+        </div>
+
+        {loading && (
+          <p className="text-[12px] animate-pulse" style={{ color: "#6b7280" }}>
+            시장 스토리 검색 중... (실시간 웹 검색, 몇 초 걸려요)
+          </p>
+        )}
+        {error && !loading && (
+          <p className="text-[12px]" style={{ color: "#f87171" }}>{error}</p>
+        )}
+
+        {brief && !loading && (
+          <>
+            {sent && (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded" style={{ background: sent.color + "20", color: sent.color, border: `1px solid ${sent.color}40` }}>
+                  {sent.emoji} {sent.label}
+                </span>
+                {brief.sentiment_reason && (
+                  <span className="text-[11px]" style={{ color: "#6b7280" }}>{brief.sentiment_reason}</span>
+                )}
+              </div>
+            )}
+
+            <p className="text-[12px] leading-relaxed" style={{ color: "#d1d5db" }}>{brief.story}</p>
+
+            {brief.catalysts.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold mb-1" style={{ color: "#4ade80" }}>▲ 다가오는 촉매</p>
+                {brief.catalysts.map((t, i) => (
+                  <p key={i} className="text-[11px] leading-relaxed pl-2" style={{ color: "#9ca3af" }}>· {t}</p>
+                ))}
+              </div>
+            )}
+            {brief.risks.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold mb-1" style={{ color: "#f87171" }}>▼ 스토리가 깨지는 경우</p>
+                {brief.risks.map((t, i) => (
+                  <p key={i} className="text-[11px] leading-relaxed pl-2" style={{ color: "#9ca3af" }}>· {t}</p>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-1" style={{ borderTop: "1px solid #222" }}>
+              <span className="text-[10px]" style={{ color: "#374151" }}>
+                Perplexity 실시간 검색 · 참고용 · {brief.cached_at.slice(0, 10)} 기준
+              </span>
+              {brief.sources.length > 0 && (
+                <span className="flex gap-1.5">
+                  {brief.sources.slice(0, 3).map((url, i) => (
+                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-[10px] underline" style={{ color: "#4b5563" }}>
+                      출처{i + 1}
+                    </a>
+                  ))}
+                </span>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── 종목 상세 팝업 ────────────────────────────────────────────────────────────
 function DetailModal({ c, inList, onAdd, onClose }: {
   c: Candidate; inList: boolean; onAdd: () => void; onClose: () => void;
@@ -138,7 +254,7 @@ function DetailModal({ c, inList, onAdd, onClose }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }} onClick={onClose}>
-      <div className="rounded-2xl w-full max-w-md space-y-4" style={{ background: "#1c1c1c", border: "1px solid #333" }} onClick={(e) => e.stopPropagation()}>
+      <div className="rounded-2xl w-full max-w-md space-y-4 max-h-[88vh] overflow-y-auto" style={{ background: "#1c1c1c", border: "1px solid #333" }} onClick={(e) => e.stopPropagation()}>
         {/* 헤더 */}
         <div className="flex items-start justify-between px-5 pt-5">
           <div>
@@ -208,6 +324,9 @@ function DetailModal({ c, inList, onAdd, onClose }: {
             </div>
           </div>
         </div>
+
+        {/* 네러티브 브리프 */}
+        <NarrativeSection c={c} />
 
         {/* 버튼 */}
         <div className="px-5 pb-5">
