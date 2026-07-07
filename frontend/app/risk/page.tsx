@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import InfoTooltip from "@/src/components/InfoTooltip";
 import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
+import { stopLossPct } from "@/src/lib/stopLoss";
 
 /* ── 유틸 ─────────────────────────────────────────── */
 function pct(v: number, digits = 1) {
@@ -175,7 +176,7 @@ function KRRiskView() {
         <h2 className="stat-label mb-3">지금 적용할 기준</h2>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "손절선", val: regime === "risk_on" ? "-10%" : regime === "neutral" ? "-8%" : regime === "risk_off" ? "-5%" : "-3%", desc: "이 수준 도달 시 즉시 매도" },
+            { label: "손절선", val: `-${stopLossPct(regime)}%`, desc: "이 수준 도달 시 즉시 매도" },
             { label: "포트폴리오 MDD 경고", val: data.vol_60d > 25 ? "-15%" : "-12%", desc: "전체 자산 최대 낙폭 경보" },
             { label: "권장 투자 비중", val: regime === "risk_on" ? "70~80%" : regime === "neutral" ? "50~60%" : regime === "risk_off" ? "30~40%" : "10~20%", desc: "현재 체제 기준 권장 비중" },
             { label: "고변동성 대응", val: data.vol_60d > 35 ? "비중 축소" : data.vol_60d > 25 ? "분할 매수" : "정상 유지", desc: `현재 변동성 ${data.vol_60d?.toFixed(1)}% 기준` },

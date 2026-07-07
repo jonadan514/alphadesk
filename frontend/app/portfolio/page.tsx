@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Trash2, Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { Trash2, Plus, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Legend,
 } from "recharts";
+import { stopLossPct } from "@/src/lib/stopLoss";
 
 type TradeType = "buy" | "sell";
 interface Trade {
@@ -146,6 +147,25 @@ export default function PortfolioPage() {
   const fmtMoney = (market: string, v: number) =>
     market === "US" ? `$${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : `₩${Math.round(v).toLocaleString()}`;
 
+  // 보유 시장의 현재 체제 → 손절 기준(%) 조회
+  const [regimes, setRegimes] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const markets = Array.from(new Set(holdings.map((h) => h.market)));
+    if (markets.length === 0) return;
+    Promise.allSettled(
+      markets.map((m) =>
+        fetch(m === "KR" ? "/api/data/kr/regime" : "/api/data/regime").then((r) => r.json())
+      )
+    ).then((results) => {
+      const next: Record<string, string> = {};
+      markets.forEach((m, i) => {
+        const r = results[i];
+        if (r.status === "fulfilled") next[m] = r.value?.regime ?? "neutral";
+      });
+      setRegimes(next);
+    });
+  }, [holdings]);
+
   // 시장별 합계 (가격 조회된 종목만)
   const totals = useMemo(() => {
     const acc: Record<string, { cost: number; value: number }> = {};
@@ -197,31 +217,50 @@ export default function PortfolioPage() {
                 const pl    = price != null ? (price - h.cost) * h.shares : null;
                 const plPct = price != null && h.cost > 0 ? (price / h.cost - 1) * 100 : null;
                 const plColor = pl == null ? "#4b5563" : pl >= 0 ? "#39ff8f" : "#f87171";
+
+                const threshold = stopLossPct(regimes[h.market]);   // 예: 8 (= -8% 손절선)
+                const breached  = plPct != null && plPct <= -threshold;
+                const near      = !breached && plPct != null && plPct <= -threshold + 2;   // 손절선 2%p 이내로 근접
+                const distToStop = plPct != null ? plPct - (-threshold) : null;             // 손절선까지 남은 %p (0 이하 = 도달)
+
                 return (
-                  <div key={`${h.market}:${h.symbol}`} className="flex items-center justify-between py-1" style={{ borderTop: "1px solid #222" }}>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0" style={{ background: "#2e2e2e", color: "#9ca3af" }}>{h.market}</span>
-                        <span className="text-[13px] font-bold text-white">{h.symbol}</span>
-                        {h.name && <span className="text-[11px] truncate" style={{ color: "#6b7280" }}>{h.name}</span>}
+                  <div key={`${h.market}:${h.symbol}`} className="py-1" style={{ borderTop: "1px solid #222" }}>
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0" style={{ background: "#2e2e2e", color: "#9ca3af" }}>{h.market}</span>
+                          <span className="text-[13px] font-bold text-white">{h.symbol}</span>
+                          {h.name && <span className="text-[11px] truncate" style={{ color: "#6b7280" }}>{h.name}</span>}
+                        </div>
+                        <p className="text-[11px] mt-0.5" style={{ color: "#4b5563" }}>
+                          {h.shares.toLocaleString()}주 · 평단 {fmtMoney(h.market, h.cost)}
+                        </p>
                       </div>
-                      <p className="text-[11px] mt-0.5" style={{ color: "#4b5563" }}>
-                        {h.shares.toLocaleString()}주 · 평단 {fmtMoney(h.market, h.cost)}
-                      </p>
+                      <div className="text-right shrink-0 ml-3">
+                        {price != null ? (
+                          <>
+                            <p className="text-[13px] font-bold text-white">{fmtMoney(h.market, price)}</p>
+                            <p className="text-[11px] font-bold" style={{ color: plColor }}>
+                              {plPct != null ? `${plPct >= 0 ? "+" : ""}${plPct.toFixed(1)}%` : ""}
+                              {pl != null ? ` (${pl >= 0 ? "+" : "-"}${fmtMoney(h.market, Math.abs(pl))})` : ""}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-[11px]" style={{ color: "#4b5563" }}>가격 조회 중…</p>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right shrink-0 ml-3">
-                      {price != null ? (
-                        <>
-                          <p className="text-[13px] font-bold text-white">{fmtMoney(h.market, price)}</p>
-                          <p className="text-[11px] font-bold" style={{ color: plColor }}>
-                            {plPct != null ? `${plPct >= 0 ? "+" : ""}${plPct.toFixed(1)}%` : ""}
-                            {pl != null ? ` (${pl >= 0 ? "+" : "-"}${fmtMoney(h.market, Math.abs(pl))})` : ""}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-[11px]" style={{ color: "#4b5563" }}>가격 조회 중…</p>
-                      )}
-                    </div>
+                    {(breached || near) && (
+                      <div className="flex items-center gap-1.5 mt-1 rounded-lg px-2 py-1"
+                        style={{ background: breached ? "#ef444418" : "#f9731618", border: `1px solid ${breached ? "#ef444440" : "#f9731640"}` }}>
+                        <AlertTriangle size={11} color={breached ? "#ef4444" : "#f97316"} />
+                        <span className="text-[11px] font-bold" style={{ color: breached ? "#ef4444" : "#f97316" }}>
+                          {breached
+                            ? `손절선(-${threshold}%) 도달 — 매도 규칙 재확인`
+                            : `손절선까지 ${distToStop != null ? Math.abs(distToStop).toFixed(1) : "?"}%p 남음`}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
