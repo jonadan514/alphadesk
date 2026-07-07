@@ -1,0 +1,270 @@
+"""일간 분석 완료 후 텔레그램으로 핵심 신호를 요약 발송.
+
+Usage:
+  python scripts/send_telegram_digest.py
+
+필요 secrets (없으면 조용히 건너뜀 — 파이프라인을 막지 않음):
+  TELEGRAM_BOT_TOKEN   BotFather에서 발급받은 봇 토큰
+  TELEGRAM_CHAT_ID     알림 받을 채팅방 ID (개인 DM이면 본인 user id)
+
+봇 만드는 법:
+  1. 텔레그램에서 @BotFather 검색 → /newbot → 토큰 발급
+  2. 만든 봇과 대화 시작(아무 메시지나 전송) 후,
+     https://api.telegram.org/bot<TOKEN>/getUpdates 접속해 chat.id 확인
+  3. GitHub secrets에 TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 등록
+"""
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
+
+STOP_LOSS_PCT = {"risk_on": 10, "neutral": 8, "risk_off": 5, "crisis": 3}
+GATE_KO = {"GO": "GO (매수 가능)", "CAUTION": "CAUTION (신중)", "STOP": "STOP (관망)"}
+SENTIMENT_KO = {"HOT": "🔥HOT", "WARM": "🌤WARM", "COLD": "❄️COLD"}
+
+
+# ── Turso (Hrana v2 HTTP) — 다른 스크립트들과 동일한 패턴 ──────────────────
+
+def _turso_base():
+    url = os.environ.get("TURSO_DATA_URL", "").replace("libsql://", "https://")
+    token = os.environ.get("TURSO_DATA_TOKEN", "")
+    if not url or not token:
+        logger.error("TURSO_DATA_URL / TURSO_DATA_TOKEN 미설정")
+        sys.exit(1)
+    return url, {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+
+def turso_query(sql: str, args: list | None = None) -> list[dict]:
+    url, headers = _turso_base()
+    stmt = {"type": "execute", "stmt": {"sql": sql}}
+    if args:
+        def val(v):
+            if v is None:
+                return {"type": "null"}
+            if isinstance(v, int):
+                return {"type": "integer", "value": str(v)}
+            if isinstance(v, float):
+                return {"type": "float", "value": v}
+            return {"type": "text", "value": str(v)}
+        stmt["stmt"]["args"] = [val(a) for a in args]
+
+    body = json.dumps({"requests": [stmt]}).encode()
+    req = urllib.request.Request(f"{url}/v2/pipeline", data=body, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            results = json.loads(resp.read()).get("results", [])
+    except Exception as e:
+        logger.warning("Turso 조회 실패 (%s): %s", sql[:40], type(e).__name__)
+        return []
+
+    if not results or results[0].get("type") != "ok":
+        return []
+    result = results[0]["response"]["result"]
+    cols = [c["name"] for c in result.get("cols", [])]
+    rows = []
+    for raw in result.get("rows", []):
+        row = {}
+        for col, cell in zip(cols, raw):
+            row[col] = cell.get("value") if isinstance(cell, dict) else cell
+        rows.append(row)
+    return rows
+
+
+def get_snapshot(table: str) -> dict:
+    rows = turso_query(f"SELECT payload FROM {table} WHERE id = 1")
+    if not rows:
+        return {}
+    try:
+        return json.loads(rows[0]["payload"])
+    except Exception:
+        return {}
+
+
+def get_latest_timeseries(table: str) -> dict:
+    rows = turso_query(f"SELECT payload FROM {table} ORDER BY date DESC LIMIT 1")
+    if not rows:
+        return {}
+    try:
+        return json.loads(rows[0]["payload"])
+    except Exception:
+        return {}
+
+
+# ── 가격 조회 (yfinance) ────────────────────────────────────────────────────
+
+def fetch_prices(holdings: list[dict]) -> dict[str, float]:
+    if not holdings:
+        return {}
+    import yfinance as yf
+
+    out: dict[str, float] = {}
+    for h in holdings:
+        symbol, market = h["symbol"], h["market"]
+        candidates = [f"{symbol}.KS", f"{symbol}.KQ"] if market == "KR" else [symbol]
+        for ysym in candidates:
+            try:
+                info = yf.Ticker(ysym).fast_info
+                price = getattr(info, "last_price", None) or info.get("lastPrice")
+                if price:
+                    out[f"{market}:{symbol}"] = float(price)
+                    break
+            except Exception:
+                continue
+    return out
+
+
+# ── 데이터 수집 ──────────────────────────────────────────────────────────────
+
+def compute_holdings(trades: list[dict]) -> list[dict]:
+    """my_trades → 현재 보유 종목 (프론트 portfolio 페이지와 동일한 로직)."""
+    acc: dict[str, dict] = {}
+    for t in sorted(trades, key=lambda r: (r.get("trade_date", ""), r.get("id", 0))):
+        key = f"{t['market']}:{t['symbol']}"
+        cur = acc.setdefault(key, {"market": t["market"], "symbol": t["symbol"], "shares": 0.0, "cost": 0.0})
+        price, shares = float(t["price"]), float(t["shares"])
+        if t["type"] == "buy":
+            total_shares = cur["shares"] + shares
+            cur["cost"] = (cur["cost"] * cur["shares"] + price * shares) / total_shares if total_shares else 0
+            cur["shares"] = total_shares
+        else:
+            cur["shares"] = max(0.0, cur["shares"] - shares)
+    return [v for v in acc.values() if v["shares"] > 0]
+
+
+def get_stop_loss_alerts() -> list[str]:
+    trades = turso_query("SELECT market, symbol, type, trade_date, price, shares, id FROM my_trades")
+    holdings = compute_holdings(trades)
+    if not holdings:
+        return []
+
+    prices = fetch_prices(holdings)
+    regimes = {
+        "US": get_snapshot("data_regime").get("regime", "neutral"),
+        "KR": get_snapshot("kr_regime").get("regime", "neutral"),
+    }
+
+    alerts = []
+    for h in holdings:
+        price = prices.get(f"{h['market']}:{h['symbol']}")
+        if price is None or h["cost"] <= 0:
+            continue
+        pl_pct = (price / h["cost"] - 1) * 100
+        threshold = STOP_LOSS_PCT.get(regimes.get(h["market"], "neutral"), 8)
+        if pl_pct <= -threshold:
+            alerts.append(f"🔴 {h['symbol']}({h['market']}) {pl_pct:+.1f}% — 손절선(-{threshold}%) 도달")
+        elif pl_pct <= -threshold + 2:
+            alerts.append(f"🟠 {h['symbol']}({h['market']}) {pl_pct:+.1f}% — 손절선 근접(-{threshold}%)")
+    return alerts
+
+
+def get_narrative_shifts() -> list[str]:
+    rows = turso_query(
+        "SELECT market, symbol, payload FROM narrative_briefs "
+        "WHERE updated_at > datetime('now', '-20 hours')"
+    )
+    lines = []
+    for r in rows:
+        try:
+            payload = json.loads(r["payload"])
+        except Exception:
+            continue
+        if payload.get("trend") == "up":
+            lines.append(
+                f"📈 {r['symbol']}({r['market']}) {payload.get('prev_sentiment','?')}"
+                f"→{payload.get('sentiment','?')}"
+            )
+    return lines
+
+
+def get_cross_hits() -> list[str]:
+    """내 워치리스트 중 오늘 상위 종목(top-picks)에 등장한 종목."""
+    my_watch = {f"{r['market']}:{r['symbol']}" for r in turso_query("SELECT market, symbol FROM my_watchlist")}
+    if not my_watch:
+        return []
+
+    hits = []
+    us_report = get_latest_timeseries("data_daily_reports")
+    for p in (us_report.get("picks") or []):
+        key = f"US:{p.get('symbol')}"
+        if key in my_watch:
+            hits.append(f"⭐ {p.get('symbol')}(US) — 오늘 상위 종목 등장")
+
+    kr_report = get_latest_timeseries("kr_daily_reports")
+    for p in (kr_report.get("picks") or []):
+        key = f"KR:{p.get('symbol')}"
+        if key in my_watch:
+            hits.append(f"⭐ {p.get('symbol')}(KR) — 오늘 상위 종목 등장")
+
+    return hits
+
+
+# ── 텔레그램 발송 ────────────────────────────────────────────────────────────
+
+def send_telegram(text: str) -> bool:
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        logger.info("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 미설정 — 알림 건너뜀 (기능은 비활성 상태)")
+        return False
+
+    body = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML"}).encode()
+    req = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        data=body, headers={"Content-Type": "application/json"}, method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp.read()
+        return True
+    except Exception as e:
+        logger.error("텔레그램 발송 실패: %s", e)
+        return False
+
+
+def main() -> None:
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    us_gate = get_snapshot("data_market_gate")
+    kr_gate = get_snapshot("kr_market_gate")
+    stop_alerts = get_stop_loss_alerts()
+    shifts = get_narrative_shifts()
+    cross_hits = get_cross_hits()
+
+    lines = [f"<b>📊 AlphaDesk 일간 요약 — {today}</b>", ""]
+
+    us_g = us_gate.get("gate", "?")
+    kr_g = kr_gate.get("gate", "?")
+    lines.append(f"🇺🇸 US: {GATE_KO.get(us_g, us_g)}")
+    lines.append(f"🇰🇷 KR: {GATE_KO.get(kr_g, kr_g)}")
+
+    if stop_alerts:
+        lines += ["", "<b>⚠️ 손절선 경고</b>"] + stop_alerts
+    if cross_hits:
+        lines += ["", "<b>⭐ 워치리스트 ↔ 상위 종목 교차</b>"] + cross_hits
+    if shifts:
+        lines += ["", "<b>📈 관심도 상승</b>"] + shifts
+
+    if not (stop_alerts or cross_hits or shifts):
+        lines += ["", "오늘은 별다른 신호 없음."]
+
+    text = "\n".join(lines)
+    logger.info("메시지 구성 완료 (%d줄)\n%s", len(lines), text)
+
+    sent = send_telegram(text)
+    if sent:
+        logger.info("텔레그램 발송 완료")
+
+
+if __name__ == "__main__":
+    main()
