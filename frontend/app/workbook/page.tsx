@@ -11,21 +11,17 @@ interface CheckItem {
 }
 
 interface Checklists {
-  strategy: CheckItem[];
   sector: CheckItem[];
 }
 
-type Section = "strategy" | "sector";
+type Section = "sector";
 
+// 시장 환경·재무 필터 검증은 매수 체크 탭이 실시간 자동 판정 —
+// 워크북은 시스템이 못 하는 "정성 판단"만 담당한다.
 const SECTION_META: Record<Section, { label: string; desc: string; color: string }> = {
-  strategy: {
-    label: "투자 전략 체크리스트",
-    desc: "종목 진입 전 시장 환경과 전략 조건을 점검합니다.",
-    color: "#a78bfa",
-  },
   sector: {
-    label: "섹터/종목 선택 기준",
-    desc: "개별 종목 선택 시 재무·기술 조건을 확인합니다.",
+    label: "종목 정성 검증 (스토리·촉매)",
+    desc: "시스템이 자동 검증하지 못하는 것들 — 네러티브, 촉매, 매수 이유를 사람이 직접 점검합니다. 시장 환경·재무 조건은 매수 체크 탭이 자동 판정해요.",
     color: "#39ff8f",
   },
 };
@@ -35,14 +31,14 @@ function uid() {
 }
 
 export default function WorkbookPage() {
-  const [data, setData] = useState<Checklists>({ strategy: [], sector: [] });
+  const [data, setData] = useState<Checklists>({ sector: [] });
   const [saving, setSaving] = useState<Section | null>(null);
   const [addingNote, setAddingNote] = useState<string | null>(null); // item id
-  const [newTexts, setNewTexts] = useState<Record<Section, string>>({ strategy: "", sector: "" });
+  const [newTexts, setNewTexts] = useState<Record<Section, string>>({ sector: "" });
 
   const load = useCallback(async () => {
     const res = await fetch("/api/workbook/checklist").then((r) => r.json()).catch(() => null);
-    if (res) setData(res);
+    if (res?.sector) setData({ sector: res.sector });
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -106,7 +102,7 @@ export default function WorkbookPage() {
     <div className="space-y-6 max-w-xl">
       <h1 className="text-base font-bold text-white">투자 워크북</h1>
 
-      {(["strategy", "sector"] as Section[]).map((section) => {
+      {(["sector"] as Section[]).map((section) => {
         const meta = SECTION_META[section];
         const items = data[section];
         const checkedCount = items.filter((it) => it.checked).length;

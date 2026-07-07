@@ -247,6 +247,23 @@ function PreTradeChecklist({
     (p.symbol ?? "").toUpperCase() === tickerUp || (p.name ?? "").includes(tickerUp)
   ) : null;
 
+  // 워치리스트 후보 자동 판정
+  const [candidateSet, setCandidateSet] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    fetch("/api/watchlist/candidates")
+      .then((r) => r.json())
+      .then((d) => setCandidateSet(new Set(
+        ((d.candidates ?? []) as { market: string; symbol: string }[]).map((c) => `${c.market}:${c.symbol}`)
+      )))
+      .catch(() => {});
+  }, []);
+  const watchSymbol = (pick?.symbol ?? tickerUp).toUpperCase();
+  const watchOk = !!tickerUp && candidateSet.has(`${market}:${watchSymbol}`);
+
+  // 수동 확인 항목 (종목 바뀌면 다시 체크하도록 초기화)
+  const [manualOk, setManualOk] = useState<Record<string, boolean>>({});
+  useEffect(() => { setManualOk({}); }, [tickerUp]);
+
   const isKR    = market === "KR";
   const isBuy   = pick?.action === "BUY";
   const gradeOk = pick ? (pick.grade === "A" || pick.grade === "B") : false;
@@ -302,21 +319,26 @@ function PreTradeChecklist({
   const CHECKLIST = [
     { id: "gate",      label: "시장 게이트 GO",                        auto: true,   pass: gateOk,   tip: "시장 진입 신호가 GO여야 합니다." },
     { id: "regime",    label: "체제 Risk-on / Neutral",                auto: true,   pass: regimeOk, tip: "Risk-off·Crisis 체제에서는 신규 매수를 자제하세요." },
-    { id: "watchlist", label: "워치리스트 스크리닝 통과 종목인가?",      auto: false,  pass: false,    tip: "Piotroski≥5·ROE≥8%·함정 필터 통과 종목인지 워치리스트 탭에서 확인하세요." },
+    { id: "watchlist", label: `${tickerUp || "종목"} 워치리스트 후보 포함`, auto: !!tickerUp, pass: watchOk,
+      tip: watchOk
+        ? "적합 점수 상위 50 후보에 포함 — 재무 함정 필터 자동 통과"
+        : "워치리스트 후보에 없음 — 함정 필터 미통과이거나 적합 점수 상위 50 밖입니다. 워치리스트 탭에서 확인하세요." },
     { id: "risk",      label: "리스크 수준 허용 범위",                   auto: true,   pass: riskOk,   tip: "VaR·MDD 경고 없을 때 진입하세요." },
     { id: "buy",       label: `${tickerUp || "종목"} BUY 액션 확인`,   auto: !!pick, pass: isBuy,    tip: "스크리닝 BUY 액션 종목만 선택하세요." },
     { id: "grade",     label: `${tickerUp || "종목"} Grade A·B 확인`, auto: !!pick, pass: gradeOk,  tip: "C등급 이하는 진입 자제를 권장합니다." },
     { id: "score",     label: `${tickerUp || "종목"} 점수 ≥ 60`,      auto: !!pick, pass: scoreOk,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
     { id: "sector",    label: "선행 섹터 종목 확인",                    auto: !!pick && leadingList.length > 0, pass: sectorOk, tip: `선행: ${leadingList.join(", ") || "데이터 없음"}` },
     { id: "ai",        label: "AI 분석 thesis 확인",                   auto: true,   pass: aiOk,    tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
-    { id: "workbook",  label: "투자 워크북 체크리스트 통과",              auto: false,  pass: false,    tip: "투자 워크북 탭의 전략·섹터 체크리스트를 점검하세요." },
+    { id: "workbook",  label: "투자 워크북(정성 검증) 완료 — 클릭해서 체크", auto: false, pass: manualOk.workbook ?? false, tip: "워크북 탭에서 스토리·촉매 체크리스트를 점검했다면 이 항목을 클릭해 체크하세요." },
+    { id: "funds",     label: "6개월 이상 묶여도 되는 여유 자금 — 클릭해서 체크", auto: false, pass: manualOk.funds ?? false, tip: "단기에 쓸 돈이면 매수하지 마세요. 확인했다면 클릭해 체크하세요." },
     { id: "stop",      label: "손절가 설정",                            auto: true,   pass: stopOk,  tip: `권장 손절선: ${stopLossPct} (현재 체제 기준)` },
     { id: "size",      label: "매수 수량 확정",                         auto: true,   pass: sharesOk, tip: "위 포지션 사이징 계산기로 자금·손실한도 입력 후 수량을 역산하세요." },
   ];
 
   const passCount    = CHECKLIST.filter((c) => c.pass).length;
   const allPass      = passCount === CHECKLIST.length;
-  const overallColor = allPass ? "#39ff8f" : passCount >= 7 ? "#facc15" : "#ef4444";
+  const nearPass     = passCount >= CHECKLIST.length - 4;
+  const overallColor = allPass ? "#39ff8f" : nearPass ? "#facc15" : "#ef4444";
 
   const inputCls = "rounded-lg px-3 py-1.5 text-sm font-mono text-white outline-none w-full";
   const inputStyle = { background: "var(--bg-inset)", border: "1px solid var(--border)" };
@@ -496,6 +518,7 @@ function PreTradeChecklist({
         <div className="pt-2" />
         {CHECKLIST.map((item) => {
           const pass  = item.pass;
+          const isManual = !item.auto && (item.id === "workbook" || item.id === "funds");
           const isInputItem = item.id === "stop" || item.id === "size";
           // 입력 항목은 아직 입력 전이면 회색(미결), 틀리면 노란색 경고
           const color = pass ? "#39ff8f"
@@ -506,7 +529,12 @@ function PreTradeChecklist({
             <div
               key={item.id}
               className="flex items-center gap-3 rounded-lg px-3 py-2"
-              style={{ background: pass ? "#39ff8f08" : "transparent", border: `1px solid ${pass ? "#39ff8f22" : "#1e1e1e"}` }}
+              onClick={isManual ? () => setManualOk((m) => ({ ...m, [item.id]: !m[item.id] })) : undefined}
+              style={{
+                background: pass ? "#39ff8f08" : "transparent",
+                border: `1px solid ${pass ? "#39ff8f22" : isManual ? "#33333366" : "#1e1e1e"}`,
+                cursor: isManual ? "pointer" : "default",
+              }}
             >
               <div
                 className="w-4 h-4 rounded flex items-center justify-center text-[12px] font-black shrink-0"
@@ -527,7 +555,7 @@ function PreTradeChecklist({
         <p className="text-[12px] font-bold" style={{ color: overallColor }}>
           {allPass
             ? "✓ 모든 조건 충족 — 매수 실행 가능"
-            : passCount >= 7
+            : nearPass
             ? "주의: 일부 조건 미충족 — 확인 후 진행"
             : "매수 보류 — 미충족 조건을 먼저 해결하세요"}
         </p>

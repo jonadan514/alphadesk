@@ -3,17 +3,10 @@ import { getClient } from "@/src/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// 기본 체크리스트 — 시스템이 자동 검증하는 항목(재무 필터 등)은 넣지 않고,
-// 사람의 판단이 필요한 것만 담는다. id는 안정적으로 유지할 것 (토글 매칭에 사용).
+// 기본 체크리스트 — 시스템이 자동 검증하는 항목(시장 체제·게이트·재무 필터 등)은
+// 매수 체크 탭이 실시간으로 판정하므로 여기엔 넣지 않는다.
+// 워크북 = 시스템이 못 하는 정성 판단만. id는 안정적으로 유지할 것 (토글 매칭에 사용).
 const DEFAULTS: Record<string, { id: string; text: string; checked: boolean }[]> = {
-  strategy: [
-    { id: "st-regime",   text: "시장 체제(Regime)가 Risk-On 또는 Neutral인가?", checked: false },
-    { id: "st-gate",     text: "마켓 게이트가 GO인가?", checked: false },
-    { id: "st-sector",   text: "진입하려는 섹터가 선행 섹터이거나 현재 경기 사이클과 맞는가?", checked: false },
-    { id: "st-size",     text: "단일 종목 비중 15% 이내로 수량을 계산했는가? (매수 체크 탭 계산기)", checked: false },
-    { id: "st-stop",     text: "체제별 손절선을 확인하고 매도 규칙을 정했는가?", checked: false },
-    { id: "st-horizon",  text: "매수 후 최소 6개월 보유 가능한 여유 자금인가?", checked: false },
-  ],
   sector: [
     { id: "se-watch",    text: "워치리스트 후보(적합 점수 상위 50)에 있는 종목인가? — 재무 함정 필터는 자동 통과됨", checked: false },
     { id: "se-fit",      text: "시장 적합 점수가 60점 이상인가?", checked: false },
@@ -47,9 +40,10 @@ export async function GET() {
     const client = await ensureTable();
     const res = await client.execute("SELECT id, items FROM workbook_checklist");
 
-    const data: Record<string, any[]> = { strategy: DEFAULTS.strategy, sector: DEFAULTS.sector };
+    const data: Record<string, any[]> = { sector: DEFAULTS.sector };
     for (const row of res.rows) {
       const id = row[0] as string;
+      if (!(id in DEFAULTS)) continue; // 폐기된 섹션(strategy 등)은 무시
       try {
         const parsed = JSON.parse(row[1] as string);
         if (Array.isArray(parsed)) data[id] = backfillIds(id, parsed);
