@@ -17,9 +17,12 @@ export async function GET() {
   const vol = regime.vol_60d ?? 20;
   const sensors = regime.sensor_scores ?? {};
 
+  // 체제 점수 w(-1~3)를 상승 확률(0~1)로 매핑 — 점수가 높을수록 강세 확률↑
   const normalised = Math.max(0, Math.min(1, (w + 1) / 4));
-  const bullProb   = parseFloat((1 - normalised).toFixed(3));
+  const bullProb   = parseFloat(normalised.toFixed(3));
   const direction  = bullProb >= 0.5 ? "bullish" : "bearish";
+  // probability = "예측한 방향이 맞을 확률" (ML 예측 kr_index_predictor와 동일한 의미)
+  const dirProb    = parseFloat((direction === "bullish" ? bullProb : 1 - bullProb).toFixed(3));
   const confidence = parseFloat(Math.max(0.45, Math.min(0.90,
     Math.abs(w - 1) / 2 + 0.45
   )).toFixed(3));
@@ -28,7 +31,7 @@ export async function GET() {
     market:      "KR",
     index:       "KOSPI",
     direction,
-    probability: bullProb,
+    probability: dirProb,
     confidence,
     key_drivers: [
       { name: "KOSPI 추세 (vs SMA200)", label: "TREND vs SMA200", desc: "KOSPI가 200일 이동평균선 위에 있으면 중장기 강세 추세로 판단합니다.", direction: (sensors.trend ?? 0) >= 1 ? "bullish" : "bearish", importance_pct: 0.35, value: sensors.trend ?? 0 },
