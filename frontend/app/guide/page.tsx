@@ -4,15 +4,15 @@ import Link from "next/link";
 import FlagIcon from "@/src/components/FlagIcon";
 
 const GUIDE_SECTIONS = [
-  { href: "/workflow",  icon: "▶", label: "매수 체크",   desc: "종목 티커 입력 시 6개 시장 신호를 자동 점검해 GO/CAUTION/STOP 판정. 실제 매수 전 반드시 거치는 관문." },
-  { href: "/",          icon: "⊡", label: "개요",        desc: "마켓 게이트·체제·상위 픽을 한 화면 요약. 오늘 시장 상태를 5초에 파악하는 시작점." },
-  { href: "/regime",    icon: "▦", label: "시장 체제",   desc: "지금 시장이 강세/약세/위기 중 어느 단계인지 판단. 체제별 권장 주식 비중과 손절선 제공." },
+  { href: "/",          icon: "⊡", label: "개요",        desc: "마켓 게이트·체제·상위 픽·지수 예측을 한 화면 요약. 오늘 시장 상태를 5초에 파악하는 시작점." },
+  { href: "/regime",    icon: "▦", label: "시장 체제",   desc: "지금 시장이 강세/약세/위기 중 어느 단계인지 판단. 체제별 권장 주식 비중·손절선 + 글로벌 매크로 스냅샷." },
   { href: "/sector",    icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
-  { href: "/top-picks", icon: "★", label: "종목 분석",   desc: "팩터 점수로 자동 선별된 종목 목록. 종목 클릭 시 AI 투자 근거·목표가·리스크 요인 확인." },
-  { href: "/risk",      icon: "⛨", label: "리스크",      desc: "포지션 계산기 — 얼마나 살지 수학적으로 계산. VaR·MDD로 위험도 점검." },
-  { href: "/watchlist", icon: "🔖", label: "워치리스트",  desc: "재무 함정 필터(Piotroski·부채비율·이자보상배율 등)를 통과한 후보 종목 목록. 주간 자동 스크리닝." },
-  { href: "/portfolio", icon: "◈", label: "포트폴리오",  desc: "내 실제 매수/매도 기록 관리. 첫 거래 시점을 100으로 기준점 삼아 벤치마크 대비 누적 성과를 추적." },
-  { href: "/workbook",  icon: "◉", label: "투자 워크북", desc: "투자 전략 체크리스트·섹터/종목 선택 기준을 직접 관리. 매수 전 내 기준 점검 노트." },
+  { href: "/top-picks", icon: "★", label: "종목 분석",   desc: "매일 팩터 점수로 선별되는 발굴 레이더. 종목 클릭 시 AI 투자 근거·목표가·리스크 확인. 내 워치리스트 종목은 🔖 배지." },
+  { href: "/watchlist", icon: "🔖", label: "워치리스트",  desc: "함정 필터 + 시장 적합 점수 상위 50 후보(주간 갱신). 종목 클릭 시 재무 지표 + 네러티브 브리프(스토리·촉매·관심도)." },
+  { href: "/workbook",  icon: "◉", label: "투자 워크북", desc: "종목 정성 검증 노트 — 스토리·촉매 등 시스템이 자동 판정 못 하는 것을 점검하고 메모." },
+  { href: "/workflow",  icon: "▶", label: "매수 체크",   desc: "주문 직전 최종 관문. 티커 입력 시 13개 조건 중 11개를 실시간 자동 판정 + 적정 수량 계산." },
+  { href: "/portfolio", icon: "◈", label: "포트폴리오",  desc: "실제 매수/매도 기록 + 현재가·평가손익 실시간 표시. 손절선 접근/도달 시 자동 경고." },
+  { href: "/risk",      icon: "⛨", label: "리스크",      desc: "시스템 시뮬레이션 포트폴리오의 위험 분석(VaR·상관관계·낙폭) + 포지션 계산기." },
 ];
 
 const REGIME_ROWS = [
@@ -95,13 +95,13 @@ export default function GuidePage() {
             },
             {
               step: "STEP 2", color: "#facc15",
-              title: "어떤 종목을 살까? → 종목 분석",
-              body: "종목 분석 탭에서 BUY·Grade A/B 종목을 확인하세요. 종목을 클릭하면 AI 투자 근거·목표가·PER·PBR·리스크 요인이 팝업으로 표시됩니다. 섹터 분석에서 지금 강한 업종(LEADING)의 종목을 우선 고려합니다.",
+              title: "어떤 종목을 살까? → 워치리스트 + 종목 분석",
+              body: "워치리스트 탭에는 재무 함정 필터와 시장 적합 점수를 통과한 상위 50개 후보가 있습니다. 종목을 클릭하면 재무 지표와 함께 네러티브 브리프(시장이 왜 이 종목에 관심을 갖는지, 다가오는 촉매, 스토리가 깨지는 조건)가 표시돼요. 종목 분석 탭은 매일 갱신되는 발굴 레이더 — 여기서 눈에 띈 종목도 워치리스트에서 검증하세요. 두 탭에 동시에 뜨는 종목(🔖워치 + 오늘픽)이 가장 강한 신호입니다.",
             },
             {
               step: "STEP 3", color: "#60a5fa",
-              title: "얼마나, 어디서 살까? → 워크플로우 + 리스크",
-              body: "워크플로우 탭에서 6개 시장 신호를 확인하고, 하단 체크리스트에 티커를 입력하면 매수 가능 여부가 자동 표시됩니다. 리스크 탭의 포지션 계산기에서 내 자산 대비 몇 주를 살지 계산하세요. 모든 항목이 초록(GO)이 되면 매수합니다. 매수 후 손절가(-7~8%)를 반드시 기억하세요.",
+              title: "정말 사도 되나? 얼마나 살까? → 워크북 + 매수 체크",
+              body: "투자 워크북에서 스토리·촉매를 스스로 점검하고 매수 이유를 메모하세요. 그다음 매수 체크 탭에 티커를 입력하면 13개 조건(게이트·체제·워치리스트 포함 여부·등급·점수 등)을 자동 판정하고 적정 매수 수량까지 계산해줍니다. 모든 항목이 초록이 되면 매수합니다.",
             },
           ].map(({ step, color, title, body }) => (
             <div key={step} className="rounded-xl p-4" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
@@ -116,9 +116,10 @@ export default function GuidePage() {
 
         <div className="rounded-xl p-4" style={{ background: "#39ff8f08", border: "1px solid #39ff8f22" }}>
           <p className="text-[12px] font-bold" style={{ color: "#39ff8f" }}>💡 가장 중요한 규칙 하나만 기억한다면</p>
-          <p className="text-[13px] font-bold text-white mt-1">매수가 대비 -7~8% 하락하면 이유 불문 즉시 매도 (손절)</p>
+          <p className="text-[13px] font-bold text-white mt-1">체제별 손절선(강세 -10% ~ 위기 -3%)에 도달하면 이유 불문 즉시 매도</p>
           <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
             아무리 좋은 종목도 손절선 없이 보유하면 큰 손실로 이어집니다. 손절은 틀린 게 아니라 자산을 지키는 것입니다.
+            포트폴리오 탭에 거래를 기록해두면 보유 종목이 손절선에 접근할 때 자동으로 경고해줘요.
           </p>
         </div>
       </Card>
@@ -129,7 +130,9 @@ export default function GuidePage() {
         <div className="space-y-2 mb-4">
           {[
             { label: "일간 분석 (자동)",    color: "#39ff8f", desc: "GitHub Actions가 평일 매일 자동 실행 — 미국(장 마감 후 07:00 KST) · 한국(장 마감 후 16:30 KST)", tag: "자동" },
-            { label: "워치리스트 (주 1회)", color: "#60a5fa", desc: "매주 월요일 자동 스크리닝. Piotroski·ROE·함정 필터 적용 후 Turso DB에 업로드", tag: "자동" },
+            { label: "네러티브 브리프 (자동)", color: "#f87171", desc: "일간 분석과 함께 워치리스트 종목별 최근 1주 뉴스를 수집해 GPT가 스토리·촉매·관심도(HOT/WARM/COLD)를 생성", tag: "자동" },
+            { label: "워치리스트 (주 1회)", color: "#60a5fa", desc: "매주 월요일 자동 스크리닝 — 함정 필터 통과 후 시장 적합 점수(품질·모멘텀·체제) 상위 50개 선발", tag: "자동" },
+            { label: "텔레그램 요약 (자동)", color: "#a78bfa", desc: "일간 분석 완료 후 게이트 상태·손절 경고·워치리스트 교차 히트·관심도 상승을 폰으로 발송", tag: "자동" },
             { label: "포트폴리오·워크북",  color: "#a8a8a8", desc: "매수/매도 기록 및 체크리스트는 내가 직접 입력", tag: "수동" },
           ].map(({ label, color, desc, tag }) => (
             <div key={label} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
@@ -165,15 +168,18 @@ export default function GuidePage() {
         <SectionTitle>이 툴이 하는 것</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {[
-            ["시장 체제 감지",   "미국(5센서)·한국(4센서) 가중 합산 → risk_on / neutral / risk_off / crisis 판별"],
-            ["종목 스크리닝",    "미국(5팩터)·한국(4팩터) 복합 점수로 순위 산정. 등급 A~F + BUY/WATCH/HOLD 액션 부여"],
+            ["시장 체제 감지",   "미국(5센서)·한국(5센서) 가중 합산 → risk_on / neutral / risk_off / crisis 판별"],
+            ["종목 스크리닝",    "미국(6팩터)·한국(4팩터) 복합 점수로 매일 순위 산정. 등급 A~F + BUY/WATCH/HOLD 액션"],
+            ["워치리스트",      "함정 필터(Piotroski·ROE·부채 등) + 시장 적합 점수로 시장별 상위 50 후보를 주 1회 선발"],
+            ["네러티브 브리프",  "종목별 최근 뉴스를 GPT가 요약 — 투자 스토리·촉매·리스크·시장 관심도(HOT/WARM/COLD)"],
             ["AI 요약 생성",    "GPT-4o — 투자 thesis · 상승 촉매 · 하락 리스크를 종목별로 자동 생성"],
             ["섹터 분석",       "경기 사이클 단계 판단 + 섹터별 KOSPI/SPY 대비 상대강도"],
-            ["워치리스트",      "Piotroski≥5·ROE≥8%·함정 필터 통과 종목을 주 1회 자동 스크리닝"],
+            ["손절선 모니터",   "포트폴리오 보유 종목이 체제별 손절선에 접근·도달하면 자동 경고"],
+            ["텔레그램 알림",   "매일 분석 후 행동이 필요한 신호만 요약해 폰으로 발송"],
             ["포지션 계산기",   "고정 비율(Fixed Fraction)·켈리 공식으로 적정 매수 수량 자동 계산"],
-            ["리스크 관리",     "VaR95·MDD 모니터링 + 체제별 손절선 제공"],
-            ["포트폴리오",      "내 실제 매수/매도 기록 관리. 첫 거래 시점 기준 벤치마크 대비 성과 추적"],
-            ["투자 워크북",     "전략·섹터 체크리스트 직접 관리. 매수 전 내 기준 점검 노트"],
+            ["리스크 관리",     "VaR95·상관관계·낙폭 분석 (시스템 시뮬레이션 포트폴리오 기준)"],
+            ["포트폴리오",      "실거래 기록 + 현재가·평가손익 실시간 표시, 벤치마크 대비 성과 추적"],
+            ["투자 워크북",     "종목 정성 검증(스토리·촉매) 체크리스트 + 메모"],
           ].map(([title, desc]) => (
             <div key={title} className="rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <p className="text-[12px] font-semibold text-white mb-0.5">{title}</p>
@@ -191,12 +197,12 @@ export default function GuidePage() {
         <SectionTitle>매일 투자 의사결정 루틴</SectionTitle>
         <div className="space-y-2 mb-4">
           {[
-            { n: "①", tab: "개요",          action: "마켓 게이트 확인 — STOP이면 오늘 매매 없음",                      href: "/" },
-            { n: "②", tab: "시장 체제",     action: "레짐 확인 → 레짐별 권장 주식 비중으로 포트폴리오 조정",          href: "/regime" },
-            { n: "③", tab: "종목 분석",     action: "BUY 종목 검토 → 클릭하여 AI 목표가·팩터·PER·PBR 상세 확인",     href: "/top-picks" },
-            { n: "④", tab: "섹터 분석",     action: "경기 사이클 확인 → 강세 섹터 종목 우선 고려",                    href: "/sector" },
-            { n: "⑤", tab: "투자 워크플로우", action: "6단계 시장 신호 확인 → 하단 체크리스트 10가지 통과 후 매수",    href: "/workflow" },
-            { n: "⑥", tab: "포지션 계산기", action: "리스크 페이지에서 적정 매수 수량 수학적으로 확인",                href: "/risk" },
+            { n: "①", tab: "텔레그램 요약", action: "아침 요약 메시지 확인 — 게이트 STOP이거나 별다른 신호 없으면 오늘은 끝", href: "/" },
+            { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 게이트·체제·지수 예측 확인",                  href: "/" },
+            { n: "③", tab: "워치리스트",    action: "관심도 상승·오늘픽 배지 확인 → 눈에 띄면 클릭해 네러티브 브리프 읽기", href: "/watchlist" },
+            { n: "④", tab: "투자 워크북",   action: "살 마음이 생긴 종목의 스토리·촉매를 점검하고 매수 이유 메모",        href: "/workbook" },
+            { n: "⑤", tab: "매수 체크",     action: "티커 입력 → 13개 조건 자동 판정 + 적정 수량 계산 → 전부 초록이면 매수", href: "/workflow" },
+            { n: "⑥", tab: "포트폴리오",    action: "매수했으면 거래 기록 — 이후 손익·손절선 경고가 자동으로 표시됨",      href: "/portfolio" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <span className="text-sm font-black shrink-0 w-5 text-center" style={{ color: "#39ff8f" }}>{n}</span>
@@ -294,9 +300,9 @@ export default function GuidePage() {
             <p className="text-[12px] font-bold mb-2" style={{ color: "#39ff8f" }}><FlagIcon market="KR" size={13} />{" "}한국 (4팩터)</p>
             <div className="space-y-1">
               {[
-                ["기술 (Technical)",     "25%", "RSI·MACD·볼린저밴드·이동평균"],
+                ["기술 (Technical)",     "35%", "RSI·MACD·볼린저밴드·이동평균"],
+                ["상대강도 (RS vs KOSPI)", "30%", "최근 20일 KOSPI 대비 초과 수익률"],
                 ["펀더멘털 (Fundamental)", "20%", "PER·PBR·ROE·PEG·EPS성장·부채"],
-                ["상대강도 (RS vs KOSPI)", "15%", "최근 20일 KOSPI 대비 초과 수익률"],
                 ["거래량 (Volume)",       "15%", "최근 5일 vs 20일 평균 거래량 Z-score"],
               ].map(([f, w, tip]) => (
                 <div key={f} className="flex items-center gap-2 text-[12px] py-1" style={{ borderBottom: "1px solid #1a1a1a" }}>
@@ -416,8 +422,12 @@ export default function GuidePage() {
               a: "AI 요약은 BUY 액션 종목에 대해서만 생성됩니다(한국 상위 15개, 미국 상위 50개). WATCH·HOLD 종목은 생성되지 않습니다. 일간 분석 실행 후 업데이트됩니다.",
             },
             {
-              q: "워치리스트 종목이 너무 많거나 적어요.",
-              a: "워치리스트는 주 1회 자동 스크리닝됩니다. 필터 기준은 Piotroski F-Score≥5, ROE≥8%, 이자보상배율≥1, 부채비율≤200%, 영업현금흐름·매출 감소 없음입니다.",
+              q: "워치리스트 후보는 어떻게 뽑히나요?",
+              a: "주 1회 자동 스크리닝 — ① 함정 필터(Piotroski≥5, ROE≥8%, 이자보상배율≥1, 부채비율≤200%, 현금흐름·매출 감소 없음)로 걸러낸 뒤 ② 시장 적합 점수(품질 40 + 모멘텀 35 + 체제 정합 25)로 시장별 상위 50개만 선발합니다. 한국은 현재 KOSPI 대형주 기준이라 후보가 더 적을 수 있어요.",
+            },
+            {
+              q: "네러티브 브리프가 안 뜨는 종목이 있어요.",
+              a: "브리프는 일간 파이프라인이 매일 생성합니다. 이번 주에 새로 후보에 오른 종목은 다음 일간 분석 후에 표시돼요. '최근 뉴스 없음'으로 뜨는 건 정상 — 시장 관심 밖이라는 그 자체가 신호입니다.",
             },
             {
               q: "한국 종목에 PER·PBR 데이터가 없어요.",
