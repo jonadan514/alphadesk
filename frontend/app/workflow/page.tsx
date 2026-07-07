@@ -228,14 +228,24 @@ function PreTradeChecklist({
     if (typeof window !== "undefined") return localStorage.getItem("alphaDesk_riskPct") ?? "2";
     return "2";
   });
+  const [winRate,    setWinRate]    = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("alphaDesk_winRate") ?? "";
+    return "";
+  });
+  const [rrRatio,    setRrRatio]    = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("alphaDesk_rrRatio") ?? "";
+    return "";
+  });
 
-  // totalCap/riskPct를 localStorage에 저장
+  // 입력값을 localStorage에 저장
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (totalCap) localStorage.setItem("alphaDesk_totalCap", totalCap);
       if (riskPct)  localStorage.setItem("alphaDesk_riskPct", riskPct);
+      if (winRate)  localStorage.setItem("alphaDesk_winRate", winRate);
+      if (rrRatio)  localStorage.setItem("alphaDesk_rrRatio", rrRatio);
     }
-  }, [totalCap, riskPct]);
+  }, [totalCap, riskPct, winRate, rrRatio]);
 
   const gateOk   = steps[0]?.signal === "GO";
   const regimeOk = steps[1]?.signal !== "STOP";
@@ -315,6 +325,18 @@ function PreTradeChecklist({
   const recPositionAmt = recShares && entryPrice > 0 ? recShares * entryPrice : null;
   const recPositionPct = recPositionAmt && capOk ? (recPositionAmt / totalCapNum) * 100 : null;
   const recLossAmt     = recShares && entryPrice > 0 ? recShares * (entryPrice - stopNum2) : null;
+
+  // ── 켈리 검증 (선택 입력) ────────────────────────────────────────
+  const winNum  = parseFloat(winRate);
+  const rrNum   = parseFloat(rrRatio);
+  const kellyF  = !isNaN(winNum) && winNum > 0 && winNum < 100 && !isNaN(rrNum) && rrNum > 0
+    ? winNum / 100 - (1 - winNum / 100) / rrNum
+    : null;
+  const kellyCapped = kellyF !== null && kellyF > 0.25;   // 25% 상한
+  const kellyPct    = kellyF !== null ? Math.min(Math.max(kellyF, 0), 0.25) : null;
+  const kellyShares = kellyPct !== null && kellyPct > 0 && capOk && entryPrice > 0
+    ? Math.floor((totalCapNum * kellyPct) / entryPrice)
+    : null;
 
   const CHECKLIST = [
     { id: "gate",      label: "시장 게이트 GO",                        auto: true,   pass: gateOk,   tip: "시장 진입 신호가 GO여야 합니다." },
@@ -462,6 +484,45 @@ function PreTradeChecklist({
               총 투자 자금과 허용 손실 %를 입력하면 적정 수량을 자동 계산합니다.
             </p>
           )}
+
+          {/* 켈리 검증 (선택) */}
+          <div className="pt-2" style={{ borderTop: "1px solid #222" }}>
+            <p className="text-[12px] mb-1.5" style={{ color: "#6b7280" }}>
+              켈리 검증 <span style={{ color: "#4b5563" }}>(선택)</span> — 예상 승률·손익비를 넣으면 이 베팅이 수학적으로 말이 되는지 확인
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                value={winRate}
+                onChange={(e) => setWinRate(e.target.value)}
+                placeholder="예상 승률 % (예: 55)"
+                min="1" max="99" step="1"
+                className={inputCls}
+                style={inputStyle}
+              />
+              <input
+                type="number"
+                value={rrRatio}
+                onChange={(e) => setRrRatio(e.target.value)}
+                placeholder="손익비 R:R (예: 2)"
+                min="0.1" step="0.1"
+                className={inputCls}
+                style={inputStyle}
+              />
+            </div>
+            {kellyF !== null && (
+              kellyF <= 0 ? (
+                <p className="text-[12px] mt-1.5 font-bold" style={{ color: "#ef4444" }}>
+                  ⚠ 켈리 값 음수 ({(kellyF * 100).toFixed(1)}%) — 이 승률·손익비 조합은 기대손실입니다. 진입 자체를 재고하세요.
+                </p>
+              ) : (
+                <p className="text-[12px] mt-1.5" style={{ color: "#a78bfa" }}>
+                  켈리 기준 자금의 {((kellyPct ?? 0) * 100).toFixed(1)}%{kellyCapped && " (상한 25% 적용)"}
+                  {kellyShares !== null && ` ≈ ${kellyShares}주`} — 위 고정 비율 결과와 비교해 <span className="font-bold">작은 쪽</span>을 권장
+                </p>
+              )
+            )}
+          </div>
         </div>
 
         {/* 손절가 + 매수 수량 */}

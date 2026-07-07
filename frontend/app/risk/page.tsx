@@ -24,72 +24,6 @@ const REGIME_COLOR: Record<string, string> = {
   risk_on: "#39ff8f", neutral: "#facc15", risk_off: "#f97316", crisis: "#ef4444",
 };
 
-/* ── 포지션 계산기 ──────────────────────────────────── */
-function PositionCalculator({ currency = "USD" }: { currency?: "USD" | "KRW" }) {
-  const [portfolio, setPortfolio] = useState(currency === "KRW" ? 50000000 : 100000);
-  const [riskPct,   setRiskPct]   = useState(1);
-  const [stopLoss,  setStopLoss]  = useState(5);
-  const [price,     setPrice]     = useState(currency === "KRW" ? 50000 : 150);
-  const [winRate,   setWinRate]   = useState(55);
-  const [rr,        setRr]        = useState(2);
-
-  const riskAmount  = portfolio * (riskPct / 100);
-  const maxPosition = riskAmount / (stopLoss / 100);
-  const maxShares   = Math.floor(maxPosition / price);
-  const positionPct = (maxPosition / portfolio) * 100;
-  const kellyF      = Math.max(0, winRate / 100 - (1 - winRate / 100) / rr);
-  const kellyPct    = Math.min(kellyF * 100, 25);
-  const kellyAmount = portfolio * (kellyPct / 100);
-  const kellyShares = Math.floor(kellyAmount / price);
-  const fmt = (n: number) => currency === "KRW" ? `₩${Math.round(n).toLocaleString()}` : `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-
-  const inputCls = "w-full rounded-lg px-3 py-2 text-sm font-mono text-white outline-none";
-  const inputStyle = { background: "var(--bg-inset)", border: "1px solid var(--border)" };
-
-  return (
-    <div className="bg-card rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <h2 className="stat-label">포지션 계산기</h2>
-        <InfoTooltip content="총 자산에서 허용 손실 비중과 손절선을 입력하면 적정 매수 수량을 알려줍니다." />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 grid grid-cols-2 gap-3">
-          {[
-            { label: `총 자산 ${currency === "KRW" ? "(₩)" : "($)"}`, val: portfolio, set: setPortfolio, step: undefined },
-            { label: `종목 주가 ${currency === "KRW" ? "(₩)" : "($)"}`, val: price, set: setPrice, step: undefined },
-            { label: "허용 손실 (%)", val: riskPct, set: setRiskPct, step: 0.1 },
-            { label: "손절선 (%)", val: stopLoss, set: setStopLoss, step: 0.5 },
-            { label: "예상 승률 (%)·켈리", val: winRate, set: setWinRate, step: 1 },
-            { label: "손익비 R:R·켈리", val: rr, set: setRr, step: 0.1 },
-          ].map(({ label, val, set, step }) => (
-            <label key={label} className="block">
-              <span className="text-[12px] block mb-1" style={{ color: "var(--text-muted)" }}>{label}</span>
-              <input type="number" value={val} step={step}
-                onChange={e => set(Number(e.target.value))}
-                className={inputCls} style={inputStyle}
-                onWheel={e => e.currentTarget.blur()} />
-            </label>
-          ))}
-        </div>
-        <div className="flex flex-col gap-2">
-          <div className="flex-1 rounded-lg p-3 text-center" style={{ background: "var(--bg-inset)", border: "1px solid #39ff8f33" }}>
-            <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>고정 비율 매수 수량</p>
-            <p className="text-2xl font-black" style={{ color: "#39ff8f" }}>{maxShares.toLocaleString()}<span className="text-sm font-normal ml-1">주</span></p>
-            <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>{fmt(maxPosition)} ({positionPct.toFixed(1)}%)</p>
-            <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>최대 손실 {fmt(riskAmount)}</p>
-          </div>
-          <div className="flex-1 rounded-lg p-3 text-center" style={{ background: "var(--bg-inset)", border: "1px solid #facc1533" }}>
-            <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>켈리 기준 매수 수량</p>
-            <p className="text-2xl font-black" style={{ color: "#facc15" }}>{kellyShares.toLocaleString()}<span className="text-sm font-normal ml-1">주</span></p>
-            <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>{fmt(kellyAmount)} ({kellyPct.toFixed(1)}%)</p>
-            <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>f={kellyF.toFixed(3)}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ── KR 리스크 뷰 ─────────────────────────────────── */
 function KRRiskView() {
   const [data, setData] = useState<any>(null);
@@ -190,7 +124,9 @@ function KRRiskView() {
         </div>
       </div>
 
-      <PositionCalculator currency="KRW" />
+      <p className="text-[12px] px-1" style={{ color: "var(--text-faint)" }}>
+        💡 적정 매수 수량 계산(고정 비율 + 켈리 검증)은 매수 체크 탭의 포지션 사이징에서 할 수 있어요.
+      </p>
     </div>
   );
 }
@@ -570,7 +506,9 @@ export default function RiskPage() {
         </div>
       )}
 
-      <PositionCalculator currency="USD" />
+      <p className="text-[12px] px-1" style={{ color: "var(--text-faint)" }}>
+        💡 적정 매수 수량 계산(고정 비율 + 켈리 검증)은 매수 체크 탭의 포지션 사이징에서 할 수 있어요.
+      </p>
     </div>
   );
 }
