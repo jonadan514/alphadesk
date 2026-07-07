@@ -72,7 +72,9 @@ def build_analysis_prompt(ticker: str, data: dict, news: list,
     # 뉴스
     news_text = ""
     for n in news[:5]:
-        news_text += f"- [{n.get('published', '')}] {n.get('title', '')} ({n.get('source', '')})\n"
+        news_text += f"- [{n.get('published', '')}] {n.get('title', '')} ({n.get('publisher') or n.get('source', '')})\n"
+    if not news_text:
+        news_text = "(수집된 최근 뉴스 없음)"
 
     return f"""당신은 월가의 시니어 애널리스트입니다. 데이터 기반으로 엄격하게 분석하여 투자 요약을 JSON으로 작성하세요.
 {lang_instruction}
@@ -101,7 +103,9 @@ def build_analysis_prompt(ticker: str, data: dict, news: list,
 {news_text}
 
 ## 응답 규칙
-1. Evidence: 모든 주장에 반드시 [출처, 날짜]를 명시하세요.
+1. Evidence: 위 "최근 뉴스" 목록에 있는 기사만 [출처, 날짜]로 인용하세요.
+   뉴스 목록에 없는 출처·날짜를 절대 창작하지 마세요. 뉴스가 없거나 뉴스와 무관한 주장이면
+   evidence에 "[점수 데이터 기반]"이라고만 적으세요.
 2. Bear Cases: BUY 추천이라도 반드시 3개의 하락 리스크를 제시하세요.
 3. Data Conflicts: 기술적 vs 펀더멘털 vs 뉴스 간 충돌이 있으면 명시하세요.
 4. 반드시 아래 JSON 형식만 출력하세요. 다른 텍스트는 절대 포함하지 마세요.
@@ -330,6 +334,47 @@ class NewsCollector:
             logger.debug("%s Google 뉴스 수집 실패", ticker, exc_info=True)
             return []
 
+    def get_google_news_kr(self, name: str, limit: int = 4) -> list[dict]:
+        """한국 종목: 구글 뉴스 한국어 RSS 검색 (회사명 기반)."""
+        import xml.etree.ElementTree as ET
+        from email.utils import parsedate_to_datetime
+        from urllib.parse import quote
+
+        import requests
+
+        try:
+            query = f'"{name}" 주가 OR 실적'
+            url = f"https://news.google.com/rss/search?q={quote(query)}&hl=ko&gl=KR&ceid=KR:ko"
+            resp = requests.get(url, headers=self.headers, timeout=10)
+            resp.raise_for_status()
+            root = ET.fromstring(resp.text)
+
+            results = []
+            for item in root.iter("item"):
+                if len(results) >= limit:
+                    break
+                pub_date = ""
+                pub_el = item.find("pubDate")
+                if pub_el is not None and pub_el.text:
+                    try:
+                        pub_date = parsedate_to_datetime(pub_el.text).strftime("%Y-%m-%d")
+                    except (ValueError, TypeError):
+                        pass
+                if not self._is_recent(pub_date):
+                    continue
+                source_el = item.find("source")
+                results.append({
+                    "title": (item.find("title").text or "") if item.find("title") is not None else "",
+                    "publisher": source_el.text if source_el is not None else "",
+                    "link": (item.find("link").text or "") if item.find("link") is not None else "",
+                    "published": pub_date,
+                    "source": "GoogleKR",
+                })
+            return results
+        except Exception:
+            logger.debug("%s KR 뉴스 수집 실패", name, exc_info=True)
+            return []
+
     def get_finnhub_news(self, ticker: str, limit: int = 3) -> list[dict]:
         if not self.finnhub_key:
             return []
@@ -534,7 +579,19 @@ class OpenAISummaryGenerator:
             merged.setdefault("company_name", name)
         if sector:
             merged.setdefault("sector", sector)
-        raw = self.generate_summary(ticker, merged, news=[], macro_context=None)
+
+        # 실제 뉴스를 프롬프트에 주입 — 없으면 모델이 출처·날짜를 창작하는 환각 발생
+        news: list[dict] = []
+        try:
+            collector = NewsCollector()
+            if market == "KR":
+                news = collector.get_google_news_kr(name or ticker)
+            else:
+                news = collector.get_news_for_ticker(ticker, name or None)
+        except Exception:
+            news = []
+
+        raw = self.generate_summary(ticker, merged, news=news, macro_context=None)
         try:
             result = json.loads(raw) if isinstance(raw, str) else raw
             return result or _get_fallback_json(ticker)
