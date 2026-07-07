@@ -90,6 +90,18 @@ export default function WorkbookPage() {
     save(section, items);
   }
 
+  async function restoreDefaults(section: Section) {
+    if (!confirm("이 섹션을 최신 기본 항목으로 교체할까요? 직접 추가한 항목과 메모는 사라져요.")) return;
+    setSaving(section);
+    const res = await fetch("/api/workbook/checklist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: section, reset: true }),
+    }).then((r) => r.json()).catch(() => null);
+    if (res?.items) setData((d) => ({ ...d, [section]: res.items }));
+    setSaving(null);
+  }
+
   return (
     <div className="space-y-6 max-w-xl">
       <h1 className="text-base font-bold text-white">투자 워크북</h1>
@@ -112,8 +124,15 @@ export default function WorkbookPage() {
                   </span>
                   <button onClick={() => resetSection(section)}
                     className="text-[10px] px-2 py-1 rounded-lg"
-                    style={{ background: "#2a2a2a", color: "#6b7280" }}>
-                    초기화
+                    style={{ background: "#2a2a2a", color: "#6b7280" }}
+                    title="체크 표시만 전부 해제">
+                    체크 해제
+                  </button>
+                  <button onClick={() => restoreDefaults(section)}
+                    className="text-[10px] px-2 py-1 rounded-lg"
+                    style={{ background: "#2a2a2a", color: "#6b7280" }}
+                    title="항목 목록을 최신 기본값으로 교체">
+                    기본 항목 복원
                   </button>
                 </div>
               </div>
