@@ -152,8 +152,8 @@ export default function RiskPage() {
     <div className="space-y-3">
       <div className="bg-card rounded-xl p-4">
         <p className="font-semibold text-white mb-1">데이터가 없습니다</p>
-        <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>alpharun 실행 후 자동으로 계산됩니다.</p>
-        <code className="block text-[12px] rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", color: "#39ff8f" }}>alpharun</code>
+        <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>일간 분석 실행 후 자동으로 계산됩니다.</p>
+        <code className="block text-[12px] rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", color: "#39ff8f" }}>GitHub → Actions → Daily Analysis → Run workflow</code>
       </div>
     </div>
   );

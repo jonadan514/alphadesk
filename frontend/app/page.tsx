@@ -353,7 +353,7 @@ export default function HomePage() {
 
           {!data || (picks.length === 0 && Object.keys(sensors).length === 0) && (
             <div className="bg-card rounded-lg p-3 text-center text-sm text-[#6b7280]">
-              데이터 없음. {isKR ? "python scripts/run_kr_analysis.py" : "alpharun"} 실행 후 재확인하세요.
+              데이터 없음. GitHub → Actions → Daily Analysis 실행 후 재확인하세요.
             </div>
           )}
         </div>

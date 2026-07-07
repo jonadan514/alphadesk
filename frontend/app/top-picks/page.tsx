@@ -445,7 +445,7 @@ export default function TopPicksPage() {
       {loading && <p className="text-sm text-[#6b7280]">로딩 중…</p>}
       {!loading && picks.length === 0 && (
         <p className="text-sm text-[#6b7280]">
-          데이터 없음. {isKR ? "python scripts/run_kr_analysis.py" : "alpharun"} 실행 후 재확인하세요.
+          데이터 없음. GitHub → Actions → Daily Analysis 실행 후 재확인하세요.
         </p>
       )}
 

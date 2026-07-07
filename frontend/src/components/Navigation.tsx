@@ -144,7 +144,7 @@ function SidebarInner({
             </p>
             {isStale && (
               <p className="text-[11px] truncate" style={{ color: "#f97316" }}>
-                {market === "KR" ? "run_kr_analysis 권장" : "alpharun 실행 권장"}
+                Actions에서 Daily Analysis 실행 권장
               </p>
             )}
           </div>

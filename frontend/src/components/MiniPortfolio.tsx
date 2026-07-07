@@ -20,6 +20,7 @@ interface Summary {
   total_value: number;
   total_pnl: number;
   total_pnl_pct: number;
+  market: string;   // 합계는 단일 시장일 때만 계산 (₩·$ 혼합 합산 방지)
 }
 
 export default function MiniPortfolio() {
@@ -28,27 +29,68 @@ export default function MiniPortfolio() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.allSettled([
-      fetch("/api/real/US/positions").then(r => r.json()),
-      fetch("/api/real/KR/positions").then(r => r.json()),
-    ]).then(([usRes, krRes]) => {
-      const usPositions: Position[] = usRes.status === "fulfilled"
-        ? (usRes.value.positions ?? []).map((p: Position) => ({ ...p, market: "US" }))
-        : [];
-      const krPositions: Position[] = krRes.status === "fulfilled"
-        ? (krRes.value.positions ?? []).map((p: Position) => ({ ...p, market: "KR" }))
-        : [];
-      const all = [...usPositions, ...krPositions];
-      setPositions(all);
+    (async () => {
+      try {
+        // 포트폴리오 페이지와 동일한 소스: 실거래(my_trades) → 보유 계산 → 현재가 조회
+        const trades = await fetch("/api/trades").then((r) => r.json());
+        if (!Array.isArray(trades) || trades.length === 0) return;
 
-      const usSummary = usRes.status === "fulfilled" ? usRes.value.summary : null;
-      const krSummary = krRes.status === "fulfilled" ? krRes.value.summary : null;
-      const totalCost = (usSummary?.total_cost ?? 0) + (krSummary?.total_cost ?? 0);
-      const totalValue = (usSummary?.total_value ?? 0) + (krSummary?.total_value ?? 0);
-      const totalPnl = totalValue - totalCost;
-      setSummary({ total_cost: totalCost, total_value: totalValue, total_pnl: totalPnl, total_pnl_pct: totalCost > 0 ? totalPnl / totalCost : 0 });
-      setLoading(false);
-    });
+        const map = new Map<string, { market: string; name: string | null; shares: number; cost: number }>();
+        [...trades].reverse().forEach((t: any) => {
+          const key = `${t.market}:${t.symbol}`;
+          const cur = map.get(key) ?? { market: t.market, name: t.name, shares: 0, cost: 0 };
+          if (t.type === "buy") {
+            cur.cost = (cur.cost * cur.shares + t.price * t.shares) / (cur.shares + t.shares || 1);
+            cur.shares += t.shares;
+          } else {
+            cur.shares = Math.max(0, cur.shares - t.shares);
+          }
+          map.set(key, cur);
+        });
+        const holdings = Array.from(map.entries())
+          .filter(([, v]) => v.shares > 0)
+          .map(([key, v]) => ({ symbol: key.split(":")[1], ...v }));
+        if (holdings.length === 0) return;
+
+        const keys = holdings.map((h) => `${h.market}:${h.symbol}`);
+        const prices: Record<string, number | null> = await fetch(
+          `/api/portfolio/prices?symbols=${keys.join(",")}`
+        ).then((r) => r.json()).catch(() => ({}));
+
+        const pos: Position[] = holdings.map((h) => {
+          const price = prices[`${h.market}:${h.symbol}`] ?? null;
+          return {
+            symbol: h.symbol,
+            name: h.name,
+            market: h.market,
+            shares: h.shares,
+            avg_price: h.cost,
+            current_price: price,
+            unrealized_pnl: price != null ? (price - h.cost) * h.shares : null,
+            unrealized_pnl_pct: price != null && h.cost > 0 ? price / h.cost - 1 : null,
+          };
+        });
+        setPositions(pos);
+
+        const markets = new Set(pos.map((p) => p.market));
+        if (markets.size === 1) {
+          const priced = pos.filter((p) => p.current_price != null);
+          const cost = priced.reduce((s, p) => s + p.avg_price * p.shares, 0);
+          const value = priced.reduce((s, p) => s + (p.current_price ?? 0) * p.shares, 0);
+          if (cost > 0) {
+            setSummary({
+              total_cost: cost, total_value: value,
+              total_pnl: value - cost, total_pnl_pct: (value - cost) / cost,
+              market: pos[0].market,
+            });
+          }
+        }
+      } catch {
+        // 조회 실패 시 "보유 종목 없음" 상태 유지
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   if (loading) return (
@@ -90,8 +132,9 @@ export default function MiniPortfolio() {
             className="text-lg font-black"
             style={{ color: summary.total_pnl >= 0 ? "#39ff8f" : "#ef4444" }}
           >
-            {summary.total_pnl >= 0 ? "+" : ""}
-            {summary.total_pnl.toLocaleString("ko-KR", { maximumFractionDigits: 0 })}
+            {summary.total_pnl >= 0 ? "+" : "-"}
+            {summary.market === "US" ? "$" : "₩"}
+            {Math.abs(summary.total_pnl).toLocaleString("ko-KR", { maximumFractionDigits: 0 })}
           </span>
           <span
             className="text-[12px] font-bold"
