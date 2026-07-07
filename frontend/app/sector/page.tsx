@@ -100,7 +100,7 @@ export default function SectorPage() {
       </div>
 
       {/* 경기 사이클 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 
         {/* 사이클 판단 */}
         <div className="bg-card rounded-xl p-3">
@@ -137,42 +137,12 @@ export default function SectorPage() {
           </div>
         </div>
 
-        {/* 국면별 점수 */}
-        <div className="bg-card rounded-xl p-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            <p className="text-[14px] font-bold text-white">국면별 점수</p>
-            <InfoTooltip content="각 경기 국면에 해당하는 섹터들의 상대강도 평균입니다. 점수가 높을수록 해당 국면의 섹터들이 시장을 아웃퍼폼 중입니다." />
-          </div>
-          <p className="text-[11px] mb-2" style={{ color: "var(--text-faint)" }}>점수가 높은 국면 = 현재 강세를 보이는 섹터 그룹</p>
-          <div className="grid grid-cols-2 gap-2">
-            {(["early", "mid", "late", "recession"] as const).map(cyc => {
-              const score = scores[cyc] ?? 0;
-              const c = CYCLE_COLOR[cyc];
-              const isActive = cyc === cycle;
-              return (
-                <div key={cyc} className="rounded-lg p-2.5 text-center"
-                  style={{
-                    background: isActive ? `${c}12` : "var(--bg-inset)",
-                    border: `1px solid ${isActive ? c + "44" : "var(--border)"}`,
-                  }}>
-                  <p className="text-[11px] mb-0.5" style={{ color: isActive ? c : "var(--text-muted)" }}>
-                    {CYCLE_KO[cyc]?.label ?? cyc}
-                  </p>
-                  <p className="text-[18px] font-black leading-none" style={{ color: score > 0 ? "#39ff8f" : "#ef4444" }}>
-                    {pct(score)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         {/* 선행 / 후행 섹터 */}
         <div className="bg-card rounded-xl p-3 space-y-2">
           <div>
             <div className="flex items-center gap-1.5 mb-1">
               <p className="text-[13px] font-bold" style={{ color: "#39ff8f" }}>↑ 선행 섹터</p>
-              <InfoTooltip content="최근 4주간 시장 대비 상대강도(RS)가 지속적으로 강한 섹터입니다. 자금이 집중되고 있는 섹터로, 포트폴리오 편입 우선순위가 높습니다." />
+              <InfoTooltip content="최근 1개월 시장 대비 상대강도(RS)가 가장 높은 상위 3개 섹터입니다. 자금이 집중되고 있는 섹터로, 포트폴리오 편입 우선순위가 높습니다." />
             </div>
             <div className="flex flex-wrap gap-1">
               {leading.map((l: any, i: number) => (
@@ -187,7 +157,7 @@ export default function SectorPage() {
           <div>
             <div className="flex items-center gap-1.5 mb-1">
               <p className="text-[13px] font-bold" style={{ color: "#ef4444" }}>↓ 후행 섹터</p>
-              <InfoTooltip content="최근 4주간 시장 대비 상대강도(RS)가 지속적으로 약한 섹터입니다. 자금이 빠지고 있는 섹터로, 비중 축소를 고려할 수 있습니다." />
+              <InfoTooltip content="최근 1개월 시장 대비 상대강도(RS)가 가장 낮은 하위 3개 섹터입니다(음수만). 자금이 빠지고 있는 섹터로, 비중 축소를 고려할 수 있습니다." />
             </div>
             <div className="flex flex-wrap gap-1">
               {lagging.map((l: any, i: number) => (
@@ -264,7 +234,9 @@ export default function SectorPage() {
           </div>
         </div>
 
-        {/* 컬럼 헤더 */}
+        {/* 컬럼 헤더 + 행 (모바일에서는 가로 스크롤) */}
+        <div className="overflow-x-auto">
+        <div style={{ minWidth: isKR ? 480 : 640 }}>
         <div className="flex items-center gap-3 px-3 py-1" style={{ borderBottom: "1px solid var(--border-dim)", background: "var(--bg-inset)" }}>
           <span className="w-32 text-[11px] font-semibold" style={{ color: "var(--text-faint)" }}>섹터</span>
           {!isKR && <span className="w-28 text-[11px]" style={{ color: "var(--text-faint)" }}>이름</span>}
@@ -287,8 +259,9 @@ export default function SectorPage() {
             return (
               <div key={key}>
                 <button
-                  onClick={() => setOpenKey(isOpen ? null : key)}
+                  onClick={() => stocks.length > 0 && setOpenKey(isOpen ? null : key)}
                   className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/5"
+                  style={{ cursor: stocks.length > 0 ? "pointer" : "default" }}
                 >
                   <span className="w-32 font-bold text-white text-[12px] truncate">{rowLabel(row)}</span>
                   {rowSubLabel(row) && (
@@ -323,8 +296,7 @@ export default function SectorPage() {
                   </div>
 
                   <span className="text-[11px] w-14 text-right" style={{ color: "var(--text-muted)" }}>
-                    {stocks.length > 0 ? `${stocks.length}종목` : ""}
-                    {" "}{isOpen ? "▲" : "▼"}
+                    {stocks.length > 0 ? `${stocks.length}종목 ${isOpen ? "▲" : "▼"}` : ""}
                   </span>
                 </button>
 
@@ -349,6 +321,8 @@ export default function SectorPage() {
             );
           });
           })()}
+        </div>
+        </div>
         </div>
       </div>
 

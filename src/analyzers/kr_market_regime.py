@@ -46,6 +46,7 @@ class KRMarketRegimeDetector:
 
         # ── Sensor 3: Momentum (60일 수익률 — 중기 관점) ──────────────────
         mom60 = float(close.iloc[-1] / close.iloc[-min(60, len(close)-1)] - 1) * 100
+        mom20 = float(close.iloc[-1] / close.iloc[-min(20, len(close)-1)] - 1) * 100  # 표시용 단기 모멘텀
         if mom60 > 10:    mom_score = 2.0
         elif mom60 > 3:   mom_score = 1.0
         elif mom60 > -3:  mom_score = 0.0
@@ -115,6 +116,7 @@ class KRMarketRegimeDetector:
             "kospi_sma200":   round(s200, 2),
             "vol_60d":        round(vol60, 2),
             "mom_60d":        round(mom60, 2),
+            "mom_20d":        round(mom20, 2),
             "usdkrw_last":    usdkrw_last,
             "usdkrw_chg_20d": usdkrw_chg,
             "computed_at":    datetime.now().strftime("%Y-%m-%d %H:%M"),

@@ -10,6 +10,18 @@ const ACTION_COLOR: Record<string, string> = {
   BUY: "#39ff8f", "SMALL BUY": "#22c55e", WATCH: "#facc15", HOLD: "#9ca3af", SKIP: "#4b5563",
 };
 
+// 파이프라인 데이터가 문자열 숫자(json default=str)나 비정형(GPT 출력)일 수 있어 방어적으로 변환
+function num(v: unknown): number | null {
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  if (typeof v === "string" && v.trim() !== "" && !isNaN(Number(v))) return Number(v);
+  return null;
+}
+function arr(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String);
+  if (typeof v === "string" && v.trim()) return [v];
+  return [];
+}
+
 function SectorBadge({ sector, leadingKeys, laggingKeys }: {
   sector: string;
   leadingKeys: string[];
@@ -44,15 +56,25 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
   const ai    = aiMap[pick.symbol] ?? aiMap[pick.name] ?? null;
   const color = pick.action === "BUY" ? "#39ff8f" : pick.action === "WATCH" ? "#facc15" : "#9ca3af";
 
+  const rsRaw = num(pick.relative_strength);
   const factors = [
-    { label: "기술 (Technical)",        val: pick.technical },
-    { label: "펀더멘털 (Fundamental)",  val: pick.fundamental },
-    ...(isKR ? [] : [{ label: "애널리스트 (Analyst)", val: pick.analyst }]),
-    { label: isKR ? "RS vs KOSPI" : "RS vs SPY",     val: pick.relative_strength != null
-        ? pick.relative_strength * (Math.abs(pick.relative_strength) < 2 ? 100 : 1) : null },
-    { label: "거래량 (Volume)",         val: pick.volume },
-    ...(isKR ? [] : [{ label: "기관 (Institutional)",  val: pick.institutional }]),
+    { label: "기술 (Technical)",        val: num(pick.technical) },
+    { label: "펀더멘털 (Fundamental)",  val: num(pick.fundamental) },
+    ...(isKR ? [] : [{ label: "애널리스트 (Analyst)", val: num(pick.analyst) }]),
+    { label: isKR ? "RS vs KOSPI" : "RS vs SPY",     val: rsRaw != null
+        ? rsRaw * (Math.abs(rsRaw) < 2 ? 100 : 1) : null },
+    { label: "거래량 (Volume)",         val: num(pick.volume) },
+    ...(isKR ? [] : [{ label: "기관 (Institutional)",  val: num(pick.institutional) }]),
   ].filter((f) => f.val != null);
+
+  const curPrice   = num(pick.current_price) ?? num(pick.cur_price);
+  const targetUS   = num(pick.target_price);
+  const targetAI   = num(ai?.target_price);
+  const pct52      = num(pick.pct_from_52h);
+  const compScore  = num(pick.composite_score);
+  const catalysts  = arr(ai?.catalysts);
+  const bearCases  = arr(ai?.bear_cases);
+  const confidence = num(ai?.confidence);
 
   return (
     <div
@@ -82,7 +104,7 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
             </div>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-black" style={{ color: "#39ff8f" }}>{pick.composite_score?.toFixed(1)}</p>
+            <p className="text-2xl font-black" style={{ color: "#39ff8f" }}>{compScore?.toFixed(1) ?? "—"}</p>
             <p className="text-[12px] text-[#6b7280]">종합 점수</p>
           </div>
           <button onClick={onClose} className="text-[#6b7280] hover:text-white text-lg font-bold">✕</button>
@@ -90,42 +112,41 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
 
         <div className="px-5 py-4 space-y-3">
           {/* 가격 정보 */}
-          {(pick.current_price != null || pick.cur_price != null || pick.target_price != null || ai?.target_price != null) && (
+          {(curPrice != null || targetUS != null || targetAI != null) && (
             <div className="grid grid-cols-2 gap-3">
-              {(pick.current_price != null || pick.cur_price != null) && (
+              {curPrice != null && (
                 <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
                   <p className="text-[12px] text-[#6b7280] mb-0.5">현재가</p>
                   <p className="text-lg font-black text-white">
-                    {isKR
-                      ? `₩${Number(pick.cur_price).toLocaleString()}`
-                      : `$${pick.current_price?.toFixed(2)}`}
+                    {isKR ? `₩${curPrice.toLocaleString()}` : `$${curPrice.toFixed(2)}`}
                   </p>
-                  {isKR && pick.pct_from_52h != null && (
-                    <p className="text-[12px] mt-0.5" style={{ color: pick.pct_from_52h > -10 ? "#facc15" : "#9ca3af" }}>
-                      52주 고점 대비 {pick.pct_from_52h > 0 ? "+" : ""}{pick.pct_from_52h}%
+                  {isKR && pct52 != null && (
+                    <p className="text-[12px] mt-0.5" style={{ color: pct52 > -10 ? "#facc15" : "#9ca3af" }}>
+                      52주 고점 대비 {pct52 > 0 ? "+" : ""}{pct52.toFixed(1)}%
                     </p>
                   )}
                 </div>
               )}
-              {isKR && ai?.target_price != null && (
+              {isKR && targetAI != null && (
                 <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid #39ff8f22" }}>
                   <p className="text-[12px] text-[#6b7280] mb-0.5">AI 목표가</p>
-                  <p className="text-lg font-black" style={{ color: "#39ff8f" }}>₩{Number(ai.target_price).toLocaleString()}</p>
-                  {pick.cur_price && ai.target_price && (
+                  <p className="text-lg font-black" style={{ color: "#39ff8f" }}>₩{targetAI.toLocaleString()}</p>
+                  {curPrice != null && curPrice > 0 && (
                     <p className="text-[12px] mt-0.5" style={{ color: "#39ff8f" }}>
-                      {(((ai.target_price - pick.cur_price) / pick.cur_price) * 100) >= 0 ? "+" : ""}
-                      {(((ai.target_price - pick.cur_price) / pick.cur_price) * 100).toFixed(1)}% 상승여력
+                      {((targetAI - curPrice) / curPrice) * 100 >= 0 ? "+" : ""}
+                      {(((targetAI - curPrice) / curPrice) * 100).toFixed(1)}% 상승여력
                     </p>
                   )}
                 </div>
               )}
-              {!isKR && pick.target_price != null && (
+              {!isKR && targetUS != null && (
                 <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid #39ff8f22" }}>
                   <p className="text-[12px] text-[#6b7280] mb-0.5">목표가</p>
-                  <p className="text-lg font-black" style={{ color: "#39ff8f" }}>${pick.target_price?.toFixed(2)}</p>
-                  {pick.current_price && pick.target_price && (
+                  <p className="text-lg font-black" style={{ color: "#39ff8f" }}>${targetUS.toFixed(2)}</p>
+                  {curPrice != null && curPrice > 0 && (
                     <p className="text-[12px] mt-0.5" style={{ color: "#39ff8f" }}>
-                      +{(((pick.target_price - pick.current_price) / pick.current_price) * 100).toFixed(1)}% 상승여력
+                      {((targetUS - curPrice) / curPrice) * 100 >= 0 ? "+" : ""}
+                      {(((targetUS - curPrice) / curPrice) * 100).toFixed(1)}% 상승여력
                     </p>
                   )}
                 </div>
@@ -150,13 +171,13 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
             </div>
           )}
 
-          {/* Lynch/O'Neil 핵심 지표: PEG + 52주 고점 */}
-          {(pick.peg_ratio != null || pick.pct_from_52h != null || pick.earnings_growth != null || pick.pct_from_52h != null) && (() => {
-            const pegVal = pick.peg_ratio ?? pick.peg_ratio;
+          {/* Lynch/O'Neil 핵심 지표: PEG + EPS 성장 + 52주 고점 */}
+          {(num(pick.peg_ratio) != null || pct52 != null || num(pick.earnings_growth) != null) && (() => {
+            const pegVal = num(pick.peg_ratio);
             const pegColor = pegVal == null ? "#6b7280" : (isKR ? pegVal < 0.7 : pegVal < 1.0) ? "#39ff8f" : pegVal < 1.5 ? "#facc15" : "#ef4444";
-            const peg52Val = isKR ? pick.pct_from_52h : pick.pct_from_52h;
+            const peg52Val = pct52;
             const peg52Color = peg52Val == null ? "#6b7280" : peg52Val > -5 ? "#39ff8f" : peg52Val > -15 ? "#facc15" : "#ef4444";
-            const egVal = pick.earnings_growth;
+            const egVal = num(pick.earnings_growth);
             const egColor = egVal == null ? "#6b7280" : egVal >= 25 ? "#39ff8f" : egVal >= 10 ? "#facc15" : "#ef4444";
             return (
               <div>
@@ -220,11 +241,11 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                 <p className="text-[12px] leading-relaxed" style={{ color: "#c0c0c0" }}>{ai.thesis}</p>
               )}
               <div className="grid grid-cols-2 gap-3">
-                {(ai.catalysts ?? []).length > 0 && (
+                {catalysts.length > 0 && (
                   <div>
                     <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: "#39ff8f" }}>상승 촉매</p>
                     <ul className="space-y-0.5">
-                      {ai.catalysts.slice(0, 3).map((c: string, i: number) => (
+                      {catalysts.slice(0, 3).map((c, i) => (
                         <li key={i} className="text-[12px] flex gap-1" style={{ color: "#a8a8a8" }}>
                           <span style={{ color: "#39ff8f" }}>▲</span>{c}
                         </li>
@@ -232,11 +253,11 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                     </ul>
                   </div>
                 )}
-                {(ai.bear_cases ?? []).length > 0 && (
+                {bearCases.length > 0 && (
                   <div>
                     <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: "#ef4444" }}>하락 리스크</p>
                     <ul className="space-y-0.5">
-                      {ai.bear_cases.slice(0, 3).map((b: string, i: number) => (
+                      {bearCases.slice(0, 3).map((b, i) => (
                         <li key={i} className="text-[12px] flex gap-1" style={{ color: "#a8a8a8" }}>
                           <span style={{ color: "#ef4444" }}>▼</span>{b}
                         </li>
@@ -245,13 +266,13 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                   </div>
                 )}
               </div>
-              {ai.confidence != null && (
+              {confidence != null && (
                 <div>
                   <div className="flex justify-between text-[12px] text-[#6b7280] mb-0.5">
-                    <span>AI 신뢰도</span><span>{ai.confidence}%</span>
+                    <span>AI 신뢰도</span><span>{Math.round(confidence)}%</span>
                   </div>
                   <div className="h-1 rounded-full" style={{ background: "#282828" }}>
-                    <div className="h-1 rounded-full" style={{ width: `${ai.confidence}%`, background: "#39ff8f" }} />
+                    <div className="h-1 rounded-full" style={{ width: `${Math.min(100, Math.max(0, confidence))}%`, background: "#39ff8f" }} />
                   </div>
                 </div>
               )}
@@ -453,9 +474,9 @@ export default function TopPicksPage() {
                 const sectorKey = getSectorKey(p.sector ?? "");
                 const isLeading = leadingKeys.includes(sectorKey);
                 const isLagging = laggingKeys.includes(sectorKey);
-                const rs = p.relative_strength;
+                const rs = num(p.relative_strength);
                 const rsDisplay = rs != null
-                  ? `${rs >= 0 ? "+" : ""}${typeof rs === "number" && Math.abs(rs) < 2 ? (rs * 100).toFixed(1) + "%" : rs.toFixed(2) + "%"}`
+                  ? `${rs >= 0 ? "+" : ""}${Math.abs(rs) < 2 ? (rs * 100).toFixed(1) : rs.toFixed(2)}%`
                   : "—";
 
                 return (

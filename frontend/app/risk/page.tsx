@@ -253,12 +253,36 @@ export default function RiskPage() {
   return (
     <div className="space-y-3">
 
+      {/* ── 시뮬레이션 안내 배너 ──
+          TODO(전환 계획): 실제 보유 종목이 5개 이상 쌓이면 이 페이지의 분석 대상을
+          my_trades(포트폴리오 탭 실거래) 기반으로 교체한다.
+          현재 데이터 소스: src/risk/portfolio_risk.py → pf_holdings (시스템 페이퍼 트레이딩) */}
+      <div className="rounded-xl px-4 py-3 flex items-start gap-2.5"
+        style={{ background: "#60a5fa10", border: "1px solid #60a5fa33" }}>
+        <span className="text-[14px] shrink-0" style={{ color: "#60a5fa" }}>ℹ</span>
+        <div>
+          <p className="text-[13px] font-bold" style={{ color: "#60a5fa" }}>
+            이 분석은 시스템 시뮬레이션 포트폴리오 기준입니다
+          </p>
+          <p className="text-[12px] mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            일간 분석의 BUY 추천을 가상 자금 $100,000으로 자동 매매(균등 배분·60일 보유)했을 때의
+            리스크예요. <span className="text-white font-semibold">포트폴리오 탭에 입력한 실제 보유와는 무관</span>하며,
+            &quot;시스템 추천을 따랐다면 지금 어떤 상태인가&quot;를 보는 용도입니다.
+            실제 보유 종목의 손절 경고는 포트폴리오 탭에서 확인하세요.
+          </p>
+        </div>
+      </div>
+
       {/* ── 1. 포트폴리오 건강도 히어로 ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* 종합 상태 */}
         <div className="md:col-span-2 rounded-xl p-4" style={{ background: `${statusColor}0d`, border: `1px solid ${statusColor}33` }}>
           <p className="text-[12px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>
-            <FlagIcon market="US" size={13} />{" "}S&P 500 포트폴리오 건강도
+            <FlagIcon market="US" size={13} />{" "}시스템 포트폴리오 건강도
+            <span className="ml-2 normal-case tracking-normal font-bold px-1.5 py-0.5 rounded text-[10px]"
+              style={{ background: "#60a5fa18", color: "#60a5fa", border: "1px solid #60a5fa33" }}>
+              시뮬레이션
+            </span>
           </p>
           <div className="flex items-center gap-3 mb-2">
             <span className="text-4xl font-black" style={{ color: statusColor }}>{statusKo}</span>

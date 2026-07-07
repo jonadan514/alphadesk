@@ -60,12 +60,13 @@ export default function HomePage() {
         fetch("/api/data/kr/market-gate").then(r => r.json()),
         fetch("/api/data/kr/regime").then(r => r.json()),
         fetch("/api/data/kr/reports?limit=1").then(r => r.json()),
-      ]).then(([gateRes, regimeRes, reportsRes]) => {
+        fetch("/api/data/kr/forecast").then(r => r.json()),
+      ]).then(([gateRes, regimeRes, reportsRes, predRes]) => {
         setData({
           gate:    gateRes.status    === "fulfilled" ? gateRes.value    : {},
           regime:  regimeRes.status  === "fulfilled" ? regimeRes.value  : {},
           report:  reportsRes.status === "fulfilled" ? (reportsRes.value[0] ?? {}) : {},
-          prediction: null,
+          prediction: predRes.status === "fulfilled" ? predRes.value : null,
         });
       });
     } else {
@@ -96,6 +97,11 @@ export default function HomePage() {
   const picks: any[] = report.picks ?? [];
   const top5 = picks.slice(0, 5);
   const spy = prediction?.spy ?? (prediction?.direction ? prediction : null);
+  const predTitle = isKR ? "KOSPI 예측" : "SPY 예측";
+  const dirInfo = (d?: string) =>
+    d === "bullish" ? { text: "강세", color: "#39ff8f" } :
+    d === "bearish" ? { text: "약세", color: "#ef4444" } :
+    { text: "중립", color: "#facc15" };
   const verdict = report.verdict ?? gate.gate ?? "—";
   const verdictColor = VERDICT_COLOR[verdict] ?? "#fff";
   const sensors: Record<string, number> = regime.sensor_scores ?? {};
@@ -150,12 +156,12 @@ export default function HomePage() {
       </div>
 
       {/* SPY / KOSPI 예측 */}
-      {!isKR && spy && (
+      {spy && (
         <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: "var(--bg-card)" }}>
           <div>
-            <p className="text-[11px] uppercase tracking-wide mb-1" style={{ color: "#6b7280" }}>SPY 예측</p>
-            <p className="text-lg font-black" style={{ color: spy.direction === "bullish" ? "#39ff8f" : "#ef4444" }}>
-              {spy.direction === "bullish" ? "강세" : "약세"}
+            <p className="text-[11px] uppercase tracking-wide mb-1" style={{ color: "#6b7280" }}>{predTitle}</p>
+            <p className="text-lg font-black" style={{ color: dirInfo(spy.direction).color }}>
+              {dirInfo(spy.direction).text}
             </p>
           </div>
           <div className="text-right">
@@ -289,25 +295,30 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* KR: additional metrics */}
-          {isKR && regime.kospi_last && (
-            <div className="bg-card rounded-lg p-3">
-              <h2 className="stat-label mb-2">KOSPI 주요 지표</h2>
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { label: "KOSPI", val: regime.kospi_last?.toLocaleString(), color: "var(--text-primary)" },
-                  { label: "SMA 200", val: regime.kospi_sma200?.toLocaleString(), color: "#6e6e6e" },
-                  { label: "변동성(60일)", val: `${regime.vol_60d?.toFixed(1)}%`, color: regime.vol_60d > 25 ? "#ef4444" : "#facc15" },
-                  { label: "모멘텀(20일)", val: regime.mom_20d != null ? `${regime.mom_20d >= 0 ? "+" : ""}${regime.mom_20d.toFixed(1)}%` : "—", color: regime.mom_20d != null ? (regime.mom_20d >= 0 ? "#39ff8f" : "#ef4444") : "var(--text-muted)" },
-                ].map(({ label, val, color }) => (
-                  <div key={label} className="rounded-lg p-3 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-                    <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
-                    <p className="text-base font-bold" style={{ color }}>{val ?? "—"}</p>
-                  </div>
-                ))}
+          {/* 지수 주요 지표 (US/KR 공통) */}
+          {(() => {
+            const idxLast = isKR ? regime.kospi_last : regime.spy_last;
+            const idxSma  = isKR ? regime.kospi_sma200 : regime.spy_sma200;
+            if (!idxLast) return null;
+            return (
+              <div className="bg-card rounded-lg p-3">
+                <h2 className="stat-label mb-2">{indexName} 주요 지표</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: isKR ? "KOSPI" : "S&P 500", val: idxLast?.toLocaleString(), color: "var(--text-primary)" },
+                    { label: "SMA 200", val: idxSma?.toLocaleString(), color: idxLast >= (idxSma ?? 0) ? "#39ff8f" : "#ef4444" },
+                    { label: "변동성(60일)", val: regime.vol_60d != null ? `${regime.vol_60d.toFixed(1)}%` : "—", color: regime.vol_60d > 25 ? "#ef4444" : "#facc15" },
+                    { label: "모멘텀(20일)", val: regime.mom_20d != null ? `${regime.mom_20d >= 0 ? "+" : ""}${regime.mom_20d.toFixed(1)}%` : "—", color: regime.mom_20d != null ? (regime.mom_20d >= 0 ? "#39ff8f" : "#ef4444") : "var(--text-muted)" },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} className="rounded-lg p-3 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
+                      <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                      <p className="text-base font-bold" style={{ color }}>{val ?? "—"}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Top picks */}
           {top5.length > 0 && (
@@ -370,15 +381,19 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* US: SPY 예측 */}
-          {!isKR && spy && (
+          {/* SPY / KOSPI 다음 주 방향 예측 */}
+          {spy && (
             <div className="bg-card rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
-                <h2 className="stat-label">SPY 예측</h2>
-                <InfoTooltip content="LightGBM 모델의 다음 주 SPY 방향 예측입니다." />
+                <h2 className="stat-label">{predTitle}</h2>
+                <InfoTooltip content={
+                  spy.model_type === "rule_based"
+                    ? "체제 지표 기반의 다음 주 방향 추정입니다. (ML 예측 데이터가 쌓이면 자동 전환)"
+                    : `LightGBM 모델의 다음 주 ${isKR ? "KOSPI" : "SPY"} 방향 예측입니다.`
+                } />
               </div>
-              <p className="text-2xl font-black mb-1" style={{ color: spy.direction === "bullish" ? "#39ff8f" : "#ef4444" }}>
-                {spy.direction === "bullish" ? "강세" : "약세"}
+              <p className="text-2xl font-black mb-1" style={{ color: dirInfo(spy.direction).color }}>
+                {dirInfo(spy.direction).text}
               </p>
               <p className="text-sm font-semibold text-white">
                 확률 {spy.probability != null ? `${Math.round(spy.probability * 100)}%` : "—"}
@@ -388,27 +403,11 @@ export default function HomePage() {
                   모델 정확도 {Math.round(spy.cv_accuracy * 100)}%
                 </p>
               )}
-            </div>
-          )}
-
-          {/* KR: KOSPI 예측 요약 */}
-          {isKR && (
-            <div className="bg-card rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <h2 className="stat-label">KOSPI 방향성</h2>
-              </div>
-              <p className="text-sm font-bold text-[#6b7280] mb-2">체제 기반 방향 추정</p>
-              {regime.mom_20d != null && (
-                <>
-                  <p className="text-2xl font-black mb-1" style={{ color: regime.mom_20d >= 0 ? "#39ff8f" : "#ef4444" }}>
-                    {regime.mom_20d >= 0 ? "상승 모멘텀" : "하락 모멘텀"}
-                  </p>
-                  <p className="text-sm text-[#6b7280]">20일: {regime.mom_20d >= 0 ? "+" : ""}{regime.mom_20d?.toFixed(2)}%</p>
-                </>
+              {spy.model_type === "rule_based" && (
+                <p className="text-[12px] mt-1" style={{ color: "var(--text-faint)" }}>
+                  체제 지표 기반 추정
+                </p>
               )}
-              <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>
-                ※ 지수 예측 탭에서 상세 분석 확인
-              </p>
             </div>
           )}
 
