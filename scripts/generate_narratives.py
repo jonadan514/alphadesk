@@ -235,6 +235,47 @@ UPSERT_SQL = (
     "payload=excluded.payload, updated_at=excluded.updated_at"
 )
 
+# 관심도(sentiment) 일별 이력 — COLD→WARM→HOT 전환 감지용
+HISTORY_CREATE_SQL = (
+    "CREATE TABLE IF NOT EXISTS narrative_sentiment_history ("
+    "  market TEXT NOT NULL,"
+    "  symbol TEXT NOT NULL,"
+    "  date TEXT NOT NULL,"
+    "  sentiment TEXT NOT NULL,"
+    "  PRIMARY KEY (market, symbol, date)"
+    ")"
+)
+
+HISTORY_INSERT_SQL = (
+    "INSERT INTO narrative_sentiment_history (market, symbol, date, sentiment) "
+    "VALUES (?, ?, ?, ?) "
+    "ON CONFLICT(market, symbol, date) DO UPDATE SET sentiment=excluded.sentiment"
+)
+
+SENTIMENT_RANK = {"COLD": 0, "WARM": 1, "HOT": 2}
+
+
+def get_prior_sentiment(market: str, symbol: str, today: str) -> str | None:
+    """오늘 이전 가장 최근 기록된 관심도. 없으면 None (첫 기록)."""
+    rows = turso_query(
+        "SELECT sentiment FROM narrative_sentiment_history "
+        "WHERE market = ? AND symbol = ? AND date < ? "
+        "ORDER BY date DESC LIMIT 1",
+        [market, symbol, today],
+    )
+    return rows[0]["sentiment"] if rows else None
+
+
+def compute_trend(prev: str | None, current: str) -> str | None:
+    if prev is None or prev not in SENTIMENT_RANK:
+        return None
+    cur_rank, prev_rank = SENTIMENT_RANK.get(current, 1), SENTIMENT_RANK[prev]
+    if cur_rank > prev_rank:
+        return "up"
+    if cur_rank < prev_rank:
+        return "down"
+    return "flat"
+
 
 def get_todo(max_age_hours: int, batch: int, force: bool) -> tuple[list[dict], int]:
     """생성 대상 종목 결정.
@@ -285,7 +326,10 @@ def main() -> None:
     args = parser.parse_args()
 
     t0 = time.time()
-    turso_pipeline([{"type": "execute", "stmt": {"sql": CREATE_SQL}}])
+    turso_pipeline([
+        {"type": "execute", "stmt": {"sql": CREATE_SQL}},
+        {"type": "execute", "stmt": {"sql": HISTORY_CREATE_SQL}},
+    ])
 
     batch = args.limit if args.limit > 0 else args.batch
     todo, total = get_todo(MAX_AGE_HOURS, batch, args.force)
@@ -295,6 +339,7 @@ def main() -> None:
 
     logger.info("전체 %d종목 중 이번 회차 %d종목 생성", total, len(todo))
 
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     ok = fail = 0
     for i, t in enumerate(todo, 1):
         market, symbol, name = t["market"], t["symbol"], t.get("name")
@@ -303,17 +348,34 @@ def main() -> None:
         if brief is None:
             fail += 1
             continue
-        turso_pipeline([{
-            "type": "execute",
-            "stmt": {
-                "sql": UPSERT_SQL,
-                "args": [_turso_val(market), _turso_val(symbol),
-                         _turso_val(json.dumps(brief, ensure_ascii=False))],
+
+        prev_sentiment = get_prior_sentiment(market, symbol, today)
+        trend = compute_trend(prev_sentiment, brief["sentiment"])
+        brief["prev_sentiment"] = prev_sentiment
+        brief["trend"] = trend  # up/down/flat/None(첫 기록)
+
+        turso_pipeline([
+            {
+                "type": "execute",
+                "stmt": {
+                    "sql": UPSERT_SQL,
+                    "args": [_turso_val(market), _turso_val(symbol),
+                             _turso_val(json.dumps(brief, ensure_ascii=False))],
+                },
             },
-        }])
+            {
+                "type": "execute",
+                "stmt": {
+                    "sql": HISTORY_INSERT_SQL,
+                    "args": [_turso_val(market), _turso_val(symbol),
+                             _turso_val(today), _turso_val(brief["sentiment"])],
+                },
+            },
+        ])
         ok += 1
-        logger.info("[%d/%d] %s(%s) %s 뉴스%d건", i, len(todo), symbol, market,
-                    brief["sentiment"], len(news))
+        trend_note = f" ({prev_sentiment}→{brief['sentiment']})" if trend == "up" else ""
+        logger.info("[%d/%d] %s(%s) %s 뉴스%d건%s", i, len(todo), symbol, market,
+                    brief["sentiment"], len(news), trend_note)
         time.sleep(0.3)  # API 예의
 
     logger.info("완료: 성공 %d / 실패 %d / 소요 %.1f초", ok, fail, time.time() - t0)

@@ -36,6 +36,8 @@ interface NarrativeBrief {
   sentiment_reason: string;
   sources: string[];
   cached_at: string;
+  prev_sentiment?: "HOT" | "WARM" | "COLD" | null;
+  trend?: "up" | "down" | "flat" | null;
 }
 
 // ── 지표 설명 ─────────────────────────────────────────────────────────────────
@@ -212,10 +214,20 @@ function NarrativeSection({ c }: { c: Candidate }) {
         {brief && !loading && (
           <>
             {sent && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded" style={{ background: sent.color + "20", color: sent.color, border: `1px solid ${sent.color}40` }}>
                   {sent.emoji} {sent.label}
                 </span>
+                {brief.trend === "up" && brief.prev_sentiment && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded" style={{ background: "#f8717120", color: "#f87171", border: "1px solid #f8717140" }}>
+                    ▲ 관심도 상승 ({brief.prev_sentiment}→{brief.sentiment})
+                  </span>
+                )}
+                {brief.trend === "down" && brief.prev_sentiment && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded" style={{ background: "#60a5fa20", color: "#60a5fa", border: "1px solid #60a5fa40" }}>
+                    ▼ 관심도 하락 ({brief.prev_sentiment}→{brief.sentiment})
+                  </span>
+                )}
                 {brief.sentiment_reason && (
                   <span className="text-[11px]" style={{ color: "#6b7280" }}>{brief.sentiment_reason}</span>
                 )}
@@ -461,6 +473,15 @@ export default function WatchlistPage() {
     });
   }, []);
 
+  // 오늘 관심도 상승(COLD→WARM/HOT 등) 종목
+  const [shifts, setShifts] = useState<{ market: string; symbol: string; prev_sentiment: string; sentiment: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/watchlist/narrative-shifts")
+      .then((r) => r.json())
+      .then((d) => setShifts(d.shifts ?? []))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => { load(); }, [load]);
 
   const addToWatchlist = async (c: Candidate) => {
@@ -525,6 +546,21 @@ export default function WatchlistPage() {
           )}
         </p>
       </div>
+
+      {/* 관심도 상승 배너 */}
+      {shifts.length > 0 && (
+        <div style={{ marginBottom: 20, borderRadius: 8, padding: "10px 14px", background: "#f8717112", border: "1px solid #f8717133" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#f87171" }}>▲ 오늘 관심도 상승</span>
+            {shifts.map((s) => (
+              <span key={`${s.market}:${s.symbol}`} style={{ fontSize: 12, color: "#e5e7eb" }}>
+                <span style={{ color: s.market === "US" ? "#60a5fa" : "#f87171", fontWeight: 600 }}>{s.symbol}</span>
+                <span style={{ color: "#6b7280" }}> ({s.prev_sentiment}→{s.sentiment})</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 통계 */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
