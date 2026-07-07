@@ -17,7 +17,24 @@ function num(v: unknown): number | null {
   return null;
 }
 function arr(v: unknown): string[] {
-  if (Array.isArray(v)) return v.map(String);
+  // AI 프롬프트가 catalysts/bear_cases를 {point, evidence} 객체 배열로 요구하므로
+  // 객체면 point(+evidence)를 추출한다. 문자열 배열·단일 문자열도 허용.
+  if (Array.isArray(v)) {
+    return v
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const o = item as Record<string, unknown>;
+          const point = typeof o.point === "string" ? o.point
+            : typeof o.text === "string" ? o.text
+            : typeof o.title === "string" ? o.title : "";
+          const evidence = typeof o.evidence === "string" ? o.evidence : "";
+          return [point, evidence].filter(Boolean).join(" ").trim();
+        }
+        return "";
+      })
+      .filter((s) => s.length > 0);
+  }
   if (typeof v === "string" && v.trim()) return [v];
   return [];
 }
