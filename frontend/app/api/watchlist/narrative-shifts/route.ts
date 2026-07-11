@@ -20,6 +20,7 @@ export async function GET() {
           return {
             market: r[0] as string,
             symbol: r[1] as string,
+            name: payload.name ?? null,
             sentiment: payload.sentiment,
             prev_sentiment: payload.prev_sentiment,
             trend: payload.trend,

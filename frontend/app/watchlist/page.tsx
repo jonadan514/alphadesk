@@ -474,7 +474,7 @@ export default function WatchlistPage() {
   }, []);
 
   // 오늘 관심도 상승(COLD→WARM/HOT 등) 종목
-  const [shifts, setShifts] = useState<{ market: string; symbol: string; prev_sentiment: string; sentiment: string }[]>([]);
+  const [shifts, setShifts] = useState<{ market: string; symbol: string; name?: string | null; prev_sentiment: string; sentiment: string }[]>([]);
   useEffect(() => {
     fetch("/api/watchlist/narrative-shifts")
       .then((r) => r.json())
@@ -554,7 +554,9 @@ export default function WatchlistPage() {
             <span style={{ fontSize: 12, fontWeight: 700, color: "#f87171" }}>▲ 오늘 관심도 상승</span>
             {shifts.map((s) => (
               <span key={`${s.market}:${s.symbol}`} style={{ fontSize: 12, color: "#e5e7eb" }}>
-                <span style={{ color: s.market === "US" ? "#60a5fa" : "#f87171", fontWeight: 600 }}>{s.symbol}</span>
+                <span style={{ color: s.market === "US" ? "#60a5fa" : "#f87171", fontWeight: 600 }}>
+                  {s.market === "KR" ? (s.name || s.symbol) : s.symbol}
+                </span>
                 <span style={{ color: "#6b7280" }}> ({s.prev_sentiment}→{s.sentiment})</span>
               </span>
             ))}

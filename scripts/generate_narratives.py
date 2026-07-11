@@ -353,6 +353,7 @@ def main() -> None:
         trend = compute_trend(prev_sentiment, brief["sentiment"])
         brief["prev_sentiment"] = prev_sentiment
         brief["trend"] = trend  # up/down/flat/None(첫 기록)
+        brief["name"] = name    # 표시용 (KR은 코드만으론 식별 어려움)
 
         turso_pipeline([
             {

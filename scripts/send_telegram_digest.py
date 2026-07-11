@@ -126,12 +126,20 @@ def fetch_prices(holdings: list[dict]) -> dict[str, float]:
 
 # ── 데이터 수집 ──────────────────────────────────────────────────────────────
 
+def disp(market: str, symbol: str, name: str | None = None) -> str:
+    """표시용 라벨 — KR은 코드 대신 종목명(있으면), US는 티커."""
+    flag = "🇰🇷" if market == "KR" else "🇺🇸"
+    label = (name or symbol) if market == "KR" else symbol
+    return f"{flag} {label}"
+
+
 def compute_holdings(trades: list[dict]) -> list[dict]:
     """my_trades → 현재 보유 종목 (프론트 portfolio 페이지와 동일한 로직)."""
     acc: dict[str, dict] = {}
     for t in sorted(trades, key=lambda r: (r.get("trade_date", ""), r.get("id", 0))):
         key = f"{t['market']}:{t['symbol']}"
-        cur = acc.setdefault(key, {"market": t["market"], "symbol": t["symbol"], "shares": 0.0, "cost": 0.0})
+        cur = acc.setdefault(key, {"market": t["market"], "symbol": t["symbol"],
+                                   "name": t.get("name"), "shares": 0.0, "cost": 0.0})
         price, shares = float(t["price"]), float(t["shares"])
         if t["type"] == "buy":
             total_shares = cur["shares"] + shares
@@ -143,7 +151,7 @@ def compute_holdings(trades: list[dict]) -> list[dict]:
 
 
 def get_stop_loss_alerts() -> list[str]:
-    trades = turso_query("SELECT market, symbol, type, trade_date, price, shares, id FROM my_trades")
+    trades = turso_query("SELECT market, symbol, name, type, trade_date, price, shares, id FROM my_trades")
     holdings = compute_holdings(trades)
     if not holdings:
         return []
@@ -161,10 +169,11 @@ def get_stop_loss_alerts() -> list[str]:
             continue
         pl_pct = (price / h["cost"] - 1) * 100
         threshold = STOP_LOSS_PCT.get(regimes.get(h["market"], "neutral"), 8)
+        label = disp(h["market"], h["symbol"], h.get("name"))
         if pl_pct <= -threshold:
-            alerts.append(f"🔴 {h['symbol']}({h['market']}) {pl_pct:+.1f}% — 손절선(-{threshold}%) 도달")
+            alerts.append(f"🔴 {label} {pl_pct:+.1f}% — 손절선(-{threshold}%) 도달")
         elif pl_pct <= -threshold + 2:
-            alerts.append(f"🟠 {h['symbol']}({h['market']}) {pl_pct:+.1f}% — 손절선 근접(-{threshold}%)")
+            alerts.append(f"🟠 {label} {pl_pct:+.1f}% — 손절선 근접(-{threshold}%)")
     return alerts
 
 
@@ -180,8 +189,9 @@ def get_narrative_shifts() -> list[str]:
         except Exception:
             continue
         if payload.get("trend") == "up":
+            label = disp(r["market"], r["symbol"], payload.get("name"))
             lines.append(
-                f"📈 {r['symbol']}({r['market']}) {payload.get('prev_sentiment','?')}"
+                f"📈 {label} {payload.get('prev_sentiment','?')}"
                 f"→{payload.get('sentiment','?')}"
             )
     return lines
@@ -189,7 +199,8 @@ def get_narrative_shifts() -> list[str]:
 
 def get_cross_hits() -> list[str]:
     """내 워치리스트 중 오늘 상위 종목(top-picks)에 등장한 종목."""
-    my_watch = {f"{r['market']}:{r['symbol']}" for r in turso_query("SELECT market, symbol FROM my_watchlist")}
+    my_watch = {f"{r['market']}:{r['symbol']}": r.get("name")
+                for r in turso_query("SELECT market, symbol, name FROM my_watchlist")}
     if not my_watch:
         return []
 
@@ -198,13 +209,14 @@ def get_cross_hits() -> list[str]:
     for p in (us_report.get("picks") or []):
         key = f"US:{p.get('symbol')}"
         if key in my_watch:
-            hits.append(f"⭐ {p.get('symbol')}(US) — 오늘 상위 종목 등장")
+            hits.append(f"⭐ {disp('US', p.get('symbol'))} — 오늘 상위 종목 등장")
 
     kr_report = get_latest_timeseries("kr_daily_reports")
     for p in (kr_report.get("picks") or []):
         key = f"KR:{p.get('symbol')}"
         if key in my_watch:
-            hits.append(f"⭐ {p.get('symbol')}(KR) — 오늘 상위 종목 등장")
+            name = p.get("name") or my_watch.get(key)
+            hits.append(f"⭐ {disp('KR', p.get('symbol'), name)} — 오늘 상위 종목 등장")
 
     return hits
 
