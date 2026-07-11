@@ -5,6 +5,7 @@ import FlagIcon from "@/src/components/FlagIcon";
 
 const GUIDE_SECTIONS = [
   { href: "/",          icon: "⊡", label: "개요",        desc: "마켓 게이트·체제·상위 픽·지수 예측을 한 화면 요약. 오늘 시장 상태를 5초에 파악하는 시작점." },
+  { href: "/briefing",  icon: "📋", label: "주간 브리핑", desc: "매주 월요일 아침 자동 생성 — 지난주 시장 궤적·워치리스트 변동·관심도 흐름·다가오는 촉매·GPT 총평." },
   { href: "/regime",    icon: "▦", label: "시장 체제",   desc: "지금 시장이 강세/약세/위기 중 어느 단계인지 판단. 체제별 권장 주식 비중·손절선 + 글로벌 매크로 스냅샷." },
   { href: "/sector",    icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
   { href: "/top-picks", icon: "★", label: "종목 분석",   desc: "매일 팩터 점수로 선별되는 발굴 레이더. 종목 클릭 시 AI 투자 근거·목표가·리스크 확인. 내 워치리스트 종목은 🔖 배지." },

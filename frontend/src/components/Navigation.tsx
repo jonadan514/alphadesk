@@ -10,6 +10,7 @@ const NAV_GROUPS = [
     label: "시장 분석",
     items: [
       { href: "/",          label: "개요",      emoji: "🏠", color: "#60a5fa" },
+      { href: "/briefing",  label: "주간 브리핑", emoji: "📋", color: "#c084fc" },
       { href: "/regime",    label: "시장 체제", emoji: "📡", color: "#a78bfa" },
       { href: "/sector",    label: "섹터 분석", emoji: "🎯", color: "#fb923c" },
       { href: "/top-picks", label: "종목 분석", emoji: "🔍", color: "#4ade80" },

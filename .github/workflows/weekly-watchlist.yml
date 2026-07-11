@@ -37,3 +37,25 @@ jobs:
           name: watchlist-db
           path: output/data.db
           retention-days: 7
+
+  briefing:
+    name: Weekly Briefing
+    needs: [screen]
+    if: always()   # 스크리닝 일부 실패해도 가능한 데이터로 브리핑 생성
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install requests yfinance
+      - name: Generate weekly briefing
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/generate_weekly_briefing.py
