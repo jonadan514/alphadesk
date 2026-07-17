@@ -181,11 +181,18 @@ def collect_universe(markets: list[str] = ("US", "KR")) -> list[dict]:
             logger.info("진행: %d / %d", i, len(items))
 
         data = fetch_financials(item["yf_symbol"])
-        # KR: .KS 실패 시 코스닥(.KQ) 재시도
-        if data is None and item["market"] == "KR" and item["yf_symbol"].endswith(".KS"):
+        # KR: .KS가 실패했거나 "반쪽 응답"(코스닥 종목을 .KS로 조회하면
+        # 재무제표는 오지만 시총·섹터가 비어 옴)이면 코스닥(.KQ)으로 재시도
+        needs_kq_retry = (
+            item["market"] == "KR"
+            and item["yf_symbol"].endswith(".KS")
+            and (data is None or not data["info"].get("marketCap"))
+        )
+        if needs_kq_retry:
             kq_symbol = item["yf_symbol"].replace(".KS", ".KQ")
-            data = fetch_financials(kq_symbol)
-            if data is not None:
+            kq_data = fetch_financials(kq_symbol)
+            if kq_data is not None and kq_data["info"].get("marketCap"):
+                data = kq_data
                 item["yf_symbol"] = kq_symbol
                 item["exchange"] = "KOSDAQ"
         if data is None:
