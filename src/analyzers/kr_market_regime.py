@@ -98,6 +98,18 @@ class KRMarketRegimeDetector:
         elif weighted >= -0.3: regime = "risk_off"
         else:                  regime = "crisis"
 
+        # ── 급락 서킷브레이커 ─────────────────────────────────────────────
+        # 추세(SMA200)·모멘텀(60일)·시장폭(250일)은 장기 후행이라 1~2주 급락을
+        # 못 본다 (실례: 2026-07 KOSPI 주간 -12% 급락에도 neutral 판정).
+        # 20일 수익률로 단기 급락을 직접 반영한다.
+        circuit_breaker = None
+        if mom20 <= -15 and regime != "crisis":
+            circuit_breaker = f"20일 {mom20:.1f}% 급락 → crisis 강등"
+            regime = "crisis"
+        elif mom20 <= -8 and regime in ("risk_on", "neutral"):
+            circuit_breaker = f"20일 {mom20:.1f}% 급락 → risk_off 강등"
+            regime = "risk_off"
+
         sensor_scores = {
             "trend":      round(trend_score, 2),
             "volatility": round(vol_score, 2),
@@ -119,6 +131,7 @@ class KRMarketRegimeDetector:
             "mom_20d":        round(mom20, 2),
             "usdkrw_last":    usdkrw_last,
             "usdkrw_chg_20d": usdkrw_chg,
+            "circuit_breaker": circuit_breaker,   # 급락 강등 사유 (없으면 None)
             "computed_at":    datetime.now().strftime("%Y-%m-%d %H:%M"),
         }
 

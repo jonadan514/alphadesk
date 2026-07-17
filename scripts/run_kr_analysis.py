@@ -132,6 +132,25 @@ def phase2_gate(regime_result: dict, t0: float) -> dict:
         gate = "STOP"
         reason = "위기 — 현금 보유"
 
+    # ── 위기 센서 거부권 ──────────────────────────────────────────────
+    # 개별 센서가 위기 수준(-1.0 이하)이면 가중 평균이 좋아도 게이트를
+    # 한 단계 강등한다. (예: 변동성 66%로 위기인데 장기 센서들이 좋아
+    # 종합 GO가 나오는 상황 방지)
+    SENSOR_KO = {"trend": "추세", "volatility": "변동성", "momentum": "모멘텀",
+                 "breadth": "시장폭", "usdkrw": "환율"}
+    sensors = regime_result.get("sensor_scores", {}) or {}
+    crisis_sensors = [SENSOR_KO.get(k, k) for k, v in sensors.items()
+                      if isinstance(v, (int, float)) and v <= -1.0]
+    if crisis_sensors:
+        label = "·".join(crisis_sensors)
+        if gate == "GO":
+            gate = "CAUTION"
+            reason = f"{label} 위기 신호 — 신규 진입 신중 (거부권 강등)"
+        elif gate == "CAUTION":
+            gate = "STOP"
+            reason = f"{label} 위기 신호 — 진입 보류 (거부권 강등)"
+        _log("Phase2", f"센서 거부권 발동: {label} → {gate}")
+
     result = {
         "market":    "KR",
         "gate":      gate,
