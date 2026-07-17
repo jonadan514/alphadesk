@@ -244,6 +244,38 @@ def send_telegram(text: str) -> bool:
         return False
 
 
+def should_send(signature: str) -> bool:
+    """중복 발송 억제 — 직전 발송과 내용이 같으면 건너뛰되,
+    24시간 넘게 조용했으면 앵커로 1회는 발송 (시스템 생존 확인용)."""
+    turso_query(
+        "CREATE TABLE IF NOT EXISTS telegram_digest_state ("
+        "  id INTEGER PRIMARY KEY CHECK (id = 1),"
+        "  signature TEXT, sent_at TEXT)"
+    )
+    rows = turso_query("SELECT signature, sent_at FROM telegram_digest_state WHERE id = 1")
+    if rows:
+        prev_sig = rows[0].get("signature")
+        sent_at = rows[0].get("sent_at") or ""
+        try:
+            last = datetime.strptime(sent_at, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            hours = (datetime.now(timezone.utc) - last).total_seconds() / 3600
+        except Exception:
+            hours = 999
+        if prev_sig == signature and hours < 24:
+            logger.info("직전 발송과 내용 동일 (%.1f시간 전) — 발송 생략", hours)
+            return False
+    return True
+
+
+def mark_sent(signature: str) -> None:
+    turso_query(
+        "INSERT INTO telegram_digest_state (id, signature, sent_at) "
+        "VALUES (1, ?, strftime('%Y-%m-%d %H:%M:%S','now')) "
+        "ON CONFLICT(id) DO UPDATE SET signature=excluded.signature, sent_at=excluded.sent_at",
+        [signature],
+    )
+
+
 def main() -> None:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -253,10 +285,18 @@ def main() -> None:
     shifts = get_narrative_shifts()
     cross_hits = get_cross_hits()
 
-    lines = [f"<b>📊 AlphaDesk 일간 요약 — {today}</b>", ""]
-
     us_g = us_gate.get("gate", "?")
     kr_g = kr_gate.get("gate", "?")
+
+    # 의미 있는 내용의 지문 — 날짜는 제외 (같은 내용이면 날짜만 달라도 중복)
+    signature = json.dumps(
+        {"us": us_g, "kr": kr_g, "stop": stop_alerts, "cross": cross_hits, "shifts": shifts},
+        ensure_ascii=False, sort_keys=True,
+    )
+    if not should_send(signature):
+        return
+
+    lines = [f"<b>📊 AlphaDesk 일간 요약 — {today}</b>", ""]
     lines.append(f"🇺🇸 US: {GATE_KO.get(us_g, us_g)}")
     lines.append(f"🇰🇷 KR: {GATE_KO.get(kr_g, kr_g)}")
 
@@ -275,6 +315,7 @@ def main() -> None:
 
     sent = send_telegram(text)
     if sent:
+        mark_sent(signature)
         logger.info("텔레그램 발송 완료")
 
 
