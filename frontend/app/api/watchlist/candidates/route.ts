@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       SELECT market, symbol, name, market_cap, sector,
              piotroski, debt_ratio, interest_coverage,
              cfo_positive_count, red_flags, regime_fit,
-             roe, rel_3m, rel_6m, fit_score, screened_at
+             roe, rel_3m, rel_6m, fit_score, data_notes, screened_at
       FROM watchlist_candidates
       WHERE 1=1
     `;
@@ -30,6 +30,7 @@ export async function GET(request: Request) {
       const obj: Record<string, unknown> = {};
       (res as any).columns?.forEach((col: string, i: number) => { obj[col] = r[i]; });
       obj.red_flags = (() => { try { return JSON.parse((obj.red_flags as string) || "[]"); } catch { return []; } })();
+      obj.data_notes = (() => { try { return JSON.parse((obj.data_notes as string) || "{}"); } catch { return {}; } })();
       return obj;
     });
 

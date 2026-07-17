@@ -44,6 +44,7 @@ CREATE_TABLE_SQL = """CREATE TABLE IF NOT EXISTS watchlist_candidates (
   rel_3m              REAL,
   rel_6m              REAL,
   fit_score           REAL,
+  data_notes          TEXT,
   screened_at         TEXT NOT NULL,
   UNIQUE(market, symbol)
 )"""
@@ -81,6 +82,7 @@ def save_candidates(conn: sqlite3.Connection, candidates: list[dict]) -> None:
             c.get("rel_3m"),
             c.get("rel_6m"),
             c.get("fit_score"),
+            json.dumps(c.get("data_notes") or {}, ensure_ascii=False),
             now,
         )
         for c in candidates
@@ -90,8 +92,8 @@ def save_candidates(conn: sqlite3.Connection, candidates: list[dict]) -> None:
         INSERT INTO watchlist_candidates
           (market, symbol, name, market_cap, sector, piotroski,
            debt_ratio, interest_coverage, cfo_positive_count,
-           red_flags, regime_fit, roe, rel_3m, rel_6m, fit_score, screened_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+           red_flags, regime_fit, roe, rel_3m, rel_6m, fit_score, data_notes, screened_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """,
         rows,
     )
@@ -131,8 +133,8 @@ def push_to_turso(candidates: list[dict]) -> None:
         "INSERT INTO watchlist_candidates "
         "(market, symbol, name, market_cap, sector, piotroski, "
         " debt_ratio, interest_coverage, cfo_positive_count, "
-        " red_flags, regime_fit, roe, rel_3m, rel_6m, fit_score, screened_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        " red_flags, regime_fit, roe, rel_3m, rel_6m, fit_score, data_notes, screened_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
 
     BATCH = 50
@@ -171,6 +173,7 @@ def push_to_turso(candidates: list[dict]) -> None:
                         _turso_val(c.get("rel_3m")),
                         _turso_val(c.get("rel_6m")),
                         _turso_val(c.get("fit_score")),
+                        _turso_val(json.dumps(c.get("data_notes") or {}, ensure_ascii=False)),
                         _turso_val(now),
                     ],
                 },

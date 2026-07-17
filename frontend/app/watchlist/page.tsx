@@ -20,6 +20,20 @@ interface Candidate {
   rel_3m: number | null;
   rel_6m: number | null;
   fit_score: number | null;
+  data_notes?: { interest?: string; debt?: string };
+}
+
+// 지표가 null일 때 "-" 대신 사유 표시 (무차입=좋음, 자본잠식=주의)
+const NOTE_COLOR: Record<string, string> = {
+  "무차입": "#4ade80",
+  "자본잠식(음수 자본)": "#f97316",
+  "금융업 제외": "#6b7280",
+  "데이터 없음": "#4b5563",
+};
+function MetricOrNote({ value, note, format }: { value: number | null; note?: string; format: (v: number) => string }) {
+  if (value != null) return <span style={{ color: "#9ca3af" }}>{format(value)}</span>;
+  if (note) return <span style={{ color: NOTE_COLOR[note] ?? "#4b5563", fontSize: 11 }}>{note}</span>;
+  return <span style={{ color: "#4b5563" }}>-</span>;
 }
 interface WatchItem {
   id: number;
@@ -342,19 +356,31 @@ function DetailModal({ c, inList, onAdd, onClose }: {
           {/* 부채비율 */}
           <div className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #2e2e2e" }}>
             <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "#4b5563" }}>부채비율</p>
-            <p className="text-2xl font-black" style={{ color: debtColor(c.debt_ratio) }}>
-              {c.debt_ratio != null ? `${c.debt_ratio}%` : "-"}
+            {c.debt_ratio != null ? (
+              <p className="text-2xl font-black" style={{ color: debtColor(c.debt_ratio) }}>{c.debt_ratio}%</p>
+            ) : (
+              <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.debt ?? ""] ?? "#4b5563" }}>
+                {c.data_notes?.debt ?? "-"}
+              </p>
+            )}
+            <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>
+              {c.data_notes?.debt === "자본잠식(음수 자본)" ? "자사주 매입 등으로 자기자본이 음수 — 원인 확인 필요" : "총부채 / 자기자본"}
             </p>
-            <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>총부채 / 자기자본</p>
           </div>
 
           {/* 이자보상배율 */}
           <div className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #2e2e2e" }}>
             <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "#4b5563" }}>이자보상배율</p>
-            <p className="text-2xl font-black" style={{ color: coverColor(c.interest_coverage) }}>
-              {c.interest_coverage != null ? `${c.interest_coverage.toFixed(1)}x` : "-"}
+            {c.interest_coverage != null ? (
+              <p className="text-2xl font-black" style={{ color: coverColor(c.interest_coverage) }}>{c.interest_coverage.toFixed(1)}x</p>
+            ) : (
+              <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.interest ?? ""] ?? "#4b5563" }}>
+                {c.data_notes?.interest ?? "-"}
+              </p>
+            )}
+            <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>
+              {c.data_notes?.interest === "무차입" ? "이자비용 없음 — 빚 없이 운영 중" : "영업이익 / 이자비용"}
             </p>
-            <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>영업이익 / 이자비용</p>
           </div>
 
           {/* 영업현금흐름 */}
@@ -675,8 +701,12 @@ export default function WatchlistPage() {
                         <td style={{ padding: "8px 10px", color: "#9ca3af" }}>{formatCap(c.market, c.market_cap)}</td>
                         <td style={{ padding: "8px 10px", color: "#6b7280", fontSize: 11 }}>{c.sector ?? "-"}</td>
                         <td style={{ padding: "8px 10px" }}><PiotroskiBadge score={c.piotroski} /></td>
-                        <td style={{ padding: "8px 10px", color: "#9ca3af" }}>{c.debt_ratio != null ? `${c.debt_ratio}%` : "-"}</td>
-                        <td style={{ padding: "8px 10px", color: "#9ca3af" }}>{c.interest_coverage != null ? c.interest_coverage.toFixed(1) + "x" : "-"}</td>
+                        <td style={{ padding: "8px 10px" }}>
+                          <MetricOrNote value={c.debt_ratio} note={c.data_notes?.debt} format={(v) => `${v}%`} />
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>
+                          <MetricOrNote value={c.interest_coverage} note={c.data_notes?.interest} format={(v) => v.toFixed(1) + "x"} />
+                        </td>
                         <td style={{ padding: "8px 10px" }}><RegimeBadge fit={c.regime_fit} /></td>
                         <td style={{ padding: "8px 10px" }} onClick={(e) => e.stopPropagation()}>
                           <button

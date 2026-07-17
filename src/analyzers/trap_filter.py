@@ -125,11 +125,15 @@ def apply_trap_filters(item: dict) -> dict:
             "cfo_positive_count": 0,
             "regime_fit": "neutral",
             "roe": None,
+            "data_notes": {"interest": "데이터 없음", "debt": "데이터 없음"},
         }
 
     def g_fin(col, idx=0): return _safe(fin, col, idx)
     def g_bs(col, idx=0):  return _safe(bs, col, idx)
     def g_cf(col, idx=0):  return _safe(cf, col, idx)
+
+    # 값이 None인 지표의 "이유" (프론트에서 "-" 대신 표시)
+    data_notes: dict[str, str] = {}
 
     # ── 이자보상배율 ──
     ebit = g_fin("EBIT") or g_fin("Operating Income")
@@ -141,6 +145,10 @@ def apply_trap_filters(item: dict) -> dict:
             red_flags.append("이자보상배율<1 (좀비기업)")
     elif ebit is not None and ebit < 0:
         red_flags.append("영업이익 적자")
+    elif ebit is not None and ebit > 0:
+        data_notes["interest"] = "무차입"   # 이자비용 없음 — 계산 불필요한 좋은 상태
+    else:
+        data_notes["interest"] = "데이터 없음"
 
     # ── 영업현금흐름 2년 연속 마이너스 ──
     cfo_vals = [g_cf("Operating Cash Flow", i) for i in range(2)]
@@ -151,14 +159,24 @@ def apply_trap_filters(item: dict) -> dict:
     # ── 부채비율 (금융업 제외) ──
     debt_ratio: float | None = None
     is_financial = any(s in sector for s in FINANCIAL_SECTORS)
-    if not is_financial:
-        total_debt   = (g_bs("Total Debt") or
-                        (g_bs("Long Term Debt") or 0) + (g_bs("Current Debt") or 0))
+    if is_financial:
+        data_notes["debt"] = "금융업 제외"
+    else:
+        # 부채 0(무차입)과 데이터 없음을 구분 — 진짜 0이면 부채비율 0%로 표시
+        total_debt = g_bs("Total Debt")
+        if total_debt is None:
+            ltd, cd = g_bs("Long Term Debt"), g_bs("Current Debt")
+            total_debt = ((ltd or 0) + (cd or 0)) if (ltd is not None or cd is not None) else None
         equity = g_bs("Stockholders Equity") or g_bs("Total Stockholder Equity")
-        if total_debt and equity and equity > 0:
+        if total_debt is not None and equity and equity > 0:
             debt_ratio = total_debt / equity * 100
             if debt_ratio > 200:
                 red_flags.append(f"부채비율 {debt_ratio:.0f}% (200% 초과)")
+        elif equity is not None and equity <= 0:
+            # 대규모 자사주 매입 기업(DVA·SBUX 등)에서 흔함 — 탈락은 아니지만 알아야 할 정보
+            data_notes["debt"] = "자본잠식(음수 자본)"
+        else:
+            data_notes["debt"] = "데이터 없음"
 
     # ── 매출 + 순이익 3년 연속 동시 감소 ──
     revenues = [g_fin("Total Revenue", i) for i in range(3)]
@@ -211,6 +229,7 @@ def apply_trap_filters(item: dict) -> dict:
         "cfo_positive_count": cfo_positive_count,
         "regime_fit": regime_fit,
         "roe": roe_pct,
+        "data_notes": data_notes,
     }
 
 
@@ -234,6 +253,7 @@ def run_screen(items: list[dict]) -> tuple[list[dict], list[dict]]:
             "red_flags":   result["red_flags"],
             "regime_fit":  result["regime_fit"],
             "roe":         result["roe"],
+            "data_notes":  result["data_notes"],
         }
         if result["pass"]:
             passed.append(entry)
