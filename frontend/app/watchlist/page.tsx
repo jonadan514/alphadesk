@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { X, Info, Pencil } from "lucide-react";
+import StockTechPanel from "@/src/components/StockTechPanel";
 
 interface Candidate {
   market: string;
@@ -379,6 +380,11 @@ function DetailModal({ c, inList, onAdd, onClose }: {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* 추세·모멘텀 차트 */}
+        <div className="px-5">
+          <StockTechPanel market={c.market} symbol={c.symbol} />
         </div>
 
         {/* 네러티브 브리프 */}

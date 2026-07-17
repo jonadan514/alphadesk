@@ -5,6 +5,7 @@ import InfoTooltip from "@/src/components/InfoTooltip";
 import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
 import { SECTOR_TO_ETF } from "@/src/lib/constants";
+import StockTechPanel from "@/src/components/StockTechPanel";
 
 const ACTION_COLOR: Record<string, string> = {
   BUY: "#39ff8f", "SMALL BUY": "#22c55e", WATCH: "#facc15", HOLD: "#9ca3af", SKIP: "#4b5563",
@@ -227,6 +228,9 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
               </div>
             );
           })()}
+
+          {/* 추세·모멘텀 (차트 + 기술 지표 분해) */}
+          <StockTechPanel market={market} symbol={pick.symbol} />
 
           {/* 팩터 점수 */}
           {factors.length > 0 && (
