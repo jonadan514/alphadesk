@@ -267,6 +267,16 @@ function PreTradeChecklist({
       )))
       .catch(() => {});
   }, []);
+
+  // 내 워치리스트 — 티커 빠른 선택용
+  const [myWatchlist, setMyWatchlist] = useState<{ market: string; symbol: string; name: string | null }[]>([]);
+  useEffect(() => {
+    fetch("/api/watchlist/my")
+      .then((r) => r.json())
+      .then((rows) => setMyWatchlist(Array.isArray(rows) ? rows : []))
+      .catch(() => {});
+  }, []);
+  const myWatchlistForMarket = myWatchlist.filter((w) => w.market === market);
   const watchSymbol = (pick?.symbol ?? tickerUp).toUpperCase();
   const watchOk = !!tickerUp && candidateSet.has(`${market}:${watchSymbol}`);
 
@@ -379,6 +389,27 @@ function PreTradeChecklist({
       <div className="px-4 pt-3 pb-3 space-y-2">
         {/* 종목 */}
         <div>
+          {myWatchlistForMarket.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {myWatchlistForMarket.map((w) => {
+                const active = tickerUp === w.symbol.toUpperCase();
+                return (
+                  <button
+                    key={`${w.market}:${w.symbol}`}
+                    onClick={() => { setTicker(w.symbol.toUpperCase()); setStopPrice(""); setShares(""); }}
+                    className="text-[12px] px-2.5 py-1 rounded-lg font-semibold transition-colors"
+                    style={{
+                      background: active ? "#39ff8f22" : "#1c1c1c",
+                      color: active ? "#39ff8f" : "#9ca3af",
+                      border: `1px solid ${active ? "#39ff8f44" : "#2e2e2e"}`,
+                    }}
+                  >
+                    {w.symbol}{w.name ? ` · ${w.name}` : ""}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <input
             type="text"
             value={ticker}
