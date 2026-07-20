@@ -13,3 +13,4 @@ output/
 
 # 매 분석마다 재다운로드되는 가격 캐시 (12MB) — git 추적 불필요
 data/us_daily_prices.csv
+*.tsbuildinfo

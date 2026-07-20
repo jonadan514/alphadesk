@@ -107,8 +107,8 @@ export default function StockTechPanel({ market, symbol }: { market: string; sym
             <Tooltip
               contentStyle={{ background: "#1c1c1c", border: "1px solid #333", borderRadius: 8, fontSize: 11 }}
               labelStyle={{ color: "#6b7280" }}
-              formatter={(v: number, name: string) => [
-                fmtPrice(v),
+              formatter={(value, name) => [
+                typeof value === "number" ? fmtPrice(value) : String(value ?? "—"),
                 name === "close" ? "종가" : name === "sma50" ? "50일선" : "200일선",
               ]}
             />
