@@ -129,6 +129,23 @@ function SidebarInner({
         ))}
       </nav>
 
+      {/* 내 대시보드 링크 */}
+      <div className="shrink-0 px-2 pb-2">
+        <a
+          href="https://invest-dashboard-orpin.vercel.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2.5 px-3 py-1.5 text-[13px] rounded-lg transition-all duration-150"
+          style={{ color: "#6b7280" }}
+          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+        >
+          <span className="shrink-0 text-base leading-none" style={{ opacity: 0.6 }}>🌿</span>
+          <span style={{ letterSpacing: "0.01em" }}>우리집 투자</span>
+          <span className="ml-auto text-[11px]" style={{ color: "#3f3f3f" }}>↗</span>
+        </a>
+      </div>
+
       {/* Bottom: data freshness */}
       <div className="shrink-0 border-t px-3 py-3" style={{ borderColor: "var(--border)" }}>
         <div
