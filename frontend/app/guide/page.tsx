@@ -10,7 +10,7 @@ const GUIDE_SECTIONS = [
   { href: "/sector",    icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
   { href: "/top-picks", icon: "★", label: "종목 분석",   desc: "매일 팩터 점수로 선별되는 발굴 레이더. 종목 클릭 시 AI 투자 근거·목표가·리스크 확인. 내 워치리스트 종목은 🔖 배지." },
   { href: "/watchlist", icon: "🔖", label: "워치리스트",  desc: "함정 필터 + 시장 적합 점수 상위 50 후보(주간 갱신). 종목 클릭 시 재무 지표 + 네러티브 브리프 + 정성 체크리스트 + 메모까지 한 팝업에서." },
-  { href: "/workflow",  icon: "▶", label: "매수 체크",   desc: "주문 직전 최종 관문. 티커 입력 시 13개 조건 중 11개를 실시간 자동 판정 + 적정 수량 계산." },
+  { href: "/workflow",  icon: "▶", label: "매수 체크",   desc: "주문 직전 최종 관문. 티커 입력 시 12개 조건 중 10개를 실시간 자동 판정 + 적정 수량 계산." },
   { href: "/portfolio", icon: "◈", label: "포트폴리오",  desc: "실제 매수/매도 기록 + 현재가·평가손익 실시간 표시. 손절선 접근/도달 시 자동 경고." },
   { href: "/risk",      icon: "⛨", label: "리스크",      desc: "시스템 시뮬레이션 포트폴리오의 위험 분석 — VaR·상관관계·종목별 낙폭." },
 ];
@@ -101,7 +101,7 @@ export default function GuidePage() {
             {
               step: "STEP 3", color: "#60a5fa",
               title: "정말 사도 되나? 얼마나 살까? → 워치리스트 팝업 + 매수 체크",
-              body: "워치리스트에서 종목을 클릭하면 정성 체크리스트(스토리·촉매 점검)와 메모를 그 자리에서 남길 수 있습니다. 그다음 매수 체크 탭에 티커를 입력하면 13개 조건(게이트·체제·워치리스트 포함 여부·등급·점수 등)을 자동 판정하고 적정 매수 수량까지 계산해줍니다. 모든 항목이 초록이 되면 매수합니다.",
+              body: "워치리스트에서 종목을 클릭하면 정성 체크리스트(스토리·촉매 점검)와 메모를 그 자리에서 남길 수 있습니다. 그다음 매수 체크 탭에 티커를 입력하면 12개 조건(게이트·체제·워치리스트 포함 여부·등급·점수 등)을 자동 판정하고 적정 매수 수량까지 계산해줍니다. 모든 항목이 초록이 되면 매수합니다.",
             },
           ].map(({ step, color, title, body }) => (
             <div key={step} className="rounded-xl p-4" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
@@ -200,7 +200,7 @@ export default function GuidePage() {
             { n: "①", tab: "텔레그램 요약", action: "아침 요약 메시지 확인 — 게이트 STOP이거나 별다른 신호 없으면 오늘은 끝", href: "/" },
             { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 게이트·체제·지수 예측 확인",                  href: "/" },
             { n: "③", tab: "워치리스트",    action: "관심도 상승·오늘픽 배지 확인 → 눈에 띄면 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
-            { n: "④", tab: "매수 체크",     action: "티커 입력 → 13개 조건 자동 판정 + 적정 수량 계산 → 전부 초록이면 매수", href: "/workflow" },
+            { n: "④", tab: "매수 체크",     action: "티커 입력 → 12개 조건 자동 판정 + 적정 수량 계산 → 전부 초록이면 매수", href: "/workflow" },
             { n: "⑤", tab: "포트폴리오",    action: "매수했으면 거래 기록 — 이후 손익·손절선 경고가 자동으로 표시됨",      href: "/portfolio" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>

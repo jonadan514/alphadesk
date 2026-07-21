@@ -370,7 +370,6 @@ function PreTradeChecklist({
     { id: "buy",       label: `${tickerUp || "종목"} BUY 액션 확인`,   auto: !!pick, pass: isBuy,    tip: "스크리닝 BUY 액션 종목만 선택하세요." },
     { id: "grade",     label: `${tickerUp || "종목"} Grade A·B 확인`, auto: !!pick, pass: gradeOk,  tip: "C등급 이하는 진입 자제를 권장합니다." },
     { id: "score",     label: `${tickerUp || "종목"} 점수 ≥ 60`,      auto: !!pick, pass: scoreOk,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
-    { id: "sector",    label: "선행 섹터 종목 확인",                    auto: !!pick && leadingList.length > 0, pass: sectorOk, tip: `선행: ${leadingList.join(", ") || "데이터 없음"}` },
     { id: "ai",        label: "AI 분석 thesis 확인",                   auto: true,   pass: aiOk,    tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
     { id: "workbook",  label: "정성 검증 완료 — 클릭해서 체크", auto: false, pass: manualOk.workbook ?? false, tip: "워치리스트 탭에서 종목을 클릭해 스토리·촉매 체크리스트를 점검했다면 이 항목을 클릭해 체크하세요." },
     { id: "funds",     label: "6개월 이상 묶여도 되는 여유 자금 — 클릭해서 체크", auto: false, pass: manualOk.funds ?? false, tip: "단기에 쓸 돈이면 매수하지 마세요. 확인했다면 클릭해 체크하세요." },
@@ -438,6 +437,14 @@ function PreTradeChecklist({
           {tickerUp && !pick && (
             <p className="text-[12px] mt-1" style={{ color: "#6e6e6e" }}>
               최신 리포트에서 찾을 수 없습니다. 손절가·수량은 직접 입력해 체크할 수 있습니다.
+            </p>
+          )}
+          {/* 선행 섹터 여부 — 판정 항목이 아닌 참고 정보 (미해당이어도 매수 진행 가능) */}
+          {tickerUp && pick && leadingList.length > 0 && (
+            <p className="text-[12px] mt-1" style={{ color: sectorOk ? "#39ff8f" : "#6e6e6e" }}>
+              {sectorOk
+                ? `✓ 선행 섹터(${leadingList.join(", ")}) 소속 — 지금 시장이 선호하는 업종`
+                : `ⓘ 참고: 지금 선행 섹터는 ${leadingList.join(", ")} — ${pick.sector ?? "이 종목"}은 해당 없음 (매수를 막지는 않음)`}
             </p>
           )}
         </div>
