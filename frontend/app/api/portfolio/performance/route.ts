@@ -75,6 +75,15 @@ export async function GET() {
     const benchmarkLabel = krCount > usCount ? "KOSPI" : "SPY";
     const benchmarkData = await fetchWeeklyPrices(benchmarkTicker);
 
+    // US·KR 종목이 섞여 있으면 원화 합산 전 환율로 통일해야 한다 —
+    // 그렇지 않으면 달러 숫자와 원화 숫자를 그대로 더하는 오류가 난다.
+    const needsFx = usCount > 0 && krCount > 0;
+    const fxData = needsFx ? await fetchWeeklyPrices("KRW=X") : { dates: [], closes: [] };
+    const fxAt = (date: string): number => {
+      if (!needsFx) return 1;
+      return findPriceAt(fxData.dates, fxData.closes, date) ?? 1;
+    };
+
     // Build unified weekly date list (from first trade date onward)
     const firstDate = trades[0].trade_date as string;
     const allDatesSet = new Set<string>();
@@ -109,7 +118,7 @@ export async function GET() {
         tradeIdx++;
       }
 
-      // Portfolio value
+      // Portfolio value — US·KR 혼합 시 원화 기준으로 통일해 합산한다
       let value = 0;
       let valid = true;
       for (const [sym, sh] of holdings) {
@@ -118,7 +127,9 @@ export async function GET() {
         if (!hist) { valid = false; break; }
         const price = findPriceAt(hist.dates, hist.closes, date);
         if (price == null) { valid = false; break; }
-        value += sh * price;
+        const market = symbolMarket.get(sym);
+        const rate = market === "US" && needsFx ? fxAt(date) : 1;
+        value += sh * price * rate;
       }
 
       const hasHoldings = Array.from(holdings.values()).some((s) => s > 0);
