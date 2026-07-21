@@ -9,8 +9,7 @@ const GUIDE_SECTIONS = [
   { href: "/regime",    icon: "▦", label: "시장 체제",   desc: "지금 시장이 강세/약세/위기 중 어느 단계인지 판단. 체제별 권장 주식 비중·손절선 + 글로벌 매크로 스냅샷." },
   { href: "/sector",    icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
   { href: "/top-picks", icon: "★", label: "종목 분석",   desc: "매일 팩터 점수로 선별되는 발굴 레이더. 종목 클릭 시 AI 투자 근거·목표가·리스크 확인. 내 워치리스트 종목은 🔖 배지." },
-  { href: "/watchlist", icon: "🔖", label: "워치리스트",  desc: "함정 필터 + 시장 적합 점수 상위 50 후보(주간 갱신). 종목 클릭 시 재무 지표 + 네러티브 브리프(스토리·촉매·관심도)." },
-  { href: "/workbook",  icon: "◉", label: "투자 워크북", desc: "종목 정성 검증 노트 — 스토리·촉매 등 시스템이 자동 판정 못 하는 것을 점검하고 메모." },
+  { href: "/watchlist", icon: "🔖", label: "워치리스트",  desc: "함정 필터 + 시장 적합 점수 상위 50 후보(주간 갱신). 종목 클릭 시 재무 지표 + 네러티브 브리프 + 정성 체크리스트 + 메모까지 한 팝업에서." },
   { href: "/workflow",  icon: "▶", label: "매수 체크",   desc: "주문 직전 최종 관문. 티커 입력 시 13개 조건 중 11개를 실시간 자동 판정 + 적정 수량 계산." },
   { href: "/portfolio", icon: "◈", label: "포트폴리오",  desc: "실제 매수/매도 기록 + 현재가·평가손익 실시간 표시. 손절선 접근/도달 시 자동 경고." },
   { href: "/risk",      icon: "⛨", label: "리스크",      desc: "시스템 시뮬레이션 포트폴리오의 위험 분석 — VaR·상관관계·종목별 낙폭." },
@@ -101,8 +100,8 @@ export default function GuidePage() {
             },
             {
               step: "STEP 3", color: "#60a5fa",
-              title: "정말 사도 되나? 얼마나 살까? → 워크북 + 매수 체크",
-              body: "투자 워크북에서 스토리·촉매를 스스로 점검하고 매수 이유를 메모하세요. 그다음 매수 체크 탭에 티커를 입력하면 13개 조건(게이트·체제·워치리스트 포함 여부·등급·점수 등)을 자동 판정하고 적정 매수 수량까지 계산해줍니다. 모든 항목이 초록이 되면 매수합니다.",
+              title: "정말 사도 되나? 얼마나 살까? → 워치리스트 팝업 + 매수 체크",
+              body: "워치리스트에서 종목을 클릭하면 정성 체크리스트(스토리·촉매 점검)와 메모를 그 자리에서 남길 수 있습니다. 그다음 매수 체크 탭에 티커를 입력하면 13개 조건(게이트·체제·워치리스트 포함 여부·등급·점수 등)을 자동 판정하고 적정 매수 수량까지 계산해줍니다. 모든 항목이 초록이 되면 매수합니다.",
             },
           ].map(({ step, color, title, body }) => (
             <div key={step} className="rounded-xl p-4" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
@@ -134,7 +133,7 @@ export default function GuidePage() {
             { label: "네러티브 브리프 (자동)", color: "#f87171", desc: "일간 분석과 함께 워치리스트 종목별 최근 1주 뉴스를 수집해 GPT가 스토리·촉매·관심도(HOT/WARM/COLD)를 생성", tag: "자동" },
             { label: "워치리스트 (주 1회)", color: "#60a5fa", desc: "매주 월요일 자동 스크리닝 — 함정 필터 통과 후 시장 적합 점수(품질·모멘텀·체제) 상위 50개 선발", tag: "자동" },
             { label: "텔레그램 요약 (자동)", color: "#a78bfa", desc: "일간 분석 완료 후 게이트 상태·손절 경고·워치리스트 교차 히트·관심도 상승을 폰으로 발송", tag: "자동" },
-            { label: "포트폴리오·워크북",  color: "#a8a8a8", desc: "매수/매도 기록 및 체크리스트는 내가 직접 입력", tag: "수동" },
+            { label: "포트폴리오·정성 체크", color: "#a8a8a8", desc: "매수/매도 기록 및 종목별 체크리스트·메모는 내가 직접 입력", tag: "수동" },
           ].map(({ label, color, desc, tag }) => (
             <div key={label} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
               <div className="flex-1 min-w-0">
@@ -180,7 +179,7 @@ export default function GuidePage() {
             ["포지션 사이징",   "고정 비율·켈리 검증으로 적정 매수 수량 자동 계산 (매수 체크 탭)"],
             ["리스크 관리",     "VaR95·상관관계·낙폭 분석 (시스템 시뮬레이션 포트폴리오 기준)"],
             ["포트폴리오",      "실거래 기록 + 현재가·평가손익 실시간 표시, 벤치마크 대비 성과 추적"],
-            ["투자 워크북",     "종목 정성 검증(스토리·촉매) 체크리스트 + 메모"],
+            ["정성 체크리스트", "워치리스트 팝업에 내장된 종목별 스토리·촉매 체크 + 메모"],
           ].map(([title, desc]) => (
             <div key={title} className="rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <p className="text-[12px] font-semibold text-white mb-0.5">{title}</p>
@@ -200,10 +199,9 @@ export default function GuidePage() {
           {[
             { n: "①", tab: "텔레그램 요약", action: "아침 요약 메시지 확인 — 게이트 STOP이거나 별다른 신호 없으면 오늘은 끝", href: "/" },
             { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 게이트·체제·지수 예측 확인",                  href: "/" },
-            { n: "③", tab: "워치리스트",    action: "관심도 상승·오늘픽 배지 확인 → 눈에 띄면 클릭해 네러티브 브리프 읽기", href: "/watchlist" },
-            { n: "④", tab: "투자 워크북",   action: "살 마음이 생긴 종목의 스토리·촉매를 점검하고 매수 이유 메모",        href: "/workbook" },
-            { n: "⑤", tab: "매수 체크",     action: "티커 입력 → 13개 조건 자동 판정 + 적정 수량 계산 → 전부 초록이면 매수", href: "/workflow" },
-            { n: "⑥", tab: "포트폴리오",    action: "매수했으면 거래 기록 — 이후 손익·손절선 경고가 자동으로 표시됨",      href: "/portfolio" },
+            { n: "③", tab: "워치리스트",    action: "관심도 상승·오늘픽 배지 확인 → 눈에 띄면 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
+            { n: "④", tab: "매수 체크",     action: "티커 입력 → 13개 조건 자동 판정 + 적정 수량 계산 → 전부 초록이면 매수", href: "/workflow" },
+            { n: "⑤", tab: "포트폴리오",    action: "매수했으면 거래 기록 — 이후 손익·손절선 경고가 자동으로 표시됨",      href: "/portfolio" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <span className="text-sm font-black shrink-0 w-5 text-center" style={{ color: "#39ff8f" }}>{n}</span>

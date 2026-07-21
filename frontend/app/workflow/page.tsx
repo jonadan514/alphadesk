@@ -372,7 +372,7 @@ function PreTradeChecklist({
     { id: "score",     label: `${tickerUp || "종목"} 점수 ≥ 60`,      auto: !!pick, pass: scoreOk,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
     { id: "sector",    label: "선행 섹터 종목 확인",                    auto: !!pick && leadingList.length > 0, pass: sectorOk, tip: `선행: ${leadingList.join(", ") || "데이터 없음"}` },
     { id: "ai",        label: "AI 분석 thesis 확인",                   auto: true,   pass: aiOk,    tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
-    { id: "workbook",  label: "투자 워크북(정성 검증) 완료 — 클릭해서 체크", auto: false, pass: manualOk.workbook ?? false, tip: "워크북 탭에서 스토리·촉매 체크리스트를 점검했다면 이 항목을 클릭해 체크하세요." },
+    { id: "workbook",  label: "정성 검증 완료 — 클릭해서 체크", auto: false, pass: manualOk.workbook ?? false, tip: "워치리스트 탭에서 종목을 클릭해 스토리·촉매 체크리스트를 점검했다면 이 항목을 클릭해 체크하세요." },
     { id: "funds",     label: "6개월 이상 묶여도 되는 여유 자금 — 클릭해서 체크", auto: false, pass: manualOk.funds ?? false, tip: "단기에 쓸 돈이면 매수하지 마세요. 확인했다면 클릭해 체크하세요." },
     { id: "stop",      label: "손절가 설정",                            auto: true,   pass: stopOk,  tip: `권장 손절선: ${stopLossPct} (현재 체제 기준)` },
     { id: "size",      label: "매수 수량 확정",                         auto: true,   pass: sharesOk, tip: "위 포지션 사이징 계산기로 자금·손실한도 입력 후 수량을 역산하세요." },

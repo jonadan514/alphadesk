@@ -289,10 +289,78 @@ function NarrativeSection({ c }: { c: Candidate }) {
   );
 }
 
+// ── 종목 정성 체크리스트 (종목별 독립 저장) ──────────────────────────────────
+interface ChecklistItem { id: string; text: string; checked: boolean }
+
+function ChecklistSection({ c }: { c: Candidate }) {
+  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/watchlist/checklist?market=${c.market}&symbol=${c.symbol}`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setItems(d.items ?? []); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [c.market, c.symbol]);
+
+  const toggle = (id: string) => {
+    const next = items.map((it) => (it.id === id ? { ...it, checked: !it.checked } : it));
+    setItems(next);
+    fetch("/api/watchlist/checklist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ market: c.market, symbol: c.symbol, items: next }),
+    }).catch(() => {});
+  };
+
+  if (loading) return <div className="h-20 rounded-xl animate-pulse" style={{ background: "#141414" }} />;
+
+  const checkedCount = items.filter((it) => it.checked).length;
+
+  return (
+    <div className="rounded-xl p-3 space-y-1.5" style={{ background: "#141414", border: "1px solid #2e2e2e" }}>
+      <div className="flex items-center justify-between mb-0.5">
+        <p className="text-[10px] uppercase tracking-widest" style={{ color: "#4b5563" }}>정성 체크</p>
+        <span className="text-[11px]" style={{ color: checkedCount === items.length && items.length > 0 ? "#4ade80" : "#4b5563" }}>
+          {checkedCount}/{items.length}
+        </span>
+      </div>
+      {items.map((it) => (
+        <button
+          key={it.id}
+          onClick={() => toggle(it.id)}
+          className="w-full flex items-start gap-2 text-left py-1"
+          style={{ background: "transparent", border: "none", cursor: "pointer" }}
+        >
+          <span
+            className="mt-0.5 shrink-0 w-3.5 h-3.5 rounded flex items-center justify-center"
+            style={{
+              background: it.checked ? "#4ade8033" : "#1c1c1c",
+              border: `1.5px solid ${it.checked ? "#4ade80" : "#3a3a3a"}`,
+            }}
+          >
+            {it.checked && <span style={{ color: "#4ade80", fontSize: 9, fontWeight: 900 }}>✓</span>}
+          </span>
+          <span className="text-[12px] leading-snug" style={{ color: it.checked ? "#6b7280" : "#d1d5db" }}>
+            {it.text}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ── 종목 상세 팝업 ────────────────────────────────────────────────────────────
-function DetailModal({ c, inList, onAdd, onClose }: {
-  c: Candidate; inList: boolean; onAdd: () => void; onClose: () => void;
+function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }: {
+  c: Candidate; inList: boolean; inTopPicks: boolean; note: string | null;
+  onAdd: () => void; onSaveNote: (note: string) => void; onClose: () => void;
 }) {
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteDraft, setNoteDraft] = useState(note ?? "");
   const coverColor = (v: number | null) => {
     if (!v) return "#6b7280";
     return v >= 5 ? "#4ade80" : v >= 3 ? "#facc15" : v >= 1 ? "#f97316" : "#f87171";
@@ -311,6 +379,12 @@ function DetailModal({ c, inList, onAdd, onClose }: {
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[11px] font-bold px-2 py-0.5 rounded" style={{ background: c.market === "US" ? "#60a5fa20" : "#f8717120", color: c.market === "US" ? "#60a5fa" : "#f87171" }}>{c.market}</span>
               <RegimeBadge fit={c.regime_fit} />
+              {inTopPicks && (
+                <span title="오늘 종목 분석 상위 종목에 포함"
+                  style={{ background: "#39ff8f20", color: "#39ff8f", border: "1px solid #39ff8f40", borderRadius: 4, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
+                  ⭐ 오늘픽
+                </span>
+              )}
             </div>
             <h2 className="text-xl font-black text-white">{c.symbol}</h2>
             {c.name && <p className="text-[13px] mt-0.5" style={{ color: "#9ca3af" }}>{c.name}</p>}
@@ -416,10 +490,43 @@ function DetailModal({ c, inList, onAdd, onClose }: {
         {/* 네러티브 브리프 */}
         <NarrativeSection c={c} />
 
+        {/* 정성 체크 (구 투자 워크북) */}
+        <div className="px-5">
+          <ChecklistSection c={c} />
+        </div>
+
+        {/* 매수 이유 메모 — 워치리스트에 추가된 종목만 */}
+        {inList && (
+          <div className="px-5">
+            <div className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #2e2e2e" }}>
+              <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "#4b5563" }}>매수 이유 메모</p>
+              {editingNote ? (
+                <div className="flex gap-1.5">
+                  <input
+                    value={noteDraft}
+                    onChange={(e) => setNoteDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { onSaveNote(noteDraft.trim()); setEditingNote(false); } if (e.key === "Escape") setEditingNote(false); }}
+                    placeholder="담은 이유, 지켜볼 포인트…"
+                    autoFocus
+                    className="flex-1 px-2.5 py-1.5 rounded-lg text-[12px] outline-none"
+                    style={{ background: "#0e0e0e", color: "#e5e7eb", border: "1px solid #333" }}
+                  />
+                  <button onClick={() => { onSaveNote(noteDraft.trim()); setEditingNote(false); }}
+                    className="px-3 rounded-lg text-[12px] font-bold" style={{ background: "#39ff8f18", color: "#39ff8f", border: "1px solid #39ff8f33" }}>저장</button>
+                </div>
+              ) : (
+                <button onClick={() => setEditingNote(true)} className="text-[12px] text-left w-full" style={{ color: note ? "#9ca3af" : "#374151", background: "transparent", border: "none", cursor: "pointer" }}>
+                  {note || "+ 메모 추가 — 왜 담았는지 기록해두세요"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 버튼 */}
         <div className="px-5 pb-5">
           <button
-            onClick={() => { onAdd(); onClose(); }}
+            onClick={onAdd}
             disabled={inList}
             className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-opacity disabled:opacity-40"
             style={{ background: inList ? "#1c1c1c" : "#39ff8f18", color: inList ? "#4b5563" : "#39ff8f", border: `1px solid ${inList ? "#2e2e2e" : "#39ff8f33"}` }}>
@@ -529,7 +636,7 @@ export default function WatchlistPage() {
     load();
   };
 
-  // 메모 인라인 편집
+  // 메모 인라인 편집 (내 워치리스트 탭 목록용)
   const [editingNote, setEditingNote] = useState<number | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const saveNote = async (item: WatchItem) => {
@@ -539,6 +646,16 @@ export default function WatchlistPage() {
       body: JSON.stringify({ market: item.market, symbol: item.symbol, name: item.name, note: noteDraft.trim() || null }),
     });
     setEditingNote(null);
+    load();
+  };
+
+  // 상세 팝업에서의 메모 저장 (종목 클릭 → 팝업 내 메모)
+  const saveNoteFromModal = async (c: Candidate, note: string) => {
+    await fetch("/api/watchlist/my", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ market: c.market, symbol: c.symbol, name: c.name, note: note || null }),
+    });
     load();
   };
 
@@ -560,7 +677,10 @@ export default function WatchlistPage() {
         <DetailModal
           c={selected}
           inList={addedSymbols.has(`${selected.market}:${selected.symbol}`)}
+          inTopPicks={topPicks.has(`${selected.market}:${selected.symbol}`)}
+          note={myList.find((w) => w.market === selected.market && w.symbol === selected.symbol)?.note ?? null}
           onAdd={() => addToWatchlist(selected)}
+          onSaveNote={(note) => saveNoteFromModal(selected, note)}
           onClose={() => setSelected(null)}
         />
       )}
