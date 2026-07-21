@@ -322,14 +322,25 @@ export default function TopPicksPage() {
   const [myWatch, setMyWatch]         = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetch("/api/watchlist/my")
-      .then((r) => r.json())
-      .then((rows) => {
-        if (Array.isArray(rows)) {
-          setMyWatch(new Set(rows.map((w: any) => `${w.market}:${w.symbol}`)));
-        }
-      })
-      .catch(() => {});
+    // 워치리스트 탭에서 종목을 추가한 뒤 새로고침 없이 돌아와도 배지가
+    // 최신 상태를 반영하도록 마운트 시 + 탭 포커스 복귀 시 재조회한다.
+    const loadMyWatch = () => {
+      fetch("/api/watchlist/my")
+        .then((r) => r.json())
+        .then((rows) => {
+          if (Array.isArray(rows)) {
+            setMyWatch(new Set(rows.map((w: any) => `${w.market}:${w.symbol}`)));
+          }
+        })
+        .catch(() => {});
+    };
+    loadMyWatch();
+    window.addEventListener("focus", loadMyWatch);
+    document.addEventListener("visibilitychange", loadMyWatch);
+    return () => {
+      window.removeEventListener("focus", loadMyWatch);
+      document.removeEventListener("visibilitychange", loadMyWatch);
+    };
   }, []);
 
   useEffect(() => {
