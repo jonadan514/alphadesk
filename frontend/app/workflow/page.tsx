@@ -269,12 +269,23 @@ function PreTradeChecklist({
   }, []);
 
   // 내 워치리스트 — 티커 빠른 선택용
+  // 다른 탭(워치리스트 페이지)에서 종목을 추가한 뒤 새로고침 없이 돌아올 때도
+  // 최신 목록이 보이도록 마운트 시 + 탭 포커스 복귀 시 재조회한다.
   const [myWatchlist, setMyWatchlist] = useState<{ market: string; symbol: string; name: string | null }[]>([]);
   useEffect(() => {
-    fetch("/api/watchlist/my")
-      .then((r) => r.json())
-      .then((rows) => setMyWatchlist(Array.isArray(rows) ? rows : []))
-      .catch(() => {});
+    const load = () => {
+      fetch("/api/watchlist/my")
+        .then((r) => r.json())
+        .then((rows) => setMyWatchlist(Array.isArray(rows) ? rows : []))
+        .catch(() => {});
+    };
+    load();
+    window.addEventListener("focus", load);
+    document.addEventListener("visibilitychange", load);
+    return () => {
+      window.removeEventListener("focus", load);
+      document.removeEventListener("visibilitychange", load);
+    };
   }, []);
   const myWatchlistForMarket = myWatchlist.filter((w) => w.market === market);
   const watchSymbol = (pick?.symbol ?? tickerUp).toUpperCase();
