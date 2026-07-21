@@ -247,6 +247,17 @@ function PreTradeChecklist({
     }
   }, [totalCap, riskPct, winRate, rrRatio]);
 
+  // 실시간 원/달러 환율 — "총 투자 자금"은 항상 원화로 입력받고, 미국 종목이면
+  // 이 환율로 내부에서 달러로 환산해 계산한다 (시장 전환 시 단위 혼동 방지).
+  const [fxRate, setFxRate]   = useState<number | null>(null);
+  const [fxError, setFxError] = useState(false);
+  useEffect(() => {
+    fetch("/api/fx/usdkrw")
+      .then((r) => r.json())
+      .then((d) => { if (typeof d.rate === "number") setFxRate(d.rate); else setFxError(true); })
+      .catch(() => setFxError(true));
+  }, []);
+
   const gateOk   = steps[0]?.signal === "GO";
   const regimeOk = steps[1]?.signal !== "STOP";
   const riskOk   = steps[4]?.signal !== "STOP";
@@ -333,19 +344,27 @@ function PreTradeChecklist({
     : null;
 
   // ── 포지션 사이징 역산 ────────────────────────────────────────────
-  const totalCapNum  = parseFloat(totalCap.replace(/,/g, ""));
+  // "총 투자 자금"은 항상 원화(₩)로 입력받는다. 미국 종목이면 실시간 환율로
+  // 내부에서 달러로 환산해 계산한다 — 시장 전환 시 같은 숫자가 원↔달러로
+  // 잘못 재해석되던 문제를 근본적으로 없앤다.
+  const totalCapWon  = parseFloat(totalCap.replace(/,/g, ""));
   const riskPctNum   = parseFloat(riskPct);
   const entryPrice   = curPrice > 0 ? curPrice : parseFloat(stopPrice) / (1 - 0.08); // fallback
   const stopNum2     = parseFloat(stopPrice);
-  const capOk        = totalCap !== "" && !isNaN(totalCapNum) && totalCapNum > 0;
+  const capOk        = totalCap !== "" && !isNaN(totalCapWon) && totalCapWon > 0;
+  const fxReady      = isKR || (fxRate !== null);
+  const totalCapNum  = capOk ? (isKR ? totalCapWon : (fxRate ? totalCapWon / fxRate : NaN)) : NaN;
   const riskOk2      = riskPct !== "" && !isNaN(riskPctNum) && riskPctNum > 0 && riskPctNum <= 20;
-  const canCalc      = capOk && riskOk2 && stopOk && entryPrice > 0 && stopNum2 > 0 && stopNum2 < entryPrice;
+  const canCalc      = capOk && fxReady && riskOk2 && stopOk && entryPrice > 0 && stopNum2 > 0 && stopNum2 < entryPrice;
 
-  const maxLossMoney   = capOk && riskOk2 ? totalCapNum * (riskPctNum / 100) : null;
+  const maxLossMoney   = capOk && fxReady && riskOk2 ? totalCapNum * (riskPctNum / 100) : null;
   const recShares      = canCalc && maxLossMoney ? Math.floor(maxLossMoney / (entryPrice - stopNum2)) : null;
   const recPositionAmt = recShares && entryPrice > 0 ? recShares * entryPrice : null;
-  const recPositionPct = recPositionAmt && capOk ? (recPositionAmt / totalCapNum) * 100 : null;
+  const recPositionPct = recPositionAmt && capOk && fxReady ? (recPositionAmt / totalCapNum) * 100 : null;
   const recLossAmt     = recShares && entryPrice > 0 ? recShares * (entryPrice - stopNum2) : null;
+  // 원화 환산 표시용 (미국 종목일 때만 의미 있음)
+  const recPositionWon = !isKR && recPositionAmt && fxRate ? recPositionAmt * fxRate : null;
+  const recLossWon     = !isKR && recLossAmt && fxRate ? recLossAmt * fxRate : null;
 
   // ── 켈리 검증 (선택 입력) ────────────────────────────────────────
   const winNum  = parseFloat(winRate);
@@ -355,7 +374,7 @@ function PreTradeChecklist({
     : null;
   const kellyCapped = kellyF !== null && kellyF > 0.25;   // 25% 상한
   const kellyPct    = kellyF !== null ? Math.min(Math.max(kellyF, 0), 0.25) : null;
-  const kellyShares = kellyPct !== null && kellyPct > 0 && capOk && entryPrice > 0
+  const kellyShares = kellyPct !== null && kellyPct > 0 && capOk && fxReady && entryPrice > 0
     ? Math.floor((totalCapNum * kellyPct) / entryPrice)
     : null;
 
@@ -456,18 +475,30 @@ function PreTradeChecklist({
           </p>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-[12px] text-[#6b7280] mb-1">총 투자 자금 {isKR ? "(₩)" : "($)"}</p>
+              <p className="text-[12px] text-[#6b7280] mb-1">총 투자 자금 (₩)</p>
               <input
                 type="number"
                 value={totalCap}
                 onChange={(e) => setTotalCap(e.target.value)}
-                placeholder={isKR ? "예: 10000000" : "예: 7000"}
+                placeholder="예: 10000000"
                 className={inputCls}
                 style={{ ...inputStyle, borderColor: capOk ? "#facc1566" : "var(--border)" }}
               />
-              {capOk && <p className="text-[12px] mt-0.5" style={{ color: "#6e6e6e" }}>
-                {isKR ? `₩${totalCapNum.toLocaleString()}` : `$${totalCapNum.toLocaleString()}`}
+              {capOk && isKR && <p className="text-[12px] mt-0.5" style={{ color: "#6e6e6e" }}>
+                ₩{totalCapWon.toLocaleString()}
               </p>}
+              {capOk && !isKR && (
+                fxRate ? (
+                  <p className="text-[12px] mt-0.5" style={{ color: "#6e6e6e" }}>
+                    ≈ ${totalCapNum.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <span style={{ color: "#4b5563" }}> (환율 {fxRate.toFixed(1)}원 기준, 실시간)</span>
+                  </p>
+                ) : fxError ? (
+                  <p className="text-[12px] mt-0.5" style={{ color: "#ef4444" }}>환율을 불러오지 못했습니다 — 새로고침 해보세요.</p>
+                ) : (
+                  <p className="text-[12px] mt-0.5" style={{ color: "#6e6e6e" }}>환율 불러오는 중…</p>
+                )
+              )}
             </div>
             <div>
               <p className="text-[12px] text-[#6b7280] mb-1">종목당 허용 손실 (%)</p>
@@ -502,6 +533,9 @@ function PreTradeChecklist({
                   <p className="text-sm font-black text-white">
                     {isKR ? `₩${Math.round(recPositionAmt ?? 0).toLocaleString()}` : `$${(recPositionAmt ?? 0).toFixed(0)}`}
                   </p>
+                  {recPositionWon !== null && (
+                    <p className="text-[12px]" style={{ color: "#6e6e6e" }}>≈ ₩{Math.round(recPositionWon).toLocaleString()}</p>
+                  )}
                   {recPositionPct !== null && (
                     <p className="text-[12px]" style={{ color: recPositionPct > 30 ? "#ef4444" : "#6b7280" }}>
                       자금의 {recPositionPct.toFixed(1)}%
@@ -513,6 +547,9 @@ function PreTradeChecklist({
                   <p className="text-sm font-black" style={{ color: "#ef4444" }}>
                     {isKR ? `₩${Math.round(recLossAmt ?? 0).toLocaleString()}` : `$${(recLossAmt ?? 0).toFixed(0)}`}
                   </p>
+                  {recLossWon !== null && (
+                    <p className="text-[12px]" style={{ color: "#ef4444" }}>≈ ₩{Math.round(recLossWon).toLocaleString()}</p>
+                  )}
                   <p className="text-[12px]" style={{ color: "#ef4444" }}>(-{riskPctNum}%)</p>
                 </div>
               </div>
@@ -524,6 +561,10 @@ function PreTradeChecklist({
                 이 수량으로 적용 ({recShares}주)
               </button>
             </div>
+          ) : capOk && riskOk2 && !fxReady ? (
+            <p className="text-[12px]" style={{ color: "#6e6e6e" }}>
+              환율을 불러오는 중입니다 — 잠시 후 다시 확인하세요.
+            </p>
           ) : capOk && riskOk2 ? (
             <p className="text-[12px]" style={{ color: "#6e6e6e" }}>
               종목 입력 후 손절가를 설정하면 권장 수량이 계산됩니다.
