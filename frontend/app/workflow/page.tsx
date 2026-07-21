@@ -914,7 +914,11 @@ export default function WorkflowPage() {
         signal: s3sig,
         title: "종목 선택",
         summary: `BUY A·B등급 ${buyPicks.length}개${alignedPicks.length > 0 ? ` · 선행섹터 ${alignedPicks.length}개` : ""} · ${diversifiedSymbols || "없음"}`,
-        detail: `${clabel ? `현재 ${clabel} 구간 — ${leadingEtfs.join(", ")} 선행 중. ` : ""}선행 섹터 우선 + 섹터 분산 적용: ${diversifiedSymbols || "없음"}${hasSectorConcentration ? ` ⚠ 동일 섹터 2개 이상 포함(${sectorSummary}) — 직접 분산 조정 권장` : ` (${sectorSummary})`}`,
+        detail: `${clabel ? `현재 ${clabel} 구간 — ${leadingEtfs.join(", ")} 선행 중. ` : ""}${
+          alignedPicks.length > 0
+            ? `선행 섹터 우선 + 섹터 분산 적용: ${diversifiedSymbols || "없음"}`
+            : `오늘 BUY A·B 종목 중 선행 섹터(${leadingEtfs.join(", ") || "—"}) 소속이 없어 섹터 분산만 적용: ${diversifiedSymbols || "없음"}`
+        }${hasSectorConcentration ? ` ⚠ 동일 섹터 2개 이상 포함(${sectorSummary}) — 직접 분산 조정 권장` : ` (${sectorSummary})`}`,
         action: diversifiedList.length > 0
           ? `분산 후보 → ${diversifiedSymbols}${hasSectorConcentration ? " ⚠ 섹터 편중 확인" : ""}`
           : buyPicks.length >= 1 ? "조건 충족 종목 부족 — 상위 종목 탭 직접 확인" : "조건 종목 없음 — 대기",

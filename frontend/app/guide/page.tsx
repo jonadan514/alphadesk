@@ -378,6 +378,7 @@ export default function GuidePage() {
             <p className="text-[12px] leading-relaxed mb-2" style={{ color: "var(--text-muted)" }}>
               워크플로우가 추천하는 상위 종목 순서는 상위 종목 탭의 점수 순서와 다를 수 있습니다.
               STEP 3은 <span className="text-white">BUY + A/B등급</span> 필터 후, 그 안에서 <span className="text-white">현재 선행 섹터 종목을 먼저</span> 올립니다.
+              단, BUY·A/B등급 종목 중 선행 섹터 소속이 하나도 없는 날은 이 우선순위가 적용될 대상 자체가 없으므로, 섹터 분산만 적용된 후보를 보여주고 카드에 그 사실을 그대로 안내합니다.
             </p>
             <div className="rounded-lg px-3 py-2.5 text-[12px]" style={{ background: "#111111", border: "1px solid #2e2e2e" }}>
               <p style={{ color: "#6e6e6e" }}>예) XLK(Technology)가 선행 섹터일 때</p>
