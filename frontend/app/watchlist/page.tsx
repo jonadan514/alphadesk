@@ -40,12 +40,12 @@ const TEXT_SECONDARY = "#a39c88";
 const TEXT_MUTED     = "#726b58";
 const TEXT_FAINT     = "#423e33";
 
-const ACCENT  = "#ffb020"; // 브랜드 = "양호" 시맨틱과 통일 (단색조 터미널)
-const GOOD    = ACCENT;
-const WARN    = "#c98a2e";
-const CAUTION = "#b8642e";
-const BAD     = "#c1443a";
-const INFO    = "#6fb3b8"; // 미국장/성장/COLD/필터 활성 등 유일한 보조색
+const ACCENT  = "#ffb020"; // 브랜드 액센트 (오늘픽 배지·활성 탭·추가 버튼) — 시맨틱과 분리
+const GOOD    = "#4ade80"; // 실제 신호색: 우수/안정/배당
+const WARN    = "#facc15"; // 보통
+const CAUTION = "#fb923c"; // 주의
+const BAD     = "#f87171"; // 취약/위험
+const INFO    = "#6fb3b8"; // 미국장/성장/COLD/필터 활성 등 보조색
 const NUM     = "#e3a63e"; // 시맨틱 판단이 없는 순수 숫자(시가총액 등) · 티커 강조
 
 const MONO = 'ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", monospace';
