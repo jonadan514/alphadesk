@@ -9,25 +9,25 @@ const NAV_GROUPS = [
   {
     label: "시장 분석",
     items: [
-      { href: "/",          label: "개요",      emoji: "🏠", color: "#ffb020" },
-      { href: "/briefing",  label: "주간 브리핑", emoji: "📋", color: "#ffb020" },
-      { href: "/regime",    label: "시장 체제", emoji: "📡", color: "#ffb020" },
-      { href: "/sector",    label: "섹터 분석", emoji: "🎯", color: "#ffb020" },
-      { href: "/top-picks", label: "종목 분석", emoji: "🔍", color: "#ffb020" },
+      { href: "/",          label: "개요",      emoji: "📊", color: "#ffb020" },
+      { href: "/briefing",  label: "주간 브리핑", emoji: "📰", color: "#ffb020" },
+      { href: "/regime",    label: "시장 체제", emoji: "🧭", color: "#ffb020" },
+      { href: "/sector",    label: "섹터 분석", emoji: "🏭", color: "#ffb020" },
+      { href: "/top-picks", label: "종목 분석", emoji: "🔎", color: "#ffb020" },
       { href: "/risk",      label: "리스크",    emoji: "🛡️", color: "#ffb020" },
     ],
   },
   {
     label: "내 투자",
     items: [
-      { href: "/watchlist", label: "워치리스트",  emoji: "🔖", color: "#ffb020" },
+      { href: "/watchlist", label: "워치리스트",  emoji: "👁️", color: "#ffb020" },
       { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#ffb020" },
     ],
   },
   {
     label: "도구",
     items: [
-      { href: "/workflow",  label: "매수 체크",  emoji: "⚡", color: "#ffb020" },
+      { href: "/workflow",  label: "매수 체크",  emoji: "✅", color: "#ffb020" },
       { href: "/guide",     label: "가이드",     emoji: "📖", color: "#ffb020" },
     ],
   },
