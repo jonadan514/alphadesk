@@ -26,10 +26,10 @@ type RegimeKey = "risk_on" | "neutral" | "risk_off" | "crisis";
 
 const REGIME_GUIDE: Record<RegimeKey, { icon: string; color: string; text: string }[]> = {
   risk_on: [
-    { icon: "✓", color: "#39ff8f", text: "신규 진입 가능" },
-    { icon: "✓", color: "#39ff8f", text: "포지션 비중 확대" },
-    { icon: "✓", color: "#39ff8f", text: "BUY 등급 종목 우선 편입" },
-    { icon: "✓", color: "#39ff8f", text: "손절선 -10% 적용" },
+    { icon: "✓", color: "#4ade80", text: "신규 진입 가능" },
+    { icon: "✓", color: "#4ade80", text: "포지션 비중 확대" },
+    { icon: "✓", color: "#4ade80", text: "BUY 등급 종목 우선 편입" },
+    { icon: "✓", color: "#4ade80", text: "손절선 -10% 적용" },
   ],
   neutral: [
     { icon: "~", color: "#facc15", text: "기존 포지션 유지" },
@@ -38,24 +38,24 @@ const REGIME_GUIDE: Record<RegimeKey, { icon: string; color: string; text: strin
     { icon: "~", color: "#facc15", text: "손절선 -8% 준수" },
   ],
   risk_off: [
-    { icon: "✗", color: "#f97316", text: "신규 진입 자제" },
-    { icon: "✗", color: "#f97316", text: "보유 비중 단계적 축소" },
-    { icon: "✗", color: "#f97316", text: "방어주 · 현금 비중 확대" },
-    { icon: "✗", color: "#f97316", text: "손절선 -5% 엄수" },
+    { icon: "✗", color: "#fb923c", text: "신규 진입 자제" },
+    { icon: "✗", color: "#fb923c", text: "보유 비중 단계적 축소" },
+    { icon: "✗", color: "#fb923c", text: "방어주 · 현금 비중 확대" },
+    { icon: "✗", color: "#fb923c", text: "손절선 -5% 엄수" },
   ],
   crisis: [
-    { icon: "✗", color: "#ef4444", text: "신규 진입 금지" },
-    { icon: "✗", color: "#ef4444", text: "포지션 최소화" },
-    { icon: "✗", color: "#ef4444", text: "현금 비중 최대화" },
-    { icon: "✗", color: "#ef4444", text: "손절선 -3% 즉시 실행" },
+    { icon: "✗", color: "#f87171", text: "신규 진입 금지" },
+    { icon: "✗", color: "#f87171", text: "포지션 최소화" },
+    { icon: "✗", color: "#f87171", text: "현금 비중 최대화" },
+    { icon: "✗", color: "#f87171", text: "손절선 -3% 즉시 실행" },
   ],
 };
 
 function sensorInfo(score: number) {
-  if (score >= 1.5) return { text: "강세", color: "#39ff8f" };
+  if (score >= 1.5) return { text: "강세", color: "#4ade80" };
   if (score >= 0.5) return { text: "중립", color: "#facc15" };
-  if (score >= 0)   return { text: "약세", color: "#f97316" };
-  return { text: "위기", color: "#ef4444" };
+  if (score >= 0)   return { text: "약세", color: "#fb923c" };
+  return { text: "위기", color: "#f87171" };
 }
 
 const STOP_LOSS: Record<string, { pct: string; mdd: string; strategy: string; desc: string }> = {
@@ -118,10 +118,10 @@ export default function RegimePage() {
   const indexLast   = market === "KR" ? data.kospi_last : data.spy_last;
   const indexSma200 = market === "KR" ? data.kospi_sma200 : data.spy_sma200;
 
-  const regimeColor = regime === "risk_on" ? "#39ff8f"
+  const regimeColor = regime === "risk_on" ? "#4ade80"
     : regime === "neutral" ? "#facc15"
-    : regime === "risk_off" ? "#f97316"
-    : "#ef4444";
+    : regime === "risk_off" ? "#fb923c"
+    : "#f87171";
 
   const sensorEntries = Object.entries(sensors);
 
@@ -188,7 +188,7 @@ export default function RegimePage() {
             {data.vol_60d != null && (
               <div>
                 <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>변동성 60일</p>
-                <p className="text-[15px] font-bold" style={{ color: data.vol_60d > 30 ? "#ef4444" : data.vol_60d > 20 ? "#f97316" : "#facc15" }}>
+                <p className="text-[15px] font-bold" style={{ color: data.vol_60d > 30 ? "#f87171" : data.vol_60d > 20 ? "#fb923c" : "#facc15" }}>
                   {data.vol_60d.toFixed(1)}%
                 </p>
               </div>
@@ -196,7 +196,7 @@ export default function RegimePage() {
             {data.mom_20d != null && (
               <div>
                 <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>모멘텀 20일</p>
-                <p className="text-[15px] font-bold" style={{ color: data.mom_20d >= 0 ? "#39ff8f" : "#ef4444" }}>
+                <p className="text-[15px] font-bold" style={{ color: data.mom_20d >= 0 ? "#4ade80" : "#f87171" }}>
                   {data.mom_20d >= 0 ? "+" : ""}{data.mom_20d.toFixed(2)}%
                 </p>
               </div>
@@ -204,7 +204,7 @@ export default function RegimePage() {
             {data.usdkrw_last != null && (
               <div>
                 <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>USD/KRW</p>
-                <p className="text-[15px] font-bold" style={{ color: (data.usdkrw_chg_20d ?? 0) > 0 ? "#ef4444" : "#39ff8f" }}>
+                <p className="text-[15px] font-bold" style={{ color: (data.usdkrw_chg_20d ?? 0) > 0 ? "#f87171" : "#4ade80" }}>
                   {data.usdkrw_last.toLocaleString()}
                   {data.usdkrw_chg_20d != null && (
                     <span className="text-[12px] ml-1">
@@ -224,14 +224,14 @@ export default function RegimePage() {
             <InfoTooltip content="현재 체제에서 권장되는 리스크 관리 기준입니다." />
           </div>
           <div className="flex flex-col gap-1.5 flex-1">
-            <div className="flex-1 rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #ef444433" }}>
+            <div className="flex-1 rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #f8717133" }}>
               <p className="text-[12px] mb-0.5" style={{ color: "var(--text-muted)" }}>종목별 손절선</p>
-              <p className="text-[22px] font-black text-[#ef4444] leading-none">{sl.pct}</p>
+              <p className="text-[22px] font-black text-[#f87171] leading-none">{sl.pct}</p>
               <p className="text-[11px] mt-1" style={{ color: "var(--text-faint)" }}>매수가 대비 이 수준 도달 시 즉시 매도</p>
             </div>
-            <div className="flex-1 rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #f9731633" }}>
+            <div className="flex-1 rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #fb923c33" }}>
               <p className="text-[12px] mb-0.5" style={{ color: "var(--text-muted)" }}>포트폴리오 MDD 경고</p>
-              <p className="text-[22px] font-black text-[#f97316] leading-none">{sl.mdd}</p>
+              <p className="text-[22px] font-black text-[#fb923c] leading-none">{sl.mdd}</p>
               <p className="text-[11px] mt-1" style={{ color: "var(--text-faint)" }}>전체 자산 최대 낙폭 경보 기준</p>
             </div>
             <div className="flex-1 rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>

@@ -3,27 +3,33 @@
 @tailwind utilities;
 
 :root {
-  /* Surface */
-  --bg-base:    #111111;
-  --bg-card:    #1c1c1c;
-  --bg-inset:   #222222;
-  --bg-raised:  #282828;
+  /* Surface — 터미널 앰버 */
+  --bg-base:    #0a0a08;
+  --bg-card:    #111009;
+  --bg-inset:   #0e0d08;
+  --bg-raised:  #191509;
 
   /* Border */
-  --border:     #2e2e2e;
-  --border-dim: #252525;
+  --border:     #262112;
+  --border-dim: #1c170d;
+  --border-ctrl: #453b1f;
 
-  /* Text */
-  --text-primary:   #e8e8e8;
-  --text-secondary: #a8a8a8;
-  --text-muted:     #6e6e6e;
-  --text-faint:     #4a4a4a;
+  /* Text — 본문은 종이빛 화이트 */
+  --text-primary:   #ece7d8;
+  --text-secondary: #a39c88;
+  --text-muted:     #726b58;
+  --text-faint:     #423e33;
 
-  /* Accent */
-  --accent:     #39ff8f;
+  /* 브랜드 액센트 (오늘픽 배지·활성 탭·CTA 등) — 시맨틱과 분리 */
+  --accent:     #ffb020;
+  --num:        #e3a63e; /* 판단이 없는 순수 숫자·티커 강조 */
+  --info:       #6fb3b8; /* 미국장/성장/보조 정보색 */
+
+  /* 실제 신호색 — 판단이 들어가는 지표(게이트, 점수 등) 전용 */
+  --good:       #4ade80;
   --warn:       #facc15;
-  --danger:     #ef4444;
-  --orange:     #f97316;
+  --orange:     #fb923c;
+  --danger:     #f87171;
 }
 
 @layer base {
@@ -41,31 +47,29 @@
   }
   * { box-sizing: border-box; }
   ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: #111; }
-  ::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+  ::-webkit-scrollbar-track { background: var(--bg-base); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-ctrl); }
 }
 
 @layer utilities {
   .bg-card {
     background-color: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 0.875rem;
   }
   .bg-inset {
     background-color: var(--bg-inset);
     border: 1px solid var(--border);
-    border-radius: 0.625rem;
   }
   .text-accent   { color: var(--accent); }
   .text-muted    { color: var(--text-muted); }
   .text-faint    { color: var(--text-faint); }
   .border-dim    { border-color: var(--border); }
 
-  /* Signal badges */
-  .badge-go      { background: #39ff8f1a; color: #39ff8f; border: 1px solid #39ff8f33; }
-  .badge-caution { background: #facc151a; color: #facc15; border: 1px solid #facc1533; }
-  .badge-stop    { background: #ef44441a; color: #ef4444; border: 1px solid #ef444433; }
+  /* 신호 배지 — 실제 판단색 (게이트 GO/CAUTION/STOP 등) */
+  .badge-go      { background: #4ade8020; color: #4ade80; border: 1px solid #4ade8040; }
+  .badge-caution { background: #facc1520; color: #facc15; border: 1px solid #facc1540; }
+  .badge-stop    { background: #f8717120; color: #f87171; border: 1px solid #f8717140; }
 
   /* Label above a stat */
   .stat-label {

@@ -21,7 +21,7 @@ const REGIME_LABEL: Record<string, string> = {
   risk_on: "강세", neutral: "중립", risk_off: "약세", crisis: "위기",
 };
 const REGIME_COLOR: Record<string, string> = {
-  risk_on: "#39ff8f", neutral: "#facc15", risk_off: "#f97316", crisis: "#ef4444",
+  risk_on: "#4ade80", neutral: "#facc15", risk_off: "#fb923c", crisis: "#f87171",
 };
 
 /* ── KR 리스크 뷰 ─────────────────────────────────── */
@@ -35,11 +35,11 @@ function KRRiskView() {
 
   const regime = data.regime ?? "neutral";
   const regColor = REGIME_COLOR[regime] ?? "#facc15";
-  const rlColor = data.risk_level === "DANGER" ? "#ef4444" : data.risk_level === "WATCH" ? "#facc15" : "#39ff8f";
+  const rlColor = data.risk_level === "DANGER" ? "#f87171" : data.risk_level === "WATCH" ? "#facc15" : "#4ade80";
   const rlKo = data.risk_level === "DANGER" ? "위험" : data.risk_level === "WATCH" ? "주의" : "정상";
   const sensors: Record<string, number> = data.sensor_scores ?? {};
 
-  const volColor = data.vol_60d > 35 ? "#ef4444" : data.vol_60d > 25 ? "#f97316" : "#39ff8f";
+  const volColor = data.vol_60d > 35 ? "#f87171" : data.vol_60d > 25 ? "#fb923c" : "#4ade80";
   const volText  = data.vol_60d > 35 ? "고변동 — 비중 축소 권장" : data.vol_60d > 25 ? "경계 — 분할 매수 권장" : "안정 구간";
 
   return (
@@ -65,7 +65,7 @@ function KRRiskView() {
           {[
             { label: "KOSPI", val: data.kospi_last?.toLocaleString(), sub: `SMA200 : ${data.kospi_sma200?.toLocaleString()}`, color: "var(--text-primary)" },
             { label: "변동성 (60일)", val: `${data.vol_60d?.toFixed(1)}%`, sub: volText, color: volColor },
-            { label: "20일 모멘텀", val: `${data.mom_20d >= 0 ? "+" : ""}${data.mom_20d?.toFixed(2)}%`, sub: data.mom_20d > 3 ? "상승 추세" : data.mom_20d > 0 ? "약한 상승" : data.mom_20d > -3 ? "약한 하락" : "하락 추세", color: data.mom_20d >= 0 ? "#39ff8f" : "#ef4444" },
+            { label: "20일 모멘텀", val: `${data.mom_20d >= 0 ? "+" : ""}${data.mom_20d?.toFixed(2)}%`, sub: data.mom_20d > 3 ? "상승 추세" : data.mom_20d > 0 ? "약한 상승" : data.mom_20d > -3 ? "약한 하락" : "하락 추세", color: data.mom_20d >= 0 ? "#4ade80" : "#f87171" },
           ].map(({ label, val, sub, color }) => (
             <div key={label} className="rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</p>
@@ -85,7 +85,7 @@ function KRRiskView() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(sensors).map(([key, val]) => {
-              const color = val >= 1 ? "#39ff8f" : val >= 0 ? "#facc15" : "#ef4444";
+              const color = val >= 1 ? "#4ade80" : val >= 0 ? "#facc15" : "#f87171";
               const statusKo = val >= 1 ? "안정" : val >= 0 ? "주의" : "위험";
               const barPct = Math.min(Math.max(((val + 1) / 3) * 100, 0), 100);
               return (
@@ -153,7 +153,7 @@ export default function RiskPage() {
       <div className="bg-card rounded-xl p-4">
         <p className="font-semibold text-white mb-1">데이터가 없습니다</p>
         <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>일간 분석 실행 후 자동으로 계산됩니다.</p>
-        <code className="block text-[12px] rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", color: "#39ff8f" }}>GitHub → Actions → Daily Analysis → Run workflow</code>
+        <code className="block text-[12px] rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", color: "#ffb020" }}>GitHub → Actions → Daily Analysis → Run workflow</code>
       </div>
     </div>
   );
@@ -167,7 +167,7 @@ export default function RiskPage() {
   const compVar: any[]   = detail.component_var ?? [];
   const cdarTable: any[] = detail.cdar_cvar ?? [];
 
-  const statusColor = status === "NORMAL" ? "#39ff8f" : status === "WATCH" ? "#facc15" : "#ef4444";
+  const statusColor = status === "NORMAL" ? "#4ade80" : status === "WATCH" ? "#facc15" : "#f87171";
   const statusKo    = status === "NORMAL" ? "정상" : status === "WATCH" ? "주의" : "위험";
   const statusDesc  = status === "NORMAL"
     ? "모든 지표가 안정 범위입니다. 현재 전략을 유지하세요."
@@ -194,10 +194,10 @@ export default function RiskPage() {
           my_trades(포트폴리오 탭 실거래) 기반으로 교체한다.
           현재 데이터 소스: src/risk/portfolio_risk.py → pf_holdings (시스템 페이퍼 트레이딩) */}
       <div className="rounded-xl px-4 py-3 flex items-start gap-2.5"
-        style={{ background: "#60a5fa10", border: "1px solid #60a5fa33" }}>
-        <span className="text-[14px] shrink-0" style={{ color: "#60a5fa" }}>ℹ</span>
+        style={{ background: "#6fb3b810", border: "1px solid #6fb3b833" }}>
+        <span className="text-[14px] shrink-0" style={{ color: "#6fb3b8" }}>ℹ</span>
         <div>
-          <p className="text-[13px] font-bold" style={{ color: "#60a5fa" }}>
+          <p className="text-[13px] font-bold" style={{ color: "#6fb3b8" }}>
             이 분석은 시스템 시뮬레이션 포트폴리오 기준입니다
           </p>
           <p className="text-[12px] mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
@@ -216,7 +216,7 @@ export default function RiskPage() {
           <p className="text-[12px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>
             <FlagIcon market="US" size={13} />{" "}시스템 포트폴리오 건강도
             <span className="ml-2 normal-case tracking-normal font-bold px-1.5 py-0.5 rounded text-[10px]"
-              style={{ background: "#60a5fa18", color: "#60a5fa", border: "1px solid #60a5fa33" }}>
+              style={{ background: "#6fb3b818", color: "#6fb3b8", border: "1px solid #6fb3b833" }}>
               시뮬레이션
             </span>
           </p>
@@ -226,12 +226,12 @@ export default function RiskPage() {
               시장 {REGIME_LABEL[regime] ?? regime}
             </span>
             {(detail.critical_count ?? 0) > 0 && (
-              <span className="text-[13px] px-2 py-0.5 rounded font-bold" style={{ background: "#ef444418", color: "#ef4444", border: "1px solid #ef444433" }}>
+              <span className="text-[13px] px-2 py-0.5 rounded font-bold" style={{ background: "#f8717118", color: "#f87171", border: "1px solid #f8717133" }}>
                 심각 {detail.critical_count}건
               </span>
             )}
             {(detail.warning_count ?? 0) > 0 && (
-              <span className="text-[13px] px-2 py-0.5 rounded font-bold" style={{ background: "#f9731618", color: "#f97316", border: "1px solid #f9731633" }}>
+              <span className="text-[13px] px-2 py-0.5 rounded font-bold" style={{ background: "#fb923c18", color: "#fb923c", border: "1px solid #fb923c33" }}>
                 경고 {detail.warning_count}건
               </span>
             )}
@@ -250,24 +250,24 @@ export default function RiskPage() {
             </div>
             <div className="flex items-end gap-2">
               <span className="text-2xl font-black text-white">{investedPct}%</span>
-              <span className="text-[12px] mb-0.5" style={{ color: cashPct > 50 ? "#39ff8f" : "var(--text-muted)" }}>현금 {cashPct}%</span>
+              <span className="text-[12px] mb-0.5" style={{ color: cashPct > 50 ? "#ffb020" : "var(--text-muted)" }}>현금 {cashPct}%</span>
             </div>
             <div className="mt-1.5 h-1.5 rounded-full" style={{ background: "var(--bg-inset)" }}>
-              <div className="h-full rounded-full" style={{ width: `${investedPct}%`, background: investedPct > recPct + 10 ? "#f97316" : "#39ff8f" }} />
+              <div className="h-full rounded-full" style={{ width: `${investedPct}%`, background: investedPct > recPct + 10 ? "#fb923c" : "#4ade80" }} />
             </div>
             <p className="text-[12px] mt-1" style={{ color: "var(--text-faint)" }}>권장 {recPct}% (시장 {REGIME_LABEL[regime]} 기준)</p>
           </div>
 
           {/* 하루 최대 예상 손실 */}
-          <div className="flex-1 rounded-xl p-3" style={{ background: "var(--bg-card)", border: `1px solid ${varWarning ? "#ef444433" : "var(--border)"}` }}>
+          <div className="flex-1 rounded-xl p-3" style={{ background: "var(--bg-card)", border: `1px solid ${varWarning ? "#f8717133" : "var(--border)"}` }}>
             <div className="flex items-center justify-between mb-1">
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>하루 최대 예상 손실</p>
               <InfoTooltip content="95% 확률로 하루 동안 이 금액 이상은 잃지 않는다는 추정치입니다. (VaR 95%)" />
             </div>
-            <p className="text-2xl font-black" style={{ color: varWarning ? "#ef4444" : "#facc15" }}>
+            <p className="text-2xl font-black" style={{ color: varWarning ? "#f87171" : "#facc15" }}>
               {detail.var_usd ? `-${usd(detail.var_usd)}` : varPct > 0 ? `-${varPct.toFixed(2)}%` : "—"}
             </p>
-            <p className="text-[12px] mt-1" style={{ color: varWarning ? "#ef4444" : "var(--text-faint)" }}>
+            <p className="text-[12px] mt-1" style={{ color: varWarning ? "#f87171" : "var(--text-faint)" }}>
               {varWarning ? "⚠ 리스크 한도 초과 (1.5%)" : "리스크 한도 내 정상"}
             </p>
           </div>
@@ -278,13 +278,13 @@ export default function RiskPage() {
       {alerts.length > 0 && (
         <div className="bg-card rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <span style={{ color: "#f97316" }}>⚠</span>
+            <span style={{ color: "#fb923c" }}>⚠</span>
             <h2 className="stat-label">지금 확인해야 할 것들</h2>
             <span className="ml-auto text-[12px]" style={{ color: "var(--text-muted)" }}>{alerts.length}건</span>
           </div>
           <div className="space-y-2">
             {alerts.map((a: any) => {
-              const lvlColor = a.level === "CRITICAL" ? "#ef4444" : a.level === "WARNING" ? "#f97316" : "#60a5fa";
+              const lvlColor = a.level === "CRITICAL" ? "#f87171" : a.level === "WARNING" ? "#fb923c" : "#6fb3b8";
               const lvlKo    = a.level === "CRITICAL" ? "심각" : a.level === "WARNING" ? "경고" : "참고";
               return (
                 <div key={a.id} className="flex items-start gap-3 rounded-lg p-3"
@@ -323,16 +323,16 @@ export default function RiskPage() {
             <div className="space-y-1.5">
               {positions.map((p: any) => {
                 const barW = Math.round((p.value / maxPosVal) * 100);
-                const pnlC = p.pnl_pct >= 0 ? "#39ff8f" : "#ef4444";
+                const pnlC = p.pnl_pct >= 0 ? "#4ade80" : "#f87171";
                 return (
                   <div key={p.symbol} className="flex items-center gap-2">
                     <span className="w-6 text-[12px] font-black text-center rounded shrink-0"
-                      style={{ background: "#39ff8f22", color: "#39ff8f" }}>{p.grade}</span>
+                      style={{ background: "#ffb02022", color: "#ffb020" }}>{p.grade}</span>
                     <span className="w-14 text-[13px] font-bold text-white shrink-0">{p.symbol}</span>
                     <div className="flex-1 h-5 rounded overflow-hidden" style={{ background: "var(--bg-inset)" }}>
                       <div className="h-full rounded flex items-center px-2"
-                        style={{ width: `${barW}%`, background: "#39ff8f1a", minWidth: 4 }}>
-                        <span className="text-[12px] font-bold" style={{ color: "#39ff8f" }}>
+                        style={{ width: `${barW}%`, background: "#ffb0201a", minWidth: 4 }}>
+                        <span className="text-[12px] font-bold" style={{ color: "#ffb020" }}>
                           {Math.round((p.weight_pct ?? 0) * 100)}%
                         </span>
                       </div>
@@ -372,15 +372,15 @@ export default function RiskPage() {
               {sectors.map((s: any) => {
                 const wPct   = Math.round(s.weight_pct * 100);
                 const isHigh = wPct >= 40;
-                const color  = isHigh ? "#f97316" : "#39ff8f";
+                const color  = isHigh ? "#fb923c" : "#4ade80";
                 const barW   = Math.round((s.weight_pct / maxSector) * 100);
                 return (
                   <div key={s.sector}>
                     <div className="flex justify-between text-[12px] mb-0.5">
-                      <span style={{ color: isHigh ? "#f97316" : "var(--text-secondary)" }}>
+                      <span style={{ color: isHigh ? "#fb923c" : "var(--text-secondary)" }}>
                         {isHigh && "⚠ "}{s.sector}
                       </span>
-                      <span style={{ color: isHigh ? "#f97316" : "var(--text-muted)" }}>{wPct}%</span>
+                      <span style={{ color: isHigh ? "#fb923c" : "var(--text-muted)" }}>{wPct}%</span>
                     </div>
                     <div className="h-1.5 rounded-full" style={{ background: "var(--bg-inset)" }}>
                       <div className="h-full rounded-full" style={{ width: `${barW}%`, background: color }} />
@@ -408,7 +408,7 @@ export default function RiskPage() {
             <div className="space-y-1.5">
               {corrPairs.slice(0, 8).map((pair: any, i: number) => {
                 const absC  = Math.abs(pair.corr);
-                const color = absC >= 0.9 ? "#ef4444" : absC >= 0.8 ? "#f97316" : "#facc15";
+                const color = absC >= 0.9 ? "#f87171" : absC >= 0.8 ? "#fb923c" : "#facc15";
                 const label = absC >= 0.9 ? "매우 강함" : absC >= 0.8 ? "강함" : "보통";
                 return (
                   <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2"
@@ -443,9 +443,9 @@ export default function RiskPage() {
                   <div key={c.symbol} className="flex items-center gap-2">
                     <span className="w-14 text-[13px] font-bold text-white shrink-0">{c.symbol}</span>
                     <div className="flex-1 h-4 rounded overflow-hidden" style={{ background: "var(--bg-inset)" }}>
-                      <div className="h-full rounded" style={{ width: `${barW}%`, background: "#ef444430" }} />
+                      <div className="h-full rounded" style={{ width: `${barW}%`, background: "#f8717130" }} />
                     </div>
-                    <span className="text-[12px] w-14 text-right shrink-0" style={{ color: "#ef4444" }}>
+                    <span className="text-[12px] w-14 text-right shrink-0" style={{ color: "#f87171" }}>
                       {pct(c.cvar_pct)}
                     </span>
                     <span className="text-[12px] w-16 text-right shrink-0" style={{ color: "var(--text-muted)" }}>
@@ -489,12 +489,12 @@ export default function RiskPage() {
               </thead>
               <tbody>
                 {cdarTable.map((r: any) => {
-                  const ddColor = r.current_dd < -0.1 ? "#ef4444" : r.current_dd < -0.05 ? "#f97316" : r.current_dd >= 0 ? "#39ff8f" : "var(--text-secondary)";
+                  const ddColor = r.current_dd < -0.1 ? "#f87171" : r.current_dd < -0.05 ? "#fb923c" : r.current_dd >= 0 ? "#4ade80" : "var(--text-secondary)";
                   return (
                     <tr key={r.symbol} style={{ borderBottom: "1px solid var(--border-dim)" }}>
                       <td className="px-3 py-2.5 font-bold text-white">{r.symbol}</td>
-                      <td className="px-3 py-2.5 font-semibold" style={{ color: "#ef4444" }}>{pct(r.cdar)}</td>
-                      <td className="px-3 py-2.5" style={{ color: "#f97316" }}>{pct(r.cvar)}</td>
+                      <td className="px-3 py-2.5 font-semibold" style={{ color: "#f87171" }}>{pct(r.cdar)}</td>
+                      <td className="px-3 py-2.5" style={{ color: "#fb923c" }}>{pct(r.cvar)}</td>
                       <td className="px-3 py-2.5" style={{ color: "var(--text-secondary)" }}>{pct(r.max_dd)}</td>
                       <td className="px-3 py-2.5 font-bold" style={{ color: ddColor }}>{pct(r.current_dd)}</td>
                     </tr>

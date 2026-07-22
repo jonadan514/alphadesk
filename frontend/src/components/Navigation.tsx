@@ -9,37 +9,37 @@ const NAV_GROUPS = [
   {
     label: "시장 분석",
     items: [
-      { href: "/",          label: "개요",      emoji: "🏠", color: "#60a5fa" },
-      { href: "/briefing",  label: "주간 브리핑", emoji: "📋", color: "#c084fc" },
-      { href: "/regime",    label: "시장 체제", emoji: "📡", color: "#a78bfa" },
-      { href: "/sector",    label: "섹터 분석", emoji: "🎯", color: "#fb923c" },
-      { href: "/top-picks", label: "종목 분석", emoji: "🔍", color: "#4ade80" },
-      { href: "/risk",      label: "리스크",    emoji: "🛡️", color: "#f87171" },
+      { href: "/",          label: "개요",      emoji: "🏠", color: "#ffb020" },
+      { href: "/briefing",  label: "주간 브리핑", emoji: "📋", color: "#ffb020" },
+      { href: "/regime",    label: "시장 체제", emoji: "📡", color: "#ffb020" },
+      { href: "/sector",    label: "섹터 분석", emoji: "🎯", color: "#ffb020" },
+      { href: "/top-picks", label: "종목 분석", emoji: "🔍", color: "#ffb020" },
+      { href: "/risk",      label: "리스크",    emoji: "🛡️", color: "#ffb020" },
     ],
   },
   {
     label: "내 투자",
     items: [
-      { href: "/watchlist", label: "워치리스트",  emoji: "🔖", color: "#60a5fa" },
-      { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#fbbf24" },
+      { href: "/watchlist", label: "워치리스트",  emoji: "🔖", color: "#ffb020" },
+      { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#ffb020" },
     ],
   },
   {
     label: "도구",
     items: [
-      { href: "/workflow",  label: "매수 체크",  emoji: "⚡", color: "#39ff8f" },
-      { href: "/guide",     label: "가이드",     emoji: "📖", color: "#818cf8" },
+      { href: "/workflow",  label: "매수 체크",  emoji: "⚡", color: "#ffb020" },
+      { href: "/guide",     label: "가이드",     emoji: "📖", color: "#ffb020" },
     ],
   },
 ] as const;
 
 function staleness(dateStr: string | null): { label: string; color: string } {
-  if (!dateStr) return { label: "데이터 없음", color: "#4b5563" };
+  if (!dateStr) return { label: "데이터 없음", color: "#423e33" };
   const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
-  if (days === 0) return { label: "오늘 업데이트", color: "#39ff8f" };
+  if (days === 0) return { label: "오늘 업데이트", color: "#4ade80" };
   if (days === 1) return { label: "어제 업데이트", color: "#facc15" };
-  if (days <= 3)  return { label: `${days}일 전 업데이트`, color: "#f97316" };
-  return { label: `${days}일 전 업데이트`, color: "#ef4444" };
+  if (days <= 3)  return { label: `${days}일 전 업데이트`, color: "#fb923c" };
+  return { label: `${days}일 전 업데이트`, color: "#f87171" };
 }
 
 function SidebarInner({
@@ -64,14 +64,14 @@ function SidebarInner({
         className="flex h-20 shrink-0 items-center border-b px-5"
         style={{ borderColor: "var(--border)" }}
       >
-        <span className="text-2xl font-black tracking-tight" style={{ color: "#39ff8f" }}>
-          Alpha<span className="text-white">Desk</span>
+        <span className="text-2xl font-black tracking-tight" style={{ color: "#ffb020" }}>
+          Alpha<span style={{ color: "#ece7d8" }}>Desk</span>
         </span>
         {onClose && (
           <button
             className="ml-auto p-2 rounded"
             onClick={onClose}
-            style={{ color: "#6b7280" }}
+            style={{ color: "#726b58" }}
             aria-label="메뉴 닫기"
           >
             ✕
@@ -85,7 +85,7 @@ function SidebarInner({
           <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
             <p
               className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest"
-              style={{ color: "#3f3f3f" }}
+              style={{ color: "#423e33" }}
             >
               {group.label}
             </p>
@@ -95,9 +95,9 @@ function SidebarInner({
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-2.5 px-3 py-1.5 text-[13px] transition-all duration-150 relative rounded-lg my-0.5"
+                  className="flex items-center gap-2.5 px-3 py-1.5 text-[13px] transition-all duration-150 relative my-0.5"
                   style={{
-                    color: isActive ? "#e5e7eb" : "#6b7280",
+                    color: isActive ? "#ece7d8" : "#726b58",
                     background: isActive ? `${itemColor}15` : "transparent",
                     fontWeight: isActive ? 600 : 400,
                   }}
@@ -110,7 +110,7 @@ function SidebarInner({
                 >
                   {isActive && (
                     <span
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4"
                       style={{ background: itemColor }}
                     />
                   )}
@@ -134,22 +134,22 @@ function SidebarInner({
           href="https://invest-dashboard-orpin.vercel.app"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2.5 px-3 py-1.5 text-[13px] rounded-lg transition-all duration-150"
-          style={{ color: "#6b7280" }}
+          className="flex items-center gap-2.5 px-3 py-1.5 text-[13px] transition-all duration-150"
+          style={{ color: "#726b58" }}
           onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
           onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
         >
           <span className="shrink-0 text-base leading-none" style={{ opacity: 0.6 }}>🌿</span>
           <span style={{ letterSpacing: "0.01em" }}>우리집 투자</span>
-          <span className="ml-auto text-[11px]" style={{ color: "#3f3f3f" }}>↗</span>
+          <span className="ml-auto text-[11px]" style={{ color: "#423e33" }}>↗</span>
         </a>
       </div>
 
       {/* Bottom: data freshness */}
       <div className="shrink-0 border-t px-3 py-3" style={{ borderColor: "var(--border)" }}>
         <div
-          className="rounded-lg px-3 py-2 flex items-center gap-2"
-          style={{ background: "#141414", border: "1px solid #222" }}
+          className="px-3 py-2 flex items-center gap-2"
+          style={{ background: "#0e0d08", border: "1px solid #262112" }}
         >
           <span
             className="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -160,7 +160,7 @@ function SidebarInner({
               {freshnessLabel}
             </p>
             {isStale && (
-              <p className="text-[11px] truncate" style={{ color: "#f97316" }}>
+              <p className="text-[11px] truncate" style={{ color: "#fb923c" }}>
                 Actions에서 Daily Analysis 실행 권장
               </p>
             )}
@@ -197,7 +197,7 @@ export default function Navigation() {
       {/* ── 데스크톱: 고정 사이드바 ── */}
       <aside
         className="hidden md:flex w-56 shrink-0 flex-col border-r h-full overflow-hidden"
-        style={{ background: "#0e0e0e", borderColor: "var(--border)" }}
+        style={{ background: "#0a0a08", borderColor: "var(--border)" }}
       >
         <SidebarInner lastDate={lastDate} market={market} />
       </aside>
@@ -209,9 +209,9 @@ export default function Navigation() {
         aria-label="메뉴 열기"
       >
         <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
-          <rect y="0"  width="20" height="2" rx="1" fill="#e5e7eb" />
-          <rect y="7"  width="20" height="2" rx="1" fill="#e5e7eb" />
-          <rect y="14" width="20" height="2" rx="1" fill="#e5e7eb" />
+          <rect y="0"  width="20" height="2" rx="1" fill="#ece7d8" />
+          <rect y="7"  width="20" height="2" rx="1" fill="#ece7d8" />
+          <rect y="14" width="20" height="2" rx="1" fill="#ece7d8" />
         </svg>
       </button>
 
@@ -228,7 +228,7 @@ export default function Navigation() {
         className={`md:hidden fixed inset-y-0 left-0 z-[55] flex flex-col w-64 border-r overflow-hidden transition-transform duration-200 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        style={{ background: "#0e0e0e", borderColor: "var(--border)" }}
+        style={{ background: "#0a0a08", borderColor: "var(--border)" }}
       >
         <SidebarInner onClose={() => setIsOpen(false)} lastDate={lastDate} market={market} />
       </aside>

@@ -18,10 +18,10 @@ interface StepStatus {
 }
 
 const SIG_COLOR: Record<Signal, string> = {
-  GO: "#39ff8f", CAUTION: "#facc15", STOP: "#ef4444", LOADING: "#4b5563",
+  GO: "#4ade80", CAUTION: "#facc15", STOP: "#f87171", LOADING: "#423e33",
 };
 const SIG_BG: Record<Signal, string> = {
-  GO: "#39ff8f18", CAUTION: "#facc1518", STOP: "#ef444418", LOADING: "#1e1e1e",
+  GO: "#4ade8018", CAUTION: "#facc1518", STOP: "#f8717118", LOADING: "#111009",
 };
 const SIG_ICON: Record<Signal, string> = {
   GO: "✓", CAUTION: "!", STOP: "✕", LOADING: "·",
@@ -142,7 +142,7 @@ function SignalCard({
   return (
     <div
       className="rounded-xl overflow-hidden transition-all"
-      style={{ border: `1px solid ${isOpen ? color + "55" : color + "22"}`, background: "#1c1c1c" }}
+      style={{ border: `1px solid ${isOpen ? color + "55" : color + "22"}`, background: "#111009" }}
     >
       {/* 컴팩트 헤더 */}
       <button
@@ -152,7 +152,7 @@ function SignalCard({
       >
         <span
           className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-black"
-          style={{ background: color, color: "#0a0a0a" }}
+          style={{ background: color, color: "#0a0a08" }}
         >
           {SIG_ICON[status.signal]}
         </span>
@@ -167,7 +167,7 @@ function SignalCard({
           </div>
           <p className="text-[13px] font-semibold text-white truncate">{status.title}</p>
         </div>
-        <span className="text-[12px] text-[#4b5563]">{isOpen ? "▲" : "▼"}</span>
+        <span className="text-[12px] text-[#423e33]">{isOpen ? "▲" : "▼"}</span>
       </button>
 
       {/* 요약 한 줄 (항상 보임) */}
@@ -182,10 +182,10 @@ function SignalCard({
       {/* 상세 (열렸을 때) */}
       {isOpen && (
         <div className="px-4 pb-4 pt-2 space-y-3" style={{ borderTop: `1px solid ${color}22` }}>
-          <p className="text-[12px] leading-relaxed" style={{ color: "#c0c0c0" }}>
+          <p className="text-[12px] leading-relaxed" style={{ color: "#a39c88" }}>
             {status.summary}
           </p>
-          <p className="text-[12px] leading-relaxed" style={{ color: "#a8a8a8" }}>
+          <p className="text-[12px] leading-relaxed" style={{ color: "#a39c88" }}>
             {status.detail}
           </p>
           <div className="rounded-lg px-3 py-2" style={{ background: `${color}0d`, border: `1px solid ${color}33` }}>
@@ -399,14 +399,14 @@ function PreTradeChecklist({
   const passCount    = CHECKLIST.filter((c) => c.pass).length;
   const allPass      = passCount === CHECKLIST.length;
   const nearPass     = passCount >= CHECKLIST.length - 4;
-  const overallColor = allPass ? "#39ff8f" : nearPass ? "#facc15" : "#ef4444";
+  const overallColor = allPass ? "#4ade80" : nearPass ? "#facc15" : "#f87171";
 
   const inputCls = "rounded-lg px-3 py-1.5 text-sm font-mono text-white outline-none w-full";
   const inputStyle = { background: "var(--bg-inset)", border: "1px solid var(--border)" };
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #2e2e2e", background: "#1c1c1c" }}>
-      <div className="px-4 py-3 flex items-center gap-3" style={{ background: "#131313", borderBottom: "1px solid #272727" }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #262112", background: "#111009" }}>
+      <div className="px-4 py-3 flex items-center gap-3" style={{ background: "#0e0d08", borderBottom: "1px solid #111009" }}>
         <p className="text-[12px] font-bold uppercase tracking-widest text-white">매수 전 체크리스트</p>
         <div className="flex-1" />
         <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ color: overallColor, background: `${overallColor}22`, border: `1px solid ${overallColor}44` }}>
@@ -428,9 +428,9 @@ function PreTradeChecklist({
                     onClick={() => { setTicker(w.symbol.toUpperCase()); setStopPrice(""); setShares(""); }}
                     className="text-[12px] px-2.5 py-1 rounded-lg font-semibold transition-colors"
                     style={{
-                      background: active ? "#39ff8f22" : "#1c1c1c",
-                      color: active ? "#39ff8f" : "#9ca3af",
-                      border: `1px solid ${active ? "#39ff8f44" : "#2e2e2e"}`,
+                      background: active ? "#ffb02022" : "#111009",
+                      color: active ? "#ffb020" : "#a39c88",
+                      border: `1px solid ${active ? "#ffb02044" : "#262112"}`,
                     }}
                   >
                     {w.symbol}{w.name ? ` · ${w.name}` : ""}
@@ -448,19 +448,19 @@ function PreTradeChecklist({
             style={inputStyle}
           />
           {tickerUp && pick && (
-            <p className="text-[12px] mt-1" style={{ color: "#39ff8f" }}>
+            <p className="text-[12px] mt-1" style={{ color: "#4ade80" }}>
               ✓ {pick.symbol}{pick.name ? ` (${pick.name})` : ""} — Grade {pick.grade} / {pick.composite_score?.toFixed(1)}점 / {pick.action}
-              {curPrice > 0 && <span className="ml-2" style={{ color: "#a8a8a8" }}>현재가 {isKR ? `₩${Number(curPrice).toLocaleString()}` : `$${curPrice}`}</span>}
+              {curPrice > 0 && <span className="ml-2" style={{ color: "#a39c88" }}>현재가 {isKR ? `₩${Number(curPrice).toLocaleString()}` : `$${curPrice}`}</span>}
             </p>
           )}
           {tickerUp && !pick && (
-            <p className="text-[12px] mt-1" style={{ color: "#6e6e6e" }}>
+            <p className="text-[12px] mt-1" style={{ color: "#726b58" }}>
               최신 리포트에서 찾을 수 없습니다. 손절가·수량은 직접 입력해 체크할 수 있습니다.
             </p>
           )}
           {/* 선행 섹터 여부 — 판정 항목이 아닌 참고 정보 (미해당이어도 매수 진행 가능) */}
           {tickerUp && pick && leadingList.length > 0 && (
-            <p className="text-[12px] mt-1" style={{ color: sectorOk ? "#39ff8f" : "#6e6e6e" }}>
+            <p className="text-[12px] mt-1" style={{ color: sectorOk ? "#4ade80" : "#726b58" }}>
               {sectorOk
                 ? `✓ 선행 섹터(${leadingList.join(", ")}) 소속 — 지금 시장이 선호하는 업종`
                 : `ⓘ 참고: 지금 선행 섹터는 ${leadingList.join(", ")} — ${pick.sector ?? "이 종목"}은 해당 없음 (매수를 막지는 않음)`}
@@ -469,13 +469,13 @@ function PreTradeChecklist({
         </div>
 
         {/* 포지션 사이징 계산기 */}
-        <div className="rounded-lg p-3 space-y-2" style={{ background: "#111111", border: "1px solid #2e2e2e" }}>
+        <div className="rounded-lg p-3 space-y-2" style={{ background: "#0e0d08", border: "1px solid #262112" }}>
           <p className="text-[12px] font-bold uppercase tracking-widest" style={{ color: "#facc15" }}>
             포지션 사이징 — 손실 한도 기반 수량 역산
           </p>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-[12px] text-[#6b7280] mb-1">총 투자 자금 (₩)</p>
+              <p className="text-[12px] text-[#726b58] mb-1">총 투자 자금 (₩)</p>
               <input
                 type="number"
                 value={totalCap}
@@ -484,24 +484,24 @@ function PreTradeChecklist({
                 className={inputCls}
                 style={{ ...inputStyle, borderColor: capOk ? "#facc1566" : "var(--border)" }}
               />
-              {capOk && isKR && <p className="text-[12px] mt-0.5" style={{ color: "#6e6e6e" }}>
+              {capOk && isKR && <p className="text-[12px] mt-0.5" style={{ color: "#726b58" }}>
                 ₩{totalCapWon.toLocaleString()}
               </p>}
               {capOk && !isKR && (
                 fxRate ? (
-                  <p className="text-[12px] mt-0.5" style={{ color: "#6e6e6e" }}>
+                  <p className="text-[12px] mt-0.5" style={{ color: "#726b58" }}>
                     ≈ ${totalCapNum.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    <span style={{ color: "#4b5563" }}> (환율 {fxRate.toFixed(1)}원 기준, 실시간)</span>
+                    <span style={{ color: "#423e33" }}> (환율 {fxRate.toFixed(1)}원 기준, 실시간)</span>
                   </p>
                 ) : fxError ? (
-                  <p className="text-[12px] mt-0.5" style={{ color: "#ef4444" }}>환율을 불러오지 못했습니다 — 새로고침 해보세요.</p>
+                  <p className="text-[12px] mt-0.5" style={{ color: "#f87171" }}>환율을 불러오지 못했습니다 — 새로고침 해보세요.</p>
                 ) : (
-                  <p className="text-[12px] mt-0.5" style={{ color: "#6e6e6e" }}>환율 불러오는 중…</p>
+                  <p className="text-[12px] mt-0.5" style={{ color: "#726b58" }}>환율 불러오는 중…</p>
                 )
               )}
             </div>
             <div>
-              <p className="text-[12px] text-[#6b7280] mb-1">종목당 허용 손실 (%)</p>
+              <p className="text-[12px] text-[#726b58] mb-1">종목당 허용 손실 (%)</p>
               <input
                 type="number"
                 value={riskPct}
@@ -525,32 +525,32 @@ function PreTradeChecklist({
               <p className="text-[12px] font-bold" style={{ color: "#facc15" }}>계산 결과</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-[12px]" style={{ color: "#6e6e6e" }}>권장 수량</p>
+                  <p className="text-[12px]" style={{ color: "#726b58" }}>권장 수량</p>
                   <p className="text-sm font-black text-white">{recShares}주</p>
                 </div>
                 <div>
-                  <p className="text-[12px]" style={{ color: "#6e6e6e" }}>포지션 크기</p>
+                  <p className="text-[12px]" style={{ color: "#726b58" }}>포지션 크기</p>
                   <p className="text-sm font-black text-white">
                     {isKR ? `₩${Math.round(recPositionAmt ?? 0).toLocaleString()}` : `$${(recPositionAmt ?? 0).toFixed(0)}`}
                   </p>
                   {recPositionWon !== null && (
-                    <p className="text-[12px]" style={{ color: "#6e6e6e" }}>≈ ₩{Math.round(recPositionWon).toLocaleString()}</p>
+                    <p className="text-[12px]" style={{ color: "#726b58" }}>≈ ₩{Math.round(recPositionWon).toLocaleString()}</p>
                   )}
                   {recPositionPct !== null && (
-                    <p className="text-[12px]" style={{ color: recPositionPct > 30 ? "#ef4444" : "#6b7280" }}>
+                    <p className="text-[12px]" style={{ color: recPositionPct > 30 ? "#f87171" : "#726b58" }}>
                       자금의 {recPositionPct.toFixed(1)}%
                     </p>
                   )}
                 </div>
                 <div>
-                  <p className="text-[12px]" style={{ color: "#6e6e6e" }}>손절 시 손실</p>
-                  <p className="text-sm font-black" style={{ color: "#ef4444" }}>
+                  <p className="text-[12px]" style={{ color: "#726b58" }}>손절 시 손실</p>
+                  <p className="text-sm font-black" style={{ color: "#f87171" }}>
                     {isKR ? `₩${Math.round(recLossAmt ?? 0).toLocaleString()}` : `$${(recLossAmt ?? 0).toFixed(0)}`}
                   </p>
                   {recLossWon !== null && (
-                    <p className="text-[12px]" style={{ color: "#ef4444" }}>≈ ₩{Math.round(recLossWon).toLocaleString()}</p>
+                    <p className="text-[12px]" style={{ color: "#f87171" }}>≈ ₩{Math.round(recLossWon).toLocaleString()}</p>
                   )}
-                  <p className="text-[12px]" style={{ color: "#ef4444" }}>(-{riskPctNum}%)</p>
+                  <p className="text-[12px]" style={{ color: "#f87171" }}>(-{riskPctNum}%)</p>
                 </div>
               </div>
               <button
@@ -562,23 +562,23 @@ function PreTradeChecklist({
               </button>
             </div>
           ) : capOk && riskOk2 && !fxReady ? (
-            <p className="text-[12px]" style={{ color: "#6e6e6e" }}>
+            <p className="text-[12px]" style={{ color: "#726b58" }}>
               환율을 불러오는 중입니다 — 잠시 후 다시 확인하세요.
             </p>
           ) : capOk && riskOk2 ? (
-            <p className="text-[12px]" style={{ color: "#6e6e6e" }}>
+            <p className="text-[12px]" style={{ color: "#726b58" }}>
               종목 입력 후 손절가를 설정하면 권장 수량이 계산됩니다.
             </p>
           ) : (
-            <p className="text-[12px]" style={{ color: "#6e6e6e" }}>
+            <p className="text-[12px]" style={{ color: "#726b58" }}>
               총 투자 자금과 허용 손실 %를 입력하면 적정 수량을 자동 계산합니다.
             </p>
           )}
 
           {/* 켈리 검증 (선택) */}
-          <div className="pt-2" style={{ borderTop: "1px solid #222" }}>
-            <p className="text-[12px] mb-1.5" style={{ color: "#6b7280" }}>
-              켈리 검증 <span style={{ color: "#4b5563" }}>(선택)</span> — 예상 승률·손익비를 넣으면 이 베팅이 수학적으로 말이 되는지 확인
+          <div className="pt-2" style={{ borderTop: "1px solid #262112" }}>
+            <p className="text-[12px] mb-1.5" style={{ color: "#726b58" }}>
+              켈리 검증 <span style={{ color: "#423e33" }}>(선택)</span> — 예상 승률·손익비를 넣으면 이 베팅이 수학적으로 말이 되는지 확인
             </p>
             <div className="grid grid-cols-2 gap-2">
               <input
@@ -602,11 +602,11 @@ function PreTradeChecklist({
             </div>
             {kellyF !== null && (
               kellyF <= 0 ? (
-                <p className="text-[12px] mt-1.5 font-bold" style={{ color: "#ef4444" }}>
+                <p className="text-[12px] mt-1.5 font-bold" style={{ color: "#f87171" }}>
                   ⚠ 켈리 값 음수 ({(kellyF * 100).toFixed(1)}%) — 이 승률·손익비 조합은 기대손실입니다. 진입 자체를 재고하세요.
                 </p>
               ) : (
-                <p className="text-[12px] mt-1.5" style={{ color: "#a78bfa" }}>
+                <p className="text-[12px] mt-1.5" style={{ color: "#6fb3b8" }}>
                   켈리 기준 자금의 {((kellyPct ?? 0) * 100).toFixed(1)}%{kellyCapped && " (상한 25% 적용)"}
                   {kellyShares !== null && ` ≈ ${kellyShares}주`} — 위 고정 비율 결과와 비교해 <span className="font-bold">작은 쪽</span>을 권장
                 </p>
@@ -618,7 +618,7 @@ function PreTradeChecklist({
         {/* 손절가 + 매수 수량 */}
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <p className="text-[12px] text-[#6b7280] mb-1 uppercase tracking-widest">
+            <p className="text-[12px] text-[#726b58] mb-1 uppercase tracking-widest">
               손절가 {isKR ? "(₩)" : "($)"}
               {recStopNum && <span className="ml-1 normal-case" style={{ color: "#facc15" }}>권장 {isKR ? `₩${Number(recStopNum).toLocaleString()}` : `$${recStopNum}`}</span>}
             </p>
@@ -628,29 +628,29 @@ function PreTradeChecklist({
               onChange={(e) => setStopPrice(e.target.value)}
               placeholder={recStopNum ?? (isKR ? "예: 48000" : "예: 138.50")}
               className={inputCls}
-              style={{ ...inputStyle, borderColor: stopOk ? "#39ff8f66" : "var(--border)" }}
+              style={{ ...inputStyle, borderColor: stopOk ? "#ffb02066" : "var(--border)" }}
             />
             {stopOk && stopLossAmt !== null && (
-              <p className="text-[12px] mt-0.5" style={{ color: "#ef4444" }}>
+              <p className="text-[12px] mt-0.5" style={{ color: "#f87171" }}>
                 손실 {isKR ? `₩${Math.abs(stopLossAmt).toLocaleString()}` : `$${Math.abs(stopLossAmt).toFixed(0)}`} ({sharesNum}주 기준)
               </p>
             )}
-            <p className="text-[12px] mt-1.5 leading-relaxed" style={{ color: "#6e6e6e" }}>
+            <p className="text-[12px] mt-1.5 leading-relaxed" style={{ color: "#726b58" }}>
               <span style={{ color: "#facc15" }}>O'Neil 원칙</span> 매수가 대비 -7~8% 하락 시 감정 없이 즉시 손절
             </p>
           </div>
           <div>
-            <p className="text-[12px] text-[#6b7280] mb-1 uppercase tracking-widest">매수 수량 (주)</p>
+            <p className="text-[12px] text-[#726b58] mb-1 uppercase tracking-widest">매수 수량 (주)</p>
             <input
               type="number"
               value={shares}
               onChange={(e) => setShares(e.target.value)}
               placeholder="예: 10"
               className={inputCls}
-              style={{ ...inputStyle, borderColor: sharesOk ? "#39ff8f66" : "var(--border)" }}
+              style={{ ...inputStyle, borderColor: sharesOk ? "#ffb02066" : "var(--border)" }}
             />
             {sharesOk && curPrice > 0 && (
-              <p className="text-[12px] mt-0.5" style={{ color: "#a8a8a8" }}>
+              <p className="text-[12px] mt-0.5" style={{ color: "#a39c88" }}>
                 총 {isKR ? `₩${(curPrice * sharesNum).toLocaleString()}` : `$${(curPrice * sharesNum).toFixed(0)}`}
               </p>
             )}
@@ -659,50 +659,50 @@ function PreTradeChecklist({
 
         {/* AI thesis 미니 표시 */}
         {aiOk && aiData.thesis && (
-          <div className="rounded-lg px-3 py-2 text-[12px] leading-relaxed" style={{ background: "#39ff8f08", border: "1px solid #39ff8f22", color: "#a8a8a8" }}>
-            <span className="font-bold" style={{ color: "#39ff8f" }}>AI Thesis </span>{aiData.thesis}
+          <div className="rounded-lg px-3 py-2 text-[12px] leading-relaxed" style={{ background: "#ffb02008", border: "1px solid #ffb02022", color: "#a39c88" }}>
+            <span className="font-bold" style={{ color: "#ffb020" }}>AI Thesis </span>{aiData.thesis}
           </div>
         )}
       </div>
 
-      <div className="px-4 pb-4 space-y-1.5" style={{ borderTop: "1px solid #2e2e2e" }}>
+      <div className="px-4 pb-4 space-y-1.5" style={{ borderTop: "1px solid #262112" }}>
         <div className="pt-2" />
         {CHECKLIST.map((item) => {
           const pass  = item.pass;
           const isManual = !item.auto && (item.id === "workbook" || item.id === "funds");
           const isInputItem = item.id === "stop" || item.id === "size";
           // 입력 항목은 아직 입력 전이면 회색(미결), 틀리면 노란색 경고
-          const color = pass ? "#39ff8f"
-            : isInputItem ? "#6b7280"
-            : item.auto && !pass && (item.id === "buy" || item.id === "grade" || item.id === "score") ? "#ef4444"
-            : "#6b7280";
+          const color = pass ? "#4ade80"
+            : isInputItem ? "#726b58"
+            : item.auto && !pass && (item.id === "buy" || item.id === "grade" || item.id === "score") ? "#f87171"
+            : "#726b58";
           return (
             <div
               key={item.id}
               className="flex items-center gap-3 rounded-lg px-3 py-2"
               onClick={isManual ? () => setManualOk((m) => ({ ...m, [item.id]: !m[item.id] })) : undefined}
               style={{
-                background: pass ? "#39ff8f08" : "transparent",
-                border: `1px solid ${pass ? "#39ff8f22" : isManual ? "#33333366" : "#1e1e1e"}`,
+                background: pass ? "#4ade8008" : "transparent",
+                border: `1px solid ${pass ? "#4ade8022" : isManual ? "#26211266" : "#111009"}`,
                 cursor: isManual ? "pointer" : "default",
               }}
             >
               <div
                 className="w-4 h-4 rounded flex items-center justify-center text-[12px] font-black shrink-0"
-                style={{ background: pass ? "#39ff8f33" : "#1c1c1c", border: `1px solid ${color}66`, color }}
+                style={{ background: pass ? "#4ade8033" : "#111009", border: `1px solid ${color}66`, color }}
               >
                 {pass ? "✓" : "○"}
               </div>
-              <span className="flex-1 text-[12px]" style={{ color: pass ? "#c0c0c0" : "#6b7280" }}>
+              <span className="flex-1 text-[12px]" style={{ color: pass ? "#a39c88" : "#726b58" }}>
                 {item.label}
               </span>
-              <span className="text-[12px]" style={{ color: "#6e6e6e" }} title={item.tip}>?</span>
+              <span className="text-[12px]" style={{ color: "#726b58" }} title={item.tip}>?</span>
             </div>
           );
         })}
       </div>
 
-      <div className="px-4 py-3 rounded-b-xl text-center" style={{ background: allPass ? "#39ff8f0d" : "#ef44440d", borderTop: `1px solid ${overallColor}22` }}>
+      <div className="px-4 py-3 rounded-b-xl text-center" style={{ background: allPass ? "#4ade800d" : "#f871710d", borderTop: `1px solid ${overallColor}22` }}>
         <p className="text-[12px] font-bold" style={{ color: overallColor }}>
           {allPass
             ? "✓ 모든 조건 충족 — 매수 실행 가능"
@@ -1056,20 +1056,20 @@ export default function WorkflowPage() {
     <div className="space-y-3 max-w-3xl">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#222222", color: "#6e6e6e" }}>
+        <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#262112", color: "#726b58" }}>
           <FlagIcon market={market === "KR" ? "KR" : "US"} size={14} />{" "}{market === "KR" ? "KOSPI" : "S&P 500"}
         </span>
         <h1 className="text-base font-bold text-white">투자 의사결정 워크플로우</h1>
         {!loading && (
           <span className="text-[12px] px-2 py-0.5 rounded font-bold"
-            style={{ background: "#39ff8f22", color: "#39ff8f", border: "1px solid #39ff8f44" }}>
+            style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
             LIVE
           </span>
         )}
       </div>
 
       {loading && (
-        <div className="rounded-xl p-8 text-center" style={{ background: "#1c1c1c", border: "1px solid #222" }}>
+        <div className="rounded-xl p-8 text-center" style={{ background: "#111009", border: "1px solid #262112" }}>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>데이터 로딩 중…</p>
         </div>
       )}
@@ -1113,7 +1113,7 @@ export default function WorkflowPage() {
                 onClick={() => setOpenStep(openStep === i ? null : i)}
               />
               {i < steps.length - 1 && (
-                <div className="w-6 h-px" style={{ background: s.proceed ? SIG_COLOR[s.signal] + "44" : "#2a2a2a" }} />
+                <div className="w-6 h-px" style={{ background: s.proceed ? SIG_COLOR[s.signal] + "44" : "#262112" }} />
               )}
             </div>
           ))}

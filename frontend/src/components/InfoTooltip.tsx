@@ -50,12 +50,11 @@ export default function InfoTooltip({ content }: InfoTooltipProps) {
   const boxStyle: React.CSSProperties = {
     position: "absolute",
     zIndex: 9999,
-    background: "#1a1a1a",
-    border: "1px solid #303030",
-    borderRadius: 12,
+    background: "#111009",
+    border: "1px solid #262112",
     padding: "12px 16px",
     width: 288,
-    color: "#a1a1aa",
+    color: "#a39c88",
     fontSize: 12,
     lineHeight: 1.65,
     boxShadow: "0 12px 40px rgba(0,0,0,0.8)",
@@ -67,8 +66,8 @@ export default function InfoTooltip({ content }: InfoTooltipProps) {
     position: "absolute",
     width: 8,
     height: 8,
-    background: "#1a1a1a",
-    border: "1px solid #303030",
+    background: "#111009",
+    border: "1px solid #262112",
     transform: "rotate(45deg)",
   };
 
@@ -98,9 +97,9 @@ export default function InfoTooltip({ content }: InfoTooltipProps) {
         style={{
           width: 16,
           height: 16,
-          background: visible ? "#39ff8f22" : "#222",
-          color: visible ? "#39ff8f" : "#71717a",
-          border: `1px solid ${visible ? "#39ff8f55" : "#333"}`,
+          background: visible ? "#ffb02022" : "#0e0d08",
+          color: visible ? "#ffb020" : "#726b58",
+          border: `1px solid ${visible ? "#ffb02055" : "#262112"}`,
           cursor: "default",
           lineHeight: 1,
         }}

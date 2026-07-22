@@ -9,15 +9,15 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-noto-kr)", "var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["ui-monospace", "SF Mono", "Cascadia Code", "Roboto Mono", "var(--font-noto-kr)", "var(--font-inter)", "ui-sans-serif", "system-ui", "monospace"],
       },
       borderRadius: {
-        DEFAULT: "0.625rem",
-        sm: "0.375rem",
-        md: "0.75rem",
-        lg: "1rem",
-        xl: "1.25rem",
-        "2xl": "1.5rem",
+        DEFAULT: "0px",
+        sm: "0px",
+        md: "0px",
+        lg: "0px",
+        xl: "0px",
+        "2xl": "0px",
       },
       colors: {
         surface: {
@@ -29,12 +29,16 @@ const config: Config = {
         border: {
           DEFAULT: "var(--border)",
           dim:     "var(--border-dim)",
+          ctrl:    "var(--border-ctrl)",
         },
         accent: {
           DEFAULT: "var(--accent)",
-          dim: "#22c55e",
-          muted: "#166534",
+          dim: "#c98a2e",
+          muted: "#4a3410",
         },
+        good:   "var(--good)",
+        info:   "var(--info)",
+        num:    "var(--num)",
         warn:   "var(--warn)",
         danger: "var(--danger)",
       },

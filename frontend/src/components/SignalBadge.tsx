@@ -1,6 +1,6 @@
 interface SignalBadgeProps {
   signal: string;          // "GO" | "CAUTION" | "STOP" | any string
-  color?: string;          // override — hex like "#39ff8f"
+  color?: string;          // override — hex like "#ffb020"
   size?: "sm" | "md";
 }
 

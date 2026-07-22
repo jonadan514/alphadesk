@@ -8,7 +8,7 @@ import { SECTOR_TO_ETF } from "@/src/lib/constants";
 import StockTechPanel from "@/src/components/StockTechPanel";
 
 const ACTION_COLOR: Record<string, string> = {
-  BUY: "#39ff8f", "SMALL BUY": "#22c55e", WATCH: "#facc15", HOLD: "#9ca3af", SKIP: "#4b5563",
+  BUY: "#4ade80", "SMALL BUY": "#22c55e", WATCH: "#facc15", HOLD: "#a39c88", SKIP: "#423e33",
 };
 
 // 파이프라인 데이터가 문자열 숫자(json default=str)나 비정형(GPT 출력)일 수 있어 방어적으로 변환
@@ -48,7 +48,7 @@ function SectorBadge({ sector, leadingKeys, laggingKeys }: {
   if (leadingKeys.includes(sector)) {
     return (
       <span className="text-[12px] font-bold px-1.5 py-0.5 rounded"
-        style={{ background: "#39ff8f18", color: "#39ff8f", border: "1px solid #39ff8f33" }}>
+        style={{ background: "#4ade8018", color: "#4ade80", border: "1px solid #4ade8033" }}>
         ↑ LEADING
       </span>
     );
@@ -56,7 +56,7 @@ function SectorBadge({ sector, leadingKeys, laggingKeys }: {
   if (laggingKeys.includes(sector)) {
     return (
       <span className="text-[12px] font-bold px-1.5 py-0.5 rounded"
-        style={{ background: "#ef444418", color: "#ef4444", border: "1px solid #ef444433" }}>
+        style={{ background: "#f8717118", color: "#f87171", border: "1px solid #f8717133" }}>
         ↓ LAGGING
       </span>
     );
@@ -72,7 +72,7 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
 }) {
   const isKR  = market === "KR";
   const ai    = aiMap[pick.symbol] ?? aiMap[pick.name] ?? null;
-  const color = pick.action === "BUY" ? "#39ff8f" : pick.action === "WATCH" ? "#facc15" : "#9ca3af";
+  const color = pick.action === "BUY" ? "#4ade80" : pick.action === "WATCH" ? "#facc15" : "#a39c88";
 
   const rsRaw = num(pick.relative_strength);
   const factors = [
@@ -102,11 +102,11 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
     >
       <div
         className="w-full max-w-lg rounded-2xl overflow-hidden"
-        style={{ background: "#1c1c1c", border: `1.5px solid ${color}44`, maxHeight: "85vh", overflowY: "auto" }}
+        style={{ background: "#111009", border: `1.5px solid ${color}44`, maxHeight: "85vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 flex items-start gap-4" style={{ background: "#131313", borderBottom: `1px solid ${color}22` }}>
+        <div className="px-5 py-4 flex items-start gap-4" style={{ background: "#0e0d08", borderBottom: `1px solid ${color}22` }}>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-0.5">
               {pick.name
@@ -117,15 +117,15 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{pick.action}</span>
-              <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#39ff8f22", color: "#39ff8f", border: "1px solid #39ff8f44" }}>Grade {pick.grade}</span>
-              <span className="text-[12px] text-[#6b7280]">{pick.sector}</span>
+              <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>Grade {pick.grade}</span>
+              <span className="text-[12px] text-[#726b58]">{pick.sector}</span>
             </div>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-black" style={{ color: "#39ff8f" }}>{compScore?.toFixed(1) ?? "—"}</p>
-            <p className="text-[12px] text-[#6b7280]">종합 점수</p>
+            <p className="text-2xl font-black" style={{ color: "#ffb020" }}>{compScore?.toFixed(1) ?? "—"}</p>
+            <p className="text-[12px] text-[#726b58]">종합 점수</p>
           </div>
-          <button onClick={onClose} className="text-[#6b7280] hover:text-white text-lg font-bold">✕</button>
+          <button onClick={onClose} className="text-[#726b58] hover:text-white text-lg font-bold">✕</button>
         </div>
 
         <div className="px-5 py-4 space-y-3">
@@ -134,23 +134,23 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
             <div className="grid grid-cols-2 gap-3">
               {curPrice != null && (
                 <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-                  <p className="text-[12px] text-[#6b7280] mb-0.5">현재가</p>
+                  <p className="text-[12px] text-[#726b58] mb-0.5">현재가</p>
                   <p className="text-lg font-black text-white">
                     {isKR ? `₩${curPrice.toLocaleString()}` : `$${curPrice.toFixed(2)}`}
                   </p>
                   {isKR && pct52 != null && (
-                    <p className="text-[12px] mt-0.5" style={{ color: pct52 > -10 ? "#facc15" : "#9ca3af" }}>
+                    <p className="text-[12px] mt-0.5" style={{ color: pct52 > -10 ? "#facc15" : "#a39c88" }}>
                       52주 고점 대비 {pct52 > 0 ? "+" : ""}{pct52.toFixed(1)}%
                     </p>
                   )}
                 </div>
               )}
               {isKR && targetAI != null && (
-                <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid #39ff8f22" }}>
-                  <p className="text-[12px] text-[#6b7280] mb-0.5">AI 목표가</p>
-                  <p className="text-lg font-black" style={{ color: "#39ff8f" }}>₩{targetAI.toLocaleString()}</p>
+                <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid #ffb02022" }}>
+                  <p className="text-[12px] text-[#726b58] mb-0.5">AI 목표가</p>
+                  <p className="text-lg font-black" style={{ color: "#ffb020" }}>₩{targetAI.toLocaleString()}</p>
                   {curPrice != null && curPrice > 0 && (
-                    <p className="text-[12px] mt-0.5" style={{ color: "#39ff8f" }}>
+                    <p className="text-[12px] mt-0.5" style={{ color: "#ffb020" }}>
                       {((targetAI - curPrice) / curPrice) * 100 >= 0 ? "+" : ""}
                       {(((targetAI - curPrice) / curPrice) * 100).toFixed(1)}% 상승여력
                     </p>
@@ -158,11 +158,11 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                 </div>
               )}
               {!isKR && targetUS != null && (
-                <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid #39ff8f22" }}>
-                  <p className="text-[12px] text-[#6b7280] mb-0.5">목표가</p>
-                  <p className="text-lg font-black" style={{ color: "#39ff8f" }}>${targetUS.toFixed(2)}</p>
+                <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid #ffb02022" }}>
+                  <p className="text-[12px] text-[#726b58] mb-0.5">목표가</p>
+                  <p className="text-lg font-black" style={{ color: "#ffb020" }}>${targetUS.toFixed(2)}</p>
                   {curPrice != null && curPrice > 0 && (
-                    <p className="text-[12px] mt-0.5" style={{ color: "#39ff8f" }}>
+                    <p className="text-[12px] mt-0.5" style={{ color: "#ffb020" }}>
                       {((targetUS - curPrice) / curPrice) * 100 >= 0 ? "+" : ""}
                       {(((targetUS - curPrice) / curPrice) * 100).toFixed(1)}% 상승여력
                     </p>
@@ -182,7 +182,7 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                 { label: "배당", val: pick.dividend_yield != null ? `${pick.dividend_yield}%` : null },
               ].filter(f => f.val).map(({ label, val }) => (
                 <div key={label} className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-                  <p className="text-[12px] text-[#6b7280]">{label}</p>
+                  <p className="text-[12px] text-[#726b58]">{label}</p>
                   <p className="text-sm font-black text-white">{val}</p>
                 </div>
               ))}
@@ -192,34 +192,34 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
           {/* Lynch/O'Neil 핵심 지표: PEG + EPS 성장 + 52주 고점 */}
           {(num(pick.peg_ratio) != null || pct52 != null || num(pick.earnings_growth) != null) && (() => {
             const pegVal = num(pick.peg_ratio);
-            const pegColor = pegVal == null ? "#6b7280" : (isKR ? pegVal < 0.7 : pegVal < 1.0) ? "#39ff8f" : pegVal < 1.5 ? "#facc15" : "#ef4444";
+            const pegColor = pegVal == null ? "#726b58" : (isKR ? pegVal < 0.7 : pegVal < 1.0) ? "#4ade80" : pegVal < 1.5 ? "#facc15" : "#f87171";
             const peg52Val = pct52;
-            const peg52Color = peg52Val == null ? "#6b7280" : peg52Val > -5 ? "#39ff8f" : peg52Val > -15 ? "#facc15" : "#ef4444";
+            const peg52Color = peg52Val == null ? "#726b58" : peg52Val > -5 ? "#4ade80" : peg52Val > -15 ? "#facc15" : "#f87171";
             const egVal = num(pick.earnings_growth);
-            const egColor = egVal == null ? "#6b7280" : egVal >= 25 ? "#39ff8f" : egVal >= 10 ? "#facc15" : "#ef4444";
+            const egColor = egVal == null ? "#726b58" : egVal >= 25 ? "#4ade80" : egVal >= 10 ? "#facc15" : "#f87171";
             return (
               <div>
-                <p className="text-[12px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#6e6e6e" }}>
+                <p className="text-[12px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#726b58" }}>
                   Lynch / O'Neil 지표
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {pegVal != null && (
                     <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${pegColor}33` }}>
-                      <p className="text-[12px]" style={{ color: "#6e6e6e" }}>PEG 비율</p>
+                      <p className="text-[12px]" style={{ color: "#726b58" }}>PEG 비율</p>
                       <p className="text-sm font-black" style={{ color: pegColor }}>{pegVal.toFixed(2)}</p>
                       <p className="text-[12px]" style={{ color: pegColor }}>{(isKR ? pegVal < 0.7 : pegVal < 1.0) ? "Lynch ✓" : "주의"}</p>
                     </div>
                   )}
                   {egVal != null && (
                     <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${egColor}33` }}>
-                      <p className="text-[12px]" style={{ color: "#6e6e6e" }}>EPS 성장</p>
+                      <p className="text-[12px]" style={{ color: "#726b58" }}>EPS 성장</p>
                       <p className="text-sm font-black" style={{ color: egColor }}>{egVal > 0 ? "+" : ""}{egVal.toFixed(1)}%</p>
                       <p className="text-[12px]" style={{ color: egColor }}>{egVal >= 25 ? "O'Neil ✓" : egVal >= 0 ? "성장중" : "역성장"}</p>
                     </div>
                   )}
                   {peg52Val != null && (
                     <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${peg52Color}33` }}>
-                      <p className="text-[12px]" style={{ color: "#6e6e6e" }}>52주 고점</p>
+                      <p className="text-[12px]" style={{ color: "#726b58" }}>52주 고점</p>
                       <p className="text-sm font-black" style={{ color: peg52Color }}>{peg52Val > 0 ? "+" : ""}{peg52Val.toFixed(1)}%</p>
                       <p className="text-[12px]" style={{ color: peg52Color }}>{peg52Val > -5 ? "돌파권" : peg52Val > -15 ? "조정중" : "하락중"}</p>
                     </div>
@@ -235,11 +235,11 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
           {/* 팩터 점수 */}
           {factors.length > 0 && (
             <div>
-              <p className="text-[12px] font-bold uppercase tracking-widest text-[#6b7280] mb-2">팩터 점수</p>
+              <p className="text-[12px] font-bold uppercase tracking-widest text-[#726b58] mb-2">팩터 점수</p>
               <div className="space-y-1.5">
                 {factors.map(({ label, val }) => {
                   const score = Math.min(100, Math.max(0, val ?? 0));
-                  const fc = score >= 70 ? "#39ff8f" : score >= 50 ? "#facc15" : "#ef4444";
+                  const fc = score >= 70 ? "#4ade80" : score >= 50 ? "#facc15" : "#f87171";
                   return (
                     <div key={label} className="flex items-center gap-2">
                       <span className="text-[12px] w-36 shrink-0" style={{ color: "var(--text-muted)" }}>{label}</span>
@@ -257,18 +257,18 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
           {/* AI thesis */}
           {ai && (
             <div className="space-y-2">
-              <p className="text-[12px] font-bold uppercase tracking-widest text-[#6b7280]">AI 분석</p>
+              <p className="text-[12px] font-bold uppercase tracking-widest text-[#726b58]">AI 분석</p>
               {ai.thesis && (
-                <p className="text-[12px] leading-relaxed" style={{ color: "#c0c0c0" }}>{ai.thesis}</p>
+                <p className="text-[12px] leading-relaxed" style={{ color: "#a39c88" }}>{ai.thesis}</p>
               )}
               <div className="grid grid-cols-2 gap-3">
                 {catalysts.length > 0 && (
                   <div>
-                    <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: "#39ff8f" }}>상승 촉매</p>
+                    <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: "#4ade80" }}>상승 촉매</p>
                     <ul className="space-y-0.5">
                       {catalysts.slice(0, 3).map((c, i) => (
-                        <li key={i} className="text-[12px] flex gap-1" style={{ color: "#a8a8a8" }}>
-                          <span style={{ color: "#39ff8f" }}>▲</span>{c}
+                        <li key={i} className="text-[12px] flex gap-1" style={{ color: "#a39c88" }}>
+                          <span style={{ color: "#4ade80" }}>▲</span>{c}
                         </li>
                       ))}
                     </ul>
@@ -276,11 +276,11 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                 )}
                 {bearCases.length > 0 && (
                   <div>
-                    <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: "#ef4444" }}>하락 리스크</p>
+                    <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: "#f87171" }}>하락 리스크</p>
                     <ul className="space-y-0.5">
                       {bearCases.slice(0, 3).map((b, i) => (
-                        <li key={i} className="text-[12px] flex gap-1" style={{ color: "#a8a8a8" }}>
-                          <span style={{ color: "#ef4444" }}>▼</span>{b}
+                        <li key={i} className="text-[12px] flex gap-1" style={{ color: "#a39c88" }}>
+                          <span style={{ color: "#f87171" }}>▼</span>{b}
                         </li>
                       ))}
                     </ul>
@@ -289,11 +289,11 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
               </div>
               {confidence != null && (
                 <div>
-                  <div className="flex justify-between text-[12px] text-[#6b7280] mb-0.5">
+                  <div className="flex justify-between text-[12px] text-[#726b58] mb-0.5">
                     <span>AI 신뢰도</span><span>{Math.round(confidence)}%</span>
                   </div>
-                  <div className="h-1 rounded-full" style={{ background: "#282828" }}>
-                    <div className="h-1 rounded-full" style={{ width: `${Math.min(100, Math.max(0, confidence))}%`, background: "#39ff8f" }} />
+                  <div className="h-1 rounded-full" style={{ background: "#111009" }}>
+                    <div className="h-1 rounded-full" style={{ width: `${Math.min(100, Math.max(0, confidence))}%`, background: "#ffb020" }} />
                   </div>
                 </div>
               )}
@@ -425,7 +425,7 @@ export default function TopPicksPage() {
             } />
           </div>
         </div>
-        <p className="text-[12px] text-[#6b7280]">
+        <p className="text-[12px] text-[#726b58]">
           {isKR ? "KOSPI 4팩터 스크리닝" : "기관 자금흐름 & AI 스코어링"} · {picks.length}개
           {report.analysis_date && <span className="ml-2">{report.analysis_date}</span>}
         </p>
@@ -441,7 +441,7 @@ export default function TopPicksPage() {
               <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 선행:&nbsp;
                 {leadingKeys.map(k => (
-                  <span key={k} className="font-bold" style={{ color: "#39ff8f" }}>{k} </span>
+                  <span key={k} className="font-bold" style={{ color: "#ffb020" }}>{k} </span>
                 ))}
               </span>
             )}
@@ -449,7 +449,7 @@ export default function TopPicksPage() {
               <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 후행:&nbsp;
                 {laggingKeys.map(k => (
-                  <span key={k} className="font-bold" style={{ color: "#ef4444" }}>{k} </span>
+                  <span key={k} className="font-bold" style={{ color: "#f87171" }}>{k} </span>
                 ))}
               </span>
             )}
@@ -457,9 +457,9 @@ export default function TopPicksPage() {
         )}
       </div>
 
-      {loading && <p className="text-sm text-[#6b7280]">로딩 중…</p>}
+      {loading && <p className="text-sm text-[#726b58]">로딩 중…</p>}
       {!loading && picks.length === 0 && (
-        <p className="text-sm text-[#6b7280]">
+        <p className="text-sm text-[#726b58]">
           데이터 없음. GitHub → Actions → Daily Analysis 실행 후 재확인하세요.
         </p>
       )}
@@ -479,7 +479,7 @@ export default function TopPicksPage() {
           <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <tr style={{ borderBottom: "1px solid #262112" }}>
                 {[
                   { label: "#",        tip: null },
                   { label: "종목",     tip: null },
@@ -492,7 +492,7 @@ export default function TopPicksPage() {
                   { label: "섹터",     tip: "현재 사이클에서 선행/후행 섹터 여부" },
                   { label: "액션",     tip: "BUY = 신규 진입 권고. WATCH = 관심 유지." },
                 ].map(({ label, tip }) => (
-                  <th key={label} className="px-3 py-3 text-left font-semibold uppercase tracking-wider" style={{ color: "#6e6e6e", fontSize: "10px" }}>
+                  <th key={label} className="px-3 py-3 text-left font-semibold uppercase tracking-wider" style={{ color: "#726b58", fontSize: "10px" }}>
                     <span className="flex items-center gap-1">
                       {label}
                       {tip && <InfoTooltip content={tip} />}
@@ -516,14 +516,14 @@ export default function TopPicksPage() {
                     key={p.symbol}
                     className="transition-colors cursor-pointer"
                     style={{
-                      borderBottom: "1px solid #2e2e2e",
-                      background: isLeading ? "#39ff8f04" : "transparent",
+                      borderBottom: "1px solid #262112",
+                      background: isLeading ? "#ffb02004" : "transparent",
                     }}
                     onClick={() => setSelectedPick(p)}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#161616")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = isLeading ? "#39ff8f04" : "transparent")}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#0e0d08")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLeading ? "#ffb02004" : "transparent")}
                   >
-                    <td className="px-3 py-3 font-mono text-[#6b7280]">
+                    <td className="px-3 py-3 font-mono text-[#726b58]">
                       {String(i + 1).padStart(2, "0")}
                     </td>
                     <td className="px-3 py-3">
@@ -532,7 +532,7 @@ export default function TopPicksPage() {
                         const badge = inWatch && (
                           <span title="내 워치리스트에 담긴 종목"
                             className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0"
-                            style={{ background: "#60a5fa20", color: "#60a5fa", border: "1px solid #60a5fa40" }}>
+                            style={{ background: "#6fb3b820", color: "#6fb3b8", border: "1px solid #6fb3b840" }}>
                             🔖 워치
                           </span>
                         );
@@ -544,15 +544,15 @@ export default function TopPicksPage() {
                       <div className="text-[12px]" style={{ color: "var(--text-faint)" }}>{p.sector}</div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="px-2 py-0.5 rounded text-[13px] font-bold" style={{ background: "#39ff8f22", color: "#39ff8f", border: "1px solid #39ff8f44" }}>
+                      <span className="px-2 py-0.5 rounded text-[13px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
                         {p.grade}
                       </span>
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-accent">{p.composite_score?.toFixed(1)}</span>
-                        <div className="w-16 h-1 rounded-full" style={{ background: "#282828" }}>
-                          <div className="h-1 rounded-full" style={{ width: `${p.composite_score ?? 0}%`, background: "#39ff8f" }} />
+                        <div className="w-16 h-1 rounded-full" style={{ background: "#111009" }}>
+                          <div className="h-1 rounded-full" style={{ width: `${p.composite_score ?? 0}%`, background: "#ffb020" }} />
                         </div>
                       </div>
                     </td>
@@ -561,7 +561,7 @@ export default function TopPicksPage() {
                     {!isKR && (
                       <td className="px-3 py-3 font-mono text-white">{p.analyst != null ? Math.round(p.analyst) : "—"}</td>
                     )}
-                    <td className="px-3 py-3 font-mono font-bold" style={{ color: "#39ff8f" }}>
+                    <td className="px-3 py-3 font-mono font-bold" style={{ color: "#ffb020" }}>
                       {rsDisplay}
                     </td>
                     <td className="px-3 py-3">
@@ -569,7 +569,7 @@ export default function TopPicksPage() {
                     </td>
                     <td className="px-3 py-3">
                       <span className="px-2 py-1 rounded text-[12px] font-bold"
-                        style={{ background: `${ACTION_COLOR[p.action] ?? "#4b5563"}22`, color: ACTION_COLOR[p.action] ?? "#9ca3af", border: `1px solid ${ACTION_COLOR[p.action] ?? "#4b5563"}44` }}>
+                        style={{ background: `${ACTION_COLOR[p.action] ?? "#423e33"}22`, color: ACTION_COLOR[p.action] ?? "#a39c88", border: `1px solid ${ACTION_COLOR[p.action] ?? "#423e33"}44` }}>
                         {p.action}
                       </span>
                     </td>

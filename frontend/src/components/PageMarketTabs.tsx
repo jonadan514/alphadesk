@@ -31,7 +31,7 @@ export default function PageMarketTabs() {
           onClick={() => setMarket(key)}
           className="flex flex-1 items-center justify-center gap-2 py-2.5 text-[13px] font-bold transition-all"
           style={{
-            background: market === key ? "#39ff8f" : "transparent",
+            background: market === key ? "#ffb020" : "transparent",
             color:      market === key ? "#000" : "var(--text-muted)",
             cursor:     "pointer",
           }}

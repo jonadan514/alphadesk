@@ -28,7 +28,7 @@ interface Briefing {
   gpt_comment: string;
 }
 
-const VERDICT_COLOR: Record<string, string> = { GO: "#39ff8f", CAUTION: "#facc15", STOP: "#ef4444" };
+const VERDICT_COLOR: Record<string, string> = { GO: "#4ade80", CAUTION: "#facc15", STOP: "#f87171" };
 
 function StockLabel({ s }: { s: StockRef }) {
   return (
@@ -40,7 +40,7 @@ function StockLabel({ s }: { s: StockRef }) {
 }
 
 function MarketRow({ label, m }: { label: string; m: MarketWeek }) {
-  const gc = VERDICT_COLOR[m.gate ?? ""] ?? "#9ca3af";
+  const gc = VERDICT_COLOR[m.gate ?? ""] ?? "#a39c88";
   return (
     <div className="flex items-center gap-3 flex-wrap rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
       <span className="text-[13px] font-bold text-white w-24 shrink-0">{label}</span>
@@ -49,7 +49,7 @@ function MarketRow({ label, m }: { label: string; m: MarketWeek }) {
       </span>
       <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{m.regime?.replace("_", " ") ?? "—"}</span>
       {m.index_chg_1w != null && (
-        <span className="text-[12px] font-bold" style={{ color: m.index_chg_1w >= 0 ? "#39ff8f" : "#ef4444" }}>
+        <span className="text-[12px] font-bold" style={{ color: m.index_chg_1w >= 0 ? "#4ade80" : "#f87171" }}>
           주간 {m.index_chg_1w >= 0 ? "+" : ""}{m.index_chg_1w}%
         </span>
       )}
@@ -58,7 +58,7 @@ function MarketRow({ label, m }: { label: string; m: MarketWeek }) {
         {(m.history ?? []).map((h) => (
           <span key={h.date} title={`${h.date} · ${h.verdict}`}
             className="w-2.5 h-2.5 rounded-full inline-block"
-            style={{ background: VERDICT_COLOR[h.verdict] ?? "#4b5563" }} />
+            style={{ background: VERDICT_COLOR[h.verdict] ?? "#423e33" }} />
         ))}
       </span>
     </div>
@@ -74,7 +74,7 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
       <button className="w-full flex items-center gap-3 px-4 py-3 text-left" onClick={() => setOpen(!open)}>
         <span className="text-[14px] font-bold text-white">📋 {b.week} 주</span>
         <span className="text-[11px]" style={{ color: "var(--text-faint)" }}>{b.generated_at}</span>
-        <span className="ml-auto text-[12px]" style={{ color: "#39ff8f" }}>{open ? "▲" : "▼"}</span>
+        <span className="ml-auto text-[12px]" style={{ color: "#ffb020" }}>{open ? "▲" : "▼"}</span>
       </button>
 
       {open && (
@@ -89,9 +89,9 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
 
           {/* GPT 총평 */}
           {b.gpt_comment && (
-            <div className="rounded-xl p-3" style={{ background: "#39ff8f08", border: "1px solid #39ff8f22" }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#39ff8f" }}>주간 총평</p>
-              <p className="text-[12px] leading-relaxed whitespace-pre-line" style={{ color: "#c0c0c0" }}>{b.gpt_comment}</p>
+            <div className="rounded-xl p-3" style={{ background: "#ffb02008", border: "1px solid #ffb02022" }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#ffb020" }}>주간 총평</p>
+              <p className="text-[12px] leading-relaxed whitespace-pre-line" style={{ color: "#a39c88" }}>{b.gpt_comment}</p>
             </div>
           )}
 
@@ -106,8 +106,8 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
               <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>변동 없음</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #39ff8f22" }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color: "#39ff8f" }}>+ 신규 진입 ({wl.added.length})</p>
+                <div className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #ffb02022" }}>
+                  <p className="text-[11px] font-bold mb-1" style={{ color: "#ffb020" }}>+ 신규 진입 ({wl.added.length})</p>
                   {wl.added.map((s) => (
                     <p key={`${s.market}:${s.symbol}`} className="text-[12px] py-0.5">
                       <StockLabel s={s} />
@@ -116,8 +116,8 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
                   ))}
                   {wl.added.length === 0 && <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>없음</p>}
                 </div>
-                <div className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #ef444422" }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color: "#ef4444" }}>− 탈락 ({wl.removed.length})</p>
+                <div className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #f8717122" }}>
+                  <p className="text-[11px] font-bold mb-1" style={{ color: "#f87171" }}>− 탈락 ({wl.removed.length})</p>
                   {wl.removed.map((s) => (
                     <p key={`${s.market}:${s.symbol}`} className="text-[12px] py-0.5"><StockLabel s={s} /></p>
                   ))}
@@ -187,7 +187,7 @@ export default function BriefingPage() {
       </div>
 
       {loading ? (
-        <div className="h-24 rounded-xl animate-pulse" style={{ background: "#1c1c1c" }} />
+        <div className="h-24 rounded-xl animate-pulse" style={{ background: "#111009" }} />
       ) : briefings.length === 0 ? (
         <div className="bg-card rounded-xl p-6 text-center">
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>아직 브리핑이 없어요.</p>

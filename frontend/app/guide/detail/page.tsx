@@ -22,13 +22,13 @@ function Accordion({ sections }: { sections: Section[] }) {
               className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
               onClick={() => setOpen(isOpen ? null : s.id)}
             >
-              <span className="text-lg w-6 text-center shrink-0" style={{ color: "#39ff8f" }}>{s.icon}</span>
+              <span className="text-lg w-6 text-center shrink-0" style={{ color: "#ffb020" }}>{s.icon}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-white">{s.title}</p>
                 <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{s.subtitle}</p>
               </div>
               <span className="text-[13px] shrink-0 transition-transform duration-200" style={{
-                color: "#39ff8f",
+                color: "#ffb020",
                 transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
                 display: "inline-block",
               }}>▼</span>
@@ -83,13 +83,13 @@ function Table({ headers, rows }: { headers: string[]; rows: (string | React.Rea
   );
 }
 function Highlight({ children }: { children: React.ReactNode }) {
-  return <span className="font-semibold" style={{ color: "#39ff8f" }}>{children}</span>;
+  return <span className="font-semibold" style={{ color: "#ffb020" }}>{children}</span>;
 }
 function Warn({ children }: { children: React.ReactNode }) {
   return <span className="font-semibold" style={{ color: "#facc15" }}>{children}</span>;
 }
 function Danger({ children }: { children: React.ReactNode }) {
-  return <span className="font-semibold" style={{ color: "#ef4444" }}>{children}</span>;
+  return <span className="font-semibold" style={{ color: "#f87171" }}>{children}</span>;
 }
 
 const SECTIONS: Section[] = [
@@ -273,7 +273,7 @@ const SECTIONS: Section[] = [
         <P>
           위험 허용 금액을 손절 비율로 나눠 최대 투자금을 구합니다.
         </P>
-        <div className="rounded-xl px-4 py-3 mt-2 font-mono text-[12px]" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: "#39ff8f" }}>
+        <div className="rounded-xl px-4 py-3 mt-2 font-mono text-[12px]" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: "#ffb020" }}>
           위험 금액 = 총액 × 위험 허용 %<br />
           최대 투자금 = 위험 금액 ÷ 손절 %<br />
           매수 수량 = 최대 투자금 ÷ 현재가
@@ -286,7 +286,7 @@ const SECTIONS: Section[] = [
         <P>
           기대 수익을 최대화하는 이론적 최적 비율을 계산합니다. 단, 최대 25% 상한으로 제한합니다.
         </P>
-        <div className="rounded-xl px-4 py-3 mt-2 font-mono text-[12px]" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: "#39ff8f" }}>
+        <div className="rounded-xl px-4 py-3 mt-2 font-mono text-[12px]" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: "#ffb020" }}>
           f = 승률 - (1 - 승률) / 손익비<br />
           투자 비율 = min(f, 25%)<br />
           매수 수량 = (총액 × 투자 비율) ÷ 현재가
@@ -340,15 +340,15 @@ const SECTIONS: Section[] = [
             go: "얼마나 살 것인가",
           },
         ].map(({ n, title, auto, detail, go }) => {
-          const autoColor = auto === "자동" ? "#39ff8f" : auto === "반자동" ? "#facc15" : "#9ca3af";
+          const autoColor = auto === "자동" ? "#ffb020" : auto === "반자동" ? "#facc15" : "#a39c88";
           return (
             <div key={n} className="rounded-xl p-3 mt-2" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="text-[12px] font-black" style={{ color: "#39ff8f" }}>{n}</span>
+                <span className="text-[12px] font-black" style={{ color: "#ffb020" }}>{n}</span>
                 <span className="text-[12px] font-semibold text-white">{title}</span>
                 <span className="text-[12px] font-bold px-1.5 py-0.5 rounded"
                   style={{ background: `${autoColor}18`, color: autoColor, border: `1px solid ${autoColor}44` }}>{auto}</span>
-                <span className="ml-auto text-[12px] px-2 py-0.5 rounded-lg font-semibold" style={{ background: "#39ff8f18", color: "#39ff8f", border: "1px solid #39ff8f33" }}>
+                <span className="ml-auto text-[12px] px-2 py-0.5 rounded-lg font-semibold" style={{ background: "#ffb02018", color: "#ffb020", border: "1px solid #ffb02033" }}>
                   GO: {go}
                 </span>
               </div>
@@ -561,10 +561,10 @@ const SECTIONS: Section[] = [
           },
         ].map(({ q, a, type }) => (
           <div key={q} className="rounded-xl p-3 mt-2" style={{
-            background: "#222222",
-            border: `1px solid ${type === "danger" ? "#ef444433" : type === "warn" ? "#facc1533" : "#272727"}`,
+            background: "#262112",
+            border: `1px solid ${type === "danger" ? "#f8717133" : type === "warn" ? "#facc1533" : "#111009"}`,
           }}>
-            <p className="text-[12px] font-semibold mb-1" style={{ color: type === "danger" ? "#ef4444" : type === "warn" ? "#facc15" : "#e5e7eb" }}>
+            <p className="text-[12px] font-semibold mb-1" style={{ color: type === "danger" ? "#f87171" : type === "warn" ? "#facc15" : "#ece7d8" }}>
               ✗ {q}
             </p>
             <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{a}</p>
@@ -581,7 +581,7 @@ export default function GuideDetailPage() {
       <div>
         <div className="flex items-center gap-3 mb-1">
           <h1 className="text-base font-bold text-white">세부 사용 설명서</h1>
-          <span className="inline-block px-2 py-0.5 rounded-lg text-[12px] font-bold" style={{ background: "#39ff8f22", color: "#39ff8f", border: "1px solid #39ff8f44" }}>
+          <span className="inline-block px-2 py-0.5 rounded-lg text-[12px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
             DETAIL
           </span>
         </div>
@@ -592,7 +592,7 @@ export default function GuideDetailPage() {
 
       <Accordion sections={SECTIONS} />
 
-      <p className="text-[12px] text-center pb-4" style={{ color: "#4a4a4a" }}>
+      <p className="text-[12px] text-center pb-4" style={{ color: "#423e33" }}>
         AlphaDesk는 투자 참고 도구입니다. 최종 투자 판단과 책임은 항상 본인에게 있습니다.
       </p>
     </div>

@@ -6,10 +6,10 @@ import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
 
 const CYCLE_COLOR: Record<string, string> = {
-  early:     "#60a5fa",
-  mid:       "#39ff8f",
+  early:     "#6fb3b8",
+  mid:       "#ffb020",
   late:      "#facc15",
-  recession: "#ef4444",
+  recession: "#f87171",
 };
 
 const CYCLE_KO: Record<string, { label: string; desc: string }> = {
@@ -29,7 +29,7 @@ function pct(v: number | null | undefined, digits = 2) {
 
 function RetCell({ val }: { val: number | null | undefined }) {
   if (val == null) return <td className="px-2 py-1.5 text-center" style={{ color: "var(--text-faint)" }}>—</td>;
-  const color = val > 0 ? "#39ff8f" : val < 0 ? "#ef4444" : "var(--text-muted)";
+  const color = val > 0 ? "#4ade80" : val < 0 ? "#f87171" : "var(--text-muted)";
   return (
     <td className="px-2 py-1.5 text-center font-semibold text-[12px]" style={{ color }}>
       {pct(val)}
@@ -61,7 +61,7 @@ export default function SectorPage() {
         <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>
           일간 분석 실행 후 자동으로 계산됩니다.
         </p>
-        <code className="block text-[12px] rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", color: "#39ff8f" }}>
+        <code className="block text-[12px] rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", color: "#ffb020" }}>
           GitHub → Actions → Daily Analysis → Run workflow
         </code>
       </div>
@@ -71,7 +71,7 @@ export default function SectorPage() {
   const isKR = market === "KR";
   const cycle       = data.current_cycle ?? "mid";
   const cycleLabel  = CYCLE_KO[cycle]?.label ?? data.cycle_label ?? "Mid Cycle";
-  const cycleColor  = CYCLE_COLOR[cycle] ?? "#39ff8f";
+  const cycleColor  = CYCLE_COLOR[cycle] ?? "#ffb020";
   const scores      = data.cycle_scores ?? {};
 
   const rows: any[]       = isKR ? (data.sector_data ?? []) : (data.etf_data ?? []);
@@ -91,7 +91,7 @@ export default function SectorPage() {
     <div className="space-y-2">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#222222", color: "#6e6e6e" }}>
+        <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#262112", color: "#726b58" }}>
           <FlagIcon market={isKR ? "KR" : "US"} size={14} />{" "}{isKR ? "KOSPI" : "S&P 500"}
         </span>
         <h1 className="text-base font-bold text-white">섹터 분석</h1>
@@ -119,17 +119,17 @@ export default function SectorPage() {
             {Object.entries(scores).map(([cyc, val]: any) => {
               const isActive = cyc === cycle;
               const barW = Math.round((Math.abs(val) / maxAbsScore) * 100);
-              const c = CYCLE_COLOR[cyc] ?? "#9ca3af";
+              const c = CYCLE_COLOR[cyc] ?? "#a39c88";
               return (
                 <div key={cyc}>
                   <div className="flex justify-between text-[12px] mb-0.5">
                     <span style={{ color: isActive ? c : "var(--text-muted)", fontWeight: isActive ? 700 : 400 }}>
                       {CYCLE_KO[cyc]?.label ?? cyc.toUpperCase()}
                     </span>
-                    <span style={{ color: val > 0 ? "#39ff8f" : "#ef4444" }}>{pct(val)}</span>
+                    <span style={{ color: val > 0 ? "#4ade80" : "#f87171" }}>{pct(val)}</span>
                   </div>
                   <div className="h-1 rounded-full" style={{ background: "var(--bg-inset)" }}>
-                    <div className="h-1 rounded-full" style={{ width: `${barW}%`, background: isActive ? c : "#444" }} />
+                    <div className="h-1 rounded-full" style={{ width: `${barW}%`, background: isActive ? c : "#453b1f" }} />
                   </div>
                 </div>
               );
@@ -141,13 +141,13 @@ export default function SectorPage() {
         <div className="bg-card rounded-xl p-3 space-y-2">
           <div>
             <div className="flex items-center gap-1.5 mb-1">
-              <p className="text-[13px] font-bold" style={{ color: "#39ff8f" }}>↑ 선행 섹터</p>
+              <p className="text-[13px] font-bold" style={{ color: "#ffb020" }}>↑ 선행 섹터</p>
               <InfoTooltip content="최근 1개월 시장 대비 상대강도(RS)가 가장 높은 상위 3개 섹터입니다. 자금이 집중되고 있는 섹터로, 포트폴리오 편입 우선순위가 높습니다." />
             </div>
             <div className="flex flex-wrap gap-1">
               {leading.map((l: any, i: number) => (
                 <span key={isKR ? (l.sector ?? i) : (l.ticker ?? i)} className="text-[12px] font-bold px-2 py-0.5 rounded-lg"
-                  style={{ background: "#39ff8f18", color: "#39ff8f", border: "1px solid #39ff8f33" }}>
+                  style={{ background: "#ffb02018", color: "#ffb020", border: "1px solid #ffb02033" }}>
                   {isKR ? l.sector : `${l.ticker} · ${l.name}`}
                 </span>
               ))}
@@ -156,13 +156,13 @@ export default function SectorPage() {
           </div>
           <div>
             <div className="flex items-center gap-1.5 mb-1">
-              <p className="text-[13px] font-bold" style={{ color: "#ef4444" }}>↓ 후행 섹터</p>
+              <p className="text-[13px] font-bold" style={{ color: "#f87171" }}>↓ 후행 섹터</p>
               <InfoTooltip content="최근 1개월 시장 대비 상대강도(RS)가 가장 낮은 하위 3개 섹터입니다(음수만). 자금이 빠지고 있는 섹터로, 비중 축소를 고려할 수 있습니다." />
             </div>
             <div className="flex flex-wrap gap-1">
               {lagging.map((l: any, i: number) => (
                 <span key={isKR ? (l.sector ?? i) : (l.ticker ?? i)} className="text-[12px] font-bold px-2 py-0.5 rounded-lg"
-                  style={{ background: "#ef444418", color: "#ef4444", border: "1px solid #ef444433" }}>
+                  style={{ background: "#f8717118", color: "#f87171", border: "1px solid #f8717133" }}>
                   {isKR ? l.sector : `${l.ticker} · ${l.name}`}
                 </span>
               ))}
@@ -224,8 +224,8 @@ export default function SectorPage() {
                 <button key={p} onClick={() => setPeriod(p)}
                   className="px-2.5 py-1 text-[12px] font-semibold transition-colors"
                   style={{
-                    background: period === p ? "#39ff8f18" : "transparent",
-                    color: period === p ? "#39ff8f" : "var(--text-muted)",
+                    background: period === p ? "#ffb02018" : "transparent",
+                    color: period === p ? "#ffb020" : "var(--text-muted)",
                   }}>
                   {p === "1d" ? "1일" : p === "1w" ? "1주" : p === "1m" ? "1달" : "3달"}
                 </button>
@@ -274,7 +274,7 @@ export default function SectorPage() {
                     </span>
                   )}
 
-                  <span className="w-16 text-[12px] font-bold" style={{ color: ret == null ? "var(--text-muted)" : ret >= 0 ? "#39ff8f" : "#ef4444" }}>
+                  <span className="w-16 text-[12px] font-bold" style={{ color: ret == null ? "var(--text-muted)" : ret >= 0 ? "#4ade80" : "#f87171" }}>
                     {pct(ret)}
                   </span>
 
@@ -285,12 +285,12 @@ export default function SectorPage() {
                           style={{
                             width: `${barPct}%`,
                             left: rs >= 0 ? "50%" : `${50 - barPct}%`,
-                            background: rs >= 0 ? "#39ff8f" : "#ef4444",
+                            background: rs >= 0 ? "#4ade80" : "#f87171",
                           }} />
                       )}
                     </div>
                     <span className="w-14 text-right text-[12px] font-semibold"
-                      style={{ color: rs == null ? "var(--text-muted)" : rs >= 0 ? "#39ff8f" : "#ef4444" }}>
+                      style={{ color: rs == null ? "var(--text-muted)" : rs >= 0 ? "#4ade80" : "#f87171" }}>
                       {pct(rs)}
                     </span>
                   </div>
@@ -307,7 +307,7 @@ export default function SectorPage() {
                         <div key={s.symbol} className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px]"
                           style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
                           <span className="font-bold text-white">{s.symbol}</span>
-                          {isKR && s.name && <span style={{ color: "#a8a8a8" }}>{s.name}</span>}
+                          {isKR && s.name && <span style={{ color: "#a39c88" }}>{s.name}</span>}
                           <span className="px-1 rounded text-[12px] font-bold badge-go">{s.grade}</span>
                           {s.score != null && (
                             <span style={{ color: "var(--text-muted)" }}>{s.score.toFixed(0)}점</span>
@@ -332,7 +332,7 @@ export default function SectorPage() {
             {isKR ? "KOSPI" : "SPY"} 벤치마크 수익률
           </span>
           {Object.entries(benchmarkRet).map(([label, val]: any) => (
-            <span key={label} className="font-semibold" style={{ color: val >= 0 ? "#39ff8f" : "#ef4444" }}>
+            <span key={label} className="font-semibold" style={{ color: val >= 0 ? "#4ade80" : "#f87171" }}>
               {label}: {pct(val)}
             </span>
           ))}

@@ -81,9 +81,9 @@ function pickQuote(verdict: string | null): Quote {
 }
 
 const MOOD_COLOR: Record<string, string> = {
-  GO:      "#39ff8f",
+  GO:      "#4ade80",
   CAUTION: "#facc15",
-  STOP:    "#ef4444",
+  STOP:    "#f87171",
 };
 
 export default function DailyQuote() {
@@ -99,17 +99,17 @@ export default function DailyQuote() {
   }, [market]);
 
   const { text, ko, author } = pickQuote(verdict);
-  const accentColor = verdict ? (MOOD_COLOR[verdict] ?? "#6e6e6e") : "#6e6e6e";
+  const accentColor = verdict ? (MOOD_COLOR[verdict] ?? "#726b58") : "#726b58";
 
   return (
     <div className="hidden lg:flex items-center gap-3 min-w-0 flex-1">
-      <span className="shrink-0 w-[3px] h-7 rounded-full" style={{ background: accentColor, opacity: 0.8 }} />
+      <span className="shrink-0 w-[3px] h-7" style={{ background: accentColor, opacity: 0.8 }} />
       <div className="min-w-0">
-        <p className="truncate font-semibold leading-snug" style={{ color: "#d4d4d4", fontSize: "13px" }}>
+        <p className="truncate font-semibold leading-snug" style={{ color: "#ece7d8", fontSize: "13px" }}>
           &ldquo;{ko}&rdquo;
           <span className="font-bold ml-2" style={{ color: accentColor, fontSize: "12px" }}>— {author}</span>
         </p>
-        <p className="truncate leading-tight" style={{ color: "#5a5a5a", fontSize: "11px" }}>
+        <p className="truncate leading-tight" style={{ color: "#726b58", fontSize: "11px" }}>
           {text}
         </p>
       </div>
