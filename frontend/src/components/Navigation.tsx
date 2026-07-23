@@ -20,7 +20,7 @@ const NAV_GROUPS = [
   {
     label: "내 투자",
     items: [
-      { href: "/watchlist", label: "워치리스트",  emoji: "👁️", color: "#ffb020" },
+      { href: "/watchlist", label: "워치리스트",  emoji: "🔭", color: "#ffb020" },
       { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#ffb020" },
     ],
   },
