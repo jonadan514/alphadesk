@@ -210,14 +210,14 @@ export default function HomePage() {
       <MobileView />
 
       {/* 데스크톱 전용 ─────────────────────────────────── */}
-      <div className="hidden md:block space-y-3">
+      <div className="hidden md:block space-y-2">
 
       {/* Title */}
       <div className="flex items-center gap-3">
         <span className="text-[13px] font-bold px-2 py-0.5 rounded" style={{ background: "#262112", color: "#726b58" }}>
           <FlagIcon market={isKR ? "KR" : "US"} size={14} />{" "}{isKR ? "KOSPI" : "S&P 500"}
         </span>
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-xl font-bold text-white">
           {isKR ? "한국 주식 마켓 인텔리전스" : "미국 주식 마켓 인텔리전스"}
         </h1>
         <span className="rounded px-2 py-0.5 text-[13px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
@@ -226,7 +226,7 @@ export default function HomePage() {
       </div>
 
       {/* KPI */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-2">
         <KpiCard
           label="종합 판단"
           value={verdict}
@@ -262,13 +262,13 @@ export default function HomePage() {
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {/* Left: sensors + picks */}
-        <div className="col-span-2 space-y-3">
+        <div className="col-span-2 space-y-2">
           {/* Sensors */}
           {Object.keys(sensors).length > 0 && (
-            <div className="bg-card rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-card rounded-lg p-2">
+              <div className="flex items-center gap-2 mb-1.5">
                 <h2 className="stat-label" style={{ fontSize: 13 }}>핵심 체제 지표</h2>
                 <InfoTooltip content="각 센서는 독립적으로 시장 국면을 측정합니다." />
               </div>
@@ -280,7 +280,7 @@ export default function HomePage() {
                     {entries.map(([key, val]) => {
                       const info = sensorInfo(val, isKR);
                       return (
-                        <div key={key} className="rounded-xl p-3" style={{ background: "var(--bg-inset)", border: `1px solid ${info.color}33` }}>
+                        <div key={key} className="rounded-xl p-2" style={{ background: "var(--bg-inset)", border: `1px solid ${info.color}33` }}>
                           <p className="text-[13px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
                             {sensorLabel[key] ?? key}
                           </p>
@@ -301,8 +301,8 @@ export default function HomePage() {
             const idxSma  = isKR ? regime.kospi_sma200 : regime.spy_sma200;
             if (!idxLast) return null;
             return (
-              <div className="bg-card rounded-lg p-3">
-                <h2 className="stat-label mb-2" style={{ fontSize: 13 }}>{indexName} 주요 지표</h2>
+              <div className="bg-card rounded-lg p-2">
+                <h2 className="stat-label mb-1.5" style={{ fontSize: 13 }}>{indexName} 주요 지표</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { label: isKR ? "KOSPI" : "S&P 500", val: idxLast?.toLocaleString(), color: "var(--text-primary)" },
@@ -310,7 +310,7 @@ export default function HomePage() {
                     { label: "변동성(60일)", val: regime.vol_60d != null ? `${regime.vol_60d.toFixed(1)}%` : "—", color: regime.vol_60d > 25 ? "#f87171" : "#facc15" },
                     { label: "모멘텀(20일)", val: regime.mom_20d != null ? `${regime.mom_20d >= 0 ? "+" : ""}${regime.mom_20d.toFixed(1)}%` : "—", color: regime.mom_20d != null ? (regime.mom_20d >= 0 ? "#4ade80" : "#f87171") : "var(--text-muted)" },
                   ].map(({ label, val, color }) => (
-                    <div key={label} className="rounded-lg p-3 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
+                    <div key={label} className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
                       <p className="text-[13px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p className="text-lg font-bold" style={{ color }}>{val ?? "—"}</p>
                     </div>
@@ -322,8 +322,8 @@ export default function HomePage() {
 
           {/* Top picks */}
           {top5.length > 0 && (
-            <div className="bg-card rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
+            <div className="bg-card rounded-lg p-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <h2 className="stat-label" style={{ fontSize: 13 }}>상위 5 {isKR ? "KOSPI" : "알파"} 픽</h2>
                   <InfoTooltip content="복합 점수 상위 5개 종목입니다." />
@@ -331,7 +331,7 @@ export default function HomePage() {
               </div>
               <div className="space-y-2">
                 {top5.map((p: any) => (
-                  <div key={p.symbol} className="flex items-center gap-3 py-2 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
+                  <div key={p.symbol} className="flex items-center gap-3 py-1.5 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
                     <span className="w-6 h-6 rounded flex items-center justify-center text-[13px] font-black" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
                       {p.grade}
                     </span>
@@ -359,10 +359,10 @@ export default function HomePage() {
         </div>
 
         {/* Right */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Verdict card */}
           <div
-            className="rounded-lg p-5 flex flex-col items-center justify-center gap-2 text-center"
+            className="rounded-lg p-3 flex flex-col items-center justify-center gap-1 text-center"
             style={{
               background: verdict === "GO" ? "#4ade8018" : verdict === "CAUTION" ? "#facc1518" : "#f8717118",
               border: `1px solid ${verdictColor}44`,
@@ -371,7 +371,7 @@ export default function HomePage() {
             <div className="flex items-center gap-2">
               <span className="text-[13px] font-bold uppercase tracking-widest" style={{ color: verdictColor }}>종합 판단</span>
             </div>
-            <p className="text-5xl font-black" style={{ color: verdictColor }}>{verdict}</p>
+            <p className="text-4xl font-black" style={{ color: verdictColor }}>{verdict}</p>
             <p className="text-[13px] text-[#726b58]">
               체제: <span className="text-white font-semibold">{regime.regime?.replace("_", " ") ?? "—"}</span>
               &nbsp;·&nbsp;점수: <span className="text-white font-semibold">{regime.weighted_score?.toFixed(2) ?? "—"}</span>
@@ -383,8 +383,8 @@ export default function HomePage() {
 
           {/* SPY / KOSPI 다음 주 방향 예측 */}
           {spy && (
-            <div className="bg-card rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-card rounded-lg p-2">
+              <div className="flex items-center gap-2 mb-1.5">
                 <h2 className="stat-label" style={{ fontSize: 13 }}>{predTitle}</h2>
                 <InfoTooltip content={
                   spy.model_type === "rule_based"
@@ -392,7 +392,7 @@ export default function HomePage() {
                     : `LightGBM 모델의 다음 주 ${isKR ? "KOSPI" : "SPY"} 방향 예측입니다.`
                 } />
               </div>
-              <p className="text-3xl font-black mb-1" style={{ color: dirInfo(spy.direction).color }}>
+              <p className="text-2xl font-black mb-1" style={{ color: dirInfo(spy.direction).color }}>
                 {dirInfo(spy.direction).text}
               </p>
               <p className="text-base font-semibold text-white">
