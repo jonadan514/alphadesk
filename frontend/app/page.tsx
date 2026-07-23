@@ -25,12 +25,12 @@ function KpiCard({ label, value, sub, color, tooltip }: {
   label: string; value: string; sub?: string; color?: string; tooltip: string;
 }) {
   return (
-    <div className="bg-card rounded-xl p-3 flex flex-col gap-1.5">
+    <div className="bg-card rounded-xl p-2 flex flex-col gap-1">
       <div className="flex items-center gap-1.5">
         <p className="stat-label" style={{ fontSize: 13 }}>{label}</p>
         <InfoTooltip content={tooltip} />
       </div>
-      <p className="text-4xl font-black leading-none" style={{ color: color ?? "var(--text-primary)" }}>{value}</p>
+      <p className="text-3xl font-black leading-none" style={{ color: color ?? "var(--text-primary)" }}>{value}</p>
       {sub && <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{sub}</p>}
     </div>
   );
@@ -280,12 +280,12 @@ export default function HomePage() {
                     {entries.map(([key, val]) => {
                       const info = sensorInfo(val, isKR);
                       return (
-                        <div key={key} className="rounded-xl p-2" style={{ background: "var(--bg-inset)", border: `1px solid ${info.color}33` }}>
-                          <p className="text-[13px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+                        <div key={key} className="rounded-xl p-1.5" style={{ background: "var(--bg-inset)", border: `1px solid ${info.color}33` }}>
+                          <p className="text-[13px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>
                             {sensorLabel[key] ?? key}
                           </p>
                           <p className="text-base font-bold" style={{ color: info.color }}>{info.text}</p>
-                          <p className="text-[13px] font-mono mt-0.5" style={{ color: "var(--text-faint)" }}>{val.toFixed(2)}</p>
+                          <p className="text-[13px] font-mono" style={{ color: "var(--text-faint)" }}>{val.toFixed(2)}</p>
                         </div>
                       );
                     })}
@@ -303,15 +303,15 @@ export default function HomePage() {
             return (
               <div className="bg-card rounded-lg p-2">
                 <h2 className="stat-label mb-1.5" style={{ fontSize: 13 }}>{indexName} 주요 지표</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { label: isKR ? "KOSPI" : "S&P 500", val: idxLast?.toLocaleString(), color: "var(--text-primary)" },
                     { label: "SMA 200", val: idxSma?.toLocaleString(), color: idxLast >= (idxSma ?? 0) ? "#4ade80" : "#f87171" },
                     { label: "변동성(60일)", val: regime.vol_60d != null ? `${regime.vol_60d.toFixed(1)}%` : "—", color: regime.vol_60d > 25 ? "#f87171" : "#facc15" },
                     { label: "모멘텀(20일)", val: regime.mom_20d != null ? `${regime.mom_20d >= 0 ? "+" : ""}${regime.mom_20d.toFixed(1)}%` : "—", color: regime.mom_20d != null ? (regime.mom_20d >= 0 ? "#4ade80" : "#f87171") : "var(--text-muted)" },
                   ].map(({ label, val, color }) => (
-                    <div key={label} className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-                      <p className="text-[13px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                    <div key={label} className="rounded-lg p-1.5 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
+                      <p className="text-[13px] mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p className="text-lg font-bold" style={{ color }}>{val ?? "—"}</p>
                     </div>
                   ))}
@@ -329,9 +329,9 @@ export default function HomePage() {
                   <InfoTooltip content="복합 점수 상위 5개 종목입니다." />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {top5.map((p: any) => (
-                  <div key={p.symbol} className="flex items-center gap-3 py-1.5 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
+                  <div key={p.symbol} className="flex items-center gap-3 py-1 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
                     <span className="w-6 h-6 rounded flex items-center justify-center text-[13px] font-black" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
                       {p.grade}
                     </span>
