@@ -27,11 +27,11 @@ function KpiCard({ label, value, sub, color, tooltip }: {
   return (
     <div className="bg-card rounded-xl p-3 flex flex-col gap-1.5">
       <div className="flex items-center gap-1.5">
-        <p className="stat-label">{label}</p>
+        <p className="stat-label" style={{ fontSize: 13 }}>{label}</p>
         <InfoTooltip content={tooltip} />
       </div>
-      <p className="text-3xl font-black leading-none" style={{ color: color ?? "var(--text-primary)" }}>{value}</p>
-      {sub && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{sub}</p>}
+      <p className="text-4xl font-black leading-none" style={{ color: color ?? "var(--text-primary)" }}>{value}</p>
+      {sub && <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{sub}</p>}
     </div>
   );
 }
@@ -118,9 +118,9 @@ export default function HomePage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FlagIcon market={isKR ? "KR" : "US"} size={16} />
-          <span className="text-sm font-bold text-white">{isKR ? "한국 주식" : "미국 주식"}</span>
+          <span className="text-base font-bold text-white">{isKR ? "한국 주식" : "미국 주식"}</span>
         </div>
-        <span className="rounded px-2 py-0.5 text-[11px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
+        <span className="rounded px-2 py-0.5 text-[12px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
           LIVE
         </span>
       </div>
@@ -133,9 +133,9 @@ export default function HomePage() {
           border: `1px solid ${verdictColor}44`,
         }}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: verdictColor }}>종합 판단</p>
-        <p className="text-5xl font-black" style={{ color: verdictColor }}>{verdict}</p>
-        <p className="text-[12px] mt-1" style={{ color: "#a39c88" }}>
+        <p className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: verdictColor }}>종합 판단</p>
+        <p className="text-6xl font-black" style={{ color: verdictColor }}>{verdict}</p>
+        <p className="text-[13px] mt-1" style={{ color: "#a39c88" }}>
           {verdict === "GO" ? "진입 가능" : verdict === "CAUTION" ? "경계 — 신중하게" : verdict === "STOP" ? "신규 진입 자제" : "—"}
         </p>
       </div>
@@ -148,9 +148,9 @@ export default function HomePage() {
           { label: "마켓 게이트", value: gate.gate ?? "—", sub: isKR ? (gate.reason ?? "") : `avg ${gate.avg_score?.toFixed(1) ?? "—"}`, color: VERDICT_COLOR[gate.gate] ?? "#ece7d8" },
         ].map(({ label, value, sub, color }) => (
           <div key={label} className="rounded-xl p-3 flex flex-col gap-1" style={{ background: "var(--bg-card)" }}>
-            <p className="text-[10px] uppercase tracking-wide" style={{ color: "#726b58" }}>{label}</p>
-            <p className="text-xl font-black leading-none" style={{ color }}>{value}</p>
-            <p className="text-[10px] truncate" style={{ color: "#726b58" }}>{sub}</p>
+            <p className="text-[11px] uppercase tracking-wide" style={{ color: "#726b58" }}>{label}</p>
+            <p className="text-2xl font-black leading-none" style={{ color }}>{value}</p>
+            <p className="text-[11px] truncate" style={{ color: "#726b58" }}>{sub}</p>
           </div>
         ))}
       </div>
@@ -159,14 +159,14 @@ export default function HomePage() {
       {spy && (
         <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: "var(--bg-card)" }}>
           <div>
-            <p className="text-[11px] uppercase tracking-wide mb-1" style={{ color: "#726b58" }}>{predTitle}</p>
-            <p className="text-lg font-black" style={{ color: dirInfo(spy.direction).color }}>
+            <p className="text-[12px] uppercase tracking-wide mb-1" style={{ color: "#726b58" }}>{predTitle}</p>
+            <p className="text-xl font-black" style={{ color: dirInfo(spy.direction).color }}>
               {dirInfo(spy.direction).text}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[11px]" style={{ color: "#726b58" }}>확률</p>
-            <p className="text-lg font-bold text-white">
+            <p className="text-[12px]" style={{ color: "#726b58" }}>확률</p>
+            <p className="text-xl font-bold text-white">
               {spy.probability != null ? `${Math.round(spy.probability * 100)}%` : "—"}
             </p>
           </div>
@@ -176,21 +176,21 @@ export default function HomePage() {
       {/* 상위 픽 */}
       {top5.length > 0 && (
         <div className="rounded-xl p-3" style={{ background: "var(--bg-card)" }}>
-          <p className="text-[11px] uppercase tracking-wide mb-2" style={{ color: "#726b58" }}>
+          <p className="text-[12px] uppercase tracking-wide mb-2" style={{ color: "#726b58" }}>
             상위 {isKR ? "KOSPI" : "알파"} 픽
           </p>
           <div className="space-y-2">
             {top5.map((p: any) => (
               <div key={p.symbol} className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded text-[10px] font-black flex items-center justify-center shrink-0"
+                <span className="w-5 h-5 rounded text-[11px] font-black flex items-center justify-center shrink-0"
                   style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
                   {p.grade}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-bold text-white truncate block">{p.name ?? p.symbol}</span>
-                  {p.name && <span className="text-[10px] font-mono" style={{ color: "#726b58" }}>{p.symbol}</span>}
+                  <span className="text-base font-bold text-white truncate block">{p.name ?? p.symbol}</span>
+                  {p.name && <span className="text-[11px] font-mono" style={{ color: "#726b58" }}>{p.symbol}</span>}
                 </div>
-                <span className="text-sm font-bold shrink-0" style={{ color: "#ffb020" }}>{p.composite_score?.toFixed(1)}</span>
+                <span className="text-base font-bold shrink-0" style={{ color: "#ffb020" }}>{p.composite_score?.toFixed(1)}</span>
               </div>
             ))}
           </div>
@@ -198,7 +198,7 @@ export default function HomePage() {
       )}
 
       {picks.length === 0 && Object.keys(sensors).length === 0 && (
-        <div className="rounded-xl p-4 text-center text-sm" style={{ background: "var(--bg-card)", color: "#726b58" }}>
+        <div className="rounded-xl p-4 text-center text-base" style={{ background: "var(--bg-card)", color: "#726b58" }}>
           데이터 없음. 분석 실행 후 재확인하세요.
         </div>
       )}
@@ -214,13 +214,13 @@ export default function HomePage() {
 
       {/* Title */}
       <div className="flex items-center gap-3">
-        <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#262112", color: "#726b58" }}>
+        <span className="text-[13px] font-bold px-2 py-0.5 rounded" style={{ background: "#262112", color: "#726b58" }}>
           <FlagIcon market={isKR ? "KR" : "US"} size={14} />{" "}{isKR ? "KOSPI" : "S&P 500"}
         </span>
-        <h1 className="text-xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-white">
           {isKR ? "한국 주식 마켓 인텔리전스" : "미국 주식 마켓 인텔리전스"}
         </h1>
-        <span className="rounded px-2 py-0.5 text-[12px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
+        <span className="rounded px-2 py-0.5 text-[13px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
           LIVE
         </span>
       </div>
@@ -269,7 +269,7 @@ export default function HomePage() {
           {Object.keys(sensors).length > 0 && (
             <div className="bg-card rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
-                <h2 className="stat-label">핵심 체제 지표</h2>
+                <h2 className="stat-label" style={{ fontSize: 13 }}>핵심 체제 지표</h2>
                 <InfoTooltip content="각 센서는 독립적으로 시장 국면을 측정합니다." />
               </div>
               {(() => {
@@ -281,11 +281,11 @@ export default function HomePage() {
                       const info = sensorInfo(val, isKR);
                       return (
                         <div key={key} className="rounded-xl p-3" style={{ background: "var(--bg-inset)", border: `1px solid ${info.color}33` }}>
-                          <p className="text-[12px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[13px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
                             {sensorLabel[key] ?? key}
                           </p>
-                          <p className="text-sm font-bold" style={{ color: info.color }}>{info.text}</p>
-                          <p className="text-[12px] font-mono mt-0.5" style={{ color: "var(--text-faint)" }}>{val.toFixed(2)}</p>
+                          <p className="text-base font-bold" style={{ color: info.color }}>{info.text}</p>
+                          <p className="text-[13px] font-mono mt-0.5" style={{ color: "var(--text-faint)" }}>{val.toFixed(2)}</p>
                         </div>
                       );
                     })}
@@ -302,7 +302,7 @@ export default function HomePage() {
             if (!idxLast) return null;
             return (
               <div className="bg-card rounded-lg p-3">
-                <h2 className="stat-label mb-2">{indexName} 주요 지표</h2>
+                <h2 className="stat-label mb-2" style={{ fontSize: 13 }}>{indexName} 주요 지표</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { label: isKR ? "KOSPI" : "S&P 500", val: idxLast?.toLocaleString(), color: "var(--text-primary)" },
@@ -311,8 +311,8 @@ export default function HomePage() {
                     { label: "모멘텀(20일)", val: regime.mom_20d != null ? `${regime.mom_20d >= 0 ? "+" : ""}${regime.mom_20d.toFixed(1)}%` : "—", color: regime.mom_20d != null ? (regime.mom_20d >= 0 ? "#4ade80" : "#f87171") : "var(--text-muted)" },
                   ].map(({ label, val, color }) => (
                     <div key={label} className="rounded-lg p-3 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-                      <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
-                      <p className="text-base font-bold" style={{ color }}>{val ?? "—"}</p>
+                      <p className="text-[13px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                      <p className="text-lg font-bold" style={{ color }}>{val ?? "—"}</p>
                     </div>
                   ))}
                 </div>
@@ -325,26 +325,26 @@ export default function HomePage() {
             <div className="bg-card rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <h2 className="stat-label">상위 5 {isKR ? "KOSPI" : "알파"} 픽</h2>
+                  <h2 className="stat-label" style={{ fontSize: 13 }}>상위 5 {isKR ? "KOSPI" : "알파"} 픽</h2>
                   <InfoTooltip content="복합 점수 상위 5개 종목입니다." />
                 </div>
               </div>
               <div className="space-y-2">
                 {top5.map((p: any) => (
                   <div key={p.symbol} className="flex items-center gap-3 py-2 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
-                    <span className="w-6 h-6 rounded flex items-center justify-center text-[12px] font-black" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
+                    <span className="w-6 h-6 rounded flex items-center justify-center text-[13px] font-black" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
                       {p.grade}
                     </span>
                     <div className="flex-1 min-w-0">
                       {p.name
-                        ? <><span className="text-sm font-bold text-white">{p.name}</span>
-                            <span className="ml-2 text-[12px] font-mono" style={{ color: "var(--text-muted)" }}>{p.symbol}</span></>
-                        : <span className="text-sm font-bold text-white">{p.symbol}</span>
+                        ? <><span className="text-base font-bold text-white">{p.name}</span>
+                            <span className="ml-2 text-[13px] font-mono" style={{ color: "var(--text-muted)" }}>{p.symbol}</span></>
+                        : <span className="text-base font-bold text-white">{p.symbol}</span>
                       }
-                      {p.sector && <span className="ml-2 text-[12px]" style={{ color: "var(--text-faint)" }}>{p.sector}</span>}
+                      {p.sector && <span className="ml-2 text-[13px]" style={{ color: "var(--text-faint)" }}>{p.sector}</span>}
                     </div>
-                    <span className="text-sm font-bold" style={{ color: "#ffb020" }}>{p.composite_score?.toFixed(1)}</span>
-                    <span className="text-[12px] px-2 py-0.5 rounded" style={{ background: "#111009", color: "var(--text-secondary)" }}>{p.action}</span>
+                    <span className="text-base font-bold" style={{ color: "#ffb020" }}>{p.composite_score?.toFixed(1)}</span>
+                    <span className="text-[13px] px-2 py-0.5 rounded" style={{ background: "#111009", color: "var(--text-secondary)" }}>{p.action}</span>
                   </div>
                 ))}
               </div>
@@ -352,7 +352,7 @@ export default function HomePage() {
           )}
 
           {!data || (picks.length === 0 && Object.keys(sensors).length === 0) && (
-            <div className="bg-card rounded-lg p-3 text-center text-sm text-[#726b58]">
+            <div className="bg-card rounded-lg p-3 text-center text-base text-[#726b58]">
               데이터 없음. GitHub → Actions → Daily Analysis 실행 후 재확인하세요.
             </div>
           )}
@@ -369,15 +369,15 @@ export default function HomePage() {
             }}
           >
             <div className="flex items-center gap-2">
-              <span className="text-[12px] font-bold uppercase tracking-widest" style={{ color: verdictColor }}>종합 판단</span>
+              <span className="text-[13px] font-bold uppercase tracking-widest" style={{ color: verdictColor }}>종합 판단</span>
             </div>
-            <p className="text-4xl font-black" style={{ color: verdictColor }}>{verdict}</p>
-            <p className="text-[12px] text-[#726b58]">
+            <p className="text-5xl font-black" style={{ color: verdictColor }}>{verdict}</p>
+            <p className="text-[13px] text-[#726b58]">
               체제: <span className="text-white font-semibold">{regime.regime?.replace("_", " ") ?? "—"}</span>
               &nbsp;·&nbsp;점수: <span className="text-white font-semibold">{regime.weighted_score?.toFixed(2) ?? "—"}</span>
             </p>
             {isKR && gate.reason && (
-              <p className="text-[12px] text-[#a39c88] text-center px-2">{gate.reason}</p>
+              <p className="text-[13px] text-[#a39c88] text-center px-2">{gate.reason}</p>
             )}
           </div>
 
@@ -385,26 +385,26 @@ export default function HomePage() {
           {spy && (
             <div className="bg-card rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
-                <h2 className="stat-label">{predTitle}</h2>
+                <h2 className="stat-label" style={{ fontSize: 13 }}>{predTitle}</h2>
                 <InfoTooltip content={
                   spy.model_type === "rule_based"
                     ? "체제 지표 기반의 다음 주 방향 추정입니다. (ML 예측 데이터가 쌓이면 자동 전환)"
                     : `LightGBM 모델의 다음 주 ${isKR ? "KOSPI" : "SPY"} 방향 예측입니다.`
                 } />
               </div>
-              <p className="text-2xl font-black mb-1" style={{ color: dirInfo(spy.direction).color }}>
+              <p className="text-3xl font-black mb-1" style={{ color: dirInfo(spy.direction).color }}>
                 {dirInfo(spy.direction).text}
               </p>
-              <p className="text-sm font-semibold text-white">
+              <p className="text-base font-semibold text-white">
                 확률 {spy.probability != null ? `${Math.round(spy.probability * 100)}%` : "—"}
               </p>
               {spy.cv_accuracy != null && (
-                <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[13px] mt-1" style={{ color: "var(--text-muted)" }}>
                   모델 정확도 {Math.round(spy.cv_accuracy * 100)}%
                 </p>
               )}
               {spy.model_type === "rule_based" && (
-                <p className="text-[12px] mt-1" style={{ color: "var(--text-faint)" }}>
+                <p className="text-[13px] mt-1" style={{ color: "var(--text-faint)" }}>
                   체제 지표 기반 추정
                 </p>
               )}
