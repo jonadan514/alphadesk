@@ -217,7 +217,13 @@ function PreTradeChecklist({
   aiMap: Record<string, any>;
   regimeName: string;
 }) {
-  const [ticker,     setTicker]     = useState("");
+  const [ticker,     setTicker]     = useState(() => {
+    // 워치리스트 상세의 "매수 체크로 이동" CTA가 넘긴 ?symbol= 을 초기값으로
+    if (typeof window !== "undefined") {
+      return (new URLSearchParams(window.location.search).get("symbol") ?? "").toUpperCase();
+    }
+    return "";
+  });
   const [stopPrice,  setStopPrice]  = useState("");
   const [shares,     setShares]     = useState("");
   const [totalCap,   setTotalCap]   = useState(() => {
@@ -717,7 +723,14 @@ function PreTradeChecklist({
 
 // ── 메인 페이지 ─────────────────────────────────────────────────────────────
 export default function WorkflowPage() {
-  const { market } = useMarket();
+  const { market, setMarket } = useMarket();
+  // 워치리스트 CTA가 넘긴 ?market= 이 현재 시장과 다르면 맞춰준다 (마운트 1회)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const qm = new URLSearchParams(window.location.search).get("market");
+    if ((qm === "US" || qm === "KR") && qm !== market) setMarket(qm);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [openStep, setOpenStep] = useState<number | null>(null);
   const [steps, setSteps]       = useState<StepStatus[]>(
     Array(6).fill({ signal: "LOADING" as Signal, title: "로딩 중…", summary: "", detail: "", action: "", proceed: false })

@@ -14,11 +14,11 @@
   --border-dim: #1c170d;
   --border-ctrl: #453b1f;
 
-  /* Text — 본문은 종이빛 화이트 */
+  /* Text — 본문은 종이빛 화이트. 보조 텍스트는 가독성을 위해 한 단계 밝게 조정(2026-07 UI 개선) */
   --text-primary:   #ece7d8;
-  --text-secondary: #a39c88;
-  --text-muted:     #726b58;
-  --text-faint:     #423e33;
+  --text-secondary: #bcb4a2; /* AI 본문·설명 — 이전 #a39c88 */
+  --text-muted:     #8b8271; /* 라벨·날짜·보조 문구 — 이전 #726b58 */
+  --text-faint:     #565040; /* 정말 부차적인 정보에만 — 이전 #423e33 */
 
   /* 브랜드 액센트 (오늘픽 배지·활성 탭·CTA 등) — 시맨틱과 분리 */
   --accent:     #ffb020;
@@ -65,6 +65,27 @@
   .text-muted    { color: var(--text-muted); }
   .text-faint    { color: var(--text-faint); }
   .border-dim    { border-color: var(--border); }
+
+  /* ── 카드 계층 3단계 (2026-07 UI 개선) ──────────────────────────
+     정보 중요도를 시각적으로 구분한다. 임의 인라인 배경 대신 이 클래스를 재사용할 것.
+     - primary   : 오늘의 최종 판단·즉시 행동·핵심 위험 (한 화면에 1~2개)
+     - secondary : 판단 근거·세부 상태·주요 기능 (일반 카드, 기존 .bg-card와 동일 톤)
+     - tertiary  : 참고 표·세부 지표 (테두리 최소화, 배경만 살짝) */
+  .card-primary {
+    background-color: var(--bg-raised);
+    border: 1px solid var(--border-ctrl);
+    padding: 1.25rem;
+  }
+  .card-secondary {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.75rem;
+  }
+  .card-tertiary {
+    background-color: var(--bg-inset);
+    border: 1px solid var(--border-dim);
+    padding: 0.5rem;
+  }
 
   /* 신호 배지 — 실제 판단색 (게이트 GO/CAUTION/STOP 등) */
   .badge-go      { background: #4ade8020; color: #4ade80; border: 1px solid #4ade8040; }

@@ -21,21 +21,6 @@ const KR_SENSOR_LABEL: Record<string, string> = {
   trend: "TREND", volatility: "VOLATILITY", momentum: "MOMENTUM", breadth: "BREADTH",
 };
 
-function KpiCard({ label, value, sub, color, tooltip }: {
-  label: string; value: string; sub?: string; color?: string; tooltip: string;
-}) {
-  return (
-    <div className="bg-card rounded-xl p-2 flex flex-col gap-1">
-      <div className="flex items-center gap-1.5">
-        <p className="stat-label" style={{ fontSize: 13 }}>{label}</p>
-        <InfoTooltip content={tooltip} />
-      </div>
-      <p className="text-3xl font-black leading-none" style={{ color: color ?? "var(--text-primary)" }}>{value}</p>
-      {sub && <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{sub}</p>}
-    </div>
-  );
-}
-
 function sensorInfo(score: number, isKR: boolean) {
   if (isKR) {
     if (score >= 1.5) return { text: "강세", color: "#4ade80" };
@@ -107,6 +92,21 @@ export default function HomePage() {
   const sensors: Record<string, number> = regime.sensor_scores ?? {};
   const sensorLabel = isKR ? KR_SENSOR_LABEL : US_SENSOR_LABEL;
   const indexName = isKR ? "KOSPI" : "S&P 500";
+
+  // ── 판단 → 행동 문장 (2026-07 UI 개선: 상태만이 아니라 "오늘 할 일"을 함께) ──
+  const verdictMeaning =
+    verdict === "GO" ? "신규 진입 가능" :
+    verdict === "CAUTION" ? "경계 — 신중하게 접근" :
+    verdict === "STOP" ? "신규 진입 자제" : "데이터 대기 중";
+  const verdictBg =
+    verdict === "GO" ? "#4ade8014" : verdict === "CAUTION" ? "#facc1514" : verdict === "STOP" ? "#f8717114" : "var(--bg-raised)";
+  const todayActions: string[] =
+    verdict === "GO" ? ["상위 후보 종목 검토", "동일 섹터 집중 여부 확인", "신규 진입은 분할 매수 권장"] :
+    verdict === "CAUTION" ? ["신규 매수 자제 — 기존 포지션 유지", "손절선 재점검", "다음 분석 후 재판단"] :
+    verdict === "STOP" ? ["신규 진입 보류", "현금 비중 확대 검토", "보유 종목 손절선 엄격 적용"] :
+    ["일간 분석 실행 후 재확인"];
+  // 게이트가 종합 판단과 갈리는 경우 명시 (숨기지 않고 근거에서 드러냄)
+  const gateDiverges = gate.gate && gate.gate !== verdict;
 
   // ── 모바일 요약 뷰 ──────────────────────────────────────
   const MobileView = () => (
@@ -225,41 +225,62 @@ export default function HomePage() {
         </span>
       </div>
 
-      {/* KPI */}
-      <div className="grid grid-cols-4 gap-2">
-        <KpiCard
-          label="종합 판단"
-          value={verdict}
-          sub={verdict === "GO" ? "진입 가능" : verdict === "CAUTION" ? "경계 — 신중하게" : verdict === "STOP" ? "신규 진입 자제" : "—"}
-          color={verdictColor}
-          tooltip="시장 체제·게이트·스크리닝 결과를 종합한 최종 판단입니다."
-        />
-        <KpiCard
-          label="체제 점수"
-          value={regime.weighted_score != null ? regime.weighted_score.toFixed(2) : "—"}
-          sub={regime.regime_label ?? regime.regime ?? "—"}
-          color="#ffb020"
-          tooltip={isKR
-            ? "KOSPI 4개 센서(추세·변동성·모멘텀·브레드스) 가중 합산 점수입니다. 높을수록 강세."
-            : "5개 센서(VIX·Trend·Breadth·Credit·YieldCurve) 가중합. 낮을수록 risk_on."}
-        />
-        <KpiCard
-          label="스크리닝"
-          value={String(picks.length)}
-          sub={isKR ? "KOSPI 4팩터 상위 종목" : "6-factor 복합 점수 상위"}
-          tooltip={isKR
-            ? "기술·펀더멘털·KOSPI 대비 RS·거래량 4팩터 스크리닝 결과입니다."
-            : "6-factor 복합 점수로 S&P 500 전 종목 분석 결과입니다."}
-        />
-        <KpiCard
-          label="마켓 게이트"
-          value={gate.gate ?? "—"}
-          sub={isKR
-            ? (gate.reason ?? "")
-            : `평균 점수 ${gate.avg_score?.toFixed(2) ?? "—"}`}
-          color={VERDICT_COLOR[gate.gate] ?? "#ece7d8"}
-          tooltip="시장 진입 최종 필터입니다. GO = 진입 가능, CAUTION = 경계, STOP = 진입 자제."
-        />
+      {/* ── 오늘의 투자 판단 (Primary) — 상태 + 이유 + 행동을 한 카드에 통합 ── */}
+      <div className="card-primary" style={{ background: verdictBg, borderColor: `${verdictColor}44` }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 판단 */}
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center gap-1.5">
+              <p className="stat-label" style={{ fontSize: 13 }}>오늘의 투자 판단</p>
+              <InfoTooltip content="시장 체제·게이트·스크리닝 결과를 종합한 최종 판단입니다." />
+            </div>
+            <p className="text-5xl font-black mt-1" style={{ color: verdictColor }}>{verdict}</p>
+            <p className="text-[14px] mt-1" style={{ color: "var(--text-secondary)" }}>{verdictMeaning}</p>
+          </div>
+
+          {/* 오늘 할 일 */}
+          <div className="md:border-l md:pl-4" style={{ borderColor: "var(--border-ctrl)" }}>
+            <p className="stat-label mb-1.5" style={{ fontSize: 13 }}>오늘 할 일</p>
+            <ol className="space-y-1">
+              {todayActions.map((a, i) => (
+                <li key={i} className="flex gap-2 text-[13px]" style={{ color: "var(--text-secondary)" }}>
+                  <span className="font-bold shrink-0" style={{ color: "#ffb020" }}>{i + 1}</span>
+                  <span>{a}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* 주의 신호 */}
+          <div className="md:border-l md:pl-4" style={{ borderColor: "var(--border-ctrl)" }}>
+            <p className="stat-label mb-1.5" style={{ fontSize: 13 }}>주의 신호</p>
+            {spy || gateDiverges ? (
+              <div className="space-y-1.5">
+                {spy && (
+                  <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+                    {predTitle} 다음 주{" "}
+                    <span className="font-bold" style={{ color: dirInfo(spy.direction).color }}>
+                      {dirInfo(spy.direction).text}
+                    </span>
+                    {spy.probability != null && (
+                      <span className="font-mono" style={{ color: "var(--text-primary)" }}> {Math.round(spy.probability * 100)}%</span>
+                    )}
+                    {spy.cv_accuracy != null && (
+                      <span style={{ color: "var(--text-faint)" }}> · 모델 정확도 {Math.round(spy.cv_accuracy * 100)}%</span>
+                    )}
+                  </div>
+                )}
+                {gateDiverges && (
+                  <div className="text-[13px]" style={{ color: "#facc15" }}>
+                    ⚠ 마켓 게이트({gate.gate})가 종합 판단과 다름 — 근거 확인
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>특이 주의 신호 없음</p>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -360,56 +381,35 @@ export default function HomePage() {
 
         {/* Right */}
         <div className="space-y-2">
-          {/* Verdict card */}
-          <div
-            className="rounded-lg p-3 flex flex-col items-center justify-center gap-1 text-center"
-            style={{
-              background: verdict === "GO" ? "#4ade8018" : verdict === "CAUTION" ? "#facc1518" : "#f8717118",
-              border: `1px solid ${verdictColor}44`,
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-bold uppercase tracking-widest" style={{ color: verdictColor }}>종합 판단</span>
-            </div>
-            <p className="text-4xl font-black" style={{ color: verdictColor }}>{verdict}</p>
-            <p className="text-[13px] text-[#726b58]">
-              체제: <span className="text-white font-semibold">{regime.regime?.replace("_", " ") ?? "—"}</span>
-              &nbsp;·&nbsp;점수: <span className="text-white font-semibold">{regime.weighted_score?.toFixed(2) ?? "—"}</span>
-            </p>
-            {isKR && gate.reason && (
-              <p className="text-[13px] text-[#a39c88] text-center px-2">{gate.reason}</p>
-            )}
-          </div>
-
-          {/* SPY / KOSPI 다음 주 방향 예측 */}
-          {spy && (
-            <div className="bg-card rounded-lg p-2">
-              <div className="flex items-center gap-2 mb-1.5">
-                <h2 className="stat-label" style={{ fontSize: 13 }}>{predTitle}</h2>
-                <InfoTooltip content={
-                  spy.model_type === "rule_based"
-                    ? "체제 지표 기반의 다음 주 방향 추정입니다. (ML 예측 데이터가 쌓이면 자동 전환)"
-                    : `LightGBM 모델의 다음 주 ${isKR ? "KOSPI" : "SPY"} 방향 예측입니다.`
-                } />
+          {/* 근거 요약 — 판단을 뒷받침하는 보조 지표 (큰 KPI에서 강등) */}
+          <div className="bg-card rounded-lg p-2">
+            <h2 className="stat-label mb-1.5" style={{ fontSize: 13 }}>핵심 근거</h2>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[13px]">
+                <span style={{ color: "var(--text-muted)" }}>시장 체제</span>
+                <span className="font-mono font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {regime.regime?.replace("_", " ") ?? "—"}
+                  <span style={{ color: "var(--text-faint)" }}> · {regime.weighted_score?.toFixed(2) ?? "—"}</span>
+                </span>
               </div>
-              <p className="text-2xl font-black mb-1" style={{ color: dirInfo(spy.direction).color }}>
-                {dirInfo(spy.direction).text}
-              </p>
-              <p className="text-base font-semibold text-white">
-                확률 {spy.probability != null ? `${Math.round(spy.probability * 100)}%` : "—"}
-              </p>
-              {spy.cv_accuracy != null && (
-                <p className="text-[13px] mt-1" style={{ color: "var(--text-muted)" }}>
-                  모델 정확도 {Math.round(spy.cv_accuracy * 100)}%
-                </p>
-              )}
-              {spy.model_type === "rule_based" && (
-                <p className="text-[13px] mt-1" style={{ color: "var(--text-faint)" }}>
-                  체제 지표 기반 추정
-                </p>
+              <div className="flex items-center justify-between text-[13px]">
+                <span style={{ color: "var(--text-muted)" }}>마켓 게이트</span>
+                <span className="font-bold" style={{ color: VERDICT_COLOR[gate.gate] ?? "var(--text-primary)" }}>
+                  {gate.gate ?? "—"}
+                  {!isKR && gate.avg_score != null && (
+                    <span className="font-mono font-normal" style={{ color: "var(--text-faint)" }}> · avg {gate.avg_score.toFixed(2)}</span>
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[13px]">
+                <span style={{ color: "var(--text-muted)" }}>스크리닝 후보</span>
+                <span className="font-mono font-semibold" style={{ color: "var(--text-primary)" }}>{picks.length}종목</span>
+              </div>
+              {isKR && gate.reason && (
+                <p className="text-[12px] pt-1" style={{ color: "var(--text-secondary)", borderTop: "1px solid var(--border)" }}>{gate.reason}</p>
               )}
             </div>
-          )}
+          </div>
 
           {/* Mini portfolio */}
           <MiniPortfolio />

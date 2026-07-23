@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { X, Info, Pencil } from "lucide-react";
 import StockTechPanel from "@/src/components/StockTechPanel";
 
@@ -441,6 +442,9 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
           </div>
         </div>
 
+        {/* 네러티브 브리프 — 투자 논리·촉매·리스크를 상단으로 (2026-07 정보 순서 개선) */}
+        <NarrativeSection c={c} />
+
         {/* 지표 그리드 */}
         <div className="px-5 grid grid-cols-2 gap-3">
           {/* F-Score */}
@@ -514,9 +518,6 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
           <StockTechPanel market={c.market} symbol={c.symbol} />
         </div>
 
-        {/* 네러티브 브리프 */}
-        <NarrativeSection c={c} />
-
         {/* 정성 체크 (구 투자 워크북) */}
         <div className="px-5">
           <ChecklistSection c={c} />
@@ -550,15 +551,21 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
           </div>
         )}
 
-        {/* 버튼 */}
-        <div className="px-5 pb-5">
+        {/* 버튼 — 워치리스트 추가 + 매수 체크로 이동 (다음 행동 유도) */}
+        <div className="px-5 pb-5 flex gap-2">
           <button
             onClick={onAdd}
             disabled={inList}
-            className="w-full py-2.5 text-[13px] font-bold transition-opacity disabled:opacity-40"
+            className="flex-1 py-2.5 text-[13px] font-bold transition-opacity disabled:opacity-40"
             style={{ background: inList ? PANEL_BG : ACCENT + "18", color: inList ? TEXT_FAINT : ACCENT, border: `1px solid ${inList ? BORDER : ACCENT + "33"}` }}>
             {inList ? "이미 워치리스트에 추가됨" : "+ 내 워치리스트에 추가"}
           </button>
+          <Link
+            href={`/workflow?symbol=${encodeURIComponent(c.symbol)}&market=${c.market}`}
+            className="flex-1 py-2.5 text-[13px] font-bold text-center transition-opacity"
+            style={{ background: INFO + "14", color: INFO, border: `1px solid ${INFO}33` }}>
+            매수 체크로 이동 →
+          </Link>
         </div>
       </div>
     </div>

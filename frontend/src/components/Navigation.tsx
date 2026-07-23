@@ -5,29 +5,41 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMarket } from "@/src/contexts/MarketContext";
 
+// 사이드바 그룹 — 기능별이 아닌 사용자 투자 흐름 순서로 배치 (2026-07 UI 개선)
+// 오늘(판단) → 시장 → 종목 → 투자 실행 → 관리
 const NAV_GROUPS = [
   {
-    label: "시장 분석",
+    label: "오늘",
     items: [
       { href: "/",          label: "개요",      emoji: "📊", color: "#ffb020" },
       { href: "/briefing",  label: "주간 브리핑", emoji: "📰", color: "#ffb020" },
-      { href: "/regime",    label: "시장 체제", emoji: "🧭", color: "#ffb020" },
-      { href: "/sector",    label: "섹터 분석", emoji: "🏭", color: "#ffb020" },
-      { href: "/top-picks", label: "종목 분석", emoji: "🔎", color: "#ffb020" },
-      { href: "/risk",      label: "리스크",    emoji: "🛡️", color: "#ffb020" },
     ],
   },
   {
-    label: "내 투자",
+    label: "시장",
     items: [
+      { href: "/regime",    label: "시장 체제", emoji: "🧭", color: "#ffb020" },
+      { href: "/sector",    label: "섹터 분석", emoji: "🏭", color: "#ffb020" },
+    ],
+  },
+  {
+    label: "종목",
+    items: [
+      { href: "/top-picks", label: "종목 분석", emoji: "🔎", color: "#ffb020" },
       { href: "/watchlist", label: "워치리스트",  emoji: "🔭", color: "#ffb020" },
+    ],
+  },
+  {
+    label: "투자 실행",
+    items: [
+      { href: "/workflow",  label: "매수 체크",  emoji: "✅", color: "#ffb020" },
       { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#ffb020" },
     ],
   },
   {
-    label: "도구",
+    label: "관리",
     items: [
-      { href: "/workflow",  label: "매수 체크",  emoji: "✅", color: "#ffb020" },
+      { href: "/risk",      label: "리스크",    emoji: "🛡️", color: "#ffb020" },
       { href: "/guide",     label: "가이드",     emoji: "📖", color: "#ffb020" },
     ],
   },
