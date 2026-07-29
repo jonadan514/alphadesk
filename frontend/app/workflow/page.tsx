@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
+import StatusBadge from "@/src/components/StatusBadge";
 import { SECTOR_TO_ETF } from "@/src/lib/constants";
 
 type Signal = "GO" | "CAUTION" | "STOP" | "LOADING";
@@ -264,10 +265,6 @@ function PreTradeChecklist({
       .catch(() => setFxError(true));
   }, []);
 
-  const gateOk   = steps[0]?.signal === "GO";
-  const regimeOk = steps[1]?.signal !== "STOP";
-  const riskOk   = steps[4]?.signal !== "STOP";
-
   const latestPicks: any[] = reports[0]?.picks ?? [];
   const tickerUp = ticker.trim().toUpperCase();
   const pick = tickerUp ? latestPicks.find((p: any) =>
@@ -384,28 +381,80 @@ function PreTradeChecklist({
     ? Math.floor((totalCapNum * kellyPct) / entryPrice)
     : null;
 
-  const CHECKLIST = [
-    { id: "gate",      label: "시장 게이트 GO",                        auto: true,   pass: gateOk,   tip: "시장 진입 신호가 GO여야 합니다." },
-    { id: "regime",    label: "체제 Risk-on / Neutral",                auto: true,   pass: regimeOk, tip: "Risk-off·Crisis 체제에서는 신규 매수를 자제하세요." },
-    { id: "watchlist", label: `${tickerUp || "종목"} 워치리스트 후보 포함`, auto: !!tickerUp, pass: watchOk,
-      tip: watchOk
-        ? "적합 점수 상위 50 후보에 포함 — 재무 함정 필터 자동 통과"
-        : "워치리스트 후보에 없음 — 함정 필터 미통과이거나 적합 점수 상위 50 밖입니다. 워치리스트 탭에서 확인하세요." },
-    { id: "risk",      label: "리스크 수준 허용 범위",                   auto: true,   pass: riskOk,   tip: "VaR·MDD 경고 없을 때 진입하세요." },
-    { id: "buy",       label: `${tickerUp || "종목"} BUY 액션 확인`,   auto: !!pick, pass: isBuy,    tip: "스크리닝 BUY 액션 종목만 선택하세요." },
-    { id: "grade",     label: `${tickerUp || "종목"} Grade A·B 확인`, auto: !!pick, pass: gradeOk,  tip: "C등급 이하는 진입 자제를 권장합니다." },
-    { id: "score",     label: `${tickerUp || "종목"} 점수 ≥ 60`,      auto: !!pick, pass: scoreOk,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
-    { id: "ai",        label: "AI 분석 thesis 확인",                   auto: true,   pass: aiOk,    tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
-    { id: "workbook",  label: "정성 검증 완료 — 클릭해서 체크", auto: false, pass: manualOk.workbook ?? false, tip: "워치리스트 탭에서 종목을 클릭해 스토리·촉매 체크리스트를 점검했다면 이 항목을 클릭해 체크하세요." },
-    { id: "funds",     label: "6개월 이상 묶여도 되는 여유 자금 — 클릭해서 체크", auto: false, pass: manualOk.funds ?? false, tip: "단기에 쓸 돈이면 매수하지 마세요. 확인했다면 클릭해 체크하세요." },
-    { id: "stop",      label: "손절가 설정",                            auto: true,   pass: stopOk,  tip: `권장 손절선: ${stopLossPct} (현재 체제 기준)` },
-    { id: "size",      label: "매수 수량 확정",                         auto: true,   pass: sharesOk, tip: "위 포지션 사이징 계산기로 자금·손실한도 입력 후 수량을 역산하세요." },
+  // ── 각 조건 상태 산출 (2026-07: pass boolean → PASS/WARN/FAIL/PENDING) ──
+  // 목적: "아직 미입력·미선택(PENDING)"과 "실제 미충족(FAIL)"을 구분하고,
+  // STOP 시장 게이트/체제/리스크가 회색으로 숨던 문제를 실제 경고색으로 드러낸다.
+  // 원칙: PASS 판정 임계값은 기존과 100% 동일. 비통과 항목의 표현만 세분화한다.
+  //   gate    : GO만 통과(기존 gateOk = ===GO)
+  //   regime/risk : STOP만 미통과(기존 = !==STOP, 즉 CAUTION은 통과 유지)
+  //   종목 조건 : pick/tickerUp 없으면 PENDING(기존엔 회색, 통과 카운트 동일)
+  type CkStatus = "PASS" | "WARN" | "FAIL" | "PENDING";
+  // !STOP 통과형(체제·리스크): STOP=FAIL, 로딩=PENDING, 그 외(GO·CAUTION)=PASS
+  const notStop = (sig: Signal | undefined): CkStatus =>
+    sig === undefined || sig === "LOADING" ? "PENDING" : sig === "STOP" ? "FAIL" : "PASS";
+  const gateSig = steps[0]?.signal;
+  const stGate: CkStatus = gateSig === "GO" ? "PASS" : gateSig === "STOP" ? "FAIL" : gateSig === "CAUTION" ? "WARN" : "PENDING";
+  const stRegime = notStop(steps[1]?.signal);
+  const stRisk   = notStop(steps[4]?.signal);
+  const stWatch:  CkStatus = !tickerUp ? "PENDING" : watchOk  ? "PASS" : "WARN";
+  const stBuy:    CkStatus = !pick     ? "PENDING" : isBuy    ? "PASS" : "FAIL";
+  const stGrade:  CkStatus = !pick     ? "PENDING" : gradeOk  ? "PASS" : "FAIL";
+  const stScore:  CkStatus = !pick     ? "PENDING" : scoreOk  ? "PASS" : "FAIL";
+  const stAi:     CkStatus = !tickerUp ? "PENDING" : aiOk     ? "PASS" : "WARN";
+  const stWorkbook: CkStatus = manualOk.workbook ? "PASS" : "PENDING";
+  const stFunds:    CkStatus = manualOk.funds    ? "PASS" : "PENDING";
+  const stStop: CkStatus = stopPrice === "" ? "PENDING" : stopOk   ? "PASS" : "WARN";
+  const stSize: CkStatus = shares    === "" ? "PENDING" : sharesOk ? "PASS" : "WARN";
+
+  interface CkItem { id: string; label: string; status: CkStatus; manual?: boolean; tip: string }
+  const CK_GROUPS: { key: string; label: string; verb: string; items: CkItem[] }[] = [
+    {
+      key: "auto", label: "자동 검증", verb: "통과",
+      items: [
+        { id: "gate",      label: "시장 게이트 GO",                          status: stGate,   tip: "시장 진입 신호가 GO여야 합니다." },
+        { id: "regime",    label: "체제 Risk-on / Neutral",                  status: stRegime, tip: "Risk-off·Crisis 체제에서는 신규 매수를 자제하세요." },
+        { id: "watchlist", label: `${tickerUp || "종목"} 워치리스트 후보 포함`, status: stWatch,
+          tip: watchOk
+            ? "적합 점수 상위 50 후보에 포함 — 재무 함정 필터 자동 통과"
+            : "워치리스트 후보에 없음 — 함정 필터 미통과이거나 적합 점수 상위 50 밖입니다. 워치리스트 탭에서 확인하세요." },
+        { id: "risk",      label: "리스크 수준 허용 범위",                     status: stRisk,   tip: "VaR·MDD 경고 없을 때 진입하세요." },
+        { id: "buy",       label: `${tickerUp || "종목"} BUY 액션 확인`,     status: stBuy,    tip: "스크리닝 BUY 액션 종목만 선택하세요." },
+        { id: "grade",     label: `${tickerUp || "종목"} Grade A·B 확인`,   status: stGrade,  tip: "C등급 이하는 진입 자제를 권장합니다." },
+        { id: "score",     label: `${tickerUp || "종목"} 점수 ≥ 60`,        status: stScore,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
+        { id: "ai",        label: "AI 분석 thesis 확인",                     status: stAi,     tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
+      ],
+    },
+    {
+      key: "manual", label: "사용자 판단", verb: "완료",
+      items: [
+        { id: "workbook",  label: "정성 검증 완료 — 클릭해서 체크", status: stWorkbook, manual: true, tip: "워치리스트 탭에서 종목을 클릭해 스토리·촉매 체크리스트를 점검했다면 이 항목을 클릭해 체크하세요." },
+        { id: "funds",     label: "6개월 이상 묶여도 되는 여유 자금 — 클릭해서 체크", status: stFunds, manual: true, tip: "단기에 쓸 돈이면 매수하지 마세요. 확인했다면 클릭해 체크하세요." },
+      ],
+    },
+    {
+      key: "order", label: "주문 계획", verb: "입력",
+      items: [
+        { id: "stop", label: "손절가 설정",     status: stStop, tip: `권장 손절선: ${stopLossPct} (현재 체제 기준)` },
+        { id: "size", label: "매수 수량 확정",   status: stSize, tip: "위 포지션 사이징 계산기로 자금·손실한도 입력 후 수량을 역산하세요." },
+      ],
+    },
   ];
 
-  const passCount    = CHECKLIST.filter((c) => c.pass).length;
-  const allPass      = passCount === CHECKLIST.length;
-  const nearPass     = passCount >= CHECKLIST.length - 4;
-  const overallColor = allPass ? "#4ade80" : nearPass ? "#facc15" : "#f87171";
+  const allItems     = CK_GROUPS.flatMap((g) => g.items);
+  const passCount    = allItems.filter((c) => c.status === "PASS").length;
+  const totalCount   = allItems.length;
+  const anyFail      = allItems.some((c) => c.status === "FAIL");
+  const allPass      = passCount === totalCount;
+  const overallColor = anyFail ? "#f87171" : allPass ? "#4ade80" : "#facc15";
+
+  // 그룹 상태 칩 라벨 (그룹 성격에 맞게)
+  const ckLabel = (groupKey: string, st: CkStatus): string => {
+    if (groupKey === "manual") return st === "PASS" ? "완료" : "미체크";
+    if (groupKey === "order")  return st === "PASS" ? "입력됨" : st === "WARN" ? "확인" : "미입력";
+    return st === "PASS" ? "통과" : st === "FAIL" ? "미충족" : st === "WARN" ? "확인" : "대기";
+  };
+  const CK_ICON: Record<CkStatus, string> = { PASS: "✓", WARN: "!", FAIL: "✕", PENDING: "○" };
+  const CK_COLOR: Record<CkStatus, string> = { PASS: "#4ade80", WARN: "#facc15", FAIL: "#f87171", PENDING: "#8b8271" };
 
   const inputCls = "rounded-lg px-3 py-1.5 text-sm font-mono text-white outline-none w-full";
   const inputStyle = { background: "var(--bg-inset)", border: "1px solid var(--border)" };
@@ -415,8 +464,8 @@ function PreTradeChecklist({
       <div className="px-4 py-3 flex items-center gap-3" style={{ background: "#0e0d08", borderBottom: "1px solid #111009" }}>
         <p className="text-[12px] font-bold uppercase tracking-widest text-white">매수 전 체크리스트</p>
         <div className="flex-1" />
-        <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ color: overallColor, background: `${overallColor}22`, border: `1px solid ${overallColor}44` }}>
-          {passCount}/{CHECKLIST.length} 통과
+        <span className="text-[12px] font-bold px-2 py-0.5" style={{ color: overallColor, background: `${overallColor}22`, border: `1px solid ${overallColor}44` }}>
+          {anyFail ? "미충족 있음" : allPass ? "전체 충족" : "진행 중"}
         </span>
       </div>
 
@@ -671,50 +720,65 @@ function PreTradeChecklist({
         )}
       </div>
 
-      <div className="px-4 pb-4 space-y-1.5" style={{ borderTop: "1px solid #262112" }}>
-        <div className="pt-2" />
-        {CHECKLIST.map((item) => {
-          const pass  = item.pass;
-          const isManual = !item.auto && (item.id === "workbook" || item.id === "funds");
-          const isInputItem = item.id === "stop" || item.id === "size";
-          // 입력 항목은 아직 입력 전이면 회색(미결), 틀리면 노란색 경고
-          const color = pass ? "#4ade80"
-            : isInputItem ? "#726b58"
-            : item.auto && !pass && (item.id === "buy" || item.id === "grade" || item.id === "score") ? "#f87171"
-            : "#726b58";
+      <div className="px-4 pb-4 pt-2 space-y-3" style={{ borderTop: "1px solid #262112" }}>
+        {!tickerUp && (
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+            종목을 선택하면 종목 조건(워치리스트·BUY·등급·점수·AI)을 검증합니다. 그전까지는 &quot;대기&quot; 상태예요.
+          </p>
+        )}
+        {CK_GROUPS.map((group) => {
+          const gPass = group.items.filter((it) => it.status === "PASS").length;
+          const gFull = gPass === group.items.length;
           return (
-            <div
-              key={item.id}
-              className="flex items-center gap-3 rounded-lg px-3 py-2"
-              onClick={isManual ? () => setManualOk((m) => ({ ...m, [item.id]: !m[item.id] })) : undefined}
-              style={{
-                background: pass ? "#4ade8008" : "transparent",
-                border: `1px solid ${pass ? "#4ade8022" : isManual ? "#26211266" : "#111009"}`,
-                cursor: isManual ? "pointer" : "default",
-              }}
-            >
-              <div
-                className="w-4 h-4 rounded flex items-center justify-center text-[12px] font-black shrink-0"
-                style={{ background: pass ? "#4ade8033" : "#111009", border: `1px solid ${color}66`, color }}
-              >
-                {pass ? "✓" : "○"}
+            <div key={group.key} className="space-y-1.5">
+              {/* 그룹 헤더 + 그룹별 카운터 */}
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>{group.label}</p>
+                <span className="text-[11px] font-mono" style={{ color: gFull ? "#4ade80" : "var(--text-faint)" }}>
+                  {gPass}/{group.items.length} {group.verb}
+                </span>
               </div>
-              <span className="flex-1 text-[12px]" style={{ color: pass ? "#a39c88" : "#726b58" }}>
-                {item.label}
-              </span>
-              <span className="text-[12px]" style={{ color: "#726b58" }} title={item.tip}>?</span>
+              {group.items.map((item) => {
+                const st  = item.status;
+                const col = CK_COLOR[st];
+                const isManual = !!item.manual;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 px-3 py-2"
+                    onClick={isManual ? () => setManualOk((m) => ({ ...m, [item.id]: !m[item.id] })) : undefined}
+                    style={{
+                      background: st === "PASS" ? "#4ade8008" : st === "FAIL" ? "#f8717108" : "transparent",
+                      border: `1px solid ${st === "PASS" ? "#4ade8022" : st === "FAIL" ? "#f8717133" : isManual ? "#26211266" : "#111009"}`,
+                      cursor: isManual ? "pointer" : "default",
+                    }}
+                  >
+                    <div
+                      className="w-4 h-4 flex items-center justify-center text-[12px] font-black shrink-0"
+                      style={{ background: st === "PASS" ? "#4ade8033" : "#111009", border: `1px solid ${col}66`, color: col }}
+                    >
+                      {CK_ICON[st]}
+                    </div>
+                    <span className="flex-1 text-[12px]" style={{ color: st === "PENDING" ? "#726b58" : "#a39c88" }}>
+                      {item.label}
+                    </span>
+                    <StatusBadge status={st} label={ckLabel(group.key, st)} />
+                    <span className="text-[12px]" style={{ color: "#726b58" }} title={item.tip}>?</span>
+                  </div>
+                );
+              })}
             </div>
           );
         })}
       </div>
 
-      <div className="px-4 py-3 rounded-b-xl text-center" style={{ background: allPass ? "#4ade800d" : "#f871710d", borderTop: `1px solid ${overallColor}22` }}>
+      <div className="px-4 py-3 text-center" style={{ background: anyFail ? "#f871710d" : allPass ? "#4ade800d" : "#facc150d", borderTop: `1px solid ${overallColor}22` }}>
         <p className="text-[12px] font-bold" style={{ color: overallColor }}>
-          {allPass
+          {anyFail
+            ? "매수 보류 — 미충족(✕) 조건을 먼저 해결하세요"
+            : allPass
             ? "✓ 모든 조건 충족 — 매수 실행 가능"
-            : nearPass
-            ? "주의: 일부 조건 미충족 — 확인 후 진행"
-            : "매수 보류 — 미충족 조건을 먼저 해결하세요"}
+            : "일부 조건이 대기·확인 상태 — 입력·점검 후 진행하세요"}
         </p>
       </div>
     </div>
@@ -1131,7 +1195,7 @@ export default function WorkflowPage() {
             </div>
           ))}
           <span className="ml-2 text-[12px]" style={{ color: "var(--text-faint)" }}>
-            {steps.filter((s) => s.signal === "GO").length}/6 정상
+            워크플로우 {steps.filter((s) => s.signal === "GO").length}/6 정상
           </span>
         </div>
       )}
