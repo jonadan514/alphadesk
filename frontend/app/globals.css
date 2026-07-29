@@ -101,3 +101,13 @@
     color: var(--text-muted);
   }
 }
+
+/* 우측 슬라이드오버 패널 진입 애니메이션 (종목 상세) */
+@keyframes slideover-in {
+  from { transform: translateX(28px); opacity: 0.5; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.slideover-panel { animation: slideover-in 0.18s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .slideover-panel { animation: none; }
+}

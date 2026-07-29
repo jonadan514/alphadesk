@@ -238,9 +238,9 @@ function NarrativeSection({ c }: { c: Candidate }) {
   const sent = brief ? (SENTIMENT_STYLE[brief.sentiment] ?? SENTIMENT_STYLE.WARM) : null;
 
   return (
-    <div className="px-5">
+    <div>
       <div className="p-3 space-y-2.5" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
-        <p className="text-[10px] uppercase tracking-widest" style={{ color: TEXT_FAINT }}>네러티브 브리프</p>
+        <p className="text-[10px] uppercase tracking-widest" style={{ color: TEXT_FAINT }}>네러티브 브리프 — 투자 논리</p>
 
         {loading && (
           <p className="text-[12px] animate-pulse" style={{ color: TEXT_MUTED }}>불러오는 중...</p>
@@ -398,11 +398,26 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
     return v <= 100 ? GOOD : v <= 150 ? WARN : v <= 200 ? CAUTION : BAD;
   };
 
+  // 한 줄 결론 — 이미 있는 값(적합점수·모멘텀·체제 성격)으로 즉석 요약 (별도 API 없음)
+  const conclParts: string[] = [];
+  if (c.fit_score != null) conclParts.push(c.fit_score >= 70 ? "재무·적합도 우수" : c.fit_score >= 55 ? "적합도 양호" : "적합도 보통");
+  if (c.rel_3m != null) conclParts.push(c.rel_3m >= 0 ? "단기 추세 양호" : "단기 추세 약세");
+  conclParts.push(c.regime_fit === "growth" ? "성장주 성격" : c.regime_fit === "dividend" ? "배당주 성격" : "중립 성격");
+  const conclusion = conclParts.join(" · ");
+
+  const eyebrow = "text-[10px] uppercase tracking-widest";
+  const insetCard = { background: INSET_BG, border: `1px solid ${BORDER}` };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }} onClick={onClose}>
-      <div className="w-full max-w-md space-y-4 max-h-[88vh] overflow-y-auto" style={{ background: PANEL_BG, border: `1px solid ${BORDER}` }} onClick={(e) => e.stopPropagation()}>
-        {/* 헤더 */}
-        <div className="flex items-start justify-between px-5 pt-5">
+    // 우측 슬라이드오버 — 목록을 뒤에 남기고 상세만 오른쪽에서 밀려나온다
+    <div className="fixed inset-0 z-50 flex justify-end" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose}>
+      <div className="slideover-panel h-full w-full overflow-y-auto"
+        style={{ maxWidth: 780, background: PANEL_BG, borderLeft: `1px solid ${BORDER_CTRL}`, boxShadow: "-24px 0 60px rgba(0,0,0,0.5)" }}
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* 헤더 — 스크롤해도 상단 고정 */}
+        <div className="sticky top-0 z-10 flex items-start justify-between px-5 py-4"
+          style={{ background: PANEL_BG, borderBottom: `1px solid ${BORDER}` }}>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[11px] font-bold px-2 py-0.5" style={{ background: c.market === "US" ? INFO + "20" : BAD + "20", color: c.market === "US" ? INFO : BAD }}>{c.market}</span>
@@ -414,120 +429,123 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
                 </span>
               )}
             </div>
-            <h2 className="text-xl font-black" style={{ color: NUM, letterSpacing: "-0.01em" }}>{c.symbol}</h2>
+            <h2 className="text-2xl font-black" style={{ color: NUM, letterSpacing: "-0.01em" }}>{c.symbol}</h2>
             {c.name && <p className="text-[13px] mt-0.5" style={{ color: TEXT_SECONDARY }}>{c.name}</p>}
             {c.sector && <p className="text-[11px] mt-0.5" style={{ color: TEXT_MUTED }}>{c.sector} · {formatCap(c.market, c.market_cap)}</p>}
           </div>
-          <button onClick={onClose} className="p-1" style={{ color: TEXT_MUTED }}><X size={16} /></button>
+          <button onClick={onClose} className="p-1" style={{ color: TEXT_MUTED }}><X size={18} /></button>
         </div>
 
-        {/* 적합점수 + 모멘텀 */}
-        <div className="px-5">
-          <div className="p-3 flex items-center justify-between" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
+        <div className="p-5 space-y-4">
+          {/* 한 줄 결론 */}
+          <div className="p-3" style={insetCard}>
+            <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>한 줄 결론</p>
+            <p className="text-[14px] font-semibold" style={{ color: TEXT_PRIMARY }}>{conclusion}</p>
+          </div>
+
+          {/* 2단: 투자 논리(네러티브) | 기술적 타이밍(차트) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <NarrativeSection c={c} />
             <div>
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: TEXT_FAINT }}>시장 적합 점수</p>
-              <p className="text-2xl font-black" style={{ color: c.fit_score != null ? (c.fit_score >= 70 ? GOOD : c.fit_score >= 55 ? WARN : TEXT_SECONDARY) : TEXT_FAINT, fontVariantNumeric: "tabular-nums" }}>
-                {c.fit_score != null ? c.fit_score.toFixed(0) : "-"}<span className="text-sm font-normal" style={{ color: TEXT_FAINT }}>/100</span>
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: TEXT_FAINT }}>지수 대비 상대수익률</p>
-              <p className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
-                3개월 <span style={{ color: c.rel_3m != null ? (c.rel_3m >= 0 ? GOOD : BAD) : TEXT_FAINT, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{c.rel_3m != null ? `${c.rel_3m > 0 ? "+" : ""}${c.rel_3m}%` : "-"}</span>
-              </p>
-              <p className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
-                6개월 <span style={{ color: c.rel_6m != null ? (c.rel_6m >= 0 ? GOOD : BAD) : TEXT_FAINT, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{c.rel_6m != null ? `${c.rel_6m > 0 ? "+" : ""}${c.rel_6m}%` : "-"}</span>
-              </p>
+              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>기술적 타이밍</p>
+              <StockTechPanel market={c.market} symbol={c.symbol} />
             </div>
           </div>
-        </div>
 
-        {/* 네러티브 브리프 — 투자 논리·촉매·리스크를 상단으로 (2026-07 정보 순서 개선) */}
-        <NarrativeSection c={c} />
+          {/* 핵심 재무·체제 지표 — 넓은 폭 활용 (적합점수 + 4지표) */}
+          <div>
+            <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>핵심 재무 · 체제 지표</p>
+            <div className="p-3 flex items-center justify-between mb-3" style={insetCard}>
+              <div>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>시장 적합 점수</p>
+                <p className="text-2xl font-black" style={{ color: c.fit_score != null ? (c.fit_score >= 70 ? GOOD : c.fit_score >= 55 ? WARN : TEXT_SECONDARY) : TEXT_FAINT, fontVariantNumeric: "tabular-nums" }}>
+                  {c.fit_score != null ? c.fit_score.toFixed(0) : "-"}<span className="text-sm font-normal" style={{ color: TEXT_FAINT }}>/100</span>
+                </p>
+              </div>
+              <div className="text-right">
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>지수 대비 상대수익률</p>
+                <p className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
+                  3개월 <span style={{ color: c.rel_3m != null ? (c.rel_3m >= 0 ? GOOD : BAD) : TEXT_FAINT, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{c.rel_3m != null ? `${c.rel_3m > 0 ? "+" : ""}${c.rel_3m}%` : "-"}</span>
+                </p>
+                <p className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
+                  6개월 <span style={{ color: c.rel_6m != null ? (c.rel_6m >= 0 ? GOOD : BAD) : TEXT_FAINT, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{c.rel_6m != null ? `${c.rel_6m > 0 ? "+" : ""}${c.rel_6m}%` : "-"}</span>
+                </p>
+              </div>
+            </div>
 
-        {/* 지표 그리드 */}
-        <div className="px-5 grid grid-cols-2 gap-3">
-          {/* F-Score */}
-          <div className="p-3" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
-            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: TEXT_FAINT }}>Piotroski F-Score</p>
-            <p className="text-2xl font-black" style={{ color: c.piotroski != null ? (c.piotroski >= 7 ? GOOD : c.piotroski >= 5 ? WARN : BAD) : TEXT_FAINT, fontVariantNumeric: "tabular-nums" }}>
-              {c.piotroski ?? "-"}<span className="text-sm font-normal" style={{ color: TEXT_FAINT }}>/9</span>
-            </p>
-            <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
-              {c.piotroski != null ? (c.piotroski >= 7 ? "재무 우수" : c.piotroski >= 5 ? "보통 수준" : "취약") : "데이터 없음"}
-            </p>
-          </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* F-Score */}
+              <div className="p-3" style={insetCard}>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>Piotroski F-Score</p>
+                <p className="text-2xl font-black" style={{ color: c.piotroski != null ? (c.piotroski >= 7 ? GOOD : c.piotroski >= 5 ? WARN : BAD) : TEXT_FAINT, fontVariantNumeric: "tabular-nums" }}>
+                  {c.piotroski ?? "-"}<span className="text-sm font-normal" style={{ color: TEXT_FAINT }}>/9</span>
+                </p>
+                <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                  {c.piotroski != null ? (c.piotroski >= 7 ? "재무 우수" : c.piotroski >= 5 ? "보통 수준" : "취약") : "데이터 없음"}
+                </p>
+              </div>
 
-          {/* 부채비율 */}
-          <div className="p-3" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
-            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: TEXT_FAINT }}>부채비율</p>
-            {c.debt_ratio != null ? (
-              <p className="text-2xl font-black" style={{ color: debtColor(c.debt_ratio), fontVariantNumeric: "tabular-nums" }}>{c.debt_ratio}%</p>
-            ) : (
-              <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.debt ?? ""] ?? TEXT_FAINT }}>
-                {c.data_notes?.debt ?? "-"}
-              </p>
-            )}
-            <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
-              {c.data_notes?.debt === "자본잠식(음수 자본)" ? "자사주 매입 등으로 자기자본이 음수 — 원인 확인 필요" : "총부채 / 자기자본"}
-            </p>
-          </div>
+              {/* 부채비율 */}
+              <div className="p-3" style={insetCard}>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>부채비율</p>
+                {c.debt_ratio != null ? (
+                  <p className="text-2xl font-black" style={{ color: debtColor(c.debt_ratio), fontVariantNumeric: "tabular-nums" }}>{c.debt_ratio}%</p>
+                ) : (
+                  <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.debt ?? ""] ?? TEXT_FAINT }}>
+                    {c.data_notes?.debt ?? "-"}
+                  </p>
+                )}
+                <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                  {c.data_notes?.debt === "자본잠식(음수 자본)" ? "자기자본 음수 — 원인 확인 필요" : "총부채 / 자기자본"}
+                </p>
+              </div>
 
-          {/* 이자보상배율 */}
-          <div className="p-3" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
-            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: TEXT_FAINT }}>이자보상배율</p>
-            {c.interest_coverage != null ? (
-              <p className="text-2xl font-black" style={{ color: coverColor(c.interest_coverage), fontVariantNumeric: "tabular-nums" }}>{c.interest_coverage.toFixed(1)}x</p>
-            ) : (
-              <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.interest ?? ""] ?? TEXT_FAINT }}>
-                {c.data_notes?.interest ?? "-"}
-              </p>
-            )}
-            <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
-              {c.data_notes?.interest === "무차입" ? "이자비용 없음 — 빚 없이 운영 중" : "영업이익 / 이자비용"}
-            </p>
-          </div>
+              {/* 이자보상배율 */}
+              <div className="p-3" style={insetCard}>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>이자보상배율</p>
+                {c.interest_coverage != null ? (
+                  <p className="text-2xl font-black" style={{ color: coverColor(c.interest_coverage), fontVariantNumeric: "tabular-nums" }}>{c.interest_coverage.toFixed(1)}x</p>
+                ) : (
+                  <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.interest ?? ""] ?? TEXT_FAINT }}>
+                    {c.data_notes?.interest ?? "-"}
+                  </p>
+                )}
+                <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                  {c.data_notes?.interest === "무차입" ? "이자비용 없음 — 무차입" : "영업이익 / 이자비용"}
+                </p>
+              </div>
 
-          {/* 영업현금흐름 */}
-          <div className="p-3" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
-            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: TEXT_FAINT }}>영업현금흐름</p>
-            <p className="text-2xl font-black" style={{ color: c.cfo_positive_count >= 2 ? GOOD : c.cfo_positive_count === 1 ? WARN : BAD, fontVariantNumeric: "tabular-nums" }}>
-              {c.cfo_positive_count}/2
-            </p>
-            <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>최근 2년 중 플러스 연도</p>
-          </div>
-        </div>
+              {/* 영업현금흐름 */}
+              <div className="p-3" style={insetCard}>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>영업현금흐름</p>
+                <p className="text-2xl font-black" style={{ color: c.cfo_positive_count >= 2 ? GOOD : c.cfo_positive_count === 1 ? WARN : BAD, fontVariantNumeric: "tabular-nums" }}>
+                  {c.cfo_positive_count}/2
+                </p>
+                <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>최근 2년 중 플러스 연도</p>
+              </div>
+            </div>
 
-        {/* 체제 설명 */}
-        <div className="px-5">
-          <div className="p-3" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
-            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: TEXT_FAINT }}>시장 체제 적합도</p>
-            <div className="flex items-center gap-2">
-              <RegimeBadge fit={c.regime_fit} />
-              <span className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
-                {c.regime_fit === "growth" ? "매출/EPS 성장률 높음 — 성장장에 유리" :
-                 c.regime_fit === "dividend" ? "배당수익률 2% 이상 — 배당장에 유리" :
-                 "뚜렷한 성장·배당 특성 없음"}
-              </span>
+            {/* 체제 적합도 */}
+            <div className="p-3 mt-3" style={insetCard}>
+              <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>시장 체제 적합도</p>
+              <div className="flex items-center gap-2">
+                <RegimeBadge fit={c.regime_fit} />
+                <span className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
+                  {c.regime_fit === "growth" ? "매출/EPS 성장률 높음 — 성장장에 유리" :
+                   c.regime_fit === "dividend" ? "배당수익률 2% 이상 — 배당장에 유리" :
+                   "뚜렷한 성장·배당 특성 없음"}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 추세·모멘텀 차트 */}
-        <div className="px-5">
-          <StockTechPanel market={c.market} symbol={c.symbol} />
-        </div>
-
-        {/* 정성 체크 (구 투자 워크북) */}
-        <div className="px-5">
+          {/* 정성 체크 (구 투자 워크북) */}
           <ChecklistSection c={c} />
-        </div>
 
-        {/* 매수 이유 메모 — 워치리스트에 추가된 종목만 */}
-        {inList && (
-          <div className="px-5">
-            <div className="p-3" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
-              <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: TEXT_FAINT }}>매수 이유 메모</p>
+          {/* 매수 이유 메모 — 워치리스트에 추가된 종목만 */}
+          {inList && (
+            <div className="p-3" style={insetCard}>
+              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>매수 이유 메모</p>
               {editingNote ? (
                 <div className="flex gap-1.5">
                   <input
@@ -548,24 +566,24 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
                 </button>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 버튼 — 워치리스트 추가 + 매수 체크로 이동 (다음 행동 유도) */}
-        <div className="px-5 pb-5 flex gap-2">
-          <button
-            onClick={onAdd}
-            disabled={inList}
-            className="flex-1 py-2.5 text-[13px] font-bold transition-opacity disabled:opacity-40"
-            style={{ background: inList ? PANEL_BG : ACCENT + "18", color: inList ? TEXT_FAINT : ACCENT, border: `1px solid ${inList ? BORDER : ACCENT + "33"}` }}>
-            {inList ? "이미 워치리스트에 추가됨" : "+ 내 워치리스트에 추가"}
-          </button>
-          <Link
-            href={`/workflow?symbol=${encodeURIComponent(c.symbol)}&market=${c.market}`}
-            className="flex-1 py-2.5 text-[13px] font-bold text-center transition-opacity"
-            style={{ background: INFO + "14", color: INFO, border: `1px solid ${INFO}33` }}>
-            매수 체크로 이동 →
-          </Link>
+          {/* 버튼 — 워치리스트 추가 + 매수 체크로 이동 (다음 행동 유도) */}
+          <div className="flex gap-2">
+            <button
+              onClick={onAdd}
+              disabled={inList}
+              className="flex-1 py-2.5 text-[13px] font-bold transition-opacity disabled:opacity-40"
+              style={{ background: inList ? PANEL_BG : ACCENT + "18", color: inList ? TEXT_FAINT : ACCENT, border: `1px solid ${inList ? BORDER : ACCENT + "33"}` }}>
+              {inList ? "이미 워치리스트에 추가됨" : "+ 내 워치리스트에 추가"}
+            </button>
+            <Link
+              href={`/workflow?symbol=${encodeURIComponent(c.symbol)}&market=${c.market}`}
+              className="flex-1 py-2.5 text-[13px] font-bold text-center transition-opacity"
+              style={{ background: INFO + "14", color: INFO, border: `1px solid ${INFO}33` }}>
+              매수 체크로 이동 →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
