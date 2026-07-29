@@ -12,6 +12,7 @@ const ALLOWED_TABLES = new Set([
   "data_daily_reports",
   "data_risk_alerts",
   "data_prediction_history",
+  "data_full_scores",
   "sector_analysis",
   "pf_snapshots",
   "pf_holdings",
@@ -23,6 +24,7 @@ const ALLOWED_TABLES = new Set([
   "kr_daily_reports",
   "kr_sector_analysis",
   "kr_ai_summaries",
+  "kr_full_scores",
 ]);
 
 const MAX_LIMIT = 500;

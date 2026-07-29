@@ -91,6 +91,14 @@ _SNAPSHOT_TABLES = {
             updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """,
+    # 전체 채점 결과 (top-20 밖 종목 포함) — 매수체크에서 임의 종목의 등급/액션 조회용
+    "data_full_scores": """
+        CREATE TABLE IF NOT EXISTS data_full_scores (
+            id          INTEGER PRIMARY KEY CHECK (id = 1),
+            payload     TEXT NOT NULL,
+            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
 }
 
 # --------------------------------------------------------------------------
@@ -223,6 +231,10 @@ def upsert_market_gate(conn: sqlite3.Connection, data: dict) -> None:
 
 def upsert_ai_summaries(conn: sqlite3.Connection, data: dict) -> None:
     _upsert_snapshot(conn, "data_ai_summaries", data)
+
+
+def upsert_full_scores(conn: sqlite3.Connection, data: dict) -> None:
+    _upsert_snapshot(conn, "data_full_scores", data)
 
 
 def upsert_gbm_predictions(conn: sqlite3.Connection, data: dict) -> None:

@@ -19,9 +19,9 @@ from src.analyzers.market_regime import MarketRegimeDetector
 from src.analyzers.market_gate import USMarketGate
 from src.analyzers.smart_money_screener_v2 import EnhancedSmartMoneyScreener
 from src.analyzers.ai_summary_generator import OpenAISummaryGenerator
-from src.analyzers.final_report_generator import FinalReportGenerator
+from src.analyzers.final_report_generator import FinalReportGenerator, ACTION_MAP
 from src.us_market.index_predictor import IndexPredictor
-from src.db.data_store import get_db, init_db, upsert_daily_report, upsert_regime, upsert_market_gate, upsert_index_prediction, upsert_ai_summaries, upsert_risk, upsert_costs
+from src.db.data_store import get_db, init_db, upsert_daily_report, upsert_regime, upsert_market_gate, upsert_index_prediction, upsert_ai_summaries, upsert_risk, upsert_costs, upsert_full_scores
 from src.portfolio.tracker import init_portfolio_tables, execute_sells, execute_buys, snapshot, get_portfolio_summary
 from src.risk.portfolio_risk import compute_risk
 from src.analyzers.sector_analyzer import analyze as analyze_sectors
@@ -107,8 +107,8 @@ def phase2_screening(sp500_df, price_map, t0: float):
     symbols = sp500_df["Symbol"].tolist()
     screener = EnhancedSmartMoneyScreener()
     picks_df = screener.screen(symbols, price_map)
-    _log("Phase2", f"선별 완료: {len(picks_df)}종목", t0)
-    return picks_df
+    _log("Phase2", f"선별 완료: {len(picks_df)}종목 (전체 채점 {len(screener.full_scored)}종목)", t0)
+    return picks_df, screener.full_scored
 
 
 def phase2_5_ai_summary(picks_df, t0: float):
@@ -141,7 +141,7 @@ def phase2_5_ai_summary(picks_df, t0: float):
     return picks_df, ai_results
 
 
-def phase3_report(regime_result, gate_result, index_result, picks_df, analysis_date: str, t0: float):
+def phase3_report(regime_result, gate_result, index_result, picks_df, full_scored, analysis_date: str, t0: float):
     _log("Phase3", "최종 리포트 생성")
 
     regime = regime_result["regime"]
@@ -173,6 +173,21 @@ def phase3_report(regime_result, gate_result, index_result, picks_df, analysis_d
                 "_fallback":        p.get("_fallback", False),
             })
 
+    # 전체 채점 결과 (top-20 밖 포함) — 매수체크 폴백용 lean 페이로드.
+    # grade는 절대 임계값, action은 (gate, grade)로 정해지므로 top-20을 왜곡하지 않는다.
+    full_scores = []
+    if full_scored is not None and not full_scored.empty:
+        for _, r in full_scored.iterrows():
+            g = r.get("grade", "F")
+            full_scores.append({
+                "symbol":          r.get("symbol"),
+                "grade":           g,
+                "composite_score": r.get("composite_score"),
+                "action":          ACTION_MAP.get((gate, g), "SKIP"),
+                "current_price":   r.get("current_price"),
+                "sector":          r.get("sector", ""),
+            })
+
     # SQLite upsert
     conn = get_db()
     init_db(conn)
@@ -182,8 +197,9 @@ def phase3_report(regime_result, gate_result, index_result, picks_df, analysis_d
     upsert_index_prediction(conn, index_result)
     if ai_summaries:
         upsert_ai_summaries(conn, {"summaries": ai_summaries})
+    upsert_full_scores(conn, {"date": analysis_date, "gate": gate, "scores": full_scores})
     conn.close()
-    _log("Phase3", "DB upsert 완료", t0)
+    _log("Phase3", f"DB upsert 완료 (전체 채점 {len(full_scores)}종목 저장)", t0)
 
     return report
 
@@ -255,9 +271,9 @@ def main() -> None:
 
     sp500_df, price_map = phase0_refresh_data(t0)
     regime_result, gate_result, index_result = phase1_market_analysis(t0)
-    picks_df = phase2_screening(sp500_df, price_map, t0)
+    picks_df, full_scored = phase2_screening(sp500_df, price_map, t0)
     picks_df, ai_results = phase2_5_ai_summary(picks_df, t0)
-    report   = phase3_report(regime_result, gate_result, index_result, picks_df, args.date, t0)
+    report   = phase3_report(regime_result, gate_result, index_result, picks_df, full_scored, args.date, t0)
     phase4_risk_and_costs(ai_results, args.date, t0)
 
     # ── Phase5 포트폴리오 트래킹 ───────────────────────────────────────────

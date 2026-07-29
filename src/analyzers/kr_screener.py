@@ -32,6 +32,7 @@ def _grade(score: float) -> str:
 class KRStockScreener:
     def __init__(self):
         self._kospi_ret20: float | None = None
+        self.full_scored: pd.DataFrame = pd.DataFrame()  # screen() 후 전체 채점 결과
 
     def _get_kospi_ret20(self) -> float:
         if self._kospi_ret20 is not None:
@@ -234,9 +235,12 @@ class KRStockScreener:
 
         df = pd.DataFrame(results)
         if df.empty:
+            self.full_scored = df
             return df
-        df = df.sort_values("composite_score", ascending=False).head(30).reset_index(drop=True)
-        return df
+        # 전체 채점 결과 보존 (top-30 밖 종목도 매수체크에서 조회 가능하게)
+        df_full = df.sort_values("composite_score", ascending=False).reset_index(drop=True)
+        self.full_scored = df_full
+        return df_full.head(30).reset_index(drop=True)
 
 
 if __name__ == "__main__":

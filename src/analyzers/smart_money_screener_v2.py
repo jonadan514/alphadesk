@@ -32,6 +32,7 @@ class EnhancedSmartMoneyScreener:
     def __init__(self):
         self._session = curl_requests.Session(impersonate="chrome")
         self._spy_ret20: float | None = None
+        self.full_scored: pd.DataFrame = pd.DataFrame()  # screen() 후 전체 채점 결과
 
     # ------------------------------------------------------------------
     # SPY benchmark
@@ -283,9 +284,15 @@ class EnhancedSmartMoneyScreener:
                 print(f"[Screener] {sym} skipped: {exc}")
 
         if not rows:
+            self.full_scored = pd.DataFrame()
             return pd.DataFrame()
 
-        df = pd.DataFrame(rows).sort_values("composite_score", ascending=False).head(top_n)
+        # 전체 채점 결과 보존 — top-20 밖 종목도 매수체크에서 등급/액션으로 조회할 수 있게
+        # (grade는 절대 임계값, action은 gate+grade로 정해지므로 top-20을 왜곡하지 않는다)
+        df_full = pd.DataFrame(rows).sort_values("composite_score", ascending=False).reset_index(drop=True)
+        self.full_scored = df_full
+
+        df = df_full.head(top_n).copy()
         df = df.reset_index(drop=True)
         df.index += 1
 

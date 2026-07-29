@@ -53,6 +53,12 @@ _KR_TABLES = [
         payload     TEXT NOT NULL,
         updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     )""",
+    # 전체 채점 결과 (top-30 밖 포함) — 매수체크 폴백용
+    """CREATE TABLE IF NOT EXISTS kr_full_scores (
+        id          INTEGER PRIMARY KEY CHECK (id = 1),
+        payload     TEXT NOT NULL,
+        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    )""",
 ]
 
 
@@ -166,8 +172,9 @@ def phase2_gate(regime_result: dict, t0: float) -> dict:
 def phase3_screening(regime: str, analysis_date: str, t0: float) -> dict:
     _log("Phase3", "KOSPI 스크리닝 시작")
     from src.analyzers.kr_screener import KRStockScreener
-    picks_df = KRStockScreener().screen(regime)
-    _log("Phase3", f"스크리닝 완료: {len(picks_df)}종목", t0)
+    screener = KRStockScreener()
+    picks_df = screener.screen(regime)
+    _log("Phase3", f"스크리닝 완료: {len(picks_df)}종목 (전체 채점 {len(screener.full_scored)}종목)", t0)
 
     picks = picks_df.to_dict("records") if not picks_df.empty else []
     buy_picks   = [p for p in picks if p.get("action") == "BUY"]
@@ -192,7 +199,7 @@ def phase3_screening(regime: str, analysis_date: str, t0: float) -> dict:
         "summary":       f"BUY {len(buy_picks)}종목, WATCH {len(watch_picks)}종목 선별",
     }
     _log("Phase3", f"Verdict={verdict}  BUY={len(buy_picks)}", t0)
-    return report
+    return report, screener.full_scored
 
 
 def phase3_5_ai_summary(report: dict, regime_result: dict, sector_result: dict | None, t0: float) -> list:
@@ -320,8 +327,25 @@ def main() -> None:
         gate_result = phase2_gate(regime_result, t0)
         _upsert_snapshot(conn, "kr_market_gate", gate_result)
 
-        report = phase3_screening(regime_result["regime"], analysis_date, t0)
+        report, kr_full_scored = phase3_screening(regime_result["regime"], analysis_date, t0)
         _upsert_timeseries(conn, "kr_daily_reports", analysis_date, report)
+
+        # 전체 채점 결과 (top-30 밖 포함) — 매수체크 폴백용 lean 페이로드.
+        # KR action은 스크리너가 (체제, 점수)로 이미 산출 → 그대로 사용.
+        kr_full = []
+        if kr_full_scored is not None and not kr_full_scored.empty:
+            for _, r in kr_full_scored.iterrows():
+                kr_full.append({
+                    "symbol":          r.get("symbol"),
+                    "name":            r.get("name"),
+                    "grade":           r.get("grade"),
+                    "composite_score": r.get("composite_score"),
+                    "action":          r.get("action"),
+                    "cur_price":       r.get("cur_price"),
+                    "sector":          r.get("sector", ""),
+                })
+        _upsert_snapshot(conn, "kr_full_scores", {"date": analysis_date, "scores": _sanitize(kr_full)})
+        _log("Phase3", f"전체 채점 {len(kr_full)}종목 저장", t0)
 
         sector_result = phase4_sector(t0)
         # sector analyzer saves itself to kr_sector_analysis

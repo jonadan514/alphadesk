@@ -265,11 +265,25 @@ function PreTradeChecklist({
       .catch(() => setFxError(true));
   }, []);
 
+  // 전체 채점 결과 (top-20 밖 종목 포함) — 워치리스트 종목이 오늘 top-20에 없어도
+  // 등급·액션으로 매수체크가 되도록 폴백 소스로 사용한다. (AI thesis는 top-20에만 있음)
+  const [fullScores, setFullScores] = useState<any[]>([]);
+  useEffect(() => {
+    const url = market === "KR" ? "/api/data/kr/full-scores" : "/api/data/full-scores";
+    fetch(url)
+      .then((r) => r.json())
+      .then((d) => setFullScores(Array.isArray(d?.scores) ? d.scores : []))
+      .catch(() => {});
+  }, [market]);
+
   const latestPicks: any[] = reports[0]?.picks ?? [];
   const tickerUp = ticker.trim().toUpperCase();
-  const pick = tickerUp ? latestPicks.find((p: any) =>
-    (p.symbol ?? "").toUpperCase() === tickerUp || (p.name ?? "").includes(tickerUp)
-  ) : null;
+  const matchTicker = (p: any) =>
+    (p.symbol ?? "").toUpperCase() === tickerUp || (p.name ?? "").includes(tickerUp);
+  // 1순위: 오늘 top-20 리포트(AI thesis 포함). 없으면 전체 채점 폴백(등급·액션만).
+  const pick = tickerUp ? (latestPicks.find(matchTicker) ?? fullScores.find(matchTicker) ?? null) : null;
+  const pickFromReport = tickerUp ? latestPicks.some(matchTicker) : false; // top-20 리포트 출처 여부
+  const pickFromFallback = !!pick && !pickFromReport;                       // 전체 채점 폴백 출처
 
   // 워치리스트 후보 자동 판정
   const [candidateSet, setCandidateSet] = useState<Set<string>>(new Set());
@@ -508,9 +522,14 @@ function PreTradeChecklist({
               {curPrice > 0 && <span className="ml-2" style={{ color: "#a39c88" }}>현재가 {isKR ? `₩${Number(curPrice).toLocaleString()}` : `$${curPrice}`}</span>}
             </p>
           )}
+          {tickerUp && pickFromFallback && (
+            <p className="text-[12px] mt-0.5" style={{ color: "#726b58" }}>
+              ⓘ 오늘 top-20 랭킹 밖 종목 — 등급·액션은 전체 채점 결과 기준이며, AI 상세 분석은 top-20에만 제공돼요.
+            </p>
+          )}
           {tickerUp && !pick && (
             <p className="text-[12px] mt-1" style={{ color: "#726b58" }}>
-              최신 리포트에서 찾을 수 없습니다. 손절가·수량은 직접 입력해 체크할 수 있습니다.
+              전체 채점 결과에서 찾을 수 없습니다 (상장폐지·신규상장·데이터 누락 등). 손절가·수량은 직접 입력해 체크할 수 있습니다.
             </p>
           )}
           {/* 선행 섹터 여부 — 판정 항목이 아닌 참고 정보 (미해당이어도 매수 진행 가능) */}
