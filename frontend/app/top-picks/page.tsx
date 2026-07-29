@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import InfoTooltip from "@/src/components/InfoTooltip";
 import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
 import { SECTOR_TO_ETF } from "@/src/lib/constants";
 import StockTechPanel from "@/src/components/StockTechPanel";
+
+const ACTION_KO: Record<string, string> = {
+  BUY: "매수 후보", "SMALL BUY": "소량 매수", WATCH: "관심 유지", HOLD: "보유", SKIP: "제외",
+};
 
 const ACTION_COLOR: Record<string, string> = {
   BUY: "#4ade80", "SMALL BUY": "#22c55e", WATCH: "#facc15", HOLD: "#a39c88", SKIP: "#423e33",
@@ -94,48 +99,111 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
   const bearCases  = arr(ai?.bear_cases);
   const confidence = num(ai?.confidence);
 
+  // 한 줄 결론 — 액션·등급·종합점수(+목표가 상승여력)로 즉석 요약
+  const target = isKR ? targetAI : targetUS;
+  const upside = (target != null && curPrice != null && curPrice > 0) ? ((target - curPrice) / curPrice) * 100 : null;
+  const conclParts: string[] = [ACTION_KO[pick.action] ?? pick.action];
+  if (pick.grade) conclParts.push(`Grade ${pick.grade}`);
+  if (compScore != null) conclParts.push(`종합점수 ${compScore.toFixed(1)}`);
+  if (upside != null) conclParts.push(`목표가 대비 ${upside >= 0 ? "+" : ""}${upside.toFixed(1)}%`);
+  const conclusion = conclParts.join(" · ");
+
+  const eyebrow = "text-[10px] uppercase tracking-widest";
+  const insetCard = { background: "var(--bg-inset)", border: "1px solid var(--border)" } as React.CSSProperties;
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.75)" }}
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-lg rounded-2xl overflow-hidden"
-        style={{ background: "#111009", border: `1.5px solid ${color}44`, maxHeight: "85vh", overflowY: "auto" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="px-5 py-4 flex items-start gap-4" style={{ background: "#0e0d08", borderBottom: `1px solid ${color}22` }}>
+    // 우측 슬라이드오버 — 워치리스트 상세와 동일 골격, 데이터만 종목 분석 것
+    <div className="fixed inset-0 z-50 flex justify-end" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose}>
+      <div className="slideover-panel h-full w-full overflow-y-auto"
+        style={{ maxWidth: 780, background: "#111009", borderLeft: "1px solid var(--border-ctrl)", boxShadow: "-24px 0 60px rgba(0,0,0,0.5)" }}
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* 헤더 — 스크롤해도 상단 고정 */}
+        <div className="sticky top-0 z-10 px-5 py-4 flex items-start gap-4" style={{ background: "#111009", borderBottom: "1px solid var(--border)" }}>
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
+            <div className="flex items-center gap-2 mb-1">
               {pick.name
-                ? <><span className="text-xl font-black text-white">{pick.name}</span>
+                ? <><span className="text-2xl font-black" style={{ color: "var(--text-primary)" }}>{pick.name}</span>
                     <span className="text-[13px] font-mono" style={{ color: "var(--text-muted)" }}>{pick.symbol}</span></>
-                : <span className="text-xl font-black text-white">{pick.symbol}</span>
+                : <span className="text-2xl font-black font-mono" style={{ color: "var(--num)" }}>{pick.symbol}</span>
               }
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{pick.action}</span>
-              <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>Grade {pick.grade}</span>
-              <span className="text-[12px] text-[#726b58]">{pick.sector}</span>
+              <span className="text-[12px] font-bold px-2 py-0.5" style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{pick.action}</span>
+              <span className="text-[12px] font-bold px-2 py-0.5" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>Grade {pick.grade}</span>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{pick.sector}</span>
             </div>
           </div>
           <div className="text-center">
             <p className="text-2xl font-black" style={{ color: "#ffb020" }}>{compScore?.toFixed(1) ?? "—"}</p>
-            <p className="text-[12px] text-[#726b58]">종합 점수</p>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>종합 점수</p>
           </div>
-          <button onClick={onClose} className="text-[#726b58] hover:text-white text-lg font-bold">✕</button>
+          <button onClick={onClose} className="p-1" style={{ color: "var(--text-muted)" }}>✕</button>
         </div>
 
-        <div className="px-5 py-4 space-y-3">
+        <div className="p-5 space-y-4">
+          {/* 한 줄 결론 */}
+          <div className="p-3" style={insetCard}>
+            <p className={eyebrow + " mb-1"} style={{ color: "var(--text-faint)" }}>한 줄 결론</p>
+            <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>{conclusion}</p>
+          </div>
+
+          {/* 2단: 투자 논리(AI) | 기술적 타이밍(차트) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            {/* 투자 논리 */}
+            <div>
+              <p className={eyebrow + " mb-1.5"} style={{ color: "var(--text-faint)" }}>투자 논리 — AI 분석</p>
+              {ai ? (
+                <div className="p-3 space-y-2.5" style={insetCard}>
+                  {ai.thesis && <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{ai.thesis}</p>}
+                  {catalysts.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold mb-1" style={{ color: "#4ade80" }}>▲ 상승 촉매</p>
+                      {catalysts.slice(0, 3).map((c, i) => (
+                        <p key={i} className="text-[11px] leading-relaxed pl-2" style={{ color: "var(--text-secondary)" }}>· {c}</p>
+                      ))}
+                    </div>
+                  )}
+                  {bearCases.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold mb-1" style={{ color: "#f87171" }}>▼ 하락 리스크</p>
+                      {bearCases.slice(0, 3).map((b, i) => (
+                        <p key={i} className="text-[11px] leading-relaxed pl-2" style={{ color: "var(--text-secondary)" }}>· {b}</p>
+                      ))}
+                    </div>
+                  )}
+                  {confidence != null && (
+                    <div className="pt-1" style={{ borderTop: "1px solid var(--border)" }}>
+                      <div className="flex justify-between text-[11px] mb-0.5" style={{ color: "var(--text-muted)" }}>
+                        <span>AI 신뢰도</span><span className="font-mono">{Math.round(confidence)}%</span>
+                      </div>
+                      <div className="h-1" style={{ background: "#0e0d08" }}>
+                        <div className="h-1" style={{ width: `${Math.min(100, Math.max(0, confidence))}%`, background: "#ffb020" }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="p-3" style={insetCard}>
+                  <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>AI 분석 데이터 없음 — 다음 일간 분석 실행 후 업데이트됩니다.</p>
+                </div>
+              )}
+            </div>
+
+            {/* 기술적 타이밍 */}
+            <div>
+              <p className={eyebrow + " mb-1.5"} style={{ color: "var(--text-faint)" }}>기술적 타이밍</p>
+              <StockTechPanel market={market} symbol={pick.symbol} />
+            </div>
+          </div>
+
           {/* 가격 정보 */}
-          {(curPrice != null || targetUS != null || targetAI != null) && (
-            <div className="grid grid-cols-2 gap-3">
+          {(curPrice != null || target != null) && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {curPrice != null && (
-                <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-                  <p className="text-[12px] text-[#726b58] mb-0.5">현재가</p>
-                  <p className="text-lg font-black text-white">
+                <div className="p-3" style={insetCard}>
+                  <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-faint)" }}>현재가</p>
+                  <p className="text-lg font-black" style={{ color: "var(--text-primary)" }}>
                     {isKR ? `₩${curPrice.toLocaleString()}` : `$${curPrice.toFixed(2)}`}
                   </p>
                   {isKR && pct52 != null && (
@@ -145,27 +213,12 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                   )}
                 </div>
               )}
-              {isKR && targetAI != null && (
-                <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid #ffb02022" }}>
-                  <p className="text-[12px] text-[#726b58] mb-0.5">AI 목표가</p>
-                  <p className="text-lg font-black" style={{ color: "#ffb020" }}>₩{targetAI.toLocaleString()}</p>
-                  {curPrice != null && curPrice > 0 && (
-                    <p className="text-[12px] mt-0.5" style={{ color: "#ffb020" }}>
-                      {((targetAI - curPrice) / curPrice) * 100 >= 0 ? "+" : ""}
-                      {(((targetAI - curPrice) / curPrice) * 100).toFixed(1)}% 상승여력
-                    </p>
-                  )}
-                </div>
-              )}
-              {!isKR && targetUS != null && (
-                <div className="rounded-lg p-3" style={{ background: "var(--bg-inset)", border: "1px solid #ffb02022" }}>
-                  <p className="text-[12px] text-[#726b58] mb-0.5">목표가</p>
-                  <p className="text-lg font-black" style={{ color: "#ffb020" }}>${targetUS.toFixed(2)}</p>
-                  {curPrice != null && curPrice > 0 && (
-                    <p className="text-[12px] mt-0.5" style={{ color: "#ffb020" }}>
-                      {((targetUS - curPrice) / curPrice) * 100 >= 0 ? "+" : ""}
-                      {(((targetUS - curPrice) / curPrice) * 100).toFixed(1)}% 상승여력
-                    </p>
+              {target != null && (
+                <div className="p-3" style={{ background: "var(--bg-inset)", border: "1px solid #ffb02022" }}>
+                  <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-faint)" }}>{isKR ? "AI 목표가" : "목표가"}</p>
+                  <p className="text-lg font-black" style={{ color: "#ffb020" }}>{isKR ? `₩${target.toLocaleString()}` : `$${target.toFixed(2)}`}</p>
+                  {upside != null && (
+                    <p className="text-[12px] mt-0.5" style={{ color: "#ffb020" }}>{upside >= 0 ? "+" : ""}{upside.toFixed(1)}% 상승여력</p>
                   )}
                 </div>
               )}
@@ -181,15 +234,15 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                 { label: "ROE", val: pick.roe != null ? `${pick.roe}%` : null },
                 { label: "배당", val: pick.dividend_yield != null ? `${pick.dividend_yield}%` : null },
               ].filter(f => f.val).map(({ label, val }) => (
-                <div key={label} className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-                  <p className="text-[12px] text-[#726b58]">{label}</p>
-                  <p className="text-sm font-black text-white">{val}</p>
+                <div key={label} className="p-2 text-center" style={insetCard}>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</p>
+                  <p className="text-sm font-black" style={{ color: "var(--text-primary)" }}>{val}</p>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Lynch/O'Neil 핵심 지표: PEG + EPS 성장 + 52주 고점 */}
+          {/* Lynch/O'Neil 핵심 지표 */}
           {(num(pick.peg_ratio) != null || pct52 != null || num(pick.earnings_growth) != null) && (() => {
             const pegVal = num(pick.peg_ratio);
             const pegColor = pegVal == null ? "#726b58" : (isKR ? pegVal < 0.7 : pegVal < 1.0) ? "#4ade80" : pegVal < 1.5 ? "#facc15" : "#f87171";
@@ -199,27 +252,25 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
             const egColor = egVal == null ? "#726b58" : egVal >= 25 ? "#4ade80" : egVal >= 10 ? "#facc15" : "#f87171";
             return (
               <div>
-                <p className="text-[12px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#726b58" }}>
-                  Lynch / O'Neil 지표
-                </p>
+                <p className={eyebrow + " mb-1.5"} style={{ color: "var(--text-faint)" }}>Lynch / O&apos;Neil 지표</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {pegVal != null && (
-                    <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${pegColor}33` }}>
-                      <p className="text-[12px]" style={{ color: "#726b58" }}>PEG 비율</p>
+                    <div className="p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${pegColor}33` }}>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>PEG 비율</p>
                       <p className="text-sm font-black" style={{ color: pegColor }}>{pegVal.toFixed(2)}</p>
                       <p className="text-[12px]" style={{ color: pegColor }}>{(isKR ? pegVal < 0.7 : pegVal < 1.0) ? "Lynch ✓" : "주의"}</p>
                     </div>
                   )}
                   {egVal != null && (
-                    <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${egColor}33` }}>
-                      <p className="text-[12px]" style={{ color: "#726b58" }}>EPS 성장</p>
+                    <div className="p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${egColor}33` }}>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>EPS 성장</p>
                       <p className="text-sm font-black" style={{ color: egColor }}>{egVal > 0 ? "+" : ""}{egVal.toFixed(1)}%</p>
                       <p className="text-[12px]" style={{ color: egColor }}>{egVal >= 25 ? "O'Neil ✓" : egVal >= 0 ? "성장중" : "역성장"}</p>
                     </div>
                   )}
                   {peg52Val != null && (
-                    <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${peg52Color}33` }}>
-                      <p className="text-[12px]" style={{ color: "#726b58" }}>52주 고점</p>
+                    <div className="p-2 text-center" style={{ background: "var(--bg-inset)", border: `1px solid ${peg52Color}33` }}>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>52주 고점</p>
                       <p className="text-sm font-black" style={{ color: peg52Color }}>{peg52Val > 0 ? "+" : ""}{peg52Val.toFixed(1)}%</p>
                       <p className="text-[12px]" style={{ color: peg52Color }}>{peg52Val > -5 ? "돌파권" : peg52Val > -15 ? "조정중" : "하락중"}</p>
                     </div>
@@ -229,13 +280,10 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
             );
           })()}
 
-          {/* 추세·모멘텀 (차트 + 기술 지표 분해) */}
-          <StockTechPanel market={market} symbol={pick.symbol} />
-
           {/* 팩터 점수 */}
           {factors.length > 0 && (
             <div>
-              <p className="text-[12px] font-bold uppercase tracking-widest text-[#726b58] mb-2">팩터 점수</p>
+              <p className={eyebrow + " mb-2"} style={{ color: "var(--text-faint)" }}>팩터 점수</p>
               <div className="space-y-1.5">
                 {factors.map(({ label, val }) => {
                   const score = Math.min(100, Math.max(0, val ?? 0));
@@ -243,8 +291,8 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
                   return (
                     <div key={label} className="flex items-center gap-2">
                       <span className="text-[12px] w-36 shrink-0" style={{ color: "var(--text-muted)" }}>{label}</span>
-                      <div className="flex-1 h-1.5 rounded-full" style={{ background: "var(--bg-inset)" }}>
-                        <div className="h-1.5 rounded-full" style={{ width: `${score}%`, background: fc }} />
+                      <div className="flex-1 h-1.5" style={{ background: "var(--bg-inset)" }}>
+                        <div className="h-1.5" style={{ width: `${score}%`, background: fc }} />
                       </div>
                       <span className="text-[12px] w-8 text-right font-mono font-bold" style={{ color: fc }}>{score.toFixed(0)}</span>
                     </div>
@@ -254,55 +302,13 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
             </div>
           )}
 
-          {/* AI thesis */}
-          {ai && (
-            <div className="space-y-2">
-              <p className="text-[12px] font-bold uppercase tracking-widest text-[#726b58]">AI 분석</p>
-              {ai.thesis && (
-                <p className="text-[12px] leading-relaxed" style={{ color: "#a39c88" }}>{ai.thesis}</p>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                {catalysts.length > 0 && (
-                  <div>
-                    <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: "#4ade80" }}>상승 촉매</p>
-                    <ul className="space-y-0.5">
-                      {catalysts.slice(0, 3).map((c, i) => (
-                        <li key={i} className="text-[12px] flex gap-1" style={{ color: "#a39c88" }}>
-                          <span style={{ color: "#4ade80" }}>▲</span>{c}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {bearCases.length > 0 && (
-                  <div>
-                    <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: "#f87171" }}>하락 리스크</p>
-                    <ul className="space-y-0.5">
-                      {bearCases.slice(0, 3).map((b, i) => (
-                        <li key={i} className="text-[12px] flex gap-1" style={{ color: "#a39c88" }}>
-                          <span style={{ color: "#f87171" }}>▼</span>{b}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              {confidence != null && (
-                <div>
-                  <div className="flex justify-between text-[12px] text-[#726b58] mb-0.5">
-                    <span>AI 신뢰도</span><span>{Math.round(confidence)}%</span>
-                  </div>
-                  <div className="h-1 rounded-full" style={{ background: "#111009" }}>
-                    <div className="h-1 rounded-full" style={{ width: `${Math.min(100, Math.max(0, confidence))}%`, background: "#ffb020" }} />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {!ai && (
-            <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>AI 분석 데이터 없음 — 다음 일간 분석 실행 후 업데이트됩니다.</p>
-          )}
+          {/* 매수 체크로 이동 (다음 행동 유도) */}
+          <Link
+            href={`/workflow?symbol=${encodeURIComponent(pick.symbol)}&market=${market}`}
+            className="block w-full py-2.5 text-[13px] font-bold text-center transition-opacity"
+            style={{ background: "#6fb3b814", color: "#6fb3b8", border: "1px solid #6fb3b833" }}>
+            매수 체크로 이동 →
+          </Link>
         </div>
       </div>
     </div>
