@@ -396,6 +396,14 @@ function PreTradeChecklist({
     ? Math.floor((totalCapNum * kellyPct) / entryPrice)
     : null;
 
+  // 손익비(R:R) 자동 계산 — 목표가·손절가가 있으면 추측 대신 계산으로 채운다.
+  //   손익비 = (목표가 − 현재가) ÷ (현재가 − 손절가)
+  const targetRaw = parseFloat(pick?.target_price ?? aiData?.target_price ?? "");
+  const targetPrice = !isNaN(targetRaw) && targetRaw > 0 ? targetRaw : null;
+  const autoRR = (targetPrice && curPrice > 0 && stopOk && stopNum < curPrice && targetPrice > curPrice)
+    ? (targetPrice - curPrice) / (curPrice - stopNum)
+    : null;
+
   // ── 각 조건 상태 산출 (2026-07: pass boolean → PASS/WARN/FAIL/PENDING) ──
   // 목적: "아직 미입력·미선택(PENDING)"과 "실제 미충족(FAIL)"을 구분하고,
   // STOP 시장 게이트/체제/리스크가 회색으로 숨던 문제를 실제 경고색으로 드러낸다.
@@ -735,6 +743,29 @@ function PreTradeChecklist({
                 style={inputStyle}
               />
             </div>
+
+            {/* 손익비 자동 계산 — 목표가·손절가 기반 */}
+            {autoRR !== null ? (
+              <p className="text-[12px] mt-1.5 flex items-center gap-1.5" style={{ color: "#6fb3b8" }}>
+                <span>
+                  목표가 {isKR ? `₩${Number(targetPrice).toLocaleString()}` : `$${targetPrice!.toFixed(2)}`} 기준 손익비 ≈ <b>{autoRR.toFixed(1)}</b>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setRrRatio(autoRR.toFixed(2))}
+                  className="px-1.5 py-0.5 rounded"
+                  style={{ color: "#6fb3b8", background: "#6fb3b812", border: "1px solid #6fb3b833" }}
+                  title="계산된 손익비를 입력칸에 채웁니다"
+                >
+                  적용
+                </button>
+              </p>
+            ) : targetPrice !== null && !stopOk ? (
+              <p className="text-[12px] mt-1.5" style={{ color: "var(--text-faint)" }}>
+                손절가를 입력하면 목표가({isKR ? `₩${Number(targetPrice).toLocaleString()}` : `$${targetPrice.toFixed(2)}`}) 기준 손익비가 자동 계산돼요.
+              </p>
+            ) : null}
+
             {kellyF !== null && (
               kellyF <= 0 ? (
                 <p className="text-[12px] mt-1.5 font-bold" style={{ color: "#f87171" }}>
@@ -753,9 +784,19 @@ function PreTradeChecklist({
         {/* 손절가 + 매수 수량 */}
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <p className="text-[12px] text-[#726b58] mb-1 uppercase tracking-widest">
-              손절가 {isKR ? "(₩)" : "($)"}
-              {recStopNum && <span className="ml-1 normal-case" style={{ color: "#facc15" }}>권장 {isKR ? `₩${Number(recStopNum).toLocaleString()}` : `$${recStopNum}`}</span>}
+            <p className="text-[12px] text-[#726b58] mb-1 uppercase tracking-widest flex items-center gap-1">
+              <span>손절가 {isKR ? "(₩)" : "($)"}</span>
+              {recStopNum && (
+                <button
+                  type="button"
+                  onClick={() => setStopPrice(String(recStopNum))}
+                  className="normal-case tracking-normal px-1.5 py-0.5 rounded"
+                  style={{ color: "#facc15", background: "#facc1512", border: "1px solid #facc1533" }}
+                  title="권장 손절가를 입력칸에 채웁니다"
+                >
+                  권장 {isKR ? `₩${Number(recStopNum).toLocaleString()}` : `$${recStopNum}`} 적용
+                </button>
+              )}
             </p>
             <input
               type="number"

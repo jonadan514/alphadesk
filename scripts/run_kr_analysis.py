@@ -342,6 +342,7 @@ def main() -> None:
                     "composite_score": r.get("composite_score"),
                     "action":          r.get("action"),
                     "cur_price":       r.get("cur_price"),
+                    "target_price":    r.get("target_price"),  # 손익비 자동 계산용 (KR 스크리너엔 없으면 None)
                     "sector":          r.get("sector", ""),
                 })
         _upsert_snapshot(conn, "kr_full_scores", {"date": analysis_date, "scores": _sanitize(kr_full)})

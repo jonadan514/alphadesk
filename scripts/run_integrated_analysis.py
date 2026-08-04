@@ -185,6 +185,7 @@ def phase3_report(regime_result, gate_result, index_result, picks_df, full_score
                 "composite_score": r.get("composite_score"),
                 "action":          ACTION_MAP.get((gate, g), "SKIP"),
                 "current_price":   r.get("current_price"),
+                "target_price":    r.get("target_price"),  # 매수체크 손익비 자동 계산용
                 "sector":          r.get("sector", ""),
             })
 
