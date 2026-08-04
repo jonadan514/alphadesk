@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
 import StatusBadge from "@/src/components/StatusBadge";
+import InfoTooltip from "@/src/components/InfoTooltip";
 import { SECTOR_TO_ETF } from "@/src/lib/constants";
 
 type Signal = "GO" | "CAUTION" | "STOP" | "LOADING";
@@ -703,8 +704,16 @@ function PreTradeChecklist({
 
           {/* 켈리 검증 (선택) */}
           <div className="pt-2" style={{ borderTop: "1px solid #262112" }}>
-            <p className="text-[12px] mb-1.5" style={{ color: "#726b58" }}>
-              켈리 검증 <span style={{ color: "#423e33" }}>(선택)</span> — 예상 승률·손익비를 넣으면 이 베팅이 수학적으로 말이 되는지 확인
+            <p className="text-[12px] mb-1.5 flex items-center gap-1.5" style={{ color: "#726b58" }}>
+              <span>켈리 검증 <span style={{ color: "#423e33" }}>(선택)</span> — 이 베팅이 수학적으로 우위가 있는지 확인</span>
+              <InfoTooltip content={
+                <div className="space-y-1.5">
+                  <p><b style={{ color: "#e6e8eb" }}>켈리 공식</b>은 &quot;이길 확률 대비 손익비가 좋은 베팅인지, 그렇다면 자금의 몇 %가 최적인지&quot;를 알려줘요.</p>
+                  <p><b style={{ color: "#e6e8eb" }}>승률(%)</b>: 이 매매에서 이길 확률. 40~60처럼 퍼센트로 입력 (55 = 55%). 자신의 과거 승률이나 보수적 추정치를 쓰세요.</p>
+                  <p><b style={{ color: "#e6e8eb" }}>손익비(R:R)</b>: 맞았을 때 이익 ÷ 틀렸을 때 손실. <b style={{ color: "#e6e8eb" }}>추측이 아니라 계산돼요</b> — (목표가 − 현재가) ÷ (현재가 − 손절가). 예: 현재가 $100, 손절 $92, 목표 $116이면 16÷8 = 2.0.</p>
+                  <p>공식: 켈리 = 승률 − (1−승률) ÷ 손익비. <span style={{ color: "#f87171" }}>음수면</span> 기대손실(진입 재고), <span style={{ color: "#4ade80" }}>양수면</span> 그 %가 이론상 최적 비율 (실전은 보통 그 절반 &apos;하프 켈리&apos;).</p>
+                </div>
+              } />
             </p>
             <div className="grid grid-cols-2 gap-2">
               <input
