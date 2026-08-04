@@ -95,6 +95,27 @@ export default function PortfolioPage() {
   useEffect(() => { loadTrades(); }, [loadTrades]);
   useEffect(() => { if (tab === "performance") loadChart(); }, [tab, loadChart]);
 
+  // 매수체크 "포트폴리오에 기록" CTA가 넘긴 값으로 매수 폼을 미리 채워 연다.
+  // 실제 체결가는 사용자가 확인·수정 후 저장 (자동 생성하지 않음).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const symbol = sp.get("symbol");
+    if (!symbol) return;
+    setForm((f) => ({
+      ...f,
+      market: sp.get("market") === "KR" ? "KR" : "US",
+      symbol: symbol.toUpperCase(),
+      name: sp.get("name") ?? f.name,
+      type: "buy",
+      price: sp.get("price") ?? f.price,
+      shares: sp.get("shares") ?? f.shares,
+      note: sp.get("note") ?? f.note,
+    }));
+    setTab("trades");
+    setShowForm(true);
+  }, []);
+
   async function addTrade() {
     if (!form.symbol || !form.price || !form.shares) return;
     setSaving(true);

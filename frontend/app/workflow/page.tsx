@@ -514,6 +514,14 @@ function PreTradeChecklist({
   const verdict = buildVerdict();
   const verdictColor = CK_COLOR[verdict.tone];
 
+  // 매수체크 값 → 포트폴리오 매수 폼 프리필 딥링크 (실제 체결가는 사용자가 확인·저장)
+  const recordNote = `매수체크${pick ? ` · Grade ${pick.grade} ${pick.action}` : ""}${stopOk ? ` · 손절 ${stopPrice}` : ""}`;
+  const recordHref = `/portfolio?market=${market}&symbol=${encodeURIComponent(tickerUp)}`
+    + (pick?.name ? `&name=${encodeURIComponent(pick.name)}` : "")
+    + (sharesOk ? `&shares=${sharesNum}` : "")
+    + (curPrice > 0 ? `&price=${curPrice}` : "")
+    + `&note=${encodeURIComponent(recordNote)}`;
+
   const inputCls = "rounded-lg px-3 py-1.5 text-sm font-mono text-white outline-none w-full";
   const inputStyle = { background: "var(--bg-inset)", border: "1px solid var(--border)" };
 
@@ -842,6 +850,22 @@ function PreTradeChecklist({
           <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{verdict.sub}</p>
         )}
       </div>
+
+      {/* 포트폴리오 기록 — 매수체크 값으로 포트폴리오 매수 폼을 채워서 연다 */}
+      {tickerUp && (
+        <div className="px-4 pb-4">
+          <Link
+            href={recordHref}
+            className="block w-full py-2.5 text-[13px] font-bold text-center"
+            style={{ background: "#ffb02018", color: "#ffb020", border: "1px solid #ffb02033" }}
+          >
+            📥 이 내용으로 포트폴리오에 매수 기록 →
+          </Link>
+          <p className="text-[11px] mt-1 text-center" style={{ color: "var(--text-faint)" }}>
+            종목·수량·현재가가 매수 폼에 채워져요. 실제 체결가를 확인·수정한 뒤 저장하세요.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
