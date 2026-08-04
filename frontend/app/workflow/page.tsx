@@ -470,6 +470,50 @@ function PreTradeChecklist({
   const CK_ICON: Record<CkStatus, string> = { PASS: "✓", WARN: "!", FAIL: "✕", PENDING: "○" };
   const CK_COLOR: Record<CkStatus, string> = { PASS: "#4ade80", WARN: "#facc15", FAIL: "#f87171", PENDING: "#8b8271" };
 
+  // ── ⓑ 최종 매수 가능 여부 한 문장 종합 ──────────────────────────
+  // "무엇이 막고, 무엇을 하면 되는지"를 상태들로부터 합성한다.
+  // 차단 조건: 시장/종목 FAIL, 주문(손절가·수량) 미완, 사용자 판단 미완.
+  // 비차단(참고): 워치리스트 후보 밖·AI 상세 없음(WARN).
+  const buildVerdict = (): { tone: CkStatus; headline: string; sub: string } => {
+    if (!tickerUp) return { tone: "PENDING", headline: "종목을 선택하면 시장·종목 조건을 자동 판정합니다.", sub: "" };
+
+    const marketFail = ([["게이트", stGate], ["체제", stRegime], ["리스크", stRisk]] as const)
+      .filter(([, s]) => s === "FAIL").map(([n]) => n);
+    const stockFail = ([["BUY 액션", stBuy], ["등급 A·B", stGrade], ["점수 60↑", stScore]] as const)
+      .filter(([, s]) => s === "FAIL").map(([n]) => n);
+
+    // 참고성 경고 (매수를 막지는 않음)
+    const advisories: string[] = [];
+    if (stWatch === "WARN") advisories.push("워치리스트 후보 밖");
+    if (stAi === "WARN")    advisories.push("AI 상세 분석 없음");
+    const advisorySub = advisories.length ? `참고: ${advisories.join(" · ")}` : "";
+
+    if (marketFail.length) {
+      return { tone: "FAIL", headline: `지금 시장이 신규 진입에 부적합 (${marketFail.join("·")} 미충족) — 매수 보류.`,
+        sub: "시장 신호가 회복된 뒤 다시 검토하세요." };
+    }
+    if (stockFail.length) {
+      return { tone: "FAIL", headline: `${tickerUp}은(는) 종목 조건 미달 (Grade ${pick?.grade ?? "-"} · ${pick?.action ?? "-"}) — 매수 보류.`,
+        sub: "BUY·A/B 등급 종목을 고르거나, 근거가 확실하면 본인 판단으로 진행하세요." };
+    }
+
+    // 차단 FAIL 없음 → 남은 필수 항목(사용자 판단·주문 계획) 점검
+    const manualDone = stWorkbook === "PASS" && stFunds === "PASS";
+    const orderReady = stStop === "PASS" && stSize === "PASS";
+    const needs: string[] = [];
+    if (!manualDone) needs.push("정성 검증·자금 확인 체크");
+    if (!orderReady) needs.push(
+      (stStop === "WARN" || stSize === "WARN") ? "손절가·수량 재확인" : "손절가·수량 입력"
+    );
+
+    if (needs.length === 0) {
+      return { tone: "PASS", headline: `✓ 필수 조건 모두 충족 — ${tickerUp} 매수 실행 가능.`, sub: advisorySub };
+    }
+    return { tone: "WARN", headline: `필수 조건은 통과 — ${needs.join(" + ")} 후 매수 가능.`, sub: advisorySub };
+  };
+  const verdict = buildVerdict();
+  const verdictColor = CK_COLOR[verdict.tone];
+
   const inputCls = "rounded-lg px-3 py-1.5 text-sm font-mono text-white outline-none w-full";
   const inputStyle = { background: "var(--bg-inset)", border: "1px solid var(--border)" };
 
@@ -791,14 +835,12 @@ function PreTradeChecklist({
         })}
       </div>
 
-      <div className="px-4 py-3 text-center" style={{ background: anyFail ? "#f871710d" : allPass ? "#4ade800d" : "#facc150d", borderTop: `1px solid ${overallColor}22` }}>
-        <p className="text-[12px] font-bold" style={{ color: overallColor }}>
-          {anyFail
-            ? "매수 보류 — 미충족(✕) 조건을 먼저 해결하세요"
-            : allPass
-            ? "✓ 모든 조건 충족 — 매수 실행 가능"
-            : "일부 조건이 대기·확인 상태 — 입력·점검 후 진행하세요"}
-        </p>
+      {/* ⓑ 최종 매수 가능 여부 한 문장 종합 */}
+      <div className="px-4 py-3" style={{ background: `${verdictColor}0d`, borderTop: `1px solid ${verdictColor}22` }}>
+        <p className="text-[13px] font-bold" style={{ color: verdictColor }}>{verdict.headline}</p>
+        {verdict.sub && (
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{verdict.sub}</p>
+        )}
       </div>
     </div>
   );
