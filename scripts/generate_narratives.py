@@ -25,6 +25,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from src.db.turso_http import get_credentials, query as turso_query, execute_many as turso_pipeline
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -32,53 +34,10 @@ MAX_AGE_HOURS = 20          # 이보다 최신인 브리프는 건너뜀 (하루
 OPENAI_MODEL = "gpt-4o-mini"
 
 
-# ── Turso (Hrana v2 HTTP) ──────────────────────────────────────────────────
-
-def _turso_base():
-    url = os.environ.get("TURSO_DATA_URL", "").replace("libsql://", "https://")
-    token = os.environ.get("TURSO_DATA_TOKEN", "")
-    if not url or not token:
+def _require_turso() -> None:
+    if not get_credentials():
         logger.error("TURSO_DATA_URL / TURSO_DATA_TOKEN 미설정")
         sys.exit(1)
-    return url, {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-
-
-def _turso_val(v):
-    if v is None:
-        return {"type": "null"}
-    if isinstance(v, int):
-        return {"type": "integer", "value": str(v)}
-    if isinstance(v, float):
-        return {"type": "float", "value": v}
-    return {"type": "text", "value": str(v)}
-
-
-def turso_pipeline(statements: list[dict]) -> list:
-    """execute 문 리스트를 한 번에 전송, 결과 리스트 반환."""
-    url, headers = _turso_base()
-    body = json.dumps({"requests": statements}).encode()
-    req = urllib.request.Request(f"{url}/v2/pipeline", data=body, headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.loads(resp.read()).get("results", [])
-
-
-def turso_query(sql: str, args: list | None = None) -> list[dict]:
-    """SELECT 실행 후 dict 행 리스트 반환."""
-    stmt = {"type": "execute", "stmt": {"sql": sql}}
-    if args:
-        stmt["stmt"]["args"] = [_turso_val(a) for a in args]
-    results = turso_pipeline([stmt])
-    if not results or results[0].get("type") != "ok":
-        return []
-    result = results[0]["response"]["result"]
-    cols = [c["name"] for c in result.get("cols", [])]
-    rows = []
-    for raw in result.get("rows", []):
-        row = {}
-        for col, cell in zip(cols, raw):
-            row[col] = cell.get("value") if isinstance(cell, dict) else cell
-        rows.append(row)
-    return rows
 
 
 # ── 뉴스 수집 ───────────────────────────────────────────────────────────────
@@ -325,10 +284,11 @@ def main() -> None:
     parser.add_argument("--force", action="store_true", help="신선도 무시하고 전부 재생성")
     args = parser.parse_args()
 
+    _require_turso()
     t0 = time.time()
     turso_pipeline([
-        {"type": "execute", "stmt": {"sql": CREATE_SQL}},
-        {"type": "execute", "stmt": {"sql": HISTORY_CREATE_SQL}},
+        (CREATE_SQL, None),
+        (HISTORY_CREATE_SQL, None),
     ])
 
     batch = args.limit if args.limit > 0 else args.batch
@@ -356,22 +316,8 @@ def main() -> None:
         brief["name"] = name    # 표시용 (KR은 코드만으론 식별 어려움)
 
         turso_pipeline([
-            {
-                "type": "execute",
-                "stmt": {
-                    "sql": UPSERT_SQL,
-                    "args": [_turso_val(market), _turso_val(symbol),
-                             _turso_val(json.dumps(brief, ensure_ascii=False))],
-                },
-            },
-            {
-                "type": "execute",
-                "stmt": {
-                    "sql": HISTORY_INSERT_SQL,
-                    "args": [_turso_val(market), _turso_val(symbol),
-                             _turso_val(today), _turso_val(brief["sentiment"])],
-                },
-            },
+            (UPSERT_SQL, [market, symbol, json.dumps(brief, ensure_ascii=False)]),
+            (HISTORY_INSERT_SQL, [market, symbol, today, brief["sentiment"]]),
         ])
         ok += 1
         trend_note = f" ({prev_sentiment}→{brief['sentiment']})" if trend == "up" else ""

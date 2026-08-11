@@ -5,8 +5,6 @@
 - 경기 사이클 판단 (Early / Mid / Late / Recession)
 """
 import json
-import sqlite3
-import os
 from datetime import datetime
 
 import numpy as np
@@ -14,8 +12,7 @@ import pandas as pd
 import yfinance as yf
 
 from src.collectors.kr_kospi_list import get_kospi_list
-
-DB_PATH = os.getenv("DATA_DB_PATH", "output/data.db")
+from src.db.data_store import get_db
 
 # 경기 사이클별 대표 섹터
 CYCLE_SECTORS = {
@@ -98,7 +95,7 @@ def _weekly_ret(series: pd.Series, weeks_ago: int) -> float | None:
 def _get_sector_stocks() -> dict[str, list[dict]]:
     """kr_daily_reports에서 섹터별 종목 추출"""
     try:
-        with sqlite3.connect(DB_PATH) as con:
+        with get_db() as con:
             row = con.execute(
                 "SELECT payload FROM kr_daily_reports ORDER BY date DESC LIMIT 1"
             ).fetchone()
@@ -206,9 +203,7 @@ def analyze() -> dict:
 
 
 def _save(data: dict):
-    from pathlib import Path
-    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(DB_PATH) as con:
+    with get_db() as con:
         con.execute("""
             CREATE TABLE IF NOT EXISTS kr_sector_analysis (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,

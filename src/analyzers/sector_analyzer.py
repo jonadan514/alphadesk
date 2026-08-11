@@ -8,15 +8,13 @@
 """
 
 import json
-import sqlite3
-import os
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import yfinance as yf
 
-DB_PATH = os.getenv("DATA_DB_PATH", "output/data.db")
+from src.db.data_store import get_db
 
 SECTOR_ETFS = {
     "XLK":  "Technology",
@@ -95,7 +93,7 @@ def _weekly_ret(closes: pd.DataFrame, ticker: str, weeks_ago: int) -> float | No
 def _get_sector_stocks() -> dict[str, list[dict]]:
     """daily report picks에서 섹터별 종목 추출"""
     try:
-        with sqlite3.connect(DB_PATH) as con:
+        with get_db() as con:
             row = con.execute(
                 "SELECT payload FROM data_daily_reports ORDER BY date DESC LIMIT 1"
             ).fetchone()
@@ -192,9 +190,7 @@ def analyze() -> dict:
 
 
 def _save(data: dict):
-    from pathlib import Path
-    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(DB_PATH) as con:
+    with get_db() as con:
         con.execute("""
             CREATE TABLE IF NOT EXISTS sector_analysis (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,

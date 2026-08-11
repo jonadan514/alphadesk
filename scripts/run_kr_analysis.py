@@ -13,59 +13,12 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.db.data_store import get_db
+from src.db.data_store import get_db, init_db
 
 
 def _log(phase: str, msg: str, t0: float | None = None) -> None:
     elapsed = f"  [{time.time()-t0:.1f}s]" if t0 else ""
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {phase}{elapsed}  {msg}")
-
-
-_KR_TABLES = [
-    """CREATE TABLE IF NOT EXISTS kr_daily_reports (
-        date        TEXT PRIMARY KEY,
-        payload     TEXT NOT NULL,
-        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    )""",
-    """CREATE TABLE IF NOT EXISTS kr_regime (
-        id          INTEGER PRIMARY KEY CHECK (id = 1),
-        payload     TEXT NOT NULL,
-        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    )""",
-    """CREATE TABLE IF NOT EXISTS kr_market_gate (
-        id          INTEGER PRIMARY KEY CHECK (id = 1),
-        payload     TEXT NOT NULL,
-        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    )""",
-    """CREATE TABLE IF NOT EXISTS kr_sector_analysis (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        date       TEXT NOT NULL UNIQUE,
-        payload    TEXT NOT NULL,
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )""",
-    """CREATE TABLE IF NOT EXISTS kr_ai_summaries (
-        id          INTEGER PRIMARY KEY CHECK (id = 1),
-        payload     TEXT NOT NULL,
-        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    )""",
-    """CREATE TABLE IF NOT EXISTS kr_index_prediction (
-        id          INTEGER PRIMARY KEY CHECK (id = 1),
-        payload     TEXT NOT NULL,
-        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    )""",
-    # 전체 채점 결과 (top-30 밖 포함) — 매수체크 폴백용
-    """CREATE TABLE IF NOT EXISTS kr_full_scores (
-        id          INTEGER PRIMARY KEY CHECK (id = 1),
-        payload     TEXT NOT NULL,
-        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    )""",
-]
-
-
-def _init_kr_tables(conn) -> None:
-    for ddl in _KR_TABLES:
-        conn.execute(ddl)
-    conn.commit()
 
 
 def _sanitize(obj):
@@ -318,7 +271,7 @@ def main() -> None:
     print("=" * 60)
 
     conn = get_db()
-    _init_kr_tables(conn)
+    init_db(conn)
 
     try:
         regime_result = phase1_regime(t0)

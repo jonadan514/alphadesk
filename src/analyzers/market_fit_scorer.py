@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import json
 import logging
-import os
-import urllib.request
+
+from db.turso_http import get_credentials, query as turso_query
 
 logger = logging.getLogger(__name__)
 
@@ -32,25 +32,13 @@ REGIME_MATCH = {
 
 def get_current_regime(market: str) -> str:
     """Turso에서 최신 체제 읽기. 실패 시 neutral."""
-    url = os.environ.get("TURSO_DATA_URL", "").replace("libsql://", "https://")
-    token = os.environ.get("TURSO_DATA_TOKEN", "")
-    if not url or not token:
+    if not get_credentials():
         return "neutral"
 
     table = "kr_regime" if market == "KR" else "data_regime"
     try:
-        body = json.dumps({"requests": [{
-            "type": "execute",
-            "stmt": {"sql": f"SELECT payload FROM {table} WHERE id = 1"},
-        }]}).encode()
-        req = urllib.request.Request(
-            f"{url}/v2/pipeline", data=body, method="POST",
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            results = json.loads(resp.read()).get("results", [])
-        rows = results[0]["response"]["result"]["rows"]
-        payload = json.loads(rows[0][0]["value"])
+        rows = turso_query(f"SELECT payload FROM {table} WHERE id = 1")
+        payload = json.loads(rows[0]["payload"])
         regime = payload.get("regime", "neutral")
         return regime if regime in REGIME_MATCH else "neutral"
     except Exception:

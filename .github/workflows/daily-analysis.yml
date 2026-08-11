@@ -31,7 +31,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       - name: Install dependencies
-        run: pip install -r requirements.txt libsql-experimental
+        run: pip install -r requirements.txt
       - name: Run US analysis
         run: python scripts/run_integrated_analysis.py
 
@@ -46,7 +46,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       - name: Install dependencies
-        run: pip install -r requirements.txt libsql-experimental
+        run: pip install -r requirements.txt
       - name: Run KR analysis
         run: python scripts/run_kr_analysis.py
 

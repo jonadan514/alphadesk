@@ -32,6 +32,13 @@ _TIMESERIES_TABLES = {
             created_at  TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """,
+    "kr_daily_reports": """
+        CREATE TABLE IF NOT EXISTS kr_daily_reports (
+            date        TEXT PRIMARY KEY,
+            payload     TEXT NOT NULL,
+            created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
 }
 
 _SNAPSHOT_TABLES = {
@@ -94,6 +101,42 @@ _SNAPSHOT_TABLES = {
     # 전체 채점 결과 (top-20 밖 종목 포함) — 매수체크에서 임의 종목의 등급/액션 조회용
     "data_full_scores": """
         CREATE TABLE IF NOT EXISTS data_full_scores (
+            id          INTEGER PRIMARY KEY CHECK (id = 1),
+            payload     TEXT NOT NULL,
+            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
+    "kr_regime": """
+        CREATE TABLE IF NOT EXISTS kr_regime (
+            id          INTEGER PRIMARY KEY CHECK (id = 1),
+            payload     TEXT NOT NULL,
+            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
+    "kr_market_gate": """
+        CREATE TABLE IF NOT EXISTS kr_market_gate (
+            id          INTEGER PRIMARY KEY CHECK (id = 1),
+            payload     TEXT NOT NULL,
+            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
+    "kr_ai_summaries": """
+        CREATE TABLE IF NOT EXISTS kr_ai_summaries (
+            id          INTEGER PRIMARY KEY CHECK (id = 1),
+            payload     TEXT NOT NULL,
+            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
+    "kr_index_prediction": """
+        CREATE TABLE IF NOT EXISTS kr_index_prediction (
+            id          INTEGER PRIMARY KEY CHECK (id = 1),
+            payload     TEXT NOT NULL,
+            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
+    # 전체 채점 결과 (top-30 밖 포함) — 매수체크 폴백용
+    "kr_full_scores": """
+        CREATE TABLE IF NOT EXISTS kr_full_scores (
             id          INTEGER PRIMARY KEY CHECK (id = 1),
             payload     TEXT NOT NULL,
             updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
@@ -166,6 +209,15 @@ class _TursoConn:
 
     def close(self):
         pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+    def __iter__(self):
+        return iter(self.fetchall())
 
 
 def get_db(path: str = DB_PATH) -> sqlite3.Connection:

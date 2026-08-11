@@ -11,14 +11,13 @@
 
 import json
 import sqlite3
-import os
 from datetime import datetime
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-DB_PATH     = os.getenv("DATA_DB_PATH", "output/data.db")
+from src.db.data_store import get_db
+
 PRICES_CSV  = "data/us_daily_prices.csv"
 REF_PF      = "equal_medium"   # 분석 기준 포트폴리오
 LOOKBACK    = 60               # 수익률 계산 기간 (거래일)
@@ -35,7 +34,7 @@ REGIME_ALLOC = {
 
 
 def _conn() -> sqlite3.Connection:
-    return sqlite3.connect(DB_PATH)
+    return get_db()
 
 
 def _load_holdings() -> list[dict]:
@@ -338,8 +337,7 @@ def _to_python(obj):
 
 
 def _save(data: dict):
-    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(DB_PATH) as con:
+    with _conn() as con:
         con.execute("""
             CREATE TABLE IF NOT EXISTS risk_portfolio (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,

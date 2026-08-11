@@ -13,12 +13,10 @@
 
 import json
 import sqlite3
-import os
 from datetime import datetime, date
-from pathlib import Path
 from typing import Optional
 
-DB_PATH = os.getenv("DATA_DB_PATH", "output/data.db")
+from src.db.data_store import get_db
 
 STARTING_CASH = 100_000.0  # $100,000
 
@@ -42,69 +40,78 @@ GRADE_WEIGHT = {"A": 2.0, "B": 1.0, "C": 0.5}
 
 
 def _conn() -> sqlite3.Connection:
-    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
-    return sqlite3.connect(DB_PATH)
+    return get_db()
+
+
+_PF_TABLES_DDL = [
+    """
+    CREATE TABLE IF NOT EXISTS pf_portfolios (
+        portfolio_id  TEXT PRIMARY KEY,
+        alloc_type    TEXT NOT NULL,
+        horizon       TEXT NOT NULL,
+        hold_days     INTEGER NOT NULL,
+        take_profit   REAL NOT NULL,
+        cash          REAL NOT NULL DEFAULT 100000,
+        created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS pf_holdings (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        portfolio_id  TEXT NOT NULL,
+        symbol        TEXT NOT NULL,
+        grade         TEXT,
+        shares        REAL NOT NULL,
+        entry_price   REAL NOT NULL,
+        entry_date    TEXT NOT NULL,
+        weight        REAL NOT NULL,
+        UNIQUE(portfolio_id, symbol)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS pf_trades (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        portfolio_id  TEXT NOT NULL,
+        symbol        TEXT NOT NULL,
+        action        TEXT NOT NULL,
+        shares        REAL NOT NULL,
+        price         REAL NOT NULL,
+        value         REAL NOT NULL,
+        reason        TEXT,
+        trade_date    TEXT NOT NULL,
+        pnl           REAL,
+        pnl_pct       REAL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS pf_snapshots (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        portfolio_id  TEXT NOT NULL,
+        snap_date     TEXT NOT NULL,
+        total_value   REAL NOT NULL,
+        cash          REAL NOT NULL,
+        holdings_value REAL NOT NULL,
+        pnl_total     REAL NOT NULL,
+        pnl_pct       REAL NOT NULL,
+        UNIQUE(portfolio_id, snap_date)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS pf_benchmark (
+        snap_date     TEXT NOT NULL,
+        ticker        TEXT NOT NULL,
+        price         REAL NOT NULL,
+        pnl_pct       REAL,
+        PRIMARY KEY (snap_date, ticker)
+    )
+    """,
+]
 
 
 def init_portfolio_tables():
     with _conn() as con:
-        con.executescript("""
-        CREATE TABLE IF NOT EXISTS pf_portfolios (
-            portfolio_id  TEXT PRIMARY KEY,
-            alloc_type    TEXT NOT NULL,
-            horizon       TEXT NOT NULL,
-            hold_days     INTEGER NOT NULL,
-            take_profit   REAL NOT NULL,
-            cash          REAL NOT NULL DEFAULT 100000,
-            created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS pf_holdings (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            portfolio_id  TEXT NOT NULL,
-            symbol        TEXT NOT NULL,
-            grade         TEXT,
-            shares        REAL NOT NULL,
-            entry_price   REAL NOT NULL,
-            entry_date    TEXT NOT NULL,
-            weight        REAL NOT NULL,
-            UNIQUE(portfolio_id, symbol)
-        );
-
-        CREATE TABLE IF NOT EXISTS pf_trades (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            portfolio_id  TEXT NOT NULL,
-            symbol        TEXT NOT NULL,
-            action        TEXT NOT NULL,
-            shares        REAL NOT NULL,
-            price         REAL NOT NULL,
-            value         REAL NOT NULL,
-            reason        TEXT,
-            trade_date    TEXT NOT NULL,
-            pnl           REAL,
-            pnl_pct       REAL
-        );
-
-        CREATE TABLE IF NOT EXISTS pf_snapshots (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            portfolio_id  TEXT NOT NULL,
-            snap_date     TEXT NOT NULL,
-            total_value   REAL NOT NULL,
-            cash          REAL NOT NULL,
-            holdings_value REAL NOT NULL,
-            pnl_total     REAL NOT NULL,
-            pnl_pct       REAL NOT NULL,
-            UNIQUE(portfolio_id, snap_date)
-        );
-
-        CREATE TABLE IF NOT EXISTS pf_benchmark (
-            snap_date     TEXT NOT NULL,
-            ticker        TEXT NOT NULL,
-            price         REAL NOT NULL,
-            pnl_pct       REAL,
-            PRIMARY KEY (snap_date, ticker)
-        );
-        """)
+        for ddl in _PF_TABLES_DDL:
+            con.execute(ddl)
 
 
 def _ensure_portfolio_rows():

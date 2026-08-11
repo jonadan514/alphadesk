@@ -27,6 +27,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from src.db.turso_http import get_credentials, query as _turso_query
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -35,49 +37,19 @@ SENTIMENT_RANK = {"COLD": 0, "WARM": 1, "HOT": 2}
 
 # ── Turso (Hrana v2 HTTP) — 다른 스크립트와 동일 패턴 ──────────────────────
 
-def _turso_base():
-    url = os.environ.get("TURSO_DATA_URL", "").replace("libsql://", "https://")
-    token = os.environ.get("TURSO_DATA_TOKEN", "")
-    if not url or not token:
+def _require_turso() -> None:
+    if not get_credentials():
         logger.error("TURSO_DATA_URL / TURSO_DATA_TOKEN 미설정")
         sys.exit(1)
-    return url, {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-
-
-def _turso_val(v):
-    if v is None:
-        return {"type": "null"}
-    if isinstance(v, int):
-        return {"type": "integer", "value": str(v)}
-    if isinstance(v, float):
-        return {"type": "float", "value": v}
-    return {"type": "text", "value": str(v)}
 
 
 def turso_exec(sql: str, args: list | None = None) -> list[dict]:
-    url, headers = _turso_base()
-    stmt = {"type": "execute", "stmt": {"sql": sql}}
-    if args:
-        stmt["stmt"]["args"] = [_turso_val(a) for a in args]
-    body = json.dumps({"requests": [stmt]}).encode()
-    req = urllib.request.Request(f"{url}/v2/pipeline", data=body, headers=headers, method="POST")
+    _require_turso()
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            results = json.loads(resp.read()).get("results", [])
+        return _turso_query(sql, args)
     except Exception as e:
         logger.warning("Turso 실패 (%s): %s", sql[:50], type(e).__name__)
         return []
-    if not results or results[0].get("type") != "ok":
-        return []
-    result = results[0]["response"]["result"]
-    cols = [c["name"] for c in result.get("cols", [])]
-    rows = []
-    for raw in result.get("rows", []):
-        row = {}
-        for col, cell in zip(cols, raw):
-            row[col] = cell.get("value") if isinstance(cell, dict) else cell
-        rows.append(row)
-    return rows
 
 
 def _payload(rows: list[dict], key: str = "payload") -> list[dict]:
