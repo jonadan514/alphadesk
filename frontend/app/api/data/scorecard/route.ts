@@ -20,6 +20,35 @@ function bucket(rows: { fwd_30d_ret: number | null; fwd_60d_ret: number | null; 
   };
 }
 
+// scripts/compute_pick_returns.py가 아직 한 번도 안 돌았으면(첫 배포 직후, 매주 일요일 전)
+// 이 테이블들이 Turso에 아직 없다 — 없는 테이블을 SELECT하면 500이 나서 화면이 깨지므로
+// 여기서도 방어적으로 생성해둔다 (다른 라우트들의 ensureTable() 패턴과 동일).
+async function ensureTables(client: ReturnType<typeof getClient>, picksTable: string, benchTable: string) {
+  await Promise.all([
+    client.execute(`
+      CREATE TABLE IF NOT EXISTS ${picksTable} (
+        date TEXT NOT NULL, symbol TEXT NOT NULL, grade TEXT, gate TEXT, regime TEXT, action TEXT,
+        entry_price REAL, fwd_30d_ret REAL, fwd_60d_ret REAL, fwd_90d_ret REAL,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (date, symbol)
+      )
+    `),
+    client.execute(`
+      CREATE TABLE IF NOT EXISTS ${benchTable} (
+        date TEXT NOT NULL PRIMARY KEY, ticker TEXT NOT NULL, entry_price REAL,
+        fwd_30d_ret REAL, fwd_60d_ret REAL, fwd_90d_ret REAL,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `),
+    client.execute(`
+      CREATE TABLE IF NOT EXISTS my_trade_returns (
+        trade_id INTEGER PRIMARY KEY, market TEXT NOT NULL, symbol TEXT NOT NULL, trade_date TEXT NOT NULL,
+        entry_price REAL, fwd_30d_ret REAL, fwd_60d_ret REAL, fwd_90d_ret REAL,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `),
+  ]);
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -28,6 +57,7 @@ export async function GET(request: Request) {
     const benchTable = market === "KR" ? "kr_benchmark_returns" : "data_benchmark_returns";
 
     const client = getClient();
+    await ensureTables(client, picksTable, benchTable);
 
     const [picksRes, benchRes, tradesRes] = await Promise.all([
       client.execute(

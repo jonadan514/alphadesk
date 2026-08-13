@@ -30,14 +30,29 @@ function pctColor(v: number | null): string {
 export default function ScorecardPage() {
   const { market } = useMarket();
   const [data, setData] = useState<ScorecardData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setData(null);
+    setError(null);
     fetch(`/api/data/scorecard?market=${market}`)
       .then((r) => r.json())
-      .then(setData)
-      .catch(() => setData(null));
+      .then((d) => {
+        // API가 { error } 형태(테이블 없음·Turso 오류 등)를 반환할 수도 있으므로
+        // comparison 필드 존재로 실제 데이터인지 확인 후에만 렌더링한다.
+        if (d && d.comparison) setData(d);
+        else setError(typeof d?.error === "string" ? d.error : "데이터를 불러오지 못했습니다.");
+      })
+      .catch(() => setError("데이터를 불러오지 못했습니다."));
   }, [market]);
+
+  if (error) {
+    return (
+      <div className="bg-card rounded-lg p-3 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+        아직 집계된 데이터가 없습니다. 매주 일요일 자동 배치 실행 후 표시됩니다.
+      </div>
+    );
+  }
 
   if (!data) {
     return (
