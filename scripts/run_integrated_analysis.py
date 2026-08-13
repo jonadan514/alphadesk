@@ -127,8 +127,14 @@ def phase2_5_ai_summary(picks_df, t0: float):
             "sector":            row.get("sector", ""),
         }
         result = generator.generate(symbol, stock_data)
+
+        # AI를 검사(prosecutor)로 활용 — thesis와 독립된 별도 호출로 약세 논거만 심사
+        bear = generator.generate_bear_case(symbol, stock_data, market="US", sector=row.get("sector", ""))
+        result["independent_bear_case_found"] = bear["bear_case_found"]
+        result["independent_bear_cases"] = bear["bear_cases"]
+
         ai_results[symbol] = result
-        _log("Phase2.5", f"{symbol} → {result.get('recommendation','?')} (conf={result.get('confidence','?')})", t0)
+        _log("Phase2.5", f"{symbol} → {result.get('recommendation','?')} (conf={result.get('confidence','?')}, 독립약세={bear['bear_case_found']})", t0)
 
     import pandas as pd
     ai_df = pd.DataFrame([

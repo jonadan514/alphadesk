@@ -24,6 +24,17 @@ async function ensureTable() {
       PRIMARY KEY (market, symbol)
     )
   `);
+  // 체크리스트는 언제든 다시 수정 가능하지만(진행 중 모니터링 용도), 그 변경 자체는
+  // 덮어쓰지 않고 append로 남긴다 — 사후 확신 편향으로 과거 판단을 조용히 고쳐 쓰는 것 방지.
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS stock_checklist_history (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      market      TEXT NOT NULL,
+      symbol      TEXT NOT NULL,
+      items       TEXT NOT NULL,
+      recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
   return client;
 }
 
@@ -61,12 +72,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "market, symbol, items 필수" }, { status: 400 });
     }
     const client = await ensureTable();
+    const upperMarket = market.toUpperCase();
+    const upperSymbol = symbol.toUpperCase();
+    const itemsJson = JSON.stringify(items);
     await client.execute({
       sql: `INSERT INTO stock_checklist (market, symbol, items, updated_at)
             VALUES (?, ?, ?, datetime('now'))
             ON CONFLICT(market, symbol) DO UPDATE SET
               items = excluded.items, updated_at = excluded.updated_at`,
-      args: [market.toUpperCase(), symbol.toUpperCase(), JSON.stringify(items)],
+      args: [upperMarket, upperSymbol, itemsJson],
+    });
+    await client.execute({
+      sql: `INSERT INTO stock_checklist_history (market, symbol, items) VALUES (?, ?, ?)`,
+      args: [upperMarket, upperSymbol, itemsJson],
     });
     return NextResponse.json({ ok: true });
   } catch (e: any) {

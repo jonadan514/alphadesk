@@ -30,6 +30,10 @@ const ALLOWED_TABLES = new Set([
   "data_benchmark_returns",
   "kr_benchmark_returns",
   "my_trade_returns",
+  "trade_decision_snapshots",
+  "stock_checklist_history",
+  "my_watchlist_note_history",
+  "buy_check_log",
 ]);
 
 const MAX_LIMIT = 500;

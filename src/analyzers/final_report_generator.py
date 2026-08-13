@@ -63,7 +63,8 @@ class FinalReportGenerator:
                     "institutional":      row.get("institutional"),
                 }
                 # AI 요약이 이미 picks_df에 포함된 경우 병합
-                for ai_key in ("thesis", "catalysts", "bear_cases", "recommendation", "confidence"):
+                for ai_key in ("thesis", "catalysts", "bear_cases", "recommendation", "confidence",
+                               "independent_bear_case_found", "independent_bear_cases"):
                     if ai_key in row and row.get(ai_key) is not None:
                         entry[ai_key] = row.get(ai_key)
                 picks_list.append(entry)

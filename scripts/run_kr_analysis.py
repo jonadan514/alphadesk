@@ -211,6 +211,12 @@ def phase3_5_ai_summary(report: dict, regime_result: dict, sector_result: dict |
             name=p.get("name", ""),
             sector=p.get("sector", ""),
         )
+
+        # AI를 검사(prosecutor)로 활용 — thesis와 독립된 별도 호출로 약세 논거만 심사
+        bear = generator.generate_bear_case(
+            p["symbol"], stock_data, market="KR", name=p.get("name", ""), sector=p.get("sector", ""),
+        )
+
         summaries.append({
             "ticker":           p["symbol"],
             "name":             p.get("name", ""),
@@ -220,13 +226,15 @@ def phase3_5_ai_summary(report: dict, regime_result: dict, sector_result: dict |
             "thesis":           result.get("thesis", ""),
             "catalysts":        result.get("catalysts", []),
             "bear_cases":       result.get("bear_cases", []),
+            "independent_bear_case_found": bear["bear_case_found"],
+            "independent_bear_cases":      bear["bear_cases"],
             "target_price":     result.get("target_price"),
             "composite_score":  p.get("composite_score"),
             "grade":            p.get("grade"),
             "cur_price":        p.get("cur_price"),
             "_fallback":        result.get("_fallback", False),
         })
-        _log("Phase3.5", f"{p['symbol']}({p.get('name','')}) → {result.get('recommendation','?')}  목표가: {result.get('target_price','?')}", t0)
+        _log("Phase3.5", f"{p['symbol']}({p.get('name','')}) → {result.get('recommendation','?')}  목표가: {result.get('target_price','?')}  독립약세={bear['bear_case_found']}", t0)
 
     _log("Phase3.5", f"AI 요약 완료: {len(summaries)}종목", t0)
     return summaries

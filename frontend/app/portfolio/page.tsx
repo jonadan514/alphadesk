@@ -9,6 +9,14 @@ import {
 import { stopLossPct } from "@/src/lib/stopLoss";
 
 type TradeType = "buy" | "sell";
+interface DecisionSnapshot {
+  snapshot_at: string;
+  checklist: string | null;
+  grade: string | null;
+  composite_score: number | null;
+  gate: string | null;
+  regime: string | null;
+}
 interface Trade {
   id: number;
   market: string;
@@ -19,6 +27,7 @@ interface Trade {
   price: number;
   shares: number;
   note: string | null;
+  decision_snapshot: DecisionSnapshot | null;
 }
 interface ChartPoint {
   date: string;
@@ -441,6 +450,26 @@ export default function PortfolioPage() {
                         {t.trade_date} · {t.shares.toLocaleString()}주 · {t.market === "US" ? `$${t.price.toFixed(2)}` : `₩${Math.round(t.price).toLocaleString()}`}
                         {t.note && <span className="ml-2" style={{ color: "#726b58" }}>{t.note}</span>}
                       </div>
+                      {t.type === "buy" && t.decision_snapshot && (
+                        <div className="text-[10px] mt-1 flex items-center gap-1 flex-wrap" style={{ color: "#726b58" }}>
+                          <span title="매수 시점에 고정된 기록 — 이후 수정 불가">🔒 매수 시점</span>
+                          {t.decision_snapshot.grade && (
+                            <span className="px-1 rounded" style={{ background: "#262112", color: "#ffb020" }}>
+                              {t.decision_snapshot.grade}등급
+                            </span>
+                          )}
+                          {t.decision_snapshot.gate && (
+                            <span className="px-1 rounded" style={{ background: "#262112" }}>{t.decision_snapshot.gate}</span>
+                          )}
+                          {(() => {
+                            try {
+                              const items = t.decision_snapshot.checklist ? JSON.parse(t.decision_snapshot.checklist) : [];
+                              const checked = items.filter((it: any) => it.checked).length;
+                              return items.length > 0 ? <span>체크 {checked}/{items.length}</span> : null;
+                            } catch { return null; }
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <button onClick={() => deleteTrade(t.id)} className="p-1.5 rounded-lg ml-2 shrink-0"

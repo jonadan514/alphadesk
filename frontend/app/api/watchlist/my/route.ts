@@ -16,6 +16,16 @@ async function ensureTable() {
       UNIQUE(market, symbol)
     )
   `);
+  // 메모 수정 이력 — 덮어쓰기 전 값을 append로 보존 (사후 확신 편향 방지, stock_checklist_history와 동일 취지)
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS my_watchlist_note_history (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      market      TEXT NOT NULL,
+      symbol      TEXT NOT NULL,
+      note        TEXT,
+      recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
   return client;
 }
 
@@ -41,11 +51,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "market, symbol 필수" }, { status: 400 });
     }
     const client = await ensureTable();
+    const upperSymbol = symbol.toUpperCase();
     await client.execute({
       sql: `INSERT INTO my_watchlist (market, symbol, name, note)
             VALUES (?, ?, ?, ?)
             ON CONFLICT(market, symbol) DO UPDATE SET name=excluded.name, note=excluded.note`,
-      args: [market, symbol.toUpperCase(), name ?? null, note ?? null],
+      args: [market, upperSymbol, name ?? null, note ?? null],
+    });
+    await client.execute({
+      sql: `INSERT INTO my_watchlist_note_history (market, symbol, note) VALUES (?, ?, ?)`,
+      args: [market, upperSymbol, note ?? null],
     });
     return NextResponse.json({ ok: true });
   } catch (e: any) {

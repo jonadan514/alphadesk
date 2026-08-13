@@ -97,6 +97,8 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
   const compScore  = num(pick.composite_score);
   const catalysts  = arr(ai?.catalysts);
   const bearCases  = arr(ai?.bear_cases);
+  const independentBearCases = arr(ai?.independent_bear_cases);
+  const independentBearFound = ai?.independent_bear_case_found as boolean | null | undefined;
   const confidence = num(ai?.confidence);
 
   // 한 줄 결론 — 액션·등급·종합점수(+목표가 상승여력)로 즉석 요약
@@ -186,6 +188,27 @@ function PickDetailModal({ pick, market, aiMap, onClose }: {
               ) : (
                 <div className="p-3" style={insetCard}>
                   <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>AI 분석 데이터 없음 — 다음 일간 분석 실행 후 업데이트됩니다.</p>
+                </div>
+              )}
+
+              {/* 독립 검사 의견 — 위 강세 논리와 완전히 별도의 AI 호출. 이미 등급·점수를 본 뒤
+                  이어서 쓰는 게 아니라, 반대 논리만 심사하도록 컨텍스트를 분리했다. */}
+              {independentBearFound != null && (
+                <div className="mt-2 p-3" style={{ background: "var(--bg-inset)", border: "1px dashed #f8717155" }}>
+                  <p className="text-[10px] font-bold mb-1 flex items-center gap-1" style={{ color: "#f87171" }}>
+                    ⚖ 독립 검사 의견 <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>— 위 분석과 별도로, 반박만 요청한 결과</span>
+                  </p>
+                  {independentBearFound === false ? (
+                    <p className="text-[11px] leading-relaxed pl-2" style={{ color: "var(--text-secondary)" }}>
+                      제시할 만한 약세 논거 없음
+                    </p>
+                  ) : independentBearCases.length > 0 ? (
+                    independentBearCases.slice(0, 3).map((b, i) => (
+                      <p key={i} className="text-[11px] leading-relaxed pl-2" style={{ color: "var(--text-secondary)" }}>· {b}</p>
+                    ))
+                  ) : (
+                    <p className="text-[11px] leading-relaxed pl-2" style={{ color: "var(--text-faint)" }}>판정 실패 — 다음 분석에서 재시도됩니다.</p>
+                  )}
                 </div>
               )}
             </div>

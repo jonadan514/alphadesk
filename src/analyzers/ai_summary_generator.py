@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -131,6 +132,55 @@ def build_analysis_prompt(ticker: str, data: dict, news: list,
   }},
   "recommendation": "STRONG_BUY / BUY / HOLD / SELL / STRONG_SELL",
   "confidence": 50
+}}
+```"""
+
+
+def build_bear_case_prompt(ticker: str, data: dict, news: list, lang: str = "ko") -> str:
+    """정성 판단 검증용 — 강세 논리(build_analysis_prompt)와 완전히 분리된 프롬프트.
+
+    같은 컨텍스트에서 등급·점수를 이미 보여준 뒤 "그래도 약세 논거 3개는 채워라"고
+    시키면, 모델은 이미 내려진 결론에 맞춰 형식적으로만 채운다. 이 프롬프트는 별도
+    호출로 떼어내고, "근거가 없으면 없다고 답하라"는 탈출구를 명시해 억지 생성을
+    방지한다.
+    """
+    lang_instruction = "모든 분석 내용을 한국어로 작성하세요." if lang == "ko" else "Write all analysis in English."
+
+    news_text = ""
+    for n in news[:5]:
+        news_text += f"- [{n.get('published', '')}] {n.get('title', '')} ({n.get('publisher') or n.get('source', '')})\n"
+    if not news_text:
+        news_text = "(수집된 최근 뉴스 없음)"
+
+    return f"""당신은 이 매수 결정에 반대해야 하는 리스크 심사역입니다. 옹호가 아니라 반박이 임무입니다.
+{lang_instruction}
+
+## 종목 정보
+- Ticker: {ticker}
+- 회사명: {data.get('company_name', ticker)}
+- 현재가: {data.get('current_price', 'N/A')}
+- 등급: {data.get('grade', 'N/A')}
+- 종합 점수: {data.get('composite_score', 'N/A')}/100
+
+## 최근 뉴스
+{news_text}
+
+## 지시사항
+1. 이 종목을 지금 매수하면 안 되는 이유를 최대 3가지 제시하세요.
+2. 최근 뉴스와 재무 데이터에서 부정적 신호만 선별하세요.
+3. 장점이나 반론은 절대 언급하지 마세요.
+4. 위 뉴스 목록에 없는 출처·날짜를 창작하지 마세요. 근거가 뉴스에 없으면
+   evidence에 "[점수 데이터 기반]"이라고만 적으세요.
+5. 근거가 빈약하면 억지로 채우지 말고 bear_case_found를 false로, bear_cases를
+   빈 배열로 답하세요. "제시할 만한 약세 논거 없음"도 유효한 결론입니다.
+6. 반드시 아래 JSON 형식만 출력하세요. 다른 텍스트는 절대 포함하지 마세요.
+
+```json
+{{
+  "bear_case_found": true,
+  "bear_cases": [
+    {{"point": "하락 리스크", "evidence": "[출처, 날짜] 또는 [점수 데이터 기반]"}}
+  ]
 }}
 ```"""
 
@@ -597,6 +647,74 @@ class OpenAISummaryGenerator:
             return result or _get_fallback_json(ticker)
         except Exception:
             return _get_fallback_json(ticker)
+
+    def generate_bear_case(self, ticker: str, data: dict, *,
+                            market: str = "US", name: str = "", sector: str = "") -> dict:
+        """AI를 검사(prosecutor)로 활용 — thesis 생성(generate)과 별도의 호출.
+
+        같은 세션에서 강세 논리를 먼저 쓰게 하면 뒤이은 "약점" 요청도 이미 내린
+        결론에 맞춰 형식적으로만 채워진다. 그래서 컨텍스트를 공유하지 않는
+        독립적인 두 번째 호출로 뗀다. 실패 시 bear_case_found=None으로 "판정
+        불가"와 "약세 논거 없음"(False)을 구분해 반환한다.
+        """
+        merged = dict(data)
+        if name:
+            merged.setdefault("company_name", name)
+        if sector:
+            merged.setdefault("sector", sector)
+
+        news: list[dict] = []
+        try:
+            collector = NewsCollector()
+            if market == "KR":
+                news = collector.get_google_news_kr(name or ticker)
+            else:
+                news = collector.get_news_for_ticker(ticker, name or None)
+        except Exception:
+            news = []
+
+        import requests
+
+        prompt = build_bear_case_prompt(ticker, merged, news)
+        try:
+            resp = requests.post(
+                self.base_url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": self.model,
+                    "messages": [
+                        {"role": "system", "content": "You are a skeptical risk officer whose job is to argue against the trade. Always respond with valid JSON only."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.3,
+                    "max_tokens": 1200,
+                },
+                timeout=60,
+            )
+            resp.raise_for_status()
+            result = resp.json()
+
+            usage = result.get("usage", {})
+            usage_tracker.record(
+                "openai", f"{ticker}-bear",
+                input_tokens=usage.get("prompt_tokens", 0),
+                output_tokens=usage.get("completion_tokens", 0),
+            )
+
+            text = result["choices"][0]["message"]["content"].strip()
+            match = re.search(r"\{.*\}", text, re.DOTALL)
+            parsed = json.loads(match.group(0)) if match else {}
+            bear_cases = parsed.get("bear_cases") or []
+            return {
+                "bear_case_found": bool(parsed.get("bear_case_found", bool(bear_cases))),
+                "bear_cases": bear_cases[:3],
+            }
+        except Exception as e:
+            logger.warning("%s 독립 약세논리 생성 실패: %s", ticker, type(e).__name__)
+            return {"bear_case_found": None, "bear_cases": []}
 
 
 class PerplexitySummaryGenerator:

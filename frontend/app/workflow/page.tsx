@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
@@ -201,6 +201,68 @@ function SignalCard({
           >
             {linkLabel} 탭 자세히 보기 →
           </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 매수체크 통과/탈락 통계 ──────────────────────────────────────────────────
+// "조건별 탈락 빈도"용 고정 라벨 — 실제 저장된 label은 티커명이 섞여 들쭉날쭉하므로
+// 집계는 항상 안정적인 id 기준으로 하고, 화면 표시는 이 고정 맵을 쓴다.
+const CHECK_ID_LABEL: Record<string, string> = {
+  gate: "시장 게이트 GO", regime: "체제 Risk-on/Neutral", watchlist: "워치리스트 후보 포함",
+  risk: "리스크 허용 범위", buy: "BUY 액션", grade: "Grade A·B", score: "점수 ≥ 60",
+  ai: "AI 분석 확인", workbook: "정성 검증 완료", funds: "여유 자금 확인",
+  stop: "손절가 설정", size: "매수 수량 확정",
+};
+
+function BuyCheckStats({ market }: { market: string }) {
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    setStats(null);
+    fetch(`/api/workflow/check-log?market=${market}&days=90`)
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {});
+  }, [market]);
+
+  if (!stats || stats.total_checks === 0) return null;
+
+  const topBlockers = Object.entries(stats.by_condition as Record<string, { fail: number; warn: number; total: number }>)
+    .map(([id, v]) => ({ id, ...v, blockRate: v.total > 0 ? (v.fail + v.warn) / v.total : 0 }))
+    .filter((c) => c.fail + c.warn > 0)
+    .sort((a, b) => b.blockRate - a.blockRate)
+    .slice(0, 5);
+
+  return (
+    <div className="px-4 py-3" style={{ borderTop: "1px solid var(--border)" }}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>
+          최근 90일 매수체크 통계
+        </p>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+          {stats.total_checks}회 실행 · {stats.passed_checks}회 통과
+          {stats.pass_rate != null && ` (${Math.round(stats.pass_rate * 100)}%)`}
+        </span>
+      </div>
+      {topBlockers.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px]" style={{ color: "var(--text-faint)" }}>조건별 탈락/확인 빈도 (상위)</p>
+          {topBlockers.map((c) => (
+            <div key={c.id} className="flex items-center gap-2">
+              <span className="text-[11px] flex-1" style={{ color: "var(--text-secondary)" }}>
+                {CHECK_ID_LABEL[c.id] ?? c.id}
+              </span>
+              <div className="w-24 h-1.5" style={{ background: "var(--bg-inset)" }}>
+                <div className="h-1.5" style={{ width: `${Math.round(c.blockRate * 100)}%`, background: "#f87171" }} />
+              </div>
+              <span className="text-[10px] font-mono w-10 text-right" style={{ color: "var(--text-faint)" }}>
+                {Math.round(c.blockRate * 100)}%
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -522,6 +584,41 @@ function PreTradeChecklist({
   };
   const verdict = buildVerdict();
   const verdictColor = CK_COLOR[verdict.tone];
+
+  // 매수체크 통과/탈락 이력 로깅 — "연 2~3회만 통과하는지 매주 통과하는지" 파악할 근거.
+  // 자동 조건(시장/종목)이 아직 로딩 중이면 미완성 판정이라 기록하지 않고,
+  // 같은 티커에 대해 동일한 판정 결과를 중복 기록하지 않는다.
+  const latestCheckRef = useRef<{ items: CkItem[]; verdict: typeof verdict; passCount: number; totalCount: number } | undefined>(undefined);
+  latestCheckRef.current = { items: allItems, verdict, passCount, totalCount };
+  const loggedSignatureRef = useRef<string>("");
+  useEffect(() => {
+    if (!tickerUp) return;
+    const timer = setTimeout(() => {
+      const snap = latestCheckRef.current;
+      if (!snap) return;
+      const autoIds = new Set(["gate", "regime", "risk", "buy", "grade", "score"]);
+      const autoPending = snap.items.some((it) => autoIds.has(it.id) && it.status === "PENDING");
+      if (autoPending) return;
+
+      const signature = `${market}:${tickerUp}:${snap.items.map((it) => it.status).join(",")}`;
+      if (loggedSignatureRef.current === signature) return;
+      loggedSignatureRef.current = signature;
+
+      fetch("/api/workflow/check-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          market,
+          symbol: tickerUp,
+          conditions: snap.items.map((it) => ({ id: it.id, label: it.label, status: it.status })),
+          pass_count: snap.passCount,
+          total_count: snap.totalCount,
+          verdict: snap.verdict.tone,
+        }),
+      }).catch(() => {});
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [tickerUp, market]);
 
   // 매수체크 값 → 포트폴리오 매수 폼 프리필 딥링크 (실제 체결가는 사용자가 확인·저장)
   const recordNote = `매수체크${pick ? ` · Grade ${pick.grade} ${pick.action}` : ""}${stopOk ? ` · 손절 ${stopPrice}` : ""}`;
@@ -916,6 +1013,8 @@ function PreTradeChecklist({
           </p>
         </div>
       )}
+
+      <BuyCheckStats market={market} />
     </div>
   );
 }
