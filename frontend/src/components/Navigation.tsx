@@ -40,6 +40,7 @@ const NAV_GROUPS = [
     label: "관리",
     items: [
       { href: "/risk",      label: "리스크",    emoji: "🛡️", color: "#ffb020" },
+      { href: "/scorecard", label: "성적표",    emoji: "📈", color: "#ffb020" },
       { href: "/guide",     label: "가이드",     emoji: "📖", color: "#ffb020" },
     ],
   },

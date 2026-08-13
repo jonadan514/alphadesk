@@ -1,0 +1,302 @@
+"""신호 성과 검증 배치 — 과거 일별 픽스에 실제 주가를 대조해 30/60/90일 후 수익률을 계산한다.
+
+data_daily_reports / kr_daily_reports에 이미 쌓여 있는 일별 리포트(게이트·체제·종목별
+등급/점수/액션/당시가격)를 읽어, 각 종목의 진입일 이후 30/60/90일 시점 종가와 대조해
+수익률을 계산하고 data_pick_returns / kr_pick_returns에 저장한다.
+같은 방식으로 벤치마크(SPY / ^KS11)의 기간별 수익률도 data_benchmark_returns /
+kr_benchmark_returns에 저장해, "필터 통과 종목 vs 지수 단순 보유" 비교의 기준선을 만든다.
+
+멱등적으로 재실행 가능 — 아직 N일이 지나지 않아 계산 못 한 항목은 NULL로 남고,
+다음 실행(주 1회 권장) 때 시간이 지나 계산 가능해지면 채워진다. 이미 채워진 값은
+덮어쓰지 않는다(COALESCE).
+
+Usage:
+  python scripts/compute_pick_returns.py --market US
+  python scripts/compute_pick_returns.py --market KR
+  python scripts/compute_pick_returns.py --market ALL   (기본값)
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import time
+from datetime import date, timedelta
+from pathlib import Path
+
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from src.db.data_store import get_db
+from src.collectors.us_price_fetcher import USPriceFetcher
+
+HORIZONS = (30, 60, 90)  # 달력일 기준
+
+MARKET_CONFIG = {
+    "US": {
+        "reports_table":   "data_daily_reports",
+        "returns_table":   "data_pick_returns",
+        "bench_table":     "data_benchmark_returns",
+        "benchmark":       "SPY",
+        "price_field":     "current_price",
+    },
+    "KR": {
+        "reports_table":   "kr_daily_reports",
+        "returns_table":   "kr_pick_returns",
+        "bench_table":     "kr_benchmark_returns",
+        "benchmark":       "^KS11",
+        "price_field":     "cur_price",
+    },
+}
+
+_RETURNS_DDL = """
+    CREATE TABLE IF NOT EXISTS {table} (
+        date         TEXT NOT NULL,
+        symbol       TEXT NOT NULL,
+        grade        TEXT,
+        gate         TEXT,
+        regime       TEXT,
+        action       TEXT,
+        entry_price  REAL,
+        fwd_30d_ret  REAL,
+        fwd_60d_ret  REAL,
+        fwd_90d_ret  REAL,
+        updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (date, symbol)
+    )
+"""
+
+_BENCH_DDL = """
+    CREATE TABLE IF NOT EXISTS {table} (
+        date         TEXT NOT NULL PRIMARY KEY,
+        ticker       TEXT NOT NULL,
+        entry_price  REAL,
+        fwd_30d_ret  REAL,
+        fwd_60d_ret  REAL,
+        fwd_90d_ret  REAL,
+        updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+"""
+
+
+def _log(msg: str) -> None:
+    print(f"[compute_pick_returns] {msg}")
+
+
+def _load_reports(conn, table: str) -> list[dict]:
+    rows = conn.execute(f"SELECT date, payload FROM {table} ORDER BY date ASC").fetchall()
+    out = []
+    for row in rows:
+        d = row[0] if not hasattr(row, "keys") else row["date"]
+        payload = row[1] if not hasattr(row, "keys") else row["payload"]
+        try:
+            data = json.loads(payload)
+        except (TypeError, ValueError):
+            continue
+        out.append({"date": d, "regime": data.get("regime"), "gate": data.get("gate"),
+                     "picks": data.get("picks", [])})
+    return out
+
+
+def _price_on_or_after(df: pd.DataFrame, target: pd.Timestamp) -> float | None:
+    if df is None or df.empty:
+        return None
+    sub = df[df.index >= target]
+    if sub.empty:
+        return None
+    return float(sub.iloc[0]["Close"])
+
+
+def _fwd_returns(df: pd.DataFrame, entry_date: date, entry_price: float | None) -> dict[str, float | None]:
+    out: dict[str, float | None] = {}
+    today = date.today()
+    for h in HORIZONS:
+        target_date = entry_date + timedelta(days=h)
+        key = f"fwd_{h}d_ret"
+        if today < target_date or entry_price in (None, 0):
+            out[key] = None
+            continue
+        fwd_price = _price_on_or_after(df, pd.Timestamp(target_date))
+        out[key] = (fwd_price - entry_price) / entry_price if fwd_price is not None else None
+    return out
+
+
+def _upsert_pick_return(conn, table: str, date_str: str, symbol: str, grade, gate, regime, action,
+                         entry_price, fwd: dict[str, float | None]) -> None:
+    conn.execute(f"""
+        INSERT INTO {table} (date, symbol, grade, gate, regime, action, entry_price,
+                              fwd_30d_ret, fwd_60d_ret, fwd_90d_ret, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(date, symbol) DO UPDATE SET
+            grade        = excluded.grade,
+            gate         = excluded.gate,
+            regime       = excluded.regime,
+            action       = excluded.action,
+            entry_price  = COALESCE(excluded.entry_price, {table}.entry_price),
+            fwd_30d_ret  = COALESCE(excluded.fwd_30d_ret, {table}.fwd_30d_ret),
+            fwd_60d_ret  = COALESCE(excluded.fwd_60d_ret, {table}.fwd_60d_ret),
+            fwd_90d_ret  = COALESCE(excluded.fwd_90d_ret, {table}.fwd_90d_ret),
+            updated_at   = datetime('now')
+    """, (date_str, symbol, grade, gate, regime, action, entry_price,
+          fwd.get("fwd_30d_ret"), fwd.get("fwd_60d_ret"), fwd.get("fwd_90d_ret")))
+
+
+def _upsert_benchmark_return(conn, table: str, date_str: str, ticker: str,
+                              entry_price, fwd: dict[str, float | None]) -> None:
+    conn.execute(f"""
+        INSERT INTO {table} (date, ticker, entry_price, fwd_30d_ret, fwd_60d_ret, fwd_90d_ret, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(date) DO UPDATE SET
+            entry_price  = COALESCE(excluded.entry_price, {table}.entry_price),
+            fwd_30d_ret  = COALESCE(excluded.fwd_30d_ret, {table}.fwd_30d_ret),
+            fwd_60d_ret  = COALESCE(excluded.fwd_60d_ret, {table}.fwd_60d_ret),
+            fwd_90d_ret  = COALESCE(excluded.fwd_90d_ret, {table}.fwd_90d_ret),
+            updated_at   = datetime('now')
+    """, (date_str, ticker, entry_price, fwd.get("fwd_30d_ret"), fwd.get("fwd_60d_ret"), fwd.get("fwd_90d_ret")))
+
+
+def run(market: str) -> None:
+    cfg = MARKET_CONFIG[market]
+    conn = get_db()
+    conn.execute(_RETURNS_DDL.format(table=cfg["returns_table"]))
+    conn.execute(_BENCH_DDL.format(table=cfg["bench_table"]))
+
+    reports = _load_reports(conn, cfg["reports_table"])
+    _log(f"{market}: {len(reports)}개 일별 리포트 로드")
+    if not reports:
+        return
+
+    # 종목별로 필요한 가격 시계열을 한 번씩만 가져오기 위해 먼저 유니버스 수집
+    symbols: set[str] = set()
+    for r in reports:
+        for p in r["picks"]:
+            sym = p.get("symbol")
+            if sym:
+                symbols.add(sym)
+
+    fetcher = USPriceFetcher()
+    earliest = min(date.fromisoformat(r["date"]) for r in reports)
+    days_span = (date.today() - earliest).days + max(HORIZONS) + 5
+    period = "2y" if days_span > 365 else "1y"
+
+    price_cache: dict[str, pd.DataFrame] = {}
+    _log(f"{market}: 종목 {len(symbols)}개 + 벤치마크({cfg['benchmark']}) 가격 조회 시작 (period={period})")
+    for i, sym in enumerate(sorted(symbols) + [cfg["benchmark"]], 1):
+        price_cache[sym] = fetcher.fetch_ohlcv(sym, period=period)
+        if i % 25 == 0:
+            _log(f"  {i}/{len(symbols)+1} 조회 완료")
+        time.sleep(0.2)  # 레이트리밋 여유
+
+    bench_df = price_cache.get(cfg["benchmark"])
+
+    total = 0
+    for r in reports:
+        entry_date = date.fromisoformat(r["date"])
+
+        # 벤치마크
+        bench_entry = _price_on_or_after(bench_df, pd.Timestamp(entry_date))
+        bench_fwd = _fwd_returns(bench_df, entry_date, bench_entry)
+        _upsert_benchmark_return(conn, cfg["bench_table"], r["date"], cfg["benchmark"], bench_entry, bench_fwd)
+
+        for p in r["picks"]:
+            sym = p.get("symbol")
+            if not sym:
+                continue
+            entry_price = p.get(cfg["price_field"])
+            df = price_cache.get(sym)
+            fwd = _fwd_returns(df, entry_date, entry_price)
+            _upsert_pick_return(
+                conn, cfg["returns_table"], r["date"], sym,
+                p.get("grade"), r["gate"], r["regime"], p.get("action"),
+                entry_price, fwd,
+            )
+            total += 1
+
+    conn.commit() if hasattr(conn, "commit") else None
+    _log(f"{market}: 총 {total}개 픽 수익률 upsert 완료")
+
+
+# ── 실거래(my_trades) 성과 ────────────────────────────────────────────────
+# "실제 매수한 종목" 트랙 — 성적표 3-way 비교의 세 번째 축.
+
+_TRADE_RETURNS_DDL = """
+    CREATE TABLE IF NOT EXISTS my_trade_returns (
+        trade_id     INTEGER PRIMARY KEY,
+        market       TEXT NOT NULL,
+        symbol       TEXT NOT NULL,
+        trade_date   TEXT NOT NULL,
+        entry_price  REAL,
+        fwd_30d_ret  REAL,
+        fwd_60d_ret  REAL,
+        fwd_90d_ret  REAL,
+        updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+"""
+
+
+def _yahoo_symbol(market: str, symbol: str) -> str:
+    """KR 6자리 코드는 야후 조회용으로 .KS 접미사 부여. 이미 접미사 있으면 그대로."""
+    if market == "KR" and symbol.isdigit() and len(symbol) == 6:
+        return f"{symbol}.KS"
+    return symbol
+
+
+def run_trades() -> None:
+    conn = get_db()
+    conn.execute(_TRADE_RETURNS_DDL)
+
+    rows = conn.execute(
+        "SELECT id, market, symbol, trade_date, price FROM my_trades WHERE type = 'buy'"
+    ).fetchall()
+    trades = [
+        {"id": r[0], "market": r[1], "symbol": r[2], "trade_date": r[3], "price": r[4]}
+        for r in rows
+    ]
+    _log(f"실거래: 매수 {len(trades)}건 로드")
+    if not trades:
+        return
+
+    fetcher = USPriceFetcher()
+    price_cache: dict[str, pd.DataFrame] = {}
+
+    for t in trades:
+        ysym = _yahoo_symbol(t["market"], t["symbol"])
+        if ysym not in price_cache:
+            price_cache[ysym] = fetcher.fetch_ohlcv(ysym, period="2y")
+            time.sleep(0.2)
+
+        entry_date = date.fromisoformat(t["trade_date"])
+        fwd = _fwd_returns(price_cache[ysym], entry_date, t["price"])
+
+        conn.execute("""
+            INSERT INTO my_trade_returns (trade_id, market, symbol, trade_date, entry_price,
+                                           fwd_30d_ret, fwd_60d_ret, fwd_90d_ret, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(trade_id) DO UPDATE SET
+                entry_price  = COALESCE(excluded.entry_price, my_trade_returns.entry_price),
+                fwd_30d_ret  = COALESCE(excluded.fwd_30d_ret, my_trade_returns.fwd_30d_ret),
+                fwd_60d_ret  = COALESCE(excluded.fwd_60d_ret, my_trade_returns.fwd_60d_ret),
+                fwd_90d_ret  = COALESCE(excluded.fwd_90d_ret, my_trade_returns.fwd_90d_ret),
+                updated_at   = datetime('now')
+        """, (t["id"], t["market"], t["symbol"], t["trade_date"], t["price"],
+              fwd.get("fwd_30d_ret"), fwd.get("fwd_60d_ret"), fwd.get("fwd_90d_ret")))
+
+    conn.commit() if hasattr(conn, "commit") else None
+    _log(f"실거래: {len(trades)}건 수익률 upsert 완료")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--market", choices=["US", "KR", "ALL"], default="ALL")
+    args = parser.parse_args()
+
+    markets = ["US", "KR"] if args.market == "ALL" else [args.market]
+    for m in markets:
+        run(m)
+    run_trades()
+
+
+if __name__ == "__main__":
+    main()

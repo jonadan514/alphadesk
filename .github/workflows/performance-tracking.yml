@@ -1,0 +1,45 @@
+name: Performance Tracking
+
+on:
+  schedule:
+    - cron: '0 23 * * 0'   # 매주 일요일 23:00 UTC (weekly-watchlist 다음 시간대)
+  workflow_dispatch:         # 수동 실행
+
+jobs:
+  compute-returns:
+    name: Compute Pick Returns
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Compute pick returns (US + KR)
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: python scripts/compute_pick_returns.py --market ALL
+
+  notify-failure:
+    name: Notify on Failure
+    needs: [compute-returns]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Send failure notification
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          JOB_RESULTS: >-
+            compute-returns=${{ needs['compute-returns'].result }}
+        run: python scripts/notify_failure.py

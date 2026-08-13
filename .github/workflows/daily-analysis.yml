@@ -81,3 +81,24 @@ jobs:
         run: pip install requests yfinance
       - name: Send Telegram digest
         run: python scripts/send_telegram_digest.py
+
+  notify-failure:
+    name: Notify on Failure
+    needs: [us-analysis, kr-analysis, narratives, telegram-digest]
+    if: failure()   # needs 잡 중 하나라도 실패하면 실행 (스킵된 잡은 실패로 안 침)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Send failure notification
+        env:
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          JOB_RESULTS: >-
+            us-analysis=${{ needs['us-analysis'].result }},
+            kr-analysis=${{ needs['kr-analysis'].result }},
+            narratives=${{ needs['narratives'].result }},
+            telegram-digest=${{ needs['telegram-digest'].result }}
+        run: python scripts/notify_failure.py

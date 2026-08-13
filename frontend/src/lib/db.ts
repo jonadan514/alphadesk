@@ -25,6 +25,11 @@ const ALLOWED_TABLES = new Set([
   "kr_sector_analysis",
   "kr_ai_summaries",
   "kr_full_scores",
+  "data_pick_returns",
+  "kr_pick_returns",
+  "data_benchmark_returns",
+  "kr_benchmark_returns",
+  "my_trade_returns",
 ]);
 
 const MAX_LIMIT = 500;
