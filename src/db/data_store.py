@@ -39,6 +39,23 @@ _TIMESERIES_TABLES = {
             created_at  TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """,
+    # data_regime/kr_regime은 매일 덮어써지는 스냅샷이라 "오늘이 간당간당한 GO인지
+    # 여유있는 GO인지"를 추세로 볼 수 없었다. weighted_score+센서별 점수를 날짜별로
+    # 따로 쌓아서 이 문제를 해결한다.
+    "data_regime_history": """
+        CREATE TABLE IF NOT EXISTS data_regime_history (
+            date        TEXT PRIMARY KEY,
+            payload     TEXT NOT NULL,
+            created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
+    "kr_regime_history": """
+        CREATE TABLE IF NOT EXISTS kr_regime_history (
+            date        TEXT PRIMARY KEY,
+            payload     TEXT NOT NULL,
+            created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """,
 }
 
 _SNAPSHOT_TABLES = {
@@ -275,6 +292,22 @@ def _upsert_snapshot(conn: sqlite3.Connection, table: str, data: dict) -> None:
 
 def upsert_regime(conn: sqlite3.Connection, data: dict) -> None:
     _upsert_snapshot(conn, "data_regime", data)
+
+
+def upsert_regime_history(conn: sqlite3.Connection, as_of: str, data: dict, table: str = "data_regime_history") -> None:
+    """weighted_score+센서별 점수를 날짜별로 보존 — data_regime/kr_regime은 매일 덮어써져서
+    "오늘이 임계값에 얼마나 여유있는 GO/STOP인지"를 추세로 볼 수 없다."""
+    payload = json.dumps(data, ensure_ascii=False, default=str)
+    conn.execute(
+        f"""
+        INSERT INTO {table} (date, payload)
+        VALUES (?, ?)
+        ON CONFLICT(date) DO UPDATE SET
+            payload    = excluded.payload,
+            created_at = datetime('now')
+        """,
+        (as_of, payload),
+    )
 
 
 def upsert_market_gate(conn: sqlite3.Connection, data: dict) -> None:

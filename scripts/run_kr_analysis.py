@@ -284,6 +284,7 @@ def main() -> None:
     try:
         regime_result = phase1_regime(t0)
         _upsert_snapshot(conn, "kr_regime", regime_result)
+        _upsert_timeseries(conn, "kr_regime_history", analysis_date, regime_result)
 
         gate_result = phase2_gate(regime_result, t0)
         _upsert_snapshot(conn, "kr_market_gate", gate_result)

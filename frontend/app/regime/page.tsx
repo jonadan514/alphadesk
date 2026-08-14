@@ -1,8 +1,72 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer,
+} from "recharts";
 import InfoTooltip from "@/src/components/InfoTooltip";
 import { useMarket } from "@/src/contexts/MarketContext";
+
+// market_regime.py/kr_market_regime.py의 _classify() 임계값과 반드시 일치해야 함.
+// 미국: 점수가 낮을수록 강세(risk_on). 한국: 점수가 높을수록 강세 — 방향이 반대다.
+const REGIME_THRESHOLDS: Record<string, { value: number; label: string }[]> = {
+  US: [
+    { value: 0.75, label: "risk_on / neutral" },
+    { value: 1.5,  label: "neutral / risk_off" },
+    { value: 2.25, label: "risk_off / crisis" },
+  ],
+  KR: [
+    { value: 1.5,  label: "risk_on / neutral" },
+    { value: 0.5,  label: "neutral / risk_off" },
+    { value: -0.3, label: "risk_off / crisis" },
+  ],
+};
+
+function RegimeHistoryChart({ market }: { market: string }) {
+  const [points, setPoints] = useState<{ date: string; weighted_score: number | null; regime: string | null }[]>([]);
+
+  useEffect(() => {
+    setPoints([]);
+    fetch(`/api/data/regime-history?market=${market}&days=60`)
+      .then((r) => r.json())
+      .then((d) => setPoints(Array.isArray(d?.points) ? d.points : []))
+      .catch(() => {});
+  }, [market]);
+
+  const withScore = points.filter((p) => p.weighted_score != null);
+  if (withScore.length < 2) return null;
+
+  const latest = withScore[withScore.length - 1];
+  const thresholds = REGIME_THRESHOLDS[market] ?? REGIME_THRESHOLDS.US;
+
+  return (
+    <div className="bg-card rounded-xl p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <h2 className="stat-label">체제 점수 추이 (최근 60일)</h2>
+        <InfoTooltip content="점수가 임계값에 얼마나 여유있게 걸쳐있는지 보여줍니다. data_regime은 매일 덮어써져서 이 추세를 볼 수 없었는데, 별도 이력 테이블에 쌓기 시작했습니다." />
+      </div>
+      <ResponsiveContainer width="100%" height={160}>
+        <LineChart data={withScore} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--text-faint)" }} tickFormatter={(d) => d.slice(5)} />
+          <YAxis tick={{ fontSize: 10, fill: "var(--text-faint)" }} />
+          <Tooltip
+            contentStyle={{ background: "#111009", border: "1px solid var(--border)", fontSize: 12 }}
+            labelStyle={{ color: "var(--text-muted)" }}
+          />
+          {thresholds.map((t) => (
+            <ReferenceLine key={t.label} y={t.value} stroke="var(--text-faint)" strokeDasharray="4 4"
+              label={{ value: t.label, position: "insideTopRight", fontSize: 9, fill: "var(--text-faint)" }} />
+          ))}
+          <Line type="monotone" dataKey="weighted_score" stroke="#ffb020" strokeWidth={2} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+      <p className="text-[11px] mt-1" style={{ color: "var(--text-faint)" }}>
+        {market === "KR" ? "점수가 높을수록 강세(risk_on)" : "점수가 낮을수록 강세(risk_on)"} · 최근값 {latest.date}: {latest.weighted_score?.toFixed(3)} ({latest.regime})
+      </p>
+    </div>
+  );
+}
 
 const US_SENSOR_META: Record<string, { label: string; weight: string; desc: string }> = {
   vix:         { label: "VIX",         weight: "30%", desc: "시장 공포지수. 낮을수록 투자심리 안정 → risk_on 신호" },
@@ -292,6 +356,8 @@ export default function RegimePage() {
           </div>
         </div>
       )}
+
+      <RegimeHistoryChart market={market} />
 
       {/* 매크로 스냅샷 — US: 자체 데이터 / KR: 글로벌(미국) 매크로 + 환율 */}
       {(() => {

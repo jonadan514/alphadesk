@@ -21,7 +21,7 @@ from src.analyzers.smart_money_screener_v2 import EnhancedSmartMoneyScreener
 from src.analyzers.ai_summary_generator import OpenAISummaryGenerator
 from src.analyzers.final_report_generator import FinalReportGenerator, ACTION_MAP
 from src.us_market.index_predictor import IndexPredictor
-from src.db.data_store import get_db, init_db, upsert_daily_report, upsert_regime, upsert_market_gate, upsert_index_prediction, upsert_ai_summaries, upsert_risk, upsert_costs, upsert_full_scores
+from src.db.data_store import get_db, init_db, upsert_daily_report, upsert_regime, upsert_regime_history, upsert_market_gate, upsert_index_prediction, upsert_ai_summaries, upsert_risk, upsert_costs, upsert_full_scores
 from src.portfolio.tracker import init_portfolio_tables, execute_sells, execute_buys, check_alerts, snapshot, get_portfolio_summary
 from src.risk.portfolio_risk import compute_risk
 from src.analyzers.sector_analyzer import analyze as analyze_sectors
@@ -200,6 +200,7 @@ def phase3_report(regime_result, gate_result, index_result, picks_df, full_score
     init_db(conn)
     upsert_daily_report(conn, analysis_date, report)
     upsert_regime(conn, regime_result)
+    upsert_regime_history(conn, analysis_date, regime_result)
     upsert_market_gate(conn, gate_result)
     upsert_index_prediction(conn, index_result)
     if ai_summaries:
