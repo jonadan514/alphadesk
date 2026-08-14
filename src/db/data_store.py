@@ -73,13 +73,6 @@ _SNAPSHOT_TABLES = {
             updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """,
-    "data_ai_summaries": """
-        CREATE TABLE IF NOT EXISTS data_ai_summaries (
-            id          INTEGER PRIMARY KEY CHECK (id = 1),
-            payload     TEXT NOT NULL,
-            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    """,
     "data_gbm_predictions": """
         CREATE TABLE IF NOT EXISTS data_gbm_predictions (
             id          INTEGER PRIMARY KEY CHECK (id = 1),
@@ -115,14 +108,6 @@ _SNAPSHOT_TABLES = {
             updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """,
-    # 전체 채점 결과 (top-20 밖 종목 포함) — 매수체크에서 임의 종목의 등급/액션 조회용
-    "data_full_scores": """
-        CREATE TABLE IF NOT EXISTS data_full_scores (
-            id          INTEGER PRIMARY KEY CHECK (id = 1),
-            payload     TEXT NOT NULL,
-            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    """,
     "kr_regime": """
         CREATE TABLE IF NOT EXISTS kr_regime (
             id          INTEGER PRIMARY KEY CHECK (id = 1),
@@ -137,23 +122,8 @@ _SNAPSHOT_TABLES = {
             updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """,
-    "kr_ai_summaries": """
-        CREATE TABLE IF NOT EXISTS kr_ai_summaries (
-            id          INTEGER PRIMARY KEY CHECK (id = 1),
-            payload     TEXT NOT NULL,
-            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    """,
     "kr_index_prediction": """
         CREATE TABLE IF NOT EXISTS kr_index_prediction (
-            id          INTEGER PRIMARY KEY CHECK (id = 1),
-            payload     TEXT NOT NULL,
-            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    """,
-    # 전체 채점 결과 (top-30 밖 포함) — 매수체크 폴백용
-    "kr_full_scores": """
-        CREATE TABLE IF NOT EXISTS kr_full_scores (
             id          INTEGER PRIMARY KEY CHECK (id = 1),
             payload     TEXT NOT NULL,
             updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
@@ -312,14 +282,6 @@ def upsert_regime_history(conn: sqlite3.Connection, as_of: str, data: dict, tabl
 
 def upsert_market_gate(conn: sqlite3.Connection, data: dict) -> None:
     _upsert_snapshot(conn, "data_market_gate", data)
-
-
-def upsert_ai_summaries(conn: sqlite3.Connection, data: dict) -> None:
-    _upsert_snapshot(conn, "data_ai_summaries", data)
-
-
-def upsert_full_scores(conn: sqlite3.Connection, data: dict) -> None:
-    _upsert_snapshot(conn, "data_full_scores", data)
 
 
 def upsert_gbm_predictions(conn: sqlite3.Connection, data: dict) -> None:

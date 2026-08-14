@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import FlagIcon from "@/src/components/FlagIcon";
 
 const GUIDE_SECTIONS = [
   { href: "/",          icon: "⊡", label: "개요",        desc: "마켓 게이트·체제·상위 픽·지수 예측을 한 화면 요약. 오늘 시장 상태를 5초에 파악하는 시작점." },
@@ -22,10 +21,10 @@ const REGIME_ROWS = [
 ];
 
 const STEPS = [
-  { n: 1, label: "시장 진입 여부",   auto: "자동",   check: "마켓 게이트·종합 판단 신호 자동 표시",       go: "게이트 = GO" },
+  { n: 1, label: "시장 진입 여부",   auto: "자동",   check: "마켓 게이트·체제 신호 자동 표시",             go: "게이트 = GO" },
   { n: 2, label: "체제 & 투자 비중", auto: "자동",   check: "현재 체제 → 권장 주식 비중 자동 제시",       go: "risk_on · neutral" },
-  { n: 3, label: "종목 선택",        auto: "자동",   check: "BUY A·B 선행섹터 분산 후보 자동 제안",       go: "BUY 종목 존재" },
-  { n: 4, label: "AI 검증",          auto: "자동",   check: "AI BUY 추천 수·thesis 자동 표시",            go: "AI 분석 존재" },
+  { n: 3, label: "종목 후보 리스트", auto: "자동",   check: "재무 필터 통과 후보를 순위 없이 리스트업",   go: "후보 1개 이상" },
+  { n: 4, label: "종목별 분석",      auto: "자동",   check: "네러티브 브리프 + 재무 지표 확인 안내",       go: "항상 제공" },
   { n: 5, label: "리스크 관리",      auto: "자동",   check: "VaR·MDD·체제별 손절선 자동 경보",            go: "경보 없음" },
   { n: 6, label: "타이밍 확인",      auto: "자동",   check: "LightGBM SPY·KOSPI 방향 예측 자동 표시",     go: "강세 55%+" },
 ];
@@ -94,13 +93,13 @@ export default function GuidePage() {
             },
             {
               step: "STEP 2", color: "#facc15",
-              title: "어떤 종목을 살까? → 워치리스트 + 종목 분석",
-              body: "워치리스트 탭에는 재무 함정 필터와 시장 적합 점수를 통과한 상위 50개 후보가 있습니다. 종목을 클릭하면 재무 지표와 함께 네러티브 브리프(시장이 왜 이 종목에 관심을 갖는지, 다가오는 촉매, 스토리가 깨지는 조건)가 표시돼요. 종목 분석 탭은 매일 갱신되는 발굴 레이더 — 여기서 눈에 띈 종목도 워치리스트에서 검증하세요. 두 탭에 동시에 뜨는 종목(🔖워치 + 오늘픽)이 가장 강한 신호입니다.",
+              title: "어떤 종목을 살까? → 워치리스트",
+              body: "워치리스트 탭에는 재무 건전성 필터(Piotroski F-Score·ROE·부채비율·이자보상배율·현금흐름)를 통과한 후보가 순위 없이 나열됩니다 — 점수로 줄 세우지 않고, 통과한 종목 전부를 보여줍니다. 종목을 클릭하면 재무 지표와 함께 네러티브 브리프(시장이 왜 이 종목에 관심을 갖는지, 다가오는 촉매, 스토리가 깨지는 조건)가 표시돼요. 1~3년 보유를 전제로 한 도구이니 최종 종목 선택은 순위가 아니라 본인의 판단으로 하세요.",
             },
             {
               step: "STEP 3", color: "#6fb3b8",
               title: "정말 사도 되나? 얼마나 살까? → 워치리스트 팝업 + 매수 체크",
-              body: "워치리스트에서 종목을 클릭하면 정성 체크리스트(스토리·촉매 점검)와 메모를 그 자리에서 남길 수 있습니다. 그다음 매수 체크 탭에 티커를 입력하면 12개 조건(게이트·체제·워치리스트 포함 여부·등급·점수 등)을 자동 판정하고 적정 매수 수량까지 계산해줍니다. 모든 항목이 초록이 되면 매수합니다.",
+              body: "워치리스트에서 종목을 클릭하면 정성 체크리스트(스토리·촉매 점검)와 메모를 그 자리에서 남길 수 있습니다. 그다음 매수 체크 탭에 티커를 입력하면 게이트·체제·워치리스트 포함 여부·Piotroski·네러티브 브리프 등 여러 조건을 자동 판정하고 적정 매수 수량까지 계산해줍니다. 장기(1~3년) 모드에서는 시장 타이밍 조건(게이트·체제·리스크)이 매수를 막지 않고 참고 경고로만 표시됩니다.",
             },
           ].map(({ step, color, title, body }) => (
             <div key={step} className="rounded-xl p-4" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
@@ -115,10 +114,11 @@ export default function GuidePage() {
 
         <div className="rounded-xl p-4" style={{ background: "#ffb02008", border: "1px solid #ffb02022" }}>
           <p className="text-[12px] font-bold" style={{ color: "#ffb020" }}>💡 가장 중요한 규칙 하나만 기억한다면</p>
-          <p className="text-[13px] font-bold text-white mt-1">체제별 손절선(강세 -10% ~ 위기 -3%)에 도달하면 이유 불문 즉시 매도</p>
+          <p className="text-[13px] font-bold text-white mt-1">보유 이유가 사라졌는지 정기적으로 점검하고, 그렇다면 매도한다</p>
           <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-            아무리 좋은 종목도 손절선 없이 보유하면 큰 손실로 이어집니다. 손절은 틀린 게 아니라 자산을 지키는 것입니다.
-            포트폴리오 탭에 거래를 기록해두면 보유 종목이 손절선에 접근할 때 자동으로 경고해줘요.
+            AlphaDesk는 1~3년 펀더멘털 보유를 기본 전제로 합니다 — 단기 가격 변동에 따른 자동 손절은 없습니다.
+            대신 재무 훼손·큰 폭 하락 등을 감지하면 포트폴리오 탭에 <span className="text-white">알림만</span> 남기고, 실제 매도 여부는 항상 본인이 판단합니다.
+            (단기 스윙으로 접근한다면 체제별 손절선(강세 -10% ~ 위기 -3%)을 참고하세요 — 시장 체제 탭에서 확인 가능합니다.)
           </p>
         </div>
       </Card>
@@ -128,10 +128,10 @@ export default function GuidePage() {
         <SectionTitle>데이터 업데이트 방식</SectionTitle>
         <div className="space-y-2 mb-4">
           {[
-            { label: "일간 분석 (자동)",    color: "#ffb020", desc: "GitHub Actions가 평일 매일 자동 실행 — 미국(장 마감 후 07:00 KST) · 한국(장 마감 후 16:30 KST)", tag: "자동" },
-            { label: "네러티브 브리프 (자동)", color: "#f87171", desc: "일간 분석과 함께 워치리스트 종목별 최근 1주 뉴스를 수집해 GPT가 스토리·촉매·관심도(HOT/WARM/COLD)를 생성", tag: "자동" },
-            { label: "워치리스트 (주 1회)", color: "#6fb3b8", desc: "매주 월요일 자동 스크리닝 — 함정 필터 통과 후 시장 적합 점수(품질·모멘텀·체제) 상위 50개 선발", tag: "자동" },
-            { label: "텔레그램 요약 (자동)", color: "#6fb3b8", desc: "일간 분석 완료 후 게이트 상태·손절 경고·워치리스트 교차 히트·관심도 상승을 폰으로 발송", tag: "자동" },
+            { label: "워치리스트 스크리닝 (주 1회)", color: "#6fb3b8", desc: "매주 일요일 밤 자동 실행 — 재무 건전성 필터(트랩 필터) 통과 종목 전부를 순위 없이 리스트업", tag: "자동" },
+            { label: "네러티브 브리프 (주 1회)", color: "#f87171", desc: "워치리스트 스크리닝 직후 후보·내 워치리스트 종목별 최근 1주 뉴스를 수집해 GPT가 장기 스토리·촉매·리스크·시장 단기 관심도(HOT/WARM/COLD)를 생성", tag: "자동" },
+            { label: "시장 분석 (주 1회)", color: "#ffb020", desc: "GitHub Actions가 매주 월요일 자동 실행 — 체제·게이트·지수 예측·섹터 분석·포트폴리오 갱신", tag: "자동" },
+            { label: "텔레그램 요약 (자동)", color: "#6fb3b8", desc: "주간 시장 분석 완료 후 게이트 상태·손절 경고·워치리스트 교차 히트·관심도 상승을 폰으로 발송", tag: "자동" },
             { label: "포트폴리오·정성 체크", color: "#a39c88", desc: "매수/매도 기록 및 종목별 체크리스트·메모는 내가 직접 입력", tag: "수동" },
           ].map(({ label, color, desc, tag }) => (
             <div key={label} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
@@ -149,9 +149,9 @@ export default function GuidePage() {
         <SectionTitle>데이터 신선도 확인</SectionTitle>
         <div className="space-y-1">
           {[
-            "사이드바 하단 색상 점 — 초록(오늘 업데이트) · 노랑(어제) · 주황/빨강(오래됨)",
-            "주황/빨강이면 GitHub Actions 실행 결과를 확인하세요",
-            "수동 재실행: GitHub → Actions → Daily Analysis → Run workflow",
+            "사이드바 하단 색상 점 — 초록(7일 이내 업데이트) · 노랑(8~9일 전) · 빨강(오래됨) — 주 1회 실행 체제라 며칠 지난 건 정상입니다",
+            "빨강이면 GitHub Actions 실행 결과를 확인하세요",
+            "수동 재실행: GitHub → Actions → Weekly Market Analysis → Run workflow",
             "워치리스트 재스크리닝: GitHub → Actions → Weekly Watchlist Screen → Run workflow",
           ].map((step, i) => (
             <div key={i} className="flex items-start gap-3 py-1.5" style={{ borderBottom: "1px solid #262112" }}>
@@ -168,13 +168,11 @@ export default function GuidePage() {
         <div className="grid grid-cols-2 gap-2">
           {[
             ["시장 체제 감지",   "미국(5센서)·한국(5센서) 가중 합산 → risk_on / neutral / risk_off / crisis 판별"],
-            ["종목 스크리닝",    "미국(6팩터)·한국(4팩터) 복합 점수로 매일 순위 산정. 등급 A~F + BUY/WATCH/HOLD 액션"],
-            ["워치리스트",      "함정 필터(Piotroski·ROE·부채 등) + 시장 적합 점수로 시장별 상위 50 후보를 주 1회 선발"],
-            ["네러티브 브리프",  "종목별 최근 뉴스를 GPT가 요약 — 투자 스토리·촉매·리스크·시장 관심도(HOT/WARM/COLD)"],
-            ["AI 요약 생성",    "GPT-4o — 투자 thesis · 상승 촉매 · 하락 리스크를 종목별로 자동 생성"],
+            ["워치리스트",      "재무 건전성 필터(Piotroski·ROE·부채비율·이자보상배율·현금흐름)를 통과한 종목을 주 1회, 순위 없이 리스트업"],
+            ["네러티브 브리프",  "후보 종목별 최근 뉴스를 GPT가 요약 — 장기 투자 스토리·촉매·리스크·시장 단기 관심도(HOT/WARM/COLD)"],
             ["섹터 분석",       "경기 사이클 단계 판단 + 섹터별 KOSPI/SPY 대비 상대강도"],
             ["손절선 모니터",   "포트폴리오 보유 종목이 체제별 손절선에 접근·도달하면 자동 경고"],
-            ["텔레그램 알림",   "매일 분석 후 행동이 필요한 신호만 요약해 폰으로 발송"],
+            ["텔레그램 알림",   "주간 분석 후 행동이 필요한 신호만 요약해 폰으로 발송"],
             ["포지션 사이징",   "고정 비율·켈리 검증으로 적정 매수 수량 자동 계산 (매수 체크 탭)"],
             ["리스크 관리",     "VaR95·상관관계·낙폭 분석 (시스템 시뮬레이션 포트폴리오 기준)"],
             ["포트폴리오",      "실거래 기록 + 현재가·평가손익 실시간 표시, 벤치마크 대비 성과 추적"],
@@ -191,16 +189,16 @@ export default function GuidePage() {
         </p>
       </Card>
 
-      {/* Daily routine */}
+      {/* Weekly routine */}
       <Card>
-        <SectionTitle>매일 투자 의사결정 루틴</SectionTitle>
+        <SectionTitle>주간 투자 의사결정 루틴</SectionTitle>
         <div className="space-y-2 mb-4">
           {[
-            { n: "①", tab: "텔레그램 요약", action: "아침 요약 메시지 확인 — 게이트 STOP이거나 별다른 신호 없으면 오늘은 끝", href: "/" },
-            { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 게이트·체제·지수 예측 확인",                  href: "/" },
-            { n: "③", tab: "워치리스트",    action: "관심도 상승·오늘픽 배지 확인 → 눈에 띄면 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
-            { n: "④", tab: "매수 체크",     action: "티커 입력 → 12개 조건 자동 판정 + 적정 수량 계산 → 전부 초록이면 매수", href: "/workflow" },
-            { n: "⑤", tab: "포트폴리오",    action: "매수했으면 거래 기록 — 이후 손익·손절선 경고가 자동으로 표시됨",      href: "/portfolio" },
+            { n: "①", tab: "텔레그램 요약", action: "주간 분석 완료 후 요약 메시지 확인 — 게이트 STOP이거나 별다른 신호 없으면 이번 주는 끝", href: "/" },
+            { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 게이트·체제·지수 예측·이번 주 후보 수 확인",   href: "/" },
+            { n: "③", tab: "워치리스트",    action: "관심도 상승 배너 확인 → 눈에 띄는 후보 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
+            { n: "④", tab: "매수 체크",     action: "티커 입력 → 워치리스트 포함·Piotroski·네러티브 등 자동 판정 + 적정 수량 계산 → 조건 충족 시 매수", href: "/workflow" },
+            { n: "⑤", tab: "포트폴리오",    action: "매수했으면 거래 기록 — 이후 손익·(장기 포지션은) 재무 훼손·하락 알림이 자동으로 표시됨", href: "/portfolio" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <span className="text-sm font-black shrink-0 w-5 text-center" style={{ color: "#ffb020" }}>{n}</span>
@@ -215,9 +213,9 @@ export default function GuidePage() {
         <SectionTitle>마켓 게이트 신호별 대응</SectionTitle>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {[
-            { signal: "GO",      color: "#4ade80", desc: "상위 종목 BUY 검토 → 워크플로우 5단계 통과 후 매수." },
-            { signal: "CAUTION", color: "#facc15", desc: "신규 진입 시 포지션 50% 이하 축소. 손절선 1~2% 좁게." },
-            { signal: "STOP",    color: "#f87171", desc: "신규 진입 전면 보류. 기존 포지션 손절선 재검토." },
+            { signal: "GO",      color: "#4ade80", desc: "워치리스트 후보 검토 → 매수 체크 6단계 통과 후 매수." },
+            { signal: "CAUTION", color: "#facc15", desc: "신규 진입 시 포지션 50% 이하 축소. 장기 투자라면 참고 경고로만 취급 가능." },
+            { signal: "STOP",    color: "#f87171", desc: "단기 신규 진입 전면 보류. 장기 투자라면 저평가 우량주 진입은 정당할 수 있음." },
           ].map(({ signal, color, desc }) => (
             <div key={signal} className="rounded-xl p-3" style={{ background: "#262112", border: `1px solid ${color}33` }}>
               <Badge text={signal} color={color} />
@@ -269,78 +267,35 @@ export default function GuidePage() {
         </div>
       </Card>
 
-      {/* Factor weights US vs KR */}
+      {/* Trap filter thresholds */}
       <Card>
-        <SectionTitle>종합 점수(Composite Score) 구조</SectionTitle>
-
-        {/* US 6 factors */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div>
-            <p className="text-[12px] font-bold mb-2" style={{ color: "#6fb3b8" }}><FlagIcon market="US" size={13} />{" "}미국 (6팩터)</p>
-            <div className="space-y-1">
-              {[
-                ["기술 (Technical)",    "25%", "RSI·MACD·볼린저밴드·이동평균 정렬"],
-                ["펀더멘털 (Fundamental)", "20%", "PEG·EPS성장률·애널리스트 목표가 상승여력"],
-                ["애널리스트 (Analyst)", "15%", "월가 컨센서스 목표가 상승여력"],
-                ["상대강도 (RS vs SPY)", "15%", "최근 20일 SPY 대비 초과 수익률"],
-                ["거래량 (Volume)",      "15%", "최근 5일 vs 20일 평균 거래량 Z-score"],
-                ["기관 (Institutional)", "10%", "기관 보유 비율"],
-              ].map(([f, w, tip]) => (
-                <div key={f} className="flex items-center gap-2 text-[12px] py-1" style={{ borderBottom: "1px solid #262112" }}>
-                  <span className="flex-1" style={{ color: "var(--text-secondary)" }}>{f}</span>
-                  <span className="font-bold w-8 text-right shrink-0" style={{ color: "#6fb3b8" }}>{w}</span>
-                  <span className="w-44 text-right shrink-0" style={{ color: "#726b58" }}>{tip}</span>
-                </div>
-              ))}
+        <SectionTitle>재무 건전성 필터(트랩 필터) 구조</SectionTitle>
+        <p className="text-[12px] mb-3 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          점수를 매겨 순위를 매기는 게 아니라, 아래 항목 중 하나라도 걸리면 <span className="text-white font-semibold">탈락</span>하는
+          방식입니다. 통과한 종목은 전부 워치리스트 후보가 되고(순위 없음), 그 안에서 어떤 종목을 살지는 본인이 판단합니다.
+        </p>
+        <div className="space-y-1">
+          {[
+            ["Piotroski F-Score", "5점 미만이면 탈락 (9개 항목 중 수익성·레버리지·운영효율 채점)"],
+            ["이자보상배율(EBIT/이자비용)", "1배 미만이면 탈락 — 영업이익으로 이자도 못 내는 상태"],
+            ["부채비율(총부채/자기자본)", "200% 초과면 탈락 (금융업 제외)"],
+            ["영업현금흐름", "최근 2년 연속 마이너스면 탈락"],
+            ["매출 + 순이익", "3년 연속 동시 감소면 탈락 (매출만 2년 연속 감소도 별도 감점 사유)"],
+            ["ROE", "8% 미만이면 탈락"],
+          ].map(([f, tip]) => (
+            <div key={f} className="flex items-center gap-2 text-[12px] py-1.5" style={{ borderBottom: "1px solid #262112" }}>
+              <span className="w-48 shrink-0 font-semibold" style={{ color: "var(--text-secondary)" }}>{f}</span>
+              <span className="flex-1" style={{ color: "#726b58" }}>{tip}</span>
             </div>
-          </div>
-          <div>
-            <p className="text-[12px] font-bold mb-2" style={{ color: "#ffb020" }}><FlagIcon market="KR" size={13} />{" "}한국 (4팩터)</p>
-            <div className="space-y-1">
-              {[
-                ["기술 (Technical)",     "35%", "RSI·MACD·볼린저밴드·이동평균"],
-                ["상대강도 (RS vs KOSPI)", "30%", "최근 20일 KOSPI 대비 초과 수익률"],
-                ["펀더멘털 (Fundamental)", "20%", "PER·PBR·ROE·PEG·EPS성장·부채"],
-                ["거래량 (Volume)",       "15%", "최근 5일 vs 20일 평균 거래량 Z-score"],
-              ].map(([f, w, tip]) => (
-                <div key={f} className="flex items-center gap-2 text-[12px] py-1" style={{ borderBottom: "1px solid #262112" }}>
-                  <span className="flex-1" style={{ color: "var(--text-secondary)" }}>{f}</span>
-                  <span className="font-bold w-8 text-right shrink-0" style={{ color: "#ffb020" }}>{w}</span>
-                  <span className="w-44 text-right shrink-0" style={{ color: "#726b58" }}>{tip}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
-
-        {/* 기술적 가중 이유 설명 */}
-        <div className="rounded-xl p-3 mb-4" style={{ background: "#0e0d08", border: "1px solid #262112" }}>
-          <p className="text-[12px] font-bold mb-1.5" style={{ color: "#facc15" }}>왜 기술적 지표 비중이 높은가?</p>
+        <div className="rounded-xl p-3 mt-4" style={{ background: "#0e0d08", border: "1px solid #262112" }}>
+          <p className="text-[12px] font-bold mb-1.5" style={{ color: "#facc15" }}>왜 모멘텀·기술적 지표는 안 보나?</p>
           <p className="text-[12px] leading-relaxed" style={{ color: "#a39c88" }}>
-            AlphaDesk는 <span className="text-white font-semibold">탑다운(매크로 → 섹터 → 종목)</span> 구조로 작동합니다.
-            체제 분석과 섹터 사이클에서 &quot;좋은 환경인가&quot;를 먼저 판단하고, 종합 점수는 그 환경 안에서 &quot;지금 살 타이밍인가&quot;를 고릅니다.
-            이미 펀더멘털 필터(BUY 액션, Grade A/B)를 통과한 종목들 중에서 모멘텀·거래량·상대강도로 진입 타이밍을 선별하는 것이므로, 기술적 가중이 높은 게 이 구조에 맞습니다.
-            Lynch도 실제 매수 타이밍은 차트를 참고했고, O&apos;Neil은 이를 원칙화했습니다.
+            예전 버전은 기술적 지표·상대강도·거래량으로 &quot;지금 살 타이밍인가&quot;까지 점수화했지만,
+            1~3년 보유를 전제로 하면 그 시점의 단기 모멘텀은 큰 의미가 없다고 판단해 제거했습니다.
+            지금은 재무가 건전한 회사인지만 걸러내고, 진입 타이밍은 시장 체제·게이트를 참고 지표로만 삼아 본인이 판단합니다.
           </p>
-        </div>
-
-        {/* 등급 기준 */}
-        <div className="mt-2">
-          <p className="text-[12px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>등급 기준</p>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-1">
-            {[
-              { grade: "A", score: "80+",   color: "#4ade80" },
-              { grade: "B", score: "70~79", color: "#86efac" },
-              { grade: "C", score: "60~69", color: "#facc15" },
-              { grade: "D", score: "50~59", color: "#fb923c" },
-              { grade: "F", score: "50미만", color: "#f87171" },
-            ].map(({ grade, score, color }) => (
-              <div key={grade} className="rounded-xl p-2 text-center" style={{ background: `${color}11`, border: `1px solid ${color}33` }}>
-                <p className="text-sm font-black" style={{ color }}>{grade}</p>
-                <p className="text-[12px] mt-0.5" style={{ color: "var(--text-faint)" }}>{score}점</p>
-              </div>
-            ))}
-          </div>
         </div>
       </Card>
 
@@ -349,19 +304,19 @@ export default function GuidePage() {
         <SectionTitle>알아두면 유용한 해석법</SectionTitle>
         <div className="space-y-3">
 
-          {/* AI 신뢰도 */}
+          {/* 시장 단기 관심도 */}
           <div>
-            <p className="text-[12px] font-bold text-white mb-1">AI 신뢰도(Confidence)란?</p>
+            <p className="text-[12px] font-bold text-white mb-1">네러티브 브리프의 &quot;시장 단기 관심도&quot;란?</p>
             <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              GPT-4o가 자신의 분석에 스스로 매긴 확신 점수입니다 (0-100 정수).
-              데이터가 충분하고 투자 논리가 일관되면 높게, 데이터가 불완전하거나 논리가 애매하면 낮게 냅니다.
-              객관적 지표가 아닌 <span className="text-white">AI의 주관적 자기평가</span>입니다.
+              최근 1주일 뉴스량을 기준으로 GPT가 매기는 HOT/WARM/COLD 표시입니다.
+              <span className="text-white"> 장기 투자 판단의 핵심 지표가 아니라 보조 정보</span>일 뿐입니다 —
+              관심 밖(COLD)이어도 장기 스토리(story)는 탄탄할 수 있고, 반대로 HOT이라고 재무가 좋은 것도 아닙니다.
             </p>
             <div className="flex gap-2 mt-2">
               {[
-                { range: "85+", desc: "근거에 확신 있음", color: "#4ade80" },
-                { range: "70~84", desc: "보통 수준", color: "#facc15" },
-                { range: "~69", desc: "AI도 불확실한 상황", color: "#fb923c" },
+                { range: "🔥 HOT", desc: "뉴스 많음, 인기 테마", color: "#f87171" },
+                { range: "🌤 WARM", desc: "꾸준한 관심", color: "#facc15" },
+                { range: "❄️ COLD", desc: "뉴스 적음, 관심 밖", color: "#6fb3b8" },
               ].map(({ range, desc, color }) => (
                 <div key={range} className="flex-1 rounded-lg px-2.5 py-2 text-center" style={{ background: `${color}10`, border: `1px solid ${color}30` }}>
                   <p className="text-[12px] font-black" style={{ color }}>{range}</p>
@@ -369,29 +324,17 @@ export default function GuidePage() {
                 </div>
               ))}
             </div>
-            <p className="text-[12px] mt-1.5" style={{ color: "#726b58" }}>※ AI 신뢰도는 참고용입니다. GPT-4o가 틀려도 책임은 없으므로 과신 금물.</p>
+            <p className="text-[12px] mt-1.5" style={{ color: "#726b58" }}>※ 판단의 중심은 항상 story(투자 스토리)·catalysts(촉매)·risks(리스크)입니다.</p>
           </div>
 
           <div style={{ borderTop: "1px solid #262112", paddingTop: "1rem" }}>
-            <p className="text-[12px] font-bold text-white mb-1">워크플로우 STEP 3 종목 우선순위 원리</p>
-            <p className="text-[12px] leading-relaxed mb-2" style={{ color: "var(--text-muted)" }}>
-              워크플로우가 추천하는 상위 종목 순서는 상위 종목 탭의 점수 순서와 다를 수 있습니다.
-              STEP 3은 <span className="text-white">BUY + A/B등급</span> 필터 후, 그 안에서 <span className="text-white">현재 선행 섹터 종목을 먼저</span> 올립니다.
-              단, BUY·A/B등급 종목 중 선행 섹터 소속이 하나도 없는 날은 이 우선순위가 적용될 대상 자체가 없으므로, 섹터 분산만 적용된 후보를 보여주고 카드에 그 사실을 그대로 안내합니다.
+            <p className="text-[12px] font-bold text-white mb-1">워치리스트 후보에는 왜 순위가 없나?</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              예전 버전은 재무 필터 통과 종목을 다시 모멘텀·품질 점수로 줄 세워 상위 50개만 보여줬습니다.
+              하지만 1~3년 보유가 전제라면 스크리닝 시점의 순위가 실제 투자 성과와 크게 상관없다고 판단해 랭킹 자체를 없앴습니다.
+              지금은 재무 필터를 통과한 종목 <span className="text-white">전부</span>가 후보이고, 그 안에서 무엇을 살지는
+              섹터 분산·네러티브·본인의 확신을 기준으로 직접 고르는 게 맞는 방향이라고 봤습니다.
             </p>
-            <div className="rounded-lg px-3 py-2.5 text-[12px]" style={{ background: "#0e0d08", border: "1px solid #262112" }}>
-              <p style={{ color: "#726b58" }}>예) XLK(Technology)가 선행 섹터일 때</p>
-              <p className="mt-1" style={{ color: "#a39c88" }}>
-                전체 1위 CVS(Healthcare) 보다 4위 KLAC(Technology)를 먼저 추천 →
-                <span className="text-white"> 지금 시장이 선호하는 섹터에서 타야 한다</span>는 전략적 판단
-              </p>
-            </div>
-            <div className="rounded-lg px-3 py-2 mt-2" style={{ background: "#facc1508", border: "1px solid #facc1520" }}>
-              <p className="text-[12px]" style={{ color: "#facc15" }}>⚠ 섹터 편중 주의</p>
-              <p className="text-[12px] mt-0.5" style={{ color: "#a39c88" }}>
-                선행 섹터가 하나일 때 상위 추천이 모두 같은 섹터일 수 있습니다. 플레이북 원칙대로 <span className="text-white">4-5종목 이내, 같은 섹터 최대 1-2종목</span>을 직접 판단해서 지키세요.
-              </p>
-            </div>
           </div>
 
         </div>
@@ -417,20 +360,20 @@ export default function GuidePage() {
         <div className="space-y-3">
           {[
             {
-              q: "AI 분석이 없는 종목이 있어요.",
-              a: "AI 요약은 BUY 액션 종목에 대해서만 생성됩니다(한국 상위 15개, 미국 상위 50개). WATCH·HOLD 종목은 생성되지 않습니다. 일간 분석 실행 후 업데이트됩니다.",
+              q: "네러티브 브리프가 없는 종목이 있어요.",
+              a: "내 워치리스트 종목과 이번 주 후보는 모두 대상이지만, 후보 수가 많으면 오래된(또는 아직 없는) 종목부터 순서대로 매주 나눠서 갱신됩니다(회차당 최대 400종목). 며칠~몇 주 걸릴 수 있으니 조금 기다리거나 GitHub → Actions에서 Weekly Watchlist Screen을 수동 실행하세요.",
             },
             {
               q: "워치리스트 후보는 어떻게 뽑히나요?",
-              a: "주 1회 자동 스크리닝 — ① 함정 필터(Piotroski≥5, ROE≥8%, 이자보상배율≥1, 부채비율≤200%, 현금흐름·매출 감소 없음)로 걸러낸 뒤 ② 시장 적합 점수(품질 40 + 모멘텀 35 + 체제 정합 25)로 시장별 상위 50개만 선발합니다. 한국은 현재 KOSPI 대형주 기준이라 후보가 더 적을 수 있어요.",
+              a: "주 1회 자동 스크리닝 — 함정 필터(Piotroski≥5, ROE≥8%, 이자보상배율≥1, 부채비율≤200%, 영업현금흐름 2년 연속 마이너스 아님, 매출+순이익 3년 연속 감소 아님)를 통과한 종목 전부가 후보입니다. 더 이상 점수로 순위를 매겨 상위 N개만 자르지 않습니다. 한국은 현재 KOSPI 대형주 기준이라 후보가 더 적을 수 있어요.",
             },
             {
               q: "네러티브 브리프가 안 뜨는 종목이 있어요.",
-              a: "브리프는 일간 파이프라인이 매일 생성합니다. 이번 주에 새로 후보에 오른 종목은 다음 일간 분석 후에 표시돼요. '최근 뉴스 없음'으로 뜨는 건 정상 — 시장 관심 밖이라는 그 자체가 신호입니다.",
+              a: "브리프는 주간 워치리스트 스크리닝 직후 파이프라인이 생성합니다. 이번 주에 새로 후보에 오른 종목은 다음 주간 스크리닝 후에 표시돼요. '최근 뉴스 없음'으로 뜨는 건 정상 — 시장 관심 밖이라는 그 자체가 신호입니다.",
             },
             {
-              q: "한국 종목에 PER·PBR 데이터가 없어요.",
-              a: "yfinance가 해당 종목 정보를 가져오지 못한 경우입니다. 종합 점수는 데이터가 있는 팩터만으로 계산됩니다.",
+              q: "부채비율·이자보상배율이 숫자 대신 '무차입'·'자본잠식'으로 떠요.",
+              a: "숫자가 없는 게 아니라 그 자체가 의미 있는 상태입니다. '무차입'은 이자비용이 없어 계산이 불필요한 좋은 상태, '자본잠식(음수 자본)'은 자기자본이 마이너스라 원인을 직접 확인해야 하는 주의 상태입니다. '데이터 없음'만 진짜 결측치입니다.",
             },
             {
               q: "GO 신호가 떠도 손실이 날 수 있나요?",
