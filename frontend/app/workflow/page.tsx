@@ -281,6 +281,21 @@ function PreTradeChecklist({
   aiMap: Record<string, any>;
   regimeName: string;
 }) {
+  // 투자 기간 — 장기(1~3년)를 기본값으로 둔다. 장기 모드에서는 시장 타이밍(게이트·체제·
+  // 리스크)이 매수를 막지 않고 참고 경고로만 표시된다: 저평가 우량주를 시장이 안 좋을 때
+  // 사는 것도 장기 투자에선 정당한 진입이라서, 단기 트레이딩용 타이밍 게이트가 이를
+  // 막게 두지 않는다는 게 이번에 정한 방향.
+  const [investHorizon, setInvestHorizon] = useState<"swing" | "longTerm">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("alphaDesk_investHorizon");
+      if (saved === "swing" || saved === "longTerm") return saved;
+    }
+    return "longTerm";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("alphaDesk_investHorizon", investHorizon);
+  }, [investHorizon]);
+
   const [ticker,     setTicker]     = useState(() => {
     // 워치리스트 상세의 "매수 체크로 이동" CTA가 넘긴 ?symbol= 을 초기값으로
     if (typeof window !== "undefined") {
@@ -474,15 +489,22 @@ function PreTradeChecklist({
   //   regime/risk : STOP만 미통과(기존 = !==STOP, 즉 CAUTION은 통과 유지)
   //   종목 조건 : pick/tickerUp 없으면 PENDING(기존엔 회색, 통과 카운트 동일)
   type CkStatus = "PASS" | "WARN" | "FAIL" | "PENDING";
+  const isLongTerm = investHorizon === "longTerm";
+  // 장기 모드: 시장 타이밍 조건은 FAIL이어도 매수를 막지 않고 참고 경고(WARN)로만 낮춘다.
+  const downgradeIfLongTerm = (s: CkStatus): CkStatus => (isLongTerm && s === "FAIL" ? "WARN" : s);
   // !STOP 통과형(체제·리스크): STOP=FAIL, 로딩=PENDING, 그 외(GO·CAUTION)=PASS
   const notStop = (sig: Signal | undefined): CkStatus =>
     sig === undefined || sig === "LOADING" ? "PENDING" : sig === "STOP" ? "FAIL" : "PASS";
   const gateSig = steps[0]?.signal;
-  const stGate: CkStatus = gateSig === "GO" ? "PASS" : gateSig === "STOP" ? "FAIL" : gateSig === "CAUTION" ? "WARN" : "PENDING";
-  const stRegime = notStop(steps[1]?.signal);
-  const stRisk   = notStop(steps[4]?.signal);
+  const stGate: CkStatus = downgradeIfLongTerm(
+    gateSig === "GO" ? "PASS" : gateSig === "STOP" ? "FAIL" : gateSig === "CAUTION" ? "WARN" : "PENDING"
+  );
+  const stRegime = downgradeIfLongTerm(notStop(steps[1]?.signal));
+  const stRisk   = downgradeIfLongTerm(notStop(steps[4]?.signal));
   const stWatch:  CkStatus = !tickerUp ? "PENDING" : watchOk  ? "PASS" : "WARN";
-  const stBuy:    CkStatus = !pick     ? "PENDING" : isBuy    ? "PASS" : "FAIL";
+  // BUY 액션은 게이트로 결정되는 action(gate×grade)에 좌우되므로 장기 모드에서 함께 낮춘다.
+  // 종목 자체의 질은 grade·score 조건이 그대로 담당한다.
+  const stBuy:    CkStatus = downgradeIfLongTerm(!pick ? "PENDING" : isBuy ? "PASS" : "FAIL");
   const stGrade:  CkStatus = !pick     ? "PENDING" : gradeOk  ? "PASS" : "FAIL";
   const stScore:  CkStatus = !pick     ? "PENDING" : scoreOk  ? "PASS" : "FAIL";
   const stAi:     CkStatus = !tickerUp ? "PENDING" : aiOk     ? "PASS" : "WARN";
@@ -496,14 +518,18 @@ function PreTradeChecklist({
     {
       key: "auto", label: "자동 검증", verb: "통과",
       items: [
-        { id: "gate",      label: "시장 게이트 GO",                          status: stGate,   tip: "시장 진입 신호가 GO여야 합니다." },
-        { id: "regime",    label: "체제 Risk-on / Neutral",                  status: stRegime, tip: "Risk-off·Crisis 체제에서는 신규 매수를 자제하세요." },
+        { id: "gate",      label: "시장 게이트 GO",                          status: stGate,
+          tip: isLongTerm ? "장기 모드: 매수를 막지 않는 참고 경고입니다. 저평가 우량주는 시장이 안 좋을 때 사는 것도 정당한 진입입니다." : "시장 진입 신호가 GO여야 합니다." },
+        { id: "regime",    label: "체제 Risk-on / Neutral",                  status: stRegime,
+          tip: isLongTerm ? "장기 모드: 참고 경고만 — 매수 차단 안 함." : "Risk-off·Crisis 체제에서는 신규 매수를 자제하세요." },
         { id: "watchlist", label: `${tickerUp || "종목"} 워치리스트 후보 포함`, status: stWatch,
           tip: watchOk
             ? "적합 점수 상위 50 후보에 포함 — 재무 함정 필터 자동 통과"
             : "워치리스트 후보에 없음 — 함정 필터 미통과이거나 적합 점수 상위 50 밖입니다. 워치리스트 탭에서 확인하세요." },
-        { id: "risk",      label: "리스크 수준 허용 범위",                     status: stRisk,   tip: "VaR·MDD 경고 없을 때 진입하세요." },
-        { id: "buy",       label: `${tickerUp || "종목"} BUY 액션 확인`,     status: stBuy,    tip: "스크리닝 BUY 액션 종목만 선택하세요." },
+        { id: "risk",      label: "리스크 수준 허용 범위",                     status: stRisk,
+          tip: isLongTerm ? "장기 모드: 참고 경고만 — 매수 차단 안 함." : "VaR·MDD 경고 없을 때 진입하세요." },
+        { id: "buy",       label: `${tickerUp || "종목"} BUY 액션 확인`,     status: stBuy,
+          tip: isLongTerm ? "액션은 오늘 게이트에 좌우되는 단기 신호입니다. 장기 모드에서는 아래 등급·점수를 더 신뢰하세요." : "스크리닝 BUY 액션 종목만 선택하세요." },
         { id: "grade",     label: `${tickerUp || "종목"} Grade A·B 확인`,   status: stGrade,  tip: "C등급 이하는 진입 자제를 권장합니다." },
         { id: "score",     label: `${tickerUp || "종목"} 점수 ≥ 60`,        status: stScore,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
         { id: "ai",        label: "AI 분석 thesis 확인",                     status: stAi,     tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
@@ -600,7 +626,7 @@ function PreTradeChecklist({
       const autoPending = snap.items.some((it) => autoIds.has(it.id) && it.status === "PENDING");
       if (autoPending) return;
 
-      const signature = `${market}:${tickerUp}:${snap.items.map((it) => it.status).join(",")}`;
+      const signature = `${market}:${tickerUp}:${investHorizon}:${snap.items.map((it) => it.status).join(",")}`;
       if (loggedSignatureRef.current === signature) return;
       loggedSignatureRef.current = signature;
 
@@ -614,11 +640,12 @@ function PreTradeChecklist({
           pass_count: snap.passCount,
           total_count: snap.totalCount,
           verdict: snap.verdict.tone,
+          invest_horizon: investHorizon,
         }),
       }).catch(() => {});
     }, 2500);
     return () => clearTimeout(timer);
-  }, [tickerUp, market]);
+  }, [tickerUp, market, investHorizon]);
 
   // 매수체크 값 → 포트폴리오 매수 폼 프리필 딥링크 (실제 체결가는 사용자가 확인·저장)
   const recordNote = `매수체크${pick ? ` · Grade ${pick.grade} ${pick.action}` : ""}${stopOk ? ` · 손절 ${stopPrice}` : ""}`;
@@ -639,6 +666,34 @@ function PreTradeChecklist({
         <span className="text-[12px] font-bold px-2 py-0.5" style={{ color: overallColor, background: `${overallColor}22`, border: `1px solid ${overallColor}44` }}>
           {anyFail ? "미충족 있음" : allPass ? "전체 충족" : "진행 중"}
         </span>
+      </div>
+
+      {/* 투자 기간 토글 — 장기는 시장 타이밍(게이트·체제·리스크)이 매수를 막지 않고 참고 경고로만 표시됨 */}
+      <div className="px-4 pt-3 flex items-center gap-2">
+        <span className="text-[11px]" style={{ color: "#726b58" }}>투자 기간</span>
+        <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid #262112" }}>
+          {([
+            { value: "longTerm", label: "장기 (1~3년)" },
+            { value: "swing",    label: "스윙" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setInvestHorizon(opt.value)}
+              className="px-2.5 py-1 text-[11px] font-semibold transition-colors"
+              style={{
+                background: investHorizon === opt.value ? "#ffb02022" : "#111009",
+                color: investHorizon === opt.value ? "#ffb020" : "#726b58",
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {isLongTerm && (
+          <span className="text-[10px]" style={{ color: "#423e33" }}>
+            게이트·체제·리스크는 참고 경고만, 매수 차단 안 함
+          </span>
+        )}
       </div>
 
       {/* 입력 영역 */}

@@ -1,14 +1,19 @@
 """
 페이퍼 트레이딩 포트폴리오 트래커
 
-6개 포트폴리오 동시 운용:
+10개 포트폴리오 동시 운용:
   배분 방식: equal (균등) / weighted (등급가중)
-  보유 기간: short(20일) / medium(60일) / long(120일)
+  보유 기간: short(20일) / medium(60일) / long(120일) / 1y(365일) / 3y(1095일)
 
-자동 매도 조건:
+자동 매도 조건 (단기/중기/120일-장기 버킷만):
   - 보유 기간 초과
   - 손절선 도달 (체제별: risk_on=-10%, neutral=-8%, risk_off=-5%, crisis=-3%)
-  - 수익선 도달 (단기=+15%, 중기=+25%, 장기=+40%)
+  - 수익선 도달 (단기=+15%, 중기=+25%, 120일=+40%)
+
+1y/3y(펀더멘털 장기) 버킷은 가격 기반 손절·익절을 적용하지 않는다 — 대신
+check_alerts()가 큰 폭 하락·펀더멘털 훼손을 감지해 portfolio_alerts에
+알림만 남기고, 실제 매도는 사용자가 직접 판단한다. 보유기간 만료(1년/3년)만
+자동 매도로 남겨 시뮬레이션을 마감할 수 있게 한다.
 """
 
 import json
@@ -27,6 +32,12 @@ PORTFOLIOS = [
     {"id": "weighted_short",  "alloc": "weighted", "horizon": "short",  "hold_days": 20,  "take_profit": 0.15},
     {"id": "weighted_medium", "alloc": "weighted", "horizon": "medium", "hold_days": 60,  "take_profit": 0.25},
     {"id": "weighted_long",   "alloc": "weighted", "horizon": "long",   "hold_days": 120, "take_profit": 0.40},
+    # 펀더멘털 장기 버킷 — take_profit 값은 DB 스키마상 NOT NULL이라 채워두지만
+    # alert_only=True인 포트폴리오는 execute_sells()에서 이 값을 아예 참조하지 않는다.
+    {"id": "equal_1y",     "alloc": "equal",    "horizon": "1y", "hold_days": 365,  "take_profit": 0.40, "alert_only": True},
+    {"id": "equal_3y",     "alloc": "equal",    "horizon": "3y", "hold_days": 1095, "take_profit": 0.40, "alert_only": True},
+    {"id": "weighted_1y",  "alloc": "weighted", "horizon": "1y", "hold_days": 365,  "take_profit": 0.40, "alert_only": True},
+    {"id": "weighted_3y",  "alloc": "weighted", "horizon": "3y", "hold_days": 1095, "take_profit": 0.40, "alert_only": True},
 ]
 
 STOP_LOSS = {
@@ -105,6 +116,18 @@ _PF_TABLES_DDL = [
         PRIMARY KEY (snap_date, ticker)
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS portfolio_alerts (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        portfolio_id  TEXT NOT NULL,
+        symbol        TEXT NOT NULL,
+        alert_type    TEXT NOT NULL,
+        detail        TEXT NOT NULL,
+        alert_date    TEXT NOT NULL,
+        created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(portfolio_id, symbol, alert_type, alert_date)
+    )
+    """,
 ]
 
 
@@ -149,16 +172,25 @@ def _get_price(prices_df, symbol: str, as_of: str) -> Optional[float]:
         return None
 
 
-def execute_buys(picks: list[dict], prices_df, trade_date: str, regime: str):
+def execute_buys(picks: list[dict], prices_df, trade_date: str, regime: str, gate: str = "GO"):
     """
-    스크리닝 결과를 바탕으로 6개 포트폴리오 전부 매수 실행.
+    스크리닝 결과를 바탕으로 포트폴리오 매수 실행.
     기존 보유 종목은 유지하고, 새 자금으로 신규 매수.
+
+    마켓 게이트가 GO가 아니면 단기/중기/120일-장기 버킷은 매수를 건너뛴다.
+    펀더멘털 장기(1y/3y) 버킷은 게이트와 무관하게 매수한다 — 저평가된 좋은 기업을
+    시장 전체가 안 좋을 때 사는 것도 장기 투자에서는 정당한 진입이라서,
+    단기 트레이딩용 타이밍 게이트를 장기 매수까지 막게 두지 않는다.
     """
     _ensure_portfolio_rows()
 
     with _conn() as con:
         for pf in PORTFOLIOS:
             pid = pf["id"]
+            alert_only = pf.get("alert_only", False)
+            if not alert_only and gate != "GO":
+                continue
+
             cash = con.execute("SELECT cash FROM pf_portfolios WHERE portfolio_id=?", (pid,)).fetchone()[0]
 
             # 이미 보유 중인 종목 제외
@@ -211,6 +243,7 @@ def execute_sells(prices_df, trade_date: str, regime: str):
             pid = pf["id"]
             hold_days = pf["hold_days"]
             take_profit = pf["take_profit"]
+            alert_only = pf.get("alert_only", False)
 
             holdings = con.execute("""
                 SELECT symbol, shares, entry_price, entry_date, grade
@@ -225,12 +258,14 @@ def execute_sells(prices_df, trade_date: str, regime: str):
                 pnl_pct = (price - entry_price) / entry_price
                 days_held = (date.fromisoformat(trade_date) - date.fromisoformat(entry_date)).days
 
+                # 펀더멘털 장기 버킷은 가격 기반 손절·익절 자동매도 없음 — check_alerts()가
+                # 대신 알림만 남긴다. 보유기간 만료(1년/3년)만 시뮬레이션 마감용으로 유지.
                 reason = None
                 if days_held >= hold_days:
                     reason = f"보유 기간 만료 ({hold_days}일)"
-                elif pnl_pct <= stop_loss_pct:
+                elif not alert_only and pnl_pct <= stop_loss_pct:
                     reason = f"손절선 도달 ({pnl_pct*100:.1f}%)"
-                elif pnl_pct >= take_profit:
+                elif not alert_only and pnl_pct >= take_profit:
                     reason = f"수익선 도달 ({pnl_pct*100:.1f}%)"
 
                 if reason:
@@ -245,6 +280,96 @@ def execute_sells(prices_df, trade_date: str, regime: str):
 
                     con.execute("DELETE FROM pf_holdings WHERE portfolio_id=? AND symbol=?", (pid, sym))
                     con.execute("UPDATE pf_portfolios SET cash=cash+? WHERE portfolio_id=?", (value, pid))
+
+
+PRICE_DRAWDOWN_ALERT_PCT = -0.20  # 매수가 대비 이만큼 하락하면 알림 (자동매도 아님)
+
+ALERT_ONLY_HORIZONS = {"1y", "3y"}
+
+
+def check_alerts(prices_df, trade_date: str) -> None:
+    """펀더멘털 장기(1y/3y) 버킷 보유 종목의 큰 폭 하락·재무 훼손을 점검해
+    portfolio_alerts에 알림만 남긴다. 실제 매도는 사용자 판단 — 여기선 절대 안 판다.
+    """
+    from src.analyzers.trap_filter import apply_trap_filters
+    from src.collectors.watchlist_collector import fetch_financials
+
+    long_term_ids = [pf["id"] for pf in PORTFOLIOS if pf.get("horizon") in ALERT_ONLY_HORIZONS]
+    if not long_term_ids:
+        return
+
+    fin_cache: dict[str, dict | None] = {}
+
+    with _conn() as con:
+        for pid in long_term_ids:
+            holdings = con.execute(
+                "SELECT symbol, entry_price FROM pf_holdings WHERE portfolio_id=?", (pid,)
+            ).fetchall()
+
+            for sym, entry_price in holdings:
+                price = _get_price(prices_df, sym, trade_date)
+                if not price or not entry_price:
+                    continue
+
+                # 1) 큰 폭 하락 알림
+                pnl_pct = (price - entry_price) / entry_price
+                if pnl_pct <= PRICE_DRAWDOWN_ALERT_PCT:
+                    _upsert_alert(con, pid, sym, "price_drawdown", {
+                        "pnl_pct": round(pnl_pct, 4),
+                        "entry_price": entry_price,
+                        "cur_price": price,
+                    }, trade_date)
+
+                # 2) 펀더멘털 훼손 알림 — 종목당 하루 한 번만 조회(여러 포트폴리오가 같은
+                #    종목을 들고 있을 수 있어 캐시)
+                if sym not in fin_cache:
+                    try:
+                        fin_cache[sym] = fetch_financials(sym)
+                    except Exception:
+                        fin_cache[sym] = None
+                fin_data = fin_cache[sym]
+                if not fin_data:
+                    continue
+                try:
+                    result = apply_trap_filters({"symbol": sym, "sector": "", "financials_data": fin_data})
+                except Exception:
+                    continue
+                if not result["pass"]:
+                    _upsert_alert(con, pid, sym, "fundamental", {
+                        "red_flags": result["red_flags"],
+                        "piotroski": result["piotroski"],
+                    }, trade_date)
+
+
+def _upsert_alert(con, portfolio_id: str, symbol: str, alert_type: str, detail: dict, trade_date: str) -> None:
+    con.execute("""
+        INSERT INTO portfolio_alerts (portfolio_id, symbol, alert_type, detail, alert_date)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(portfolio_id, symbol, alert_type, alert_date) DO UPDATE SET
+            detail = excluded.detail
+    """, (portfolio_id, symbol, alert_type, json.dumps(detail, ensure_ascii=False), trade_date))
+
+
+def get_recent_alerts(days: int = 30) -> list[dict]:
+    """프론트엔드용 최근 알림 목록."""
+    with _conn() as con:
+        rows = con.execute("""
+            SELECT portfolio_id, symbol, alert_type, detail, alert_date, created_at
+            FROM portfolio_alerts
+            WHERE alert_date >= date('now', ?)
+            ORDER BY created_at DESC
+        """, (f"-{days} days",)).fetchall()
+    out = []
+    for pid, sym, atype, detail, adate, created in rows:
+        try:
+            detail_obj = json.loads(detail)
+        except (TypeError, ValueError):
+            detail_obj = {}
+        out.append({
+            "portfolio_id": pid, "symbol": sym, "alert_type": atype,
+            "detail": detail_obj, "alert_date": adate, "created_at": created,
+        })
+    return out
 
 
 def snapshot(prices_df, snap_date: str, spy_price: float = None, qqq_price: float = None):

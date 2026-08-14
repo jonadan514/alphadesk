@@ -87,6 +87,15 @@ export default function PortfolioPage() {
     setTrades(Array.isArray(res) ? res : []);
   }, []);
 
+  // 펀더멘털 장기(1~3년) 시뮬레이션 포트폴리오의 큰 폭 하락·재무 훼손 알림.
+  // 자동 매도는 없고 참고용 — 어차피 손절선이 아니라 사용자 판단이 최종 결정.
+  const [alerts, setAlerts] = useState<{ symbol: string; alert_type: string; detail: any; alert_date: string }[]>([]);
+  const loadAlerts = useCallback(async () => {
+    const res = await fetch("/api/portfolio/alerts?days=30").then((r) => r.json()).catch(() => null);
+    setAlerts(Array.isArray(res?.alerts) ? res.alerts : []);
+  }, []);
+  useEffect(() => { loadAlerts(); }, [loadAlerts]);
+
   const loadChart = useCallback(async () => {
     setChartLoading(true);
     const res = await fetch("/api/portfolio/performance").then((r) => r.json()).catch(() => null);
@@ -316,6 +325,34 @@ export default function PortfolioPage() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* 장기 페이퍼 포트폴리오 알림 — 자동매도 없이 참고용으로만 */}
+          {alerts.length > 0 && (
+            <div className="rounded-xl p-3 space-y-2" style={{ background: "#111009", border: "1px solid #f8717133" }}>
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle size={12} color="#f87171" />
+                <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#f87171" }}>
+                  장기 시뮬레이션 보유 알림 (자동매도 없음, 참고용)
+                </p>
+              </div>
+              {alerts.map((a, i) => (
+                <div key={i} className="flex items-center justify-between py-1" style={{ borderTop: i > 0 ? "1px solid #262112" : "none" }}>
+                  <div className="min-w-0">
+                    <span className="text-[12px] font-bold text-white">{a.symbol}</span>
+                    <span className="text-[11px] ml-2" style={{ color: "#726b58" }}>
+                      {a.alert_type === "price_drawdown"
+                        ? `매수가 대비 ${a.detail.pnl_pct != null ? (a.detail.pnl_pct * 100).toFixed(1) : "?"}% 하락`
+                        : `재무 훼손: ${Array.isArray(a.detail.red_flags) ? a.detail.red_flags.join(", ") : "확인 필요"}`}
+                    </span>
+                  </div>
+                  <span className="text-[10px] shrink-0" style={{ color: "#423e33" }}>{a.alert_date}</span>
+                </div>
+              ))}
+              <p className="text-[10px]" style={{ color: "#423e33" }}>
+                손절선이 아니라 사용자 판단으로 매도 여부를 결정하세요 — 정상적인 조정인지, 논지가 실제로 깨졌는지 구분이 먼저입니다.
+              </p>
             </div>
           )}
 

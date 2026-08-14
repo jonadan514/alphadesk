@@ -34,6 +34,7 @@ const ALLOWED_TABLES = new Set([
   "stock_checklist_history",
   "my_watchlist_note_history",
   "buy_check_log",
+  "portfolio_alerts",
 ]);
 
 const MAX_LIMIT = 500;

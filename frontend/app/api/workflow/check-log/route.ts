@@ -7,30 +7,33 @@ async function ensureTable() {
   const client = getClient();
   await client.execute(`
     CREATE TABLE IF NOT EXISTS buy_check_log (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      market      TEXT NOT NULL,
-      symbol      TEXT NOT NULL,
-      checked_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      conditions  TEXT NOT NULL,
-      pass_count  INTEGER NOT NULL,
-      total_count INTEGER NOT NULL,
-      verdict     TEXT NOT NULL
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      market         TEXT NOT NULL,
+      symbol         TEXT NOT NULL,
+      checked_at     TEXT NOT NULL DEFAULT (datetime('now')),
+      conditions     TEXT NOT NULL,
+      pass_count     INTEGER NOT NULL,
+      total_count    INTEGER NOT NULL,
+      verdict        TEXT NOT NULL,
+      invest_horizon TEXT
     )
   `);
+  // 이미 만들어진 테이블에 컬럼만 뒤늦게 추가하는 경우 대비 (컬럼 있으면 에러 무시)
+  try { await client.execute(`ALTER TABLE buy_check_log ADD COLUMN invest_horizon TEXT`); } catch {}
   return client;
 }
 
 export async function POST(request: Request) {
   try {
-    const { market, symbol, conditions, pass_count, total_count, verdict } = await request.json();
+    const { market, symbol, conditions, pass_count, total_count, verdict, invest_horizon } = await request.json();
     if (!market || !symbol || !Array.isArray(conditions) || pass_count == null || total_count == null || !verdict) {
       return NextResponse.json({ error: "필수 항목 누락" }, { status: 400 });
     }
     const client = await ensureTable();
     await client.execute({
-      sql: `INSERT INTO buy_check_log (market, symbol, conditions, pass_count, total_count, verdict)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [market, String(symbol).toUpperCase(), JSON.stringify(conditions), Number(pass_count), Number(total_count), verdict],
+      sql: `INSERT INTO buy_check_log (market, symbol, conditions, pass_count, total_count, verdict, invest_horizon)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [market, String(symbol).toUpperCase(), JSON.stringify(conditions), Number(pass_count), Number(total_count), verdict, invest_horizon ?? null],
     });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
@@ -46,7 +49,7 @@ export async function GET(request: Request) {
 
     const client = await ensureTable();
     const res = await client.execute({
-      sql: `SELECT symbol, checked_at, conditions, pass_count, total_count, verdict
+      sql: `SELECT symbol, checked_at, conditions, pass_count, total_count, verdict, invest_horizon
             FROM buy_check_log
             WHERE market = ? AND checked_at >= datetime('now', ?)
             ORDER BY checked_at DESC`,
@@ -63,6 +66,7 @@ export async function GET(request: Request) {
         pass_count: r[3] as number,
         total_count: r[4] as number,
         verdict: r[5] as string,
+        invest_horizon: (r[6] as string | null) ?? "unknown",
       };
     });
 
@@ -79,6 +83,14 @@ export async function GET(request: Request) {
       }
     }
 
+    const byHorizon: Record<string, { total: number; passed: number }> = {};
+    for (const row of rows) {
+      const h = row.invest_horizon;
+      if (!byHorizon[h]) byHorizon[h] = { total: 0, passed: 0 };
+      byHorizon[h].total += 1;
+      if (row.verdict === "PASS") byHorizon[h].passed += 1;
+    }
+
     return NextResponse.json({
       market,
       days,
@@ -86,9 +98,10 @@ export async function GET(request: Request) {
       passed_checks: passed,
       pass_rate: total > 0 ? passed / total : null,
       by_condition: byCondition,
+      by_horizon: byHorizon,
       recent: rows.slice(0, 20).map((row) => ({
         symbol: row.symbol, checked_at: row.checked_at, verdict: row.verdict,
-        pass_count: row.pass_count, total_count: row.total_count,
+        pass_count: row.pass_count, total_count: row.total_count, invest_horizon: row.invest_horizon,
       })),
     });
   } catch (e: any) {
