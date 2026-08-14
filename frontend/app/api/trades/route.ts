@@ -57,18 +57,19 @@ async function readSnapshotSource(
   const checklist = clRes?.rows[0] ? (clRes.rows[0][0] as string) : null;
   const checklistNote = noteRes?.rows[0] ? (noteRes.rows[0][0] as string | null) : null;
 
-  const scoresTable = market === "KR" ? "kr_full_scores" : "data_full_scores";
+  // grade/composite_score 컬럼명은 과거 등급 스크리너 시절 그대로 두되(스키마 변경 회피),
+  // 지금은 워치리스트 후보(재무 필터)의 regime_fit(성격)/piotroski(점수)를 담는다.
   let grade: string | null = null;
   let compositeScore: number | null = null;
   try {
-    const sRes = await client.execute(`SELECT payload FROM ${scoresTable} WHERE id = 1`);
-    if (sRes.rows[0]) {
-      const payload = JSON.parse(sRes.rows[0][0] as string);
-      const entry = (payload.scores ?? []).find((s: any) => s.symbol === symbol);
-      if (entry) {
-        grade = entry.grade ?? null;
-        compositeScore = entry.composite_score ?? null;
-      }
+    const wRes = await client.execute({
+      sql: "SELECT regime_fit, piotroski FROM watchlist_candidates WHERE market = ? AND symbol = ?",
+      args: [market, symbol],
+    });
+    if (wRes.rows[0]) {
+      grade = (wRes.rows[0][0] as string) ?? null;
+      const p = wRes.rows[0][1];
+      compositeScore = p == null ? null : Number(p);
     }
   } catch {}
 

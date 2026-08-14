@@ -10,7 +10,7 @@ const DEFAULT_ITEMS = [
   { id: "cl-catalyst", text: "6개월 내 촉매(실적발표·신제품·정책·계약)가 있는가?", checked: false },
   { id: "cl-risk",     text: "스토리가 깨지는 조건을 알고 있는가?", checked: false },
   { id: "cl-heat",     text: "관심도가 상승 중인가? (식어가는 종목은 아닌지)", checked: false },
-  { id: "cl-cross",    text: "오늘 종목 분석(top-picks)에도 등장하는가? (교차 신호)", checked: false },
+  { id: "cl-durable",  text: "이 스토리가 1년 후에도 유효할 것 같은가? (일시적 이슈가 아닌 구조적 동력인지)", checked: false },
 ];
 
 async function ensureTable() {

@@ -1,4 +1,4 @@
-"""일간 분석 완료 후 텔레그램으로 핵심 신호를 요약 발송.
+"""주간 분석 완료 후 텔레그램으로 핵심 신호를 요약 발송.
 
 Usage:
   python scripts/send_telegram_digest.py
@@ -150,9 +150,10 @@ def get_stop_loss_alerts() -> list[str]:
 
 
 def get_narrative_shifts() -> list[str]:
+    # 주 1회 실행에 맞춰 지난 7일 갱신분을 본다 (narratives 배치도 주 1회 실행됨)
     rows = turso_query(
         "SELECT market, symbol, payload FROM narrative_briefs "
-        "WHERE updated_at > datetime('now', '-20 hours')"
+        "WHERE updated_at > datetime('now', '-7 days')"
     )
     lines = []
     for r in rows:
@@ -170,25 +171,18 @@ def get_narrative_shifts() -> list[str]:
 
 
 def get_cross_hits() -> list[str]:
-    """내 워치리스트 중 오늘 상위 종목(top-picks)에 등장한 종목."""
+    """내 워치리스트 중 이번 주 재무 필터 통과 후보 목록에 새로 등장한 종목."""
     my_watch = {f"{r['market']}:{r['symbol']}": r.get("name")
                 for r in turso_query("SELECT market, symbol, name FROM my_watchlist")}
     if not my_watch:
         return []
 
     hits = []
-    us_report = get_latest_timeseries("data_daily_reports")
-    for p in (us_report.get("picks") or []):
-        key = f"US:{p.get('symbol')}"
+    for c in turso_query("SELECT market, symbol, name FROM watchlist_candidates"):
+        key = f"{c['market']}:{c['symbol']}"
         if key in my_watch:
-            hits.append(f"⭐ {disp('US', p.get('symbol'))} — 오늘 상위 종목 등장")
-
-    kr_report = get_latest_timeseries("kr_daily_reports")
-    for p in (kr_report.get("picks") or []):
-        key = f"KR:{p.get('symbol')}"
-        if key in my_watch:
-            name = p.get("name") or my_watch.get(key)
-            hits.append(f"⭐ {disp('KR', p.get('symbol'), name)} — 오늘 상위 종목 등장")
+            name = c.get("name") or my_watch.get(key)
+            hits.append(f"⭐ {disp(c['market'], c['symbol'], name)} — 이번 주 재무 필터 통과 후보 등장")
 
     return hits
 
@@ -268,7 +262,7 @@ def main() -> None:
     if not should_send(signature):
         return
 
-    lines = [f"<b>📊 AlphaDesk 일간 요약 — {today}</b>", ""]
+    lines = [f"<b>📊 AlphaDesk 주간 요약 — {today}</b>", ""]
     lines.append(f"🇺🇸 US: {GATE_KO.get(us_g, us_g)}")
     lines.append(f"🇰🇷 KR: {GATE_KO.get(kr_g, kr_g)}")
 

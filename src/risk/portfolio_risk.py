@@ -6,7 +6,7 @@
 - Component VaR (종목별 VaR 기여도)
 - CDAR / CVaR (조건부 기대 손실)
 
-기준 포트폴리오: equal_medium (60일 보유, 균등 배분)
+기준 포트폴리오: equal_1y (1년 보유, 균등 배분 — 펀더멘털 장기 포트폴리오)
 """
 
 import json
@@ -19,7 +19,7 @@ import pandas as pd
 from src.db.data_store import get_db
 
 PRICES_CSV  = "data/us_daily_prices.csv"
-REF_PF      = "equal_medium"   # 분석 기준 포트폴리오
+REF_PF      = "equal_1y"       # 분석 기준 포트폴리오
 LOOKBACK    = 60               # 수익률 계산 기간 (거래일)
 VAR_CONF    = 0.95
 CORR_THRESH = 0.7              # 고상관 경보 임계값
@@ -49,26 +49,22 @@ def _load_holdings() -> list[dict]:
         ).fetchone()
     cash_val = cash[0] if cash else 0.0
     return [
-        {"symbol": r[0], "grade": r[1], "shares": r[2],
+        {"symbol": r[0], "piotroski": r[1], "shares": r[2],
          "entry_price": r[3], "weight": r[4]}
         for r in rows
     ], cash_val
 
 
 def _get_sector_map() -> dict[str, str]:
-    """모든 daily report picks를 순회해 섹터 정보 구축 (최신 리포트 우선)"""
+    """워치리스트 후보(재무 필터 통과 종목)에서 섹터 정보 구축."""
     with _conn() as con:
         rows = con.execute(
-            "SELECT payload FROM data_daily_reports ORDER BY date DESC"
+            "SELECT symbol, sector FROM watchlist_candidates"
         ).fetchall()
     sector_map: dict[str, str] = {}
-    for (payload,) in rows:
-        picks = json.loads(payload).get("picks", [])
-        for p in picks:
-            sym = p.get("symbol")
-            sec = p.get("sector")
-            if sym and sec and sec != "Unknown" and sym not in sector_map:
-                sector_map[sym] = sec
+    for sym, sec in rows:
+        if sym and sec and sec != "Unknown":
+            sector_map[sym] = sec
     return sector_map
 
 
@@ -120,7 +116,7 @@ def compute_risk(analysis_date: str | None = None) -> dict:
         total_value += pos_value
         position_sizing.append({
             "symbol":      h["symbol"],
-            "grade":       h["grade"],
+            "piotroski":   h["piotroski"],
             "sector":      sector_map.get(h["symbol"], "Unknown"),
             "entry_price": round(h["entry_price"], 2),
             "cur_price":   round(cur_price, 2),

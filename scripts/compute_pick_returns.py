@@ -1,10 +1,10 @@
-"""신호 성과 검증 배치 — 과거 일별 픽스에 실제 주가를 대조해 여러 기간 후 수익률을 계산한다.
+"""신호 성과 검증 배치 — 과거 주간 워치리스트 후보에 실제 주가를 대조해 여러 기간 후 수익률을 계산한다.
 
-data_daily_reports / kr_daily_reports에 이미 쌓여 있는 일별 리포트(게이트·체제·종목별
-등급/점수/액션/당시가격)를 읽어, 각 종목의 진입일 이후 30/60/90/180/365/730일 시점
-종가와 대조해 수익률을 계산하고 data_pick_returns / kr_pick_returns에 저장한다.
-180일 이상(6개월/1년/2년) 창은 1~3년 펀더멘털 보유를 검증하기 위해 추가됨 — 30/60/90일은
-스윙 트레이딩 검증용으로 남겨둔다.
+watchlist_candidate_history(매주 스크리닝 시점 스냅샷 — 절대 덮어쓰지 않는 이력 테이블)를
+읽어, 각 종목의 스크리닝일 이후 30/60/90/180/365/730일 시점 종가와 대조해 수익률을 계산하고
+data_pick_returns / kr_pick_returns에 저장한다.
+180일 이상(6개월/1년/2년) 창은 1~3년 펀더멘털 보유를 검증하기 위한 것 — 30/60/90일은
+과거 스윙 트레이딩 시절 데이터 호환용으로 남겨둔다.
 같은 방식으로 벤치마크(SPY / ^KS11)의 기간별 수익률도 data_benchmark_returns /
 kr_benchmark_returns에 저장해, "필터 통과 종목 vs 지수 단순 보유" 비교의 기준선을 만든다.
 
@@ -20,7 +20,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import time
 from datetime import date, timedelta
@@ -39,20 +38,18 @@ RET_COLS = [f"fwd_{h}d_ret" for h in HORIZONS]
 
 MARKET_CONFIG = {
     "US": {
-        "reports_table":   "data_daily_reports",
         "returns_table":   "data_pick_returns",
         "bench_table":     "data_benchmark_returns",
         "benchmark":       "SPY",
-        "price_field":     "current_price",
     },
     "KR": {
-        "reports_table":   "kr_daily_reports",
         "returns_table":   "kr_pick_returns",
         "bench_table":     "kr_benchmark_returns",
         "benchmark":       "^KS11",
-        "price_field":     "cur_price",
     },
 }
+
+CANDIDATE_HISTORY_TABLE = "watchlist_candidate_history"
 
 
 def _returns_ddl(table: str) -> str:
@@ -100,19 +97,26 @@ def _log(msg: str) -> None:
     print(f"[compute_pick_returns] {msg}")
 
 
-def _load_reports(conn, table: str) -> list[dict]:
-    rows = conn.execute(f"SELECT date, payload FROM {table} ORDER BY date ASC").fetchall()
-    out = []
-    for row in rows:
-        d = row[0] if not hasattr(row, "keys") else row["date"]
-        payload = row[1] if not hasattr(row, "keys") else row["payload"]
-        try:
-            data = json.loads(payload)
-        except (TypeError, ValueError):
-            continue
-        out.append({"date": d, "regime": data.get("regime"), "gate": data.get("gate"),
-                     "picks": data.get("picks", [])})
-    return out
+def _load_candidate_history(conn, market: str) -> list[dict]:
+    """watchlist_candidate_history를 screened_date별로 묶어 과거 daily-report 형태로 변환.
+    (gate/regime은 후보 목록엔 없는 개념이라 None — 스키마 호환을 위해 컬럼만 남김)"""
+    rows = conn.execute(
+        f"SELECT screened_date, symbol, piotroski, regime_fit, current_price "
+        f"FROM {CANDIDATE_HISTORY_TABLE} WHERE market = ? ORDER BY screened_date ASC",
+        (market,),
+    ).fetchall()
+
+    by_date: dict[str, list[dict]] = {}
+    for r in rows:
+        d, sym, piotroski, regime_fit, price = r[0], r[1], r[2], r[3], r[4]
+        by_date.setdefault(d, []).append({
+            "symbol": sym, "piotroski": piotroski, "regime_fit": regime_fit,
+            "current_price": price,
+        })
+    return [
+        {"date": d, "regime": None, "gate": None, "picks": picks}
+        for d, picks in sorted(by_date.items())
+    ]
 
 
 def _price_on_or_after(df: pd.DataFrame, target: pd.Timestamp) -> float | None:
@@ -182,8 +186,8 @@ def run(market: str) -> None:
     _ensure_ret_columns(conn, cfg["returns_table"])
     _ensure_ret_columns(conn, cfg["bench_table"])
 
-    reports = _load_reports(conn, cfg["reports_table"])
-    _log(f"{market}: {len(reports)}개 일별 리포트 로드")
+    reports = _load_candidate_history(conn, market)
+    _log(f"{market}: {len(reports)}개 주간 스크리닝 스냅샷 로드")
     if not reports:
         return
 
@@ -224,12 +228,12 @@ def run(market: str) -> None:
             sym = p.get("symbol")
             if not sym:
                 continue
-            entry_price = p.get(cfg["price_field"])
+            entry_price = p.get("current_price")
             df = price_cache.get(sym)
             fwd = _fwd_returns(df, entry_date, entry_price)
             _upsert_pick_return(
                 conn, cfg["returns_table"], r["date"], sym,
-                p.get("grade"), r["gate"], r["regime"], p.get("action"),
+                p.get("piotroski"), r["gate"], r["regime"], p.get("regime_fit"),
                 entry_price, fwd,
             )
             total += 1

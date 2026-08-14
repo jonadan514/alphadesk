@@ -9,8 +9,8 @@
 ## 시장 분석
 
 ### 개요 `/`
-종합 대시보드 — 마켓 게이트(GO/CAUTION/STOP), 체제 점수, 핵심 체제 지표(센서), 지수 주요 지표(지수·SMA200·변동성·모멘텀), SPY/KOSPI 방향 예측, 상위 5픽, 내 포트폴리오 미니 카드.
-- 소스: `/api/data/{market-gate,regime,reports,index-prediction}` · KR은 `/api/data/kr/*` + `/api/data/kr/forecast`
+종합 대시보드 — 마켓 게이트(GO/CAUTION/STOP), 체제 점수, 핵심 체제 지표(센서), 지수 주요 지표(지수·SMA200·변동성·모멘텀), SPY/KOSPI 방향 예측, 이번 주 워치리스트 후보 수(순위 없음), 내 포트폴리오 미니 카드.
+- 소스: `/api/data/{market-gate,regime,index-prediction}` · `/api/watchlist/candidates` · KR은 `/api/data/kr/*` + `/api/data/kr/forecast`
 
 ### 시장 체제 `/regime`
 5센서 가중합 체제 판별(risk_on/neutral/risk_off/crisis), 체제별 행동 가이드·손절선·권장 비중, 센서 상태, 매크로 스냅샷(US 자체 / KR은 글로벌 매크로 + USD/KRW).
@@ -19,10 +19,6 @@
 ### 섹터 분석 `/sector`
 경기 사이클 판단(회복/성장/과열/침체), 선행·후행 섹터(1개월 RS 상위/하위 3), 주간 RS 추이(4주), 섹터별 수익률·상대강도 히트맵(섹터 클릭 시 구성 종목).
 - 소스: `/api/data/sector`, `/api/data/kr/sector`
-
-### 종목 분석 `/top-picks`
-매일 갱신되는 발굴 레이더 — 복합 점수(US 6팩터/KR 4팩터) 상위 종목 테이블. 종목 클릭 시 상세 모달(가격·목표가·Lynch/O'Neil 지표·팩터·AI 분석). 내 워치리스트 종목엔 🔖 배지.
-- 소스: `/api/data/reports`, `/api/data/ai-summaries`, `/api/data/sector` (KR 동일 구조)
 
 ### 리스크 `/risk`
 ⚠ 시스템 시뮬레이션 포트폴리오(가상 $100k 페이퍼 트레이딩) 기준 — 상단 배너에 명시.
@@ -33,7 +29,7 @@
 ## 내 투자
 
 ### 워치리스트 `/watchlist`
-주간 스크리닝: 함정 필터(Piotroski·ROE·부채·현금흐름) → 시장 적합 점수(품질40+모멘텀35+체제25) 시장별 상위 50 후보. 종목 클릭 → 재무 지표 + 네러티브 브리프(스토리·촉매·리스크·관심도 HOT/WARM/COLD·전일 대비 전환) + 종목별 정성 체크리스트(구 투자 워크북, stock_checklist에 독립 저장) + 매수 이유 메모. 오늘픽 배지, 관심도 상승 배너.
+주간 스크리닝: 함정 필터(Piotroski·ROE·부채·현금흐름) 통과 종목을 순위 없이 리스트업(모멘텀 랭킹 없음 — 1~3년 펀더멘털 투자용). 종목 클릭 → 재무 지표 + 네러티브 브리프(장기 스토리·촉매·리스크·시장 단기 관심도 HOT/WARM/COLD·전일 대비 전환) + 종목별 정성 체크리스트(구 투자 워크북, stock_checklist에 독립 저장) + 매수 이유 메모.
 - 소스: `/api/watchlist/{candidates,my,narrative,narrative-shifts,checklist}`
 
 ### 포트폴리오 `/portfolio`
@@ -55,7 +51,8 @@
 
 | 워크플로우 | 주기 | 하는 일 |
 |---|---|---|
-| Daily Analysis | 평일 2회 (KST 07:00·16:30) | US/KR 분석 → 네러티브 브리프 생성 → 텔레그램 요약 발송 |
-| Weekly Watchlist Screen | 일요일 22:00 UTC | 함정 필터 + 적합 점수 → 후보 50×2 갱신 |
+| Weekly Watchlist Screen | 일요일 22:00 UTC | 함정 필터 → 순위 없는 후보 리스트 갱신 → 네러티브 브리프 생성 → 주간 브리핑 |
+| Weekly Market Analysis | 월요일 22:00 UTC | US/KR 체제·게이트·지수예측·섹터·포트폴리오/리스크 갱신 → 텔레그램 요약 발송 |
+| Performance Tracking | 일요일 23:00 UTC | 과거 후보들의 30~730일 후 실제 수익률 계산 (성적표) |
 
 데이터 저장소: Turso (libsql). 프론트는 읽기 전용 API로 접근.

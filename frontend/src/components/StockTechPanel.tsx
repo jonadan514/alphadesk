@@ -1,7 +1,7 @@
 "use client";
 
 // 종목 모달 공용: 미니 가격 차트(6개월 종가 + SMA50/200) + 기술 지표 분해
-// top-picks 상세 모달과 워치리스트 상세 팝업에서 사용
+// 워치리스트 상세 팝업에서 사용
 
 import { useEffect, useState } from "react";
 import {

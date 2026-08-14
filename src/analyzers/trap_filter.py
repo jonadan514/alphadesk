@@ -239,6 +239,7 @@ def run_screen(items: list[dict]) -> tuple[list[dict], list[dict]]:
 
     for item in items:
         result = apply_trap_filters(item)
+        info = item.get("financials_data", {}).get("info", {})
         entry = {
             "market":      item.get("market"),
             "symbol":      item.get("symbol"),
@@ -253,6 +254,7 @@ def run_screen(items: list[dict]) -> tuple[list[dict], list[dict]]:
             "red_flags":   result["red_flags"],
             "regime_fit":  result["regime_fit"],
             "roe":         result["roe"],
+            "current_price": info.get("currentPrice"),
             "data_notes":  result["data_notes"],
         }
         if result["pass"]:

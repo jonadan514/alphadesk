@@ -16,13 +16,14 @@ export async function GET(request: Request) {
       SELECT market, symbol, name, market_cap, sector,
              piotroski, debt_ratio, interest_coverage,
              cfo_positive_count, red_flags, regime_fit,
-             roe, rel_3m, rel_6m, fit_score, data_notes, screened_at
+             roe, current_price, data_notes, screened_at
       FROM watchlist_candidates
       WHERE 1=1
     `;
     if (market)    { sql += " AND market = ?";     args.push(market); }
     if (regimeFit) { sql += " AND regime_fit = ?"; args.push(regimeFit); }
-    sql += " ORDER BY fit_score IS NULL, fit_score DESC, piotroski DESC";
+    // 순위 없는 후보 목록 — 모멘텀/품질 점수 정렬 없음. 알파벳 순으로만 안정적 표시.
+    sql += " ORDER BY market, symbol";
 
     const res = await client.execute({ sql, args }).catch(() => ({ rows: [], columns: [] }));
 

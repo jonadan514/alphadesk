@@ -1,11 +1,10 @@
-name: Daily Analysis
+name: Weekly Market Analysis
 
 on:
   schedule:
-    # 미국 장 마감 후: 월~금 22:00 UTC → 화~토 07:00 KST 도착 (토요일 아침 = 금요일 미국 마감 분석)
-    - cron: '0 22 * * 1-5'
-    # 한국 장 마감 후: 월~금 07:30 UTC = 같은 날 16:30 KST (주의: KST 16:30은 같은 UTC 날짜 — 밀지 말 것)
-    - cron: '30 7 * * 1-5'
+    # 매주 월요일 22:00 UTC (화요일 07:00 KST) — 전날(일요일) 워치리스트 스크리닝 이후,
+    # 그 주의 신규 후보를 포트폴리오 매수에 반영할 수 있도록 하루 텀을 둔다.
+    - cron: '0 22 * * 1'
   workflow_dispatch:           # 수동 실행 (모든 잡 실행)
 
 env:
@@ -18,11 +17,11 @@ env:
   TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}   # 선택 — 미설정 시 알림만 건너뜀
   TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
 
-# 크론별로 해당 시장만 실행 (이전엔 매 크론마다 양쪽을 다 돌려 AI 비용·시간 2배)
+# 종목별 AI 요약(비용이 드는 부분)은 이제 주간 워치리스트 스크리닝 쪽(narratives 잡)으로
+# 옮겨갔으므로, 여기서는 US/KR을 같은 크론에서 동시에 실행해도 비용 부담이 없다.
 jobs:
   us-analysis:
     name: US Market Analysis
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 22 * * 1-5'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -37,7 +36,6 @@ jobs:
 
   kr-analysis:
     name: KR Market Analysis
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 7 * * 1-5'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -50,26 +48,10 @@ jobs:
       - name: Run KR analysis
         run: python scripts/run_kr_analysis.py
 
-  narratives:
-    name: Watchlist Narratives
-    # 하루 1회(아침 실행)면 충분 — 20시간 신선도 체크가 있어 어차피 중복 생성 안 됨
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 22 * * 1-5'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-      - name: Install dependencies
-        run: pip install requests yfinance python-dotenv
-      - name: Generate narrative briefs
-        run: python scripts/generate_narratives.py
-
   telegram-digest:
     name: Telegram Digest
-    needs: [us-analysis, kr-analysis, narratives]
-    if: always()   # 상위 작업이 스킵/실패해도 최신 데이터로 알림 시도 (아침·오후 각 1회 발송)
+    needs: [us-analysis, kr-analysis]
+    if: always()   # 상위 작업이 스킵/실패해도 최신 데이터로 알림 시도
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -84,7 +66,7 @@ jobs:
 
   notify-failure:
     name: Notify on Failure
-    needs: [us-analysis, kr-analysis, narratives, telegram-digest]
+    needs: [us-analysis, kr-analysis, telegram-digest]
     if: failure()   # needs 잡 중 하나라도 실패하면 실행 (스킵된 잡은 실패로 안 침)
     runs-on: ubuntu-latest
     steps:
@@ -99,6 +81,5 @@ jobs:
           JOB_RESULTS: >-
             us-analysis=${{ needs['us-analysis'].result }},
             kr-analysis=${{ needs['kr-analysis'].result }},
-            narratives=${{ needs['narratives'].result }},
             telegram-digest=${{ needs['telegram-digest'].result }}
         run: python scripts/notify_failure.py

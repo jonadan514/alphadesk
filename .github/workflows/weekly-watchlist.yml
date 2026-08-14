@@ -38,10 +38,30 @@ jobs:
           path: output/data.db
           retention-days: 7
 
+  narratives:
+    name: Watchlist Narratives
+    needs: [screen]
+    if: always()   # 스크리닝 일부 실패해도 이미 있는 후보 목록 기준으로 갱신 시도
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install requests yfinance python-dotenv
+      - name: Generate narrative briefs
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/generate_narratives.py
+
   briefing:
     name: Weekly Briefing
-    needs: [screen]
-    if: always()   # 스크리닝 일부 실패해도 가능한 데이터로 브리핑 생성
+    needs: [screen, narratives]
+    if: always()   # 스크리닝/네러티브 일부 실패해도 가능한 데이터로 브리핑 생성
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -62,7 +82,7 @@ jobs:
 
   notify-failure:
     name: Notify on Failure
-    needs: [screen, briefing]
+    needs: [screen, narratives, briefing]
     if: failure()
     runs-on: ubuntu-latest
     steps:
@@ -78,5 +98,6 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           JOB_RESULTS: >-
             screen=${{ needs.screen.result }},
+            narratives=${{ needs.narratives.result }},
             briefing=${{ needs.briefing.result }}
         run: python scripts/notify_failure.py

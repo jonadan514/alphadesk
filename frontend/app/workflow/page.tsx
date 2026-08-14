@@ -45,8 +45,8 @@ const STOP_LOSS: Record<string, string> = {
 const STEP_META = [
   { linkHref: "/",          linkLabel: "개요" },
   { linkHref: "/regime",    linkLabel: "시장 체제" },
-  { linkHref: "/top-picks", linkLabel: "종목 분석" },
-  { linkHref: "/top-picks", linkLabel: "종목 분석" },
+  { linkHref: "/watchlist", linkLabel: "워치리스트" },
+  { linkHref: "/watchlist", linkLabel: "워치리스트" },
   { linkHref: "/risk",      linkLabel: "리스크" },
   { linkHref: "/regime",    linkLabel: "시장 체제" },
 ];
@@ -211,9 +211,9 @@ function SignalCard({
 // "조건별 탈락 빈도"용 고정 라벨 — 실제 저장된 label은 티커명이 섞여 들쭉날쭉하므로
 // 집계는 항상 안정적인 id 기준으로 하고, 화면 표시는 이 고정 맵을 쓴다.
 const CHECK_ID_LABEL: Record<string, string> = {
-  gate: "시장 게이트 GO", regime: "체제 Risk-on/Neutral", watchlist: "워치리스트 후보 포함",
-  risk: "리스크 허용 범위", buy: "BUY 액션", grade: "Grade A·B", score: "점수 ≥ 60",
-  ai: "AI 분석 확인", workbook: "정성 검증 완료", funds: "여유 자금 확인",
+  gate: "시장 게이트 GO", regime: "체제 Risk-on/Neutral", watchlist: "워치리스트 후보 포함 (재무 필터 통과)",
+  risk: "리스크 허용 범위", piotroski: "Piotroski ≥ 5",
+  ai: "네러티브 브리프 확인", workbook: "정성 검증 완료", funds: "여유 자금 확인",
   stop: "손절가 설정", size: "매수 수량 확정",
 };
 
@@ -271,14 +271,12 @@ function BuyCheckStats({ market }: { market: string }) {
 
 // ── 매수 전 체크리스트 ────────────────────────────────────────────────────────
 function PreTradeChecklist({
-  steps, reports, sector, market, aiMap, regimeName,
+  steps, sector, market, regimeName,
 }: {
   steps: StepStatus[];
   overall: Signal;
-  reports: any[];
   sector: any;
   market: string;
-  aiMap: Record<string, any>;
   regimeName: string;
 }) {
   // 투자 기간 — 장기(1~3년)를 기본값으로 둔다. 장기 모드에서는 시장 타이밍(게이트·체제·
@@ -343,36 +341,34 @@ function PreTradeChecklist({
       .catch(() => setFxError(true));
   }, []);
 
-  // 전체 채점 결과 (top-20 밖 종목 포함) — 워치리스트 종목이 오늘 top-20에 없어도
-  // 등급·액션으로 매수체크가 되도록 폴백 소스로 사용한다. (AI thesis는 top-20에만 있음)
-  const [fullScores, setFullScores] = useState<any[]>([]);
-  useEffect(() => {
-    const url = market === "KR" ? "/api/data/kr/full-scores" : "/api/data/full-scores";
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => setFullScores(Array.isArray(d?.scores) ? d.scores : []))
-      .catch(() => {});
-  }, [market]);
-
-  const latestPicks: any[] = reports[0]?.picks ?? [];
-  const tickerUp = ticker.trim().toUpperCase();
-  const matchTicker = (p: any) =>
-    (p.symbol ?? "").toUpperCase() === tickerUp || (p.name ?? "").includes(tickerUp);
-  // 1순위: 오늘 top-20 리포트(AI thesis 포함). 없으면 전체 채점 폴백(등급·액션만).
-  const pick = tickerUp ? (latestPicks.find(matchTicker) ?? fullScores.find(matchTicker) ?? null) : null;
-  const pickFromReport = tickerUp ? latestPicks.some(matchTicker) : false; // top-20 리포트 출처 여부
-  const pickFromFallback = !!pick && !pickFromReport;                       // 전체 채점 폴백 출처
-
-  // 워치리스트 후보 자동 판정
-  const [candidateSet, setCandidateSet] = useState<Set<string>>(new Set());
+  // 워치리스트 후보(재무 필터 통과 종목, 순위 없음) — 종목 조건 판정의 유일한 소스.
+  const [candidates, setCandidates] = useState<any[]>([]);
   useEffect(() => {
     fetch("/api/watchlist/candidates")
       .then((r) => r.json())
-      .then((d) => setCandidateSet(new Set(
-        ((d.candidates ?? []) as { market: string; symbol: string }[]).map((c) => `${c.market}:${c.symbol}`)
-      )))
+      .then((d) => setCandidates(Array.isArray(d?.candidates) ? d.candidates : []))
       .catch(() => {});
   }, []);
+  const candidateSet = new Set(candidates.map((c) => `${c.market}:${c.symbol}`));
+
+  const tickerUp = ticker.trim().toUpperCase();
+  const matchTicker = (p: any) =>
+    p.market === market && ((p.symbol ?? "").toUpperCase() === tickerUp || (p.name ?? "").includes(tickerUp));
+  const pick = tickerUp ? (candidates.find(matchTicker) ?? null) : null;
+
+  // 네러티브 브리프 존재 여부 (구 AI thesis 자리 — 뉴스 기반 장기 스토리·촉매·리스크)
+  const [narrativeOk, setNarrativeOk] = useState(false);
+  const [narrativeBrief, setNarrativeBrief] = useState<{ story?: string } | null>(null);
+  useEffect(() => {
+    setNarrativeOk(false);
+    setNarrativeBrief(null);
+    if (!tickerUp) return;
+    const params = new URLSearchParams({ market, symbol: tickerUp });
+    fetch(`/api/watchlist/narrative?${params}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.story) { setNarrativeOk(true); setNarrativeBrief(d); } })
+      .catch(() => {});
+  }, [market, tickerUp]);
 
   // 내 워치리스트 — 티커 빠른 선택용
   // 다른 탭(워치리스트 페이지)에서 종목을 추가한 뒤 새로고침 없이 돌아올 때도
@@ -401,10 +397,8 @@ function PreTradeChecklist({
   const [manualOk, setManualOk] = useState<Record<string, boolean>>({});
   useEffect(() => { setManualOk({}); }, [tickerUp]);
 
-  const isKR    = market === "KR";
-  const isBuy   = pick?.action === "BUY";
-  const gradeOk = pick ? (pick.grade === "A" || pick.grade === "B") : false;
-  const scoreOk = pick ? (pick.composite_score ?? 0) >= 60 : false;
+  const isKR      = market === "KR";
+  const piotroskiOk = pick ? (pick.piotroski ?? 0) >= 5 : false;
 
   const leadingList: string[] = isKR
     ? (sector?.leading ?? []).map((l: any) => l.sector)
@@ -414,12 +408,12 @@ function PreTradeChecklist({
     : leadingList.includes(SECTOR_TO_ETF[pick.sector ?? ""] ?? "")
   ) : false;
 
-  // AI thesis: 해당 종목의 AI 데이터가 존재하면 자동 체크
-  const aiData  = tickerUp ? (aiMap[tickerUp] ?? aiMap[pick?.name ?? ""] ?? null) : null;
-  const aiOk    = !!aiData;
+  // 네러티브 브리프(구 AI thesis 자리): narrativeOk/narrativeBrief는 위쪽 useEffect에서 갱신
+  const aiOk    = narrativeOk;
+  const aiData  = narrativeBrief;
 
   // 손절가: 입력된 손절가가 현재가보다 낮으면 체크
-  const curPrice   = isKR ? (pick?.cur_price ?? 0) : (pick?.current_price ?? 0);
+  const curPrice   = pick?.current_price ?? 0;
   const stopNum    = parseFloat(stopPrice);
   const stopOk     = stopPrice !== "" && !isNaN(stopNum) && stopNum > 0 && (curPrice === 0 || stopNum < curPrice);
 
@@ -473,13 +467,7 @@ function PreTradeChecklist({
     ? Math.floor((totalCapNum * kellyPct) / entryPrice)
     : null;
 
-  // 손익비(R:R) 자동 계산 — 목표가·손절가가 있으면 추측 대신 계산으로 채운다.
-  //   손익비 = (목표가 − 현재가) ÷ (현재가 − 손절가)
-  const targetRaw = parseFloat(pick?.target_price ?? aiData?.target_price ?? "");
-  const targetPrice = !isNaN(targetRaw) && targetRaw > 0 ? targetRaw : null;
-  const autoRR = (targetPrice && curPrice > 0 && stopOk && stopNum < curPrice && targetPrice > curPrice)
-    ? (targetPrice - curPrice) / (curPrice - stopNum)
-    : null;
+  // 손익비(R:R)는 재무 필터 통과 후보에 목표가 개념이 없어(순위·점수 없음) 항상 수동 입력.
 
   // ── 각 조건 상태 산출 (2026-07: pass boolean → PASS/WARN/FAIL/PENDING) ──
   // 목적: "아직 미입력·미선택(PENDING)"과 "실제 미충족(FAIL)"을 구분하고,
@@ -501,12 +489,8 @@ function PreTradeChecklist({
   );
   const stRegime = downgradeIfLongTerm(notStop(steps[1]?.signal));
   const stRisk   = downgradeIfLongTerm(notStop(steps[4]?.signal));
-  const stWatch:  CkStatus = !tickerUp ? "PENDING" : watchOk  ? "PASS" : "WARN";
-  // BUY 액션은 게이트로 결정되는 action(gate×grade)에 좌우되므로 장기 모드에서 함께 낮춘다.
-  // 종목 자체의 질은 grade·score 조건이 그대로 담당한다.
-  const stBuy:    CkStatus = downgradeIfLongTerm(!pick ? "PENDING" : isBuy ? "PASS" : "FAIL");
-  const stGrade:  CkStatus = !pick     ? "PENDING" : gradeOk  ? "PASS" : "FAIL";
-  const stScore:  CkStatus = !pick     ? "PENDING" : scoreOk  ? "PASS" : "FAIL";
+  const stWatch:  CkStatus = !tickerUp ? "PENDING" : watchOk  ? "PASS" : "FAIL";
+  const stPiotroski: CkStatus = !pick  ? "PENDING" : piotroskiOk ? "PASS" : "FAIL";
   const stAi:     CkStatus = !tickerUp ? "PENDING" : aiOk     ? "PASS" : "WARN";
   const stWorkbook: CkStatus = manualOk.workbook ? "PASS" : "PENDING";
   const stFunds:    CkStatus = manualOk.funds    ? "PASS" : "PENDING";
@@ -522,17 +506,15 @@ function PreTradeChecklist({
           tip: isLongTerm ? "장기 모드: 매수를 막지 않는 참고 경고입니다. 저평가 우량주는 시장이 안 좋을 때 사는 것도 정당한 진입입니다." : "시장 진입 신호가 GO여야 합니다." },
         { id: "regime",    label: "체제 Risk-on / Neutral",                  status: stRegime,
           tip: isLongTerm ? "장기 모드: 참고 경고만 — 매수 차단 안 함." : "Risk-off·Crisis 체제에서는 신규 매수를 자제하세요." },
-        { id: "watchlist", label: `${tickerUp || "종목"} 워치리스트 후보 포함`, status: stWatch,
+        { id: "watchlist", label: `${tickerUp || "종목"} 워치리스트 후보 포함 (재무 필터 통과)`, status: stWatch,
           tip: watchOk
-            ? "적합 점수 상위 50 후보에 포함 — 재무 함정 필터 자동 통과"
-            : "워치리스트 후보에 없음 — 함정 필터 미통과이거나 적합 점수 상위 50 밖입니다. 워치리스트 탭에서 확인하세요." },
+            ? "재무 함정 필터(Piotroski·부채비율·이자보상·현금흐름) 통과 — 순위 없는 후보 목록에 포함"
+            : "워치리스트 후보에 없음 — 재무 함정 필터 미통과이거나 아직 스크리닝 대상이 아닙니다. 워치리스트 탭에서 확인하세요." },
         { id: "risk",      label: "리스크 수준 허용 범위",                     status: stRisk,
           tip: isLongTerm ? "장기 모드: 참고 경고만 — 매수 차단 안 함." : "VaR·MDD 경고 없을 때 진입하세요." },
-        { id: "buy",       label: `${tickerUp || "종목"} BUY 액션 확인`,     status: stBuy,
-          tip: isLongTerm ? "액션은 오늘 게이트에 좌우되는 단기 신호입니다. 장기 모드에서는 아래 등급·점수를 더 신뢰하세요." : "스크리닝 BUY 액션 종목만 선택하세요." },
-        { id: "grade",     label: `${tickerUp || "종목"} Grade A·B 확인`,   status: stGrade,  tip: "C등급 이하는 진입 자제를 권장합니다." },
-        { id: "score",     label: `${tickerUp || "종목"} 점수 ≥ 60`,        status: stScore,  tip: `현재 점수: ${pick?.composite_score?.toFixed(1) ?? "—"}` },
-        { id: "ai",        label: "AI 분석 thesis 확인",                     status: stAi,     tip: aiOk ? `${tickerUp} AI 분석 데이터 있음 — 아래에서 확인하세요.` : "종목 분석 탭에서 해당 종목 클릭 후 투자 근거와 리스크 요인을 확인하세요." },
+        { id: "piotroski", label: `${tickerUp || "종목"} Piotroski ≥ 5`,   status: stPiotroski,
+          tip: `현재 Piotroski F-Score: ${pick?.piotroski ?? "—"}/9. 5점 미만은 재무 취약 신호입니다.` },
+        { id: "ai",        label: "네러티브 브리프 확인",                     status: stAi,     tip: aiOk ? `${tickerUp} 뉴스 기반 네러티브 브리프 있음 — 아래에서 확인하세요.` : "워치리스트 탭에서 해당 종목을 클릭해 투자 스토리와 리스크 요인을 확인하세요. 아직 생성 전일 수도 있습니다(주 1회 갱신)." },
       ],
     },
     {
@@ -576,13 +558,12 @@ function PreTradeChecklist({
 
     const marketFail = ([["게이트", stGate], ["체제", stRegime], ["리스크", stRisk]] as const)
       .filter(([, s]) => s === "FAIL").map(([n]) => n);
-    const stockFail = ([["BUY 액션", stBuy], ["등급 A·B", stGrade], ["점수 60↑", stScore]] as const)
+    const stockFail = ([["워치리스트 후보(재무 필터)", stWatch], ["Piotroski≥5", stPiotroski]] as const)
       .filter(([, s]) => s === "FAIL").map(([n]) => n);
 
     // 참고성 경고 (매수를 막지는 않음)
     const advisories: string[] = [];
-    if (stWatch === "WARN") advisories.push("워치리스트 후보 밖");
-    if (stAi === "WARN")    advisories.push("AI 상세 분석 없음");
+    if (stAi === "WARN") advisories.push("네러티브 브리프 없음");
     const advisorySub = advisories.length ? `참고: ${advisories.join(" · ")}` : "";
 
     if (marketFail.length) {
@@ -590,8 +571,8 @@ function PreTradeChecklist({
         sub: "시장 신호가 회복된 뒤 다시 검토하세요." };
     }
     if (stockFail.length) {
-      return { tone: "FAIL", headline: `${tickerUp}은(는) 종목 조건 미달 (Grade ${pick?.grade ?? "-"} · ${pick?.action ?? "-"}) — 매수 보류.`,
-        sub: "BUY·A/B 등급 종목을 고르거나, 근거가 확실하면 본인 판단으로 진행하세요." };
+      return { tone: "FAIL", headline: `${tickerUp}은(는) 종목 조건 미달 (재무 필터 통과: ${pick ? "예" : "아니오"} · Piotroski ${pick?.piotroski ?? "-"}/9) — 매수 보류.`,
+        sub: "재무 건전성이 확인된 워치리스트 후보를 고르거나, 근거가 확실하면 본인 판단으로 진행하세요." };
     }
 
     // 차단 FAIL 없음 → 남은 필수 항목(사용자 판단·주문 계획) 점검
@@ -622,7 +603,7 @@ function PreTradeChecklist({
     const timer = setTimeout(() => {
       const snap = latestCheckRef.current;
       if (!snap) return;
-      const autoIds = new Set(["gate", "regime", "risk", "buy", "grade", "score"]);
+      const autoIds = new Set(["gate", "regime", "risk", "watchlist", "piotroski"]);
       const autoPending = snap.items.some((it) => autoIds.has(it.id) && it.status === "PENDING");
       if (autoPending) return;
 
@@ -648,7 +629,7 @@ function PreTradeChecklist({
   }, [tickerUp, market, investHorizon]);
 
   // 매수체크 값 → 포트폴리오 매수 폼 프리필 딥링크 (실제 체결가는 사용자가 확인·저장)
-  const recordNote = `매수체크${pick ? ` · Grade ${pick.grade} ${pick.action}` : ""}${stopOk ? ` · 손절 ${stopPrice}` : ""}`;
+  const recordNote = `매수체크${pick ? ` · Piotroski ${pick.piotroski ?? "-"} (${pick.regime_fit ?? "-"})` : ""}${stopOk ? ` · 손절 ${stopPrice}` : ""}`;
   const recordHref = `/portfolio?market=${market}&symbol=${encodeURIComponent(tickerUp)}`
     + (pick?.name ? `&name=${encodeURIComponent(pick.name)}` : "")
     + (sharesOk ? `&shares=${sharesNum}` : "")
@@ -731,18 +712,13 @@ function PreTradeChecklist({
           />
           {tickerUp && pick && (
             <p className="text-[12px] mt-1" style={{ color: "#4ade80" }}>
-              ✓ {pick.symbol}{pick.name ? ` (${pick.name})` : ""} — Grade {pick.grade} / {pick.composite_score?.toFixed(1)}점 / {pick.action}
-              {curPrice > 0 && <span className="ml-2" style={{ color: "#a39c88" }}>현재가 {isKR ? `₩${Number(curPrice).toLocaleString()}` : `$${curPrice}`}</span>}
-            </p>
-          )}
-          {tickerUp && pickFromFallback && (
-            <p className="text-[12px] mt-0.5" style={{ color: "#726b58" }}>
-              ⓘ 오늘 top-20 랭킹 밖 종목 — 등급·액션은 전체 채점 결과 기준이며, AI 상세 분석은 top-20에만 제공돼요.
+              ✓ {pick.symbol}{pick.name ? ` (${pick.name})` : ""} — Piotroski {pick.piotroski ?? "-"}/9 / {pick.regime_fit === "growth" ? "성장" : pick.regime_fit === "dividend" ? "배당" : "중립"}
+              {curPrice > 0 && <span className="ml-2" style={{ color: "#a39c88" }}>스크리닝 시점가 {isKR ? `₩${Number(curPrice).toLocaleString()}` : `$${curPrice}`}</span>}
             </p>
           )}
           {tickerUp && !pick && (
             <p className="text-[12px] mt-1" style={{ color: "#726b58" }}>
-              전체 채점 결과에서 찾을 수 없습니다 (상장폐지·신규상장·데이터 누락 등). 손절가·수량은 직접 입력해 체크할 수 있습니다.
+              워치리스트 후보 목록에서 찾을 수 없습니다 (재무 필터 미통과·상장폐지·신규상장·데이터 누락 등). 손절가·수량은 직접 입력해 체크할 수 있습니다.
             </p>
           )}
           {/* 선행 섹터 여부 — 판정 항목이 아닌 참고 정보 (미해당이어도 매수 진행 가능) */}
@@ -896,28 +872,6 @@ function PreTradeChecklist({
               />
             </div>
 
-            {/* 손익비 자동 계산 — 목표가·손절가 기반 */}
-            {autoRR !== null ? (
-              <p className="text-[12px] mt-1.5 flex items-center gap-1.5" style={{ color: "#6fb3b8" }}>
-                <span>
-                  목표가 {isKR ? `₩${Number(targetPrice).toLocaleString()}` : `$${targetPrice!.toFixed(2)}`} 기준 손익비 ≈ <b>{autoRR.toFixed(1)}</b>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setRrRatio(autoRR.toFixed(2))}
-                  className="px-1.5 py-0.5 rounded"
-                  style={{ color: "#6fb3b8", background: "#6fb3b812", border: "1px solid #6fb3b833" }}
-                  title="계산된 손익비를 입력칸에 채웁니다"
-                >
-                  적용
-                </button>
-              </p>
-            ) : targetPrice !== null && !stopOk ? (
-              <p className="text-[12px] mt-1.5" style={{ color: "var(--text-faint)" }}>
-                손절가를 입력하면 목표가({isKR ? `₩${Number(targetPrice).toLocaleString()}` : `$${targetPrice.toFixed(2)}`}) 기준 손익비가 자동 계산돼요.
-              </p>
-            ) : null}
-
             {kellyF !== null && (
               kellyF <= 0 ? (
                 <p className="text-[12px] mt-1.5 font-bold" style={{ color: "#f87171" }}>
@@ -985,10 +939,10 @@ function PreTradeChecklist({
           </div>
         </div>
 
-        {/* AI thesis 미니 표시 */}
-        {aiOk && aiData.thesis && (
+        {/* 네러티브 브리프 미니 표시 */}
+        {aiOk && aiData?.story && (
           <div className="rounded-lg px-3 py-2 text-[12px] leading-relaxed" style={{ background: "#ffb02008", border: "1px solid #ffb02022", color: "#a39c88" }}>
-            <span className="font-bold" style={{ color: "#ffb020" }}>AI Thesis </span>{aiData.thesis}
+            <span className="font-bold" style={{ color: "#ffb020" }}>네러티브 </span>{aiData.story}
           </div>
         )}
       </div>
@@ -996,7 +950,7 @@ function PreTradeChecklist({
       <div className="px-4 pb-4 pt-2 space-y-3" style={{ borderTop: "1px solid #262112" }}>
         {!tickerUp && (
           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-            종목을 선택하면 종목 조건(워치리스트·BUY·등급·점수·AI)을 검증합니다. 그전까지는 &quot;대기&quot; 상태예요.
+            종목을 선택하면 종목 조건(워치리스트 후보·Piotroski·네러티브)을 검증합니다. 그전까지는 &quot;대기&quot; 상태예요.
           </p>
         )}
         {CK_GROUPS.map((group) => {
@@ -1093,9 +1047,7 @@ export default function WorkflowPage() {
   const [regimeName, setRegimeName] = useState("");
   const [cycleLabel, setCycleLabel] = useState("");
   const [reportDate, setReportDate] = useState("");
-  const [reports, setReports]     = useState<any[]>([]);
   const [sectorData, setSectorData] = useState<any>(null);
-  const [aiMap, setAiMap]           = useState<Record<string, any>>({});
 
   useEffect(() => {
     setSteps(Array(6).fill({ signal: "LOADING" as Signal, title: "로딩 중…", summary: "", detail: "", action: "", proceed: false }));
@@ -1107,18 +1059,16 @@ export default function WorkflowPage() {
         fetch("/api/data/kr/regime").then((r) => r.json()),
         fetch("/api/data/kr/reports?limit=1").then((r) => r.json()),
         fetch("/api/data/kr/sector").then((r) => r.json()),
-        fetch("/api/data/kr/ai-summaries").then((r) => r.json()),
-      ]).then(([gateRes, regimeRes, reportsRes, sectorRes, aiRes]) => {
+        fetch("/api/watchlist/candidates?market=KR").then((r) => r.json()),
+      ]).then(([gateRes, regimeRes, reportsRes, sectorRes, candRes]) => {
         const gate   = gateRes.status    === "fulfilled" ? gateRes.value    : {};
         const regime = regimeRes.status  === "fulfilled" ? regimeRes.value  : {};
         const report = reportsRes.status === "fulfilled" ? (reportsRes.value[0] ?? {}) : {};
         const sector = sectorRes.status  === "fulfilled" ? (sectorRes.value ?? {}) : {};
+        const candCount = candRes.status === "fulfilled" ? ((candRes.value?.candidates ?? []).length) : 0;
 
         const gateSignal  = gate.gate ?? "CAUTION";
         const rName       = regime.regime ?? "neutral";
-        const picks: any[]= report.picks ?? [];
-        const buyPicks    = picks.filter((p: any) => p.action === "BUY");
-        const watchPicks  = picks.filter((p: any) => p.action === "WATCH");
         const clabel      = sector.cycle_label ?? "";
         const leadingSectors: string[] = (sector.leading ?? []).map((l: any) => l.sector);
         const regSize     = REGIME_SIZE[rName] ?? { pct: "50%", desc: "표준 비중" };
@@ -1144,31 +1094,22 @@ export default function WorkflowPage() {
           proceed: s2sig !== "STOP",
         };
 
-        const s3sig: Signal = buyPicks.length >= 3 ? "GO" : buyPicks.length >= 1 ? "CAUTION" : "STOP";
-        const topBuy = buyPicks.slice(0, 5).map((p: any) => `${p.symbol}(${p.name ?? ""})`).join(", ");
+        const s3sig: Signal = candCount > 0 ? "GO" : "CAUTION";
         const s3: StepStatus = {
           signal: s3sig,
-          title: "KOSPI 종목 선택",
-          summary: `BUY ${buyPicks.length}개 · WATCH ${watchPicks.length}개${topBuy ? ` · ${topBuy}` : ""}`,
-          detail: `4팩터 스크리닝(기술·펀더멘털·RS·거래량) BUY: ${buyPicks.length}개.${leadingSectors.length > 0 ? ` 선행 섹터: ${leadingSectors.join(", ")}` : ""}`,
-          action: buyPicks.length >= 3 ? `상위 3~5종목 선택: ${buyPicks.slice(0, 3).map((p: any) => p.symbol).join(", ")}` : "조건 종목 부족 — 대기",
-          proceed: s3sig !== "STOP",
+          title: "KOSPI 후보 리스트",
+          summary: `재무 필터 통과 후보 ${candCount}개 (순위 없음)${leadingSectors.length > 0 ? ` · 선행 섹터 ${leadingSectors.join(", ")}` : ""}`,
+          detail: `Piotroski F-Score·부채비율·이자보상 등 재무 건전성 필터를 통과한 종목을 순위 없이 리스트업합니다(주 1회 갱신).${leadingSectors.length > 0 ? ` 참고로 지금 선행 섹터는 ${leadingSectors.join(", ")}입니다.` : ""}`,
+          action: candCount > 0 ? "워치리스트 탭에서 후보를 직접 검토 후 선정하세요." : "이번 주 후보 없음 — 다음 주간 스크리닝을 기다리세요.",
+          proceed: true,
         };
 
-        const krAiList: any[] = aiRes.status === "fulfilled"
-          ? (aiRes.value?.summaries ?? (Array.isArray(aiRes.value) ? aiRes.value : []))
-          : [];
-        const krBuySummaries = krAiList.filter((s: any) => s.recommendation === "BUY" || s.action === "BUY");
         const s4: StepStatus = {
-          signal: krBuySummaries.length >= 2 ? "GO" : krAiList.length > 0 ? "CAUTION" : "CAUTION",
-          title: "AI 검증",
-          summary: krAiList.length > 0
-            ? `AI BUY 추천 ${krBuySummaries.length}개 · 전체 ${krAiList.length}개`
-            : "AI 분석 데이터 없음 — 직접 재무제표 확인 권장",
-          detail: krAiList.length > 0
-            ? `GPT-4o가 분석한 ${krAiList.length}개 종목 중 BUY 추천은 ${krBuySummaries.length}개입니다. thesis(투자 근거)가 납득되고, bear cases(하락 리스크)를 감수할 수 있는 종목만 최종 선정하세요.`
-            : "AI 분석 데이터가 없습니다. 재분석 실행 후 재확인하거나 PER·PBR·ROE를 직접 확인하세요.",
-          action: krAiList.length > 0 ? "thesis 납득 + bear case 감수 가능 종목만 최종 선정" : "종목 클릭 → 재무제표 직접 확인 후 최종 선정",
+          signal: "GO",
+          title: "종목별 분석",
+          summary: "뉴스 기반 네러티브 브리프 + 재무 지표로 종목별 분석 제공",
+          detail: "워치리스트에서 종목을 클릭하면 투자 스토리·촉매·리스크(뉴스 기반, 주 1회 갱신)와 재무 지표를 함께 확인할 수 있습니다.",
+          action: "관심 종목 클릭 → 네러티브·재무 지표 확인 후 최종 선정",
           proceed: true,
         };
 
@@ -1196,14 +1137,7 @@ export default function WorkflowPage() {
         setRegimeName(rName);
         setCycleLabel(clabel);
         setReportDate(report.analysis_date ?? "");
-        setReports(reportsRes.status === "fulfilled" ? reportsRes.value : []);
         setSectorData(sector);
-        if (aiRes.status === "fulfilled") {
-          const list: any[] = aiRes.value?.summaries ?? (Array.isArray(aiRes.value) ? aiRes.value : []);
-          const m: Record<string, any> = {};
-          list.forEach((s: any) => { if (s.ticker) m[s.ticker] = s; });
-          setAiMap(m);
-        }
 
         const stops = newSteps.filter((s) => s.signal === "STOP").length;
         const cauts = newSteps.filter((s) => s.signal === "CAUTION").length;
@@ -1212,9 +1146,9 @@ export default function WorkflowPage() {
 
         const todayActions: string[] = [];
         if (ov === "GO") {
-          todayActions.push(buyPicks.length > 0 ? `BUY ${buyPicks.length}개 중 3~5종목: ${topBuy}` : "스크리닝 조건 종목 부족 — 재분석 필요");
+          todayActions.push(candCount > 0 ? `재무 필터 통과 후보 ${candCount}개 중 직접 선정 (워치리스트 탭)` : "이번 주 신규 후보 없음 — 다음 주간 스크리닝 대기");
           todayActions.push(`투자 비중 ${regSize.pct}, 손절선 ${stopLoss}`);
-          todayActions.push("직접 재무제표·뉴스 확인 후 최종 선정");
+          todayActions.push("워치리스트에서 네러티브·재무 지표 확인 후 최종 선정");
         } else if (ov === "CAUTION") {
           todayActions.push("신규 매수 자제, 기존 포지션 유지");
           todayActions.push(`손절선 ${stopLoss} 엄수`);
@@ -1233,28 +1167,25 @@ export default function WorkflowPage() {
       fetch("/api/data/market-gate").then((r) => r.json()),
       fetch("/api/data/regime").then((r) => r.json()),
       fetch("/api/data/reports?limit=1").then((r) => r.json()),
-      fetch("/api/data/ai-summaries").then((r) => r.json()),
+      fetch("/api/watchlist/candidates?market=US").then((r) => r.json()),
       fetch("/api/data/risk").then((r) => r.json()),
       fetch("/api/data/index-prediction").then((r) => r.json()),
       fetch("/api/data/sector").then((r) => r.json()),
-    ]).then(([gateRes, regimeRes, reportsRes, aiRes, riskRes, predRes, sectorRes]) => {
+    ]).then(([gateRes, regimeRes, reportsRes, candRes, riskRes, predRes, sectorRes]) => {
       const gate   = gateRes.status    === "fulfilled" ? gateRes.value    : {};
       const regime = regimeRes.status  === "fulfilled" ? regimeRes.value  : {};
       const report = reportsRes.status === "fulfilled" ? (reportsRes.value[0] ?? {}) : {};
-      const ai     = aiRes.status      === "fulfilled" ? aiRes.value      : {};
       const risk   = riskRes.status    === "fulfilled" ? riskRes.value    : {};
       const pred   = predRes.status    === "fulfilled" ? predRes.value    : {};
       const sector = sectorRes.status  === "fulfilled" ? (sectorRes.value ?? {}) : {};
+      const candCount = candRes.status === "fulfilled" ? ((candRes.value?.candidates ?? []).length) : 0;
 
-      const verdict    = report.verdict ?? gate.gate ?? "CAUTION";
+      const gateSignal = gate.gate ?? "CAUTION";
       const rName      = regime.regime ?? "neutral";
-      const picks: any[] = report.picks ?? [];
-      const buyPicks   = picks.filter((p: any) => p.action === "BUY" && (p.grade === "A" || p.grade === "B"));
       const var95      = risk.var_95 ?? null;
       const mdd        = risk.mdd ?? null;
       const spy        = pred.spy ?? (pred.direction ? pred : null);
       const qqq        = pred.qqq ?? null;
-      const summaries  = Array.isArray(ai.summaries) ? ai.summaries : [];
       const regSize    = REGIME_SIZE[rName] ?? { pct: "50%", desc: "표준 비중" };
       const stopLoss   = STOP_LOSS[rName] ?? "-8%";
       const spyDir     = spy?.direction;
@@ -1262,32 +1193,14 @@ export default function WorkflowPage() {
       const clabel     = sector.cycle_label ?? "";
 
       const leadingEtfs: string[] = (sector.leading ?? []).map((l: any) => l.ticker);
-      const alignedPicks = buyPicks.filter((p: any) => leadingEtfs.includes(SECTOR_TO_ETF[p.sector ?? ""] ?? ""));
-
-      // 섹터 분산 추천 목록 구성
-      // 1) 선행 섹터에서 최대 2종목
-      const leadingSlots = alignedPicks.slice(0, 2);
-      const usedSectors  = new Set(leadingSlots.map((p: any) => p.sector ?? ""));
-      const usedSymbols  = new Set(leadingSlots.map((p: any) => p.symbol));
-      // 2) 나머지 슬롯은 다른 섹터 BUY+A/B 상위 종목으로 채움 (섹터당 1개)
-      const fillPicks: any[] = [];
-      for (const p of buyPicks) {
-        if (fillPicks.length >= 3) break;
-        if (usedSymbols.has(p.symbol)) continue;
-        if (!usedSectors.has(p.sector ?? "")) {
-          fillPicks.push(p);
-          usedSectors.add(p.sector ?? "");
-        }
-      }
-      const diversifiedList = [...leadingSlots, ...fillPicks].slice(0, 5);
 
       // Step 1
-      const s1sig = verdictSignal(verdict);
+      const s1sig = verdictSignal(gateSignal);
       const s1: StepStatus = {
         signal: s1sig,
         title: "시장 진입 여부",
-        summary: `종합 판단 ${verdict} · 게이트 점수 ${gate.avg_score?.toFixed(2) ?? "—"}`,
-        detail: `시장 체제·게이트 점수·스크리닝 결과를 통합한 최종 신호입니다. 현재 ${verdict}${
+        summary: `게이트 ${gateSignal} · 게이트 점수 ${gate.avg_score?.toFixed(2) ?? "—"}`,
+        detail: `시장 체제·게이트 점수를 통합한 신호입니다. 현재 ${gateSignal}${
           s1sig === "GO" ? " — 신규 진입 가능 환경입니다." :
           s1sig === "CAUTION" ? " — 신규 진입보다 기존 포지션 관리에 집중하세요." :
           " — 시장 환경이 불리합니다."
@@ -1310,36 +1223,23 @@ export default function WorkflowPage() {
       };
 
       // Step 3
-      const s3sig: Signal = buyPicks.length >= 3 ? "GO" : buyPicks.length >= 1 ? "CAUTION" : "STOP";
-      const diversifiedSymbols = diversifiedList.map((p: any) => p.symbol).join(", ");
-      // 섹터 분포 요약 (중복 섹터 경고용)
-      const sectorCounts: Record<string, number> = {};
-      diversifiedList.forEach((p: any) => { const s = p.sector ?? "기타"; sectorCounts[s] = (sectorCounts[s] ?? 0) + 1; });
-      const hasSectorConcentration = Object.values(sectorCounts).some((n) => n >= 2);
-      const sectorSummary = Object.entries(sectorCounts).map(([s, n]) => `${s}${n >= 2 ? `×${n}` : ""}`).join(" · ");
+      const s3sig: Signal = candCount > 0 ? "GO" : "CAUTION";
       const s3: StepStatus = {
         signal: s3sig,
-        title: "종목 선택",
-        summary: `BUY A·B등급 ${buyPicks.length}개${alignedPicks.length > 0 ? ` · 선행섹터 ${alignedPicks.length}개` : ""} · ${diversifiedSymbols || "없음"}`,
-        detail: `${clabel ? `현재 ${clabel} 구간 — ${leadingEtfs.join(", ")} 선행 중. ` : ""}${
-          alignedPicks.length > 0
-            ? `선행 섹터 우선 + 섹터 분산 적용: ${diversifiedSymbols || "없음"}`
-            : `오늘 BUY A·B 종목 중 선행 섹터(${leadingEtfs.join(", ") || "—"}) 소속이 없어 섹터 분산만 적용: ${diversifiedSymbols || "없음"}`
-        }${hasSectorConcentration ? ` ⚠ 동일 섹터 2개 이상 포함(${sectorSummary}) — 직접 분산 조정 권장` : ` (${sectorSummary})`}`,
-        action: diversifiedList.length > 0
-          ? `분산 후보 → ${diversifiedSymbols}${hasSectorConcentration ? " ⚠ 섹터 편중 확인" : ""}`
-          : buyPicks.length >= 1 ? "조건 충족 종목 부족 — 상위 종목 탭 직접 확인" : "조건 종목 없음 — 대기",
-        proceed: s3sig !== "STOP",
+        title: "종목 후보 리스트",
+        summary: `재무 필터 통과 후보 ${candCount}개 (순위 없음)${leadingEtfs.length > 0 ? ` · 선행 섹터 ${leadingEtfs.join(", ")}` : ""}`,
+        detail: `Piotroski F-Score·부채비율·이자보상 등 재무 건전성 필터를 통과한 종목을 순위 없이 리스트업합니다(주 1회 갱신).${clabel ? ` 현재 ${clabel} 구간으로 ${leadingEtfs.join(", ") || "—"} 섹터가 선행 중이니 참고하세요.` : ""}`,
+        action: candCount > 0 ? "워치리스트 탭에서 후보를 직접 검토 후 섹터 분산을 고려해 선정하세요." : "이번 주 후보 없음 — 다음 주간 스크리닝을 기다리세요.",
+        proceed: true,
       };
 
       // Step 4
-      const buySummaries = summaries.filter((s: any) => s.recommendation === "BUY");
       const s4: StepStatus = {
-        signal: buySummaries.length >= 2 ? "GO" : "CAUTION",
-        title: "AI 검증",
-        summary: `AI BUY 추천 ${buySummaries.length}개 · 전체 ${summaries.length}개`,
-        detail: `GPT-4o가 분석한 ${summaries.length}개 종목 중 BUY 추천은 ${buySummaries.length}개입니다. thesis(투자 근거)가 납득되고, bear cases(하락 리스크)를 감수할 수 있는 종목만 최종 선정하세요.`,
-        action: "thesis 납득 + bear case 감수 가능 종목만 최종 선정",
+        signal: "GO",
+        title: "종목별 분석",
+        summary: "뉴스 기반 네러티브 브리프 + 재무 지표로 종목별 분석 제공",
+        detail: "워치리스트에서 종목을 클릭하면 투자 스토리·촉매·리스크(뉴스 기반, 주 1회 갱신)와 재무 지표를 함께 확인할 수 있습니다.",
+        action: "관심 종목 클릭 → 네러티브·재무 지표 확인 후 최종 선정",
         proceed: true,
       };
 
@@ -1375,14 +1275,7 @@ export default function WorkflowPage() {
       setRegimeName(rName);
       setCycleLabel(clabel);
       setReportDate(report.analysis_date ?? "");
-      setReports(reportsRes.status === "fulfilled" ? reportsRes.value : []);
       setSectorData(sector);
-      if (aiRes.status === "fulfilled") {
-        const list: any[] = aiRes.value?.summaries ?? (Array.isArray(aiRes.value) ? aiRes.value : []);
-        const m: Record<string, any> = {};
-        list.forEach((s: any) => { if (s.ticker) m[s.ticker] = s; });
-        setAiMap(m);
-      }
 
       // 종합 판단 계산
       const stops = newSteps.filter((s) => s.signal === "STOP").length;
@@ -1393,13 +1286,7 @@ export default function WorkflowPage() {
       // 오늘 할 일 생성
       const todayActions: string[] = [];
       if (ov === "GO") {
-        todayActions.push(
-          diversifiedList.length > 0
-            ? `섹터 분산 후보 — ${diversifiedSymbols}${hasSectorConcentration ? " (⚠ 동일 섹터 편중 확인)" : ""}`
-            : buyPicks.length > 0
-            ? `BUY A·B등급 ${buyPicks.length}개 중 3~5종목 직접 분산 선택`
-            : "스크리닝 조건 종목 부족 — 다음 분석 실행 후 재확인"
-        );
+        todayActions.push(candCount > 0 ? `재무 필터 통과 후보 ${candCount}개 중 섹터 분산 고려해 직접 선정 (워치리스트 탭)` : "이번 주 신규 후보 없음 — 다음 주간 스크리닝 대기");
         todayActions.push(`투자 비중 ${regSize.pct} 유지, 각 종목 손절선 ${stopLoss} 설정`);
         if (spyGo) todayActions.push("SPY 강세 예측 — 지금 분산 진입 실행");
         else todayActions.push("SPY 확률 낮음 — 분할 매수(50% 우선 진입)");
@@ -1494,10 +1381,8 @@ export default function WorkflowPage() {
         <PreTradeChecklist
           steps={steps}
           overall={overall}
-          reports={reports}
           sector={sectorData}
           market={market}
-          aiMap={aiMap}
           regimeName={regimeName}
         />
       )}

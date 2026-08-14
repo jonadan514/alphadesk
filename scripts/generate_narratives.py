@@ -6,7 +6,7 @@
   3. Turso narrative_briefs 테이블에 upsert (프론트엔드가 읽음)
 
 사용:
-  python scripts/generate_narratives.py                  # 기본 (20시간 내 갱신분은 건너뜀)
+  python scripts/generate_narratives.py                  # 기본 (7일 내 갱신분은 건너뜀)
   python scripts/generate_narratives.py --force          # 전부 재생성
   python scripts/generate_narratives.py --limit 5        # 테스트용
 """
@@ -30,7 +30,7 @@ from src.db.turso_http import get_credentials, query as turso_query, execute_man
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-MAX_AGE_HOURS = 20          # 이보다 최신인 브리프는 건너뜀 (하루 2회 크론 대비)
+MAX_AGE_HOURS = 168         # 이보다 최신인 브리프는 건너뜀 (주 1회 크론 대비 — 7일)
 OPENAI_MODEL = "gpt-4o-mini"
 
 
@@ -126,17 +126,21 @@ def generate_brief(market: str, symbol: str, name: str | None, news: list[dict])
 아래는 이 종목의 최근 1주일 뉴스 헤드라인입니다:
 {headlines}
 
-이 헤드라인들을 바탕으로 현재 시장에서 이 종목에 형성된 투자 네러티브(스토리)를 분석해 아래 JSON 형식으로만 답하세요. 헤드라인에 없는 내용을 지어내지 마세요.
+이 종목은 1~3년 보유를 전제로 한 펀더멘털 투자 후보입니다. 헤드라인을 바탕으로 이 종목의
+장기 투자 스토리를 분석해 아래 JSON 형식으로만 답하세요. 헤드라인에 없는 내용을 지어내지 마세요.
 
 {{
-  "story": "핵심 투자 스토리 2~3문장 — 시장이 왜 이 종목에 관심을 갖는지(또는 안 갖는지)",
-  "catalysts": ["다가오는 촉매 최대 3개 (실적발표·신제품·정책·계약 등)"],
-  "risks": ["이 스토리가 깨질 수 있는 리스크 최대 3개"],
+  "story": "핵심 투자 스토리 2~3문장 — 이 회사의 장기 성장 동력/사업 구조가 왜 매력적인지(또는 우려되는지)",
+  "catalysts": ["앞으로 1~3년 스토리에 영향을 줄 요인 최대 3개 (구조적 성장동력·신사업·정책 변화·업황 전환 등. 단기 실적발표 같은 이벤트도 있으면 포함 가능하나 우선순위는 아님)"],
+  "risks": ["이 장기 스토리가 깨질 수 있는 근본적 리스크 최대 3개"],
   "sentiment": "HOT 또는 WARM 또는 COLD",
-  "sentiment_reason": "시장 관심도 판단 근거 한 문장"
+  "sentiment_reason": "시장의 단기 관심도 판단 근거 한 문장 (참고용 — 장기 투자 판단의 핵심 지표는 아님)"
 }}
 
-sentiment 기준: HOT=뉴스가 많고 시장이 활발히 이야기하는 인기 테마, WARM=꾸준한 관심, COLD=뉴스가 적거나 관심 밖. 모든 내용은 한국어로 작성하세요."""
+sentiment은 "시장 단기 관심도"를 뜻하는 보조 정보일 뿐입니다: HOT=뉴스가 많고 시장이 활발히
+이야기하는 인기 테마, WARM=꾸준한 관심, COLD=뉴스가 적거나 관심 밖. 장기 투자 스토리(story)의
+매력도와는 별개이니 혼동하지 마세요 — 관심 밖(COLD)이어도 장기 스토리는 탄탄할 수 있습니다.
+모든 내용은 한국어로 작성하세요."""
 
     try:
         resp = requests.post(
@@ -280,7 +284,7 @@ def get_todo(max_age_hours: int, batch: int, force: bool) -> tuple[list[dict], i
 def main() -> None:
     parser = argparse.ArgumentParser(description="워치리스트 네러티브 브리프 생성")
     parser.add_argument("--limit", type=int, default=0, help="처리 종목 수 제한 (0=배치 기본값)")
-    parser.add_argument("--batch", type=int, default=150, help="회차당 최대 생성 수 (기본 150)")
+    parser.add_argument("--batch", type=int, default=400, help="회차당 최대 생성 수 (기본 400 — 상위 50 캡 제거로 후보 풀이 커짐)")
     parser.add_argument("--force", action="store_true", help="신선도 무시하고 전부 재생성")
     args = parser.parse_args()
 

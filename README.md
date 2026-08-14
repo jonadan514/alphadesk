@@ -54,7 +54,6 @@ frontend/                 Next.js 앱
     briefing/             주간 브리핑
     regime/                시장 체제
     sector/                섹터 분석
-    top-picks/             종목 분석 (스크리닝 상위 종목 + AI 분석)
     risk/                  리스크 모니터
     watchlist/             워치리스트 (스크리닝 후보 + 내 관심종목)
     portfolio/             포트폴리오 (실거래 기록 + 성과 비교)
@@ -73,24 +72,23 @@ src/                       Python 분석 엔진
   ml/                       LightGBM 기반 지수 방향 예측
   portfolio/, risk/         포트폴리오 추적, VaR/MDD 계산
 
-scripts/                   실행 엔트리포인트 (run_kr_analysis.py, run_screening.py 등)
+scripts/                   실행 엔트리포인트 (run_kr_analysis.py, run_watchlist_screen.py 등)
 data/                      캐시된 가격/종목 리스트 (일부는 .gitignore 대상)
-.github/workflows/         daily-analysis.yml, weekly-watchlist.yml
+.github/workflows/         weekly-analysis.yml, weekly-watchlist.yml, performance-tracking.yml
 ```
 
 ## 페이지 요약 (사이드바 순서)
 
 | 메뉴 | 경로 | 한 줄 설명 |
 |---|---|---|
-| 개요 | `/` | 종합 판단(GO/CAUTION/STOP) + 체제 점수 + 상위 5종목을 한 화면에 |
+| 개요 | `/` | 종합 판단(GO/CAUTION/STOP) + 체제 점수 + 이번 주 워치리스트 후보 수를 한 화면에 |
 | 주간 브리핑 | `/briefing` | 주간 스크리닝 결과를 읽기 쉬운 문서 형태로 요약 |
 | 시장 체제 | `/regime` | risk_on/neutral/risk_off/crisis 판정과 근거 센서 분해 |
 | 섹터 분석 | `/sector` | 섹터별 상대강도, 경기 사이클(early/mid/late/recession) |
-| 종목 분석 | `/top-picks` | 6-factor(미국)/4-factor(한국) 스크리닝 상위 종목 + AI thesis |
 | 리스크 | `/risk` | 실거래 기반 VaR, 섹터 집중도, 손절선 경보 |
-| 워치리스트 | `/watchlist` | 함정 필터 통과 종목 후보 + 내가 담은 관심종목(메모·정성체크·네러티브) |
+| 워치리스트 | `/watchlist` | 재무 건전성 필터(Piotroski 등) 통과 종목을 순위 없이 리스트업 + 내가 담은 관심종목(메모·정성체크·네러티브) |
 | 포트폴리오 | `/portfolio` | 실거래 기록 CRUD + 벤치마크 대비 성과 차트 |
-| 매수 체크 | `/workflow` | 매수 전 12조건 체크리스트 + 손실 한도 기반 포지션 사이징 계산기 |
+| 매수 체크 | `/workflow` | 매수 전 체크리스트(워치리스트 후보·Piotroski·네러티브 등) + 손실 한도 기반 포지션 사이징 계산기 |
 | 가이드 | `/guide`, `/guide/detail` | 앱 사용법·판단 기준 설명 (엔드유저용 문서) |
 
 자세한 페이지별 레이아웃·데이터소스·로직은 [`docs/PAGES.md`](docs/PAGES.md) 참고.

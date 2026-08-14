@@ -122,122 +122,16 @@ def phase2_gate(regime_result: dict, t0: float) -> dict:
     return result
 
 
-def phase3_screening(regime: str, analysis_date: str, t0: float) -> dict:
-    _log("Phase3", "KOSPI 스크리닝 시작")
-    from src.analyzers.kr_screener import KRStockScreener
-    screener = KRStockScreener()
-    picks_df = screener.screen(regime)
-    _log("Phase3", f"스크리닝 완료: {len(picks_df)}종목 (전체 채점 {len(screener.full_scored)}종목)", t0)
-
-    picks = picks_df.to_dict("records") if not picks_df.empty else []
-    buy_picks   = [p for p in picks if p.get("action") == "BUY"]
-    watch_picks = [p for p in picks if p.get("action") == "WATCH"]
-
-    # verdict 결정
-    if regime in ("risk_on",):
-        verdict = "GO" if buy_picks else "CAUTION"
-    elif regime == "neutral":
-        verdict = "GO" if len(buy_picks) >= 3 else "CAUTION"
-    else:
-        verdict = "STOP"
-
+def phase3_report(regime: str, gate: str, analysis_date: str, t0: float) -> dict:
+    """일간 리포트 — 체제/게이트만 저장 (종목 픽은 주간 워치리스트 스크리닝이 담당)."""
     report = {
         "analysis_date": analysis_date,
         "market":        "KR",
         "regime":        regime,
-        "verdict":       verdict,
-        "picks":         picks,
-        "buy_count":     len(buy_picks),
-        "watch_count":   len(watch_picks),
-        "summary":       f"BUY {len(buy_picks)}종목, WATCH {len(watch_picks)}종목 선별",
+        "gate":          gate,
     }
-    _log("Phase3", f"Verdict={verdict}  BUY={len(buy_picks)}", t0)
-    return report, screener.full_scored
-
-
-def phase3_5_ai_summary(report: dict, regime_result: dict, sector_result: dict | None, t0: float) -> list:
-    _log("Phase3.5", "KR AI 요약 생성 (GPT-4o mini)")
-    try:
-        from src.analyzers.ai_summary_generator import OpenAISummaryGenerator
-    except ImportError:
-        _log("Phase3.5", "OpenAISummaryGenerator import 실패 — 건너뜀")
-        return []
-
-    picks = [p for p in report.get("picks", []) if p.get("action") == "BUY"][:15]
-    generator = OpenAISummaryGenerator()
-    summaries = []
-
-    # 시장 컨텍스트 문자열 구성
-    regime      = regime_result.get("regime_label", regime_result.get("regime", ""))
-    kospi_last  = regime_result.get("kospi_last", "")
-    mom20       = float(regime_result.get("mom_20d") or 0)
-    vol60       = float(regime_result.get("vol_60d") or 0)
-    cycle_label = sector_result.get("cycle_label", "") if sector_result else ""
-    top_sectors = []
-    if sector_result:
-        for s in (sector_result.get("sectors") or [])[:3]:
-            top_sectors.append(f"{s.get('sector','')} ({s.get('rs_20d',0):+.1f}%)")
-
-    market_context = (
-        f"KOSPI 체제: {regime} | KOSPI: {kospi_last} | 20일 모멘텀: {mom20:+.1f}% | 60일 변동성: {vol60:.1f}%\n"
-        f"경기 사이클: {cycle_label}\n"
-        f"강세 섹터: {', '.join(top_sectors) if top_sectors else '데이터 없음'}"
-    )
-
-    for p in picks:
-        stock_data = {
-            "composite_score":   p.get("composite_score"),
-            "grade":             p.get("grade"),
-            "technical_score":   p.get("technical"),
-            "fundamental_score": p.get("fundamental"),
-            "relative_strength_vs_kospi": p.get("relative_strength"),
-            "volume_score":      p.get("volume"),
-            "cur_price_krw":     p.get("cur_price"),
-            "per":               p.get("per"),
-            "pbr":               p.get("pbr"),
-            "roe_pct":           p.get("roe"),
-            "market_cap_krw":    p.get("market_cap"),
-            "week52_high":       p.get("week52_high"),
-            "week52_low":        p.get("week52_low"),
-            "pct_from_52w_high": p.get("pct_from_52h"),
-            "dividend_yield_pct": p.get("dividend_yield"),
-            "earnings_growth_pct": p.get("earnings_growth"),
-            "debt_to_equity":    p.get("debt_to_equity"),
-        }
-        result = generator.generate(
-            p["symbol"], stock_data,
-            market="KR",
-            market_context=market_context,
-            name=p.get("name", ""),
-            sector=p.get("sector", ""),
-        )
-
-        # AI를 검사(prosecutor)로 활용 — thesis와 독립된 별도 호출로 약세 논거만 심사
-        bear = generator.generate_bear_case(
-            p["symbol"], stock_data, market="KR", name=p.get("name", ""), sector=p.get("sector", ""),
-        )
-
-        summaries.append({
-            "ticker":           p["symbol"],
-            "name":             p.get("name", ""),
-            "sector":           p.get("sector", ""),
-            "recommendation":   result.get("recommendation", "HOLD"),
-            "confidence":       result.get("confidence", 0),
-            "thesis":           result.get("thesis", ""),
-            "catalysts":        result.get("catalysts", []),
-            "bear_cases":       result.get("bear_cases", []),
-            "independent_bear_case_found": bear["bear_case_found"],
-            "independent_bear_cases":      bear["bear_cases"],
-            "target_price":     result.get("target_price"),
-            "composite_score":  p.get("composite_score"),
-            "grade":            p.get("grade"),
-            "cur_price":        p.get("cur_price"),
-            "_fallback":        result.get("_fallback", False),
-        })
-        _log("Phase3.5", f"{p['symbol']}({p.get('name','')}) → {result.get('recommendation','?')}  목표가: {result.get('target_price','?')}  독립약세={bear['bear_case_found']}", t0)
-
-    _log("Phase3.5", f"AI 요약 완료: {len(summaries)}종목", t0)
-    return summaries
+    _log("Phase3", f"Regime={regime}  Gate={gate}", t0)
+    return report
 
 
 def phase5_index_prediction(t0: float) -> dict:
@@ -289,33 +183,11 @@ def main() -> None:
         gate_result = phase2_gate(regime_result, t0)
         _upsert_snapshot(conn, "kr_market_gate", gate_result)
 
-        report, kr_full_scored = phase3_screening(regime_result["regime"], analysis_date, t0)
+        report = phase3_report(regime_result["regime"], gate_result["gate"], analysis_date, t0)
         _upsert_timeseries(conn, "kr_daily_reports", analysis_date, report)
-
-        # 전체 채점 결과 (top-30 밖 포함) — 매수체크 폴백용 lean 페이로드.
-        # KR action은 스크리너가 (체제, 점수)로 이미 산출 → 그대로 사용.
-        kr_full = []
-        if kr_full_scored is not None and not kr_full_scored.empty:
-            for _, r in kr_full_scored.iterrows():
-                kr_full.append({
-                    "symbol":          r.get("symbol"),
-                    "name":            r.get("name"),
-                    "grade":           r.get("grade"),
-                    "composite_score": r.get("composite_score"),
-                    "action":          r.get("action"),
-                    "cur_price":       r.get("cur_price"),
-                    "target_price":    r.get("target_price"),  # 손익비 자동 계산용 (KR 스크리너엔 없으면 None)
-                    "sector":          r.get("sector", ""),
-                })
-        _upsert_snapshot(conn, "kr_full_scores", {"date": analysis_date, "scores": _sanitize(kr_full)})
-        _log("Phase3", f"전체 채점 {len(kr_full)}종목 저장", t0)
 
         sector_result = phase4_sector(t0)
         # sector analyzer saves itself to kr_sector_analysis
-
-        ai_summaries = phase3_5_ai_summary(report, regime_result, sector_result, t0)
-        if ai_summaries:
-            _upsert_snapshot(conn, "kr_ai_summaries", {"summaries": ai_summaries})
 
         kr_pred = phase5_index_prediction(t0)
         if kr_pred:
@@ -337,7 +209,7 @@ def main() -> None:
     elapsed = time.time() - t0
     print("=" * 60)
     print(f"  완료  |  총 소요: {elapsed:.1f}초")
-    print(f"  Verdict: {report['verdict']}  |  Gate: {gate_result['gate']}  |  Regime: {regime_result['regime']}")
+    print(f"  Gate: {gate_result['gate']}  |  Regime: {regime_result['regime']}")
     print("=" * 60)
 
 

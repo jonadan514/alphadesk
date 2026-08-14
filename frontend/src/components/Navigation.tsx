@@ -25,7 +25,6 @@ const NAV_GROUPS = [
   {
     label: "종목",
     items: [
-      { href: "/top-picks", label: "종목 분석", emoji: "🔎", color: "#ffb020" },
       { href: "/watchlist", label: "워치리스트",  emoji: "🔭", color: "#ffb020" },
     ],
   },
@@ -46,12 +45,13 @@ const NAV_GROUPS = [
   },
 ] as const;
 
+// 주 1회(월요일) 실행 체제 — 7일까지는 정상, 그 이후만 지연으로 표시
 function staleness(dateStr: string | null): { label: string; color: string } {
   if (!dateStr) return { label: "데이터 없음", color: "#423e33" };
   const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
   if (days === 0) return { label: "오늘 업데이트", color: "#4ade80" };
-  if (days === 1) return { label: "어제 업데이트", color: "#facc15" };
-  if (days <= 3)  return { label: `${days}일 전 업데이트`, color: "#fb923c" };
+  if (days <= 7)  return { label: `${days}일 전 업데이트`, color: "#4ade80" };
+  if (days <= 9)  return { label: `${days}일 전 업데이트`, color: "#facc15" };
   return { label: `${days}일 전 업데이트`, color: "#f87171" };
 }
 
@@ -67,7 +67,7 @@ function SidebarInner({
   const pathname = usePathname();
   const { label: freshnessLabel, color: freshnessColor } = staleness(lastDate);
   const isStale = lastDate
-    ? Math.floor((Date.now() - new Date(lastDate).getTime()) / 86_400_000) > 1
+    ? Math.floor((Date.now() - new Date(lastDate).getTime()) / 86_400_000) > 8
     : true;
 
   return (
@@ -174,7 +174,7 @@ function SidebarInner({
             </p>
             {isStale && (
               <p className="text-[11px] truncate" style={{ color: "#fb923c" }}>
-                Actions에서 Daily Analysis 실행 권장
+                Actions에서 Weekly Market Analysis 실행 권장
               </p>
             )}
           </div>

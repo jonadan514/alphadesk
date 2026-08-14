@@ -71,7 +71,7 @@ def get_market_week(market: str) -> dict:
 
     reports = _payload(turso_exec(f"SELECT date, payload FROM {table} ORDER BY date DESC LIMIT 5"))
     history = [
-        {"date": r["date"], "verdict": r["_data"].get("verdict"), "regime": r["_data"].get("regime")}
+        {"date": r["date"], "verdict": r["_data"].get("gate"), "regime": r["_data"].get("regime")}
         for r in reversed(reports)
     ]
     gate_rows = _payload(turso_exec(f"SELECT payload FROM {gate_table} WHERE id = 1"))
@@ -101,7 +101,7 @@ def get_watchlist_changes() -> dict:
     )
 
     current = turso_exec(
-        "SELECT market, symbol, name, fit_score FROM watchlist_candidates ORDER BY fit_score DESC"
+        "SELECT market, symbol, name FROM watchlist_candidates ORDER BY market, symbol"
     )
     cur_map = {f"{c['market']}:{c['symbol']}": c for c in current}
 
@@ -114,7 +114,6 @@ def get_watchlist_changes() -> dict:
 
     added   = [cur_map[k] for k in cur_map if k not in prev_map]
     removed = [prev_map[k] for k in prev_map if k not in cur_map]
-    top     = current[:5]
 
     # 이번 주 스냅샷 저장 (월요일 날짜 기준)
     week = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -128,7 +127,6 @@ def get_watchlist_changes() -> dict:
         "total": len(current),
         "added": added[:10],
         "removed": removed[:10],
-        "top": top,
         "has_prev": bool(prev_map),
     }
 
@@ -259,7 +257,7 @@ def send_telegram_summary(b: dict) -> None:
         lines.append("")
         lines.append(f"<b>🔖 워치리스트</b> 신규 {len(wl['added'])} · 탈락 {len(wl['removed'])}")
         for a in wl["added"][:3]:
-            lines.append(f"  + {disp(a)} (적합 {a.get('fit_score','—')})")
+            lines.append(f"  + {disp(a)}")
     if b["sentiment_heating"]:
         lines.append("")
         lines.append("<b>📈 이번 주 달아오른 종목</b>")

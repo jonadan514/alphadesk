@@ -18,9 +18,7 @@ interface Candidate {
   red_flags: string[];
   regime_fit: "growth" | "dividend" | "neutral";
   roe: number | null;
-  rel_3m: number | null;
-  rel_6m: number | null;
-  fit_score: number | null;
+  current_price: number | null;
   data_notes?: { interest?: string; debt?: string };
 }
 
@@ -85,15 +83,6 @@ interface NarrativeBrief {
 
 // ── 지표 설명 ─────────────────────────────────────────────────────────────────
 const INDICATOR_INFO = {
-  fit: {
-    title: "시장 적합 점수 (0~100)",
-    desc: "함정 필터 통과 종목을 '지금 시장에서 살 만한 순서'로 줄 세운 점수입니다. 품질 40점(Piotroski·ROE·이자보상) + 모멘텀 35점(3·6개월 지수 대비 상대수익률) + 체제 정합 25점(현재 장세와 종목 성격의 궁합)으로 구성되며, 시장별 상위 50종목만 후보에 올라옵니다.",
-    levels: [
-      { range: "70점~", color: GOOD, label: "우수 — 재무 탄탄 + 시장이 사주는 중" },
-      { range: "55~70점", color: WARN, label: "양호 — 일부 축이 아쉬움" },
-      { range: "~55점", color: TEXT_SECONDARY, label: "보통 — 후보 중 하위권" },
-    ],
-  },
   fscore: {
     title: "Piotroski F-Score (0~9)",
     desc: "수익성·레버리지·운영효율 9가지 항목을 각 1점씩 채점한 재무 건전성 점수입니다.",
@@ -143,6 +132,10 @@ function formatCap(market: string, cap: number | null) {
   if (!cap) return "-";
   return market === "KR" ? FMT_CAP_KR(cap) : FMT_CAP_US(cap);
 }
+function formatPrice(market: string, price: number | null) {
+  if (price == null) return "-";
+  return market === "KR" ? `₩${Math.round(price).toLocaleString()}` : `$${price.toFixed(2)}`;
+}
 
 function PiotroskiBadge({ score }: { score: number | null }) {
   if (score === null) return <span style={{ color: TEXT_FAINT }}>-</span>;
@@ -150,15 +143,6 @@ function PiotroskiBadge({ score }: { score: number | null }) {
   return (
     <span style={{ background: color + "20", color, border: `1px solid ${color}40`, padding: "1px 6px", fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
       {score}/9
-    </span>
-  );
-}
-function FitScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <span style={{ color: TEXT_FAINT }}>-</span>;
-  const color = score >= 70 ? GOOD : score >= 55 ? WARN : TEXT_SECONDARY;
-  return (
-    <span style={{ background: color + "20", color, border: `1px solid ${color}40`, padding: "1px 7px", fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-      {score.toFixed(0)}
     </span>
   );
 }
@@ -247,7 +231,7 @@ function NarrativeSection({ c }: { c: Candidate }) {
         )}
         {pending && !loading && (
           <p className="text-[12px]" style={{ color: TEXT_MUTED }}>
-            아직 네러티브가 생성되지 않았어요. 다음 일간 분석(매일 아침 자동 실행) 후 표시돼요.
+            아직 네러티브가 생성되지 않았어요. 다음 주간 워치리스트 스크리닝(주 1회 자동 실행) 후 표시돼요.
           </p>
         )}
         {error && !loading && (
@@ -383,8 +367,8 @@ function ChecklistSection({ c }: { c: Candidate }) {
 }
 
 // ── 종목 상세 팝업 ────────────────────────────────────────────────────────────
-function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }: {
-  c: Candidate; inList: boolean; inTopPicks: boolean; note: string | null;
+function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
+  c: Candidate; inList: boolean; note: string | null;
   onAdd: () => void; onSaveNote: (note: string) => void; onClose: () => void;
 }) {
   const [editingNote, setEditingNote] = useState(false);
@@ -398,10 +382,9 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
     return v <= 100 ? GOOD : v <= 150 ? WARN : v <= 200 ? CAUTION : BAD;
   };
 
-  // 한 줄 결론 — 이미 있는 값(적합점수·모멘텀·체제 성격)으로 즉석 요약 (별도 API 없음)
+  // 한 줄 결론 — 이미 있는 값(재무 건전성·체제 성격)으로 즉석 요약 (별도 API 없음, 순위 아님)
   const conclParts: string[] = [];
-  if (c.fit_score != null) conclParts.push(c.fit_score >= 70 ? "재무·적합도 우수" : c.fit_score >= 55 ? "적합도 양호" : "적합도 보통");
-  if (c.rel_3m != null) conclParts.push(c.rel_3m >= 0 ? "단기 추세 양호" : "단기 추세 약세");
+  if (c.piotroski != null) conclParts.push(c.piotroski >= 7 ? "재무 우수" : c.piotroski >= 5 ? "재무 양호" : "재무 보통");
   conclParts.push(c.regime_fit === "growth" ? "성장주 성격" : c.regime_fit === "dividend" ? "배당주 성격" : "중립 성격");
   const conclusion = conclParts.join(" · ");
 
@@ -422,14 +405,13 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[11px] font-bold px-2 py-0.5" style={{ background: c.market === "US" ? INFO + "20" : BAD + "20", color: c.market === "US" ? INFO : BAD }}>{c.market}</span>
               <RegimeBadge fit={c.regime_fit} />
-              {inTopPicks && (
-                <span title="오늘 종목 분석 상위 종목에 포함"
-                  style={{ background: ACCENT + "20", color: ACCENT, border: `1px solid ${ACCENT}40`, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
-                  ⭐ 오늘픽
-                </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-2xl font-black" style={{ color: NUM, letterSpacing: "-0.01em" }}>{c.symbol}</h2>
+              {c.current_price != null && (
+                <span className="text-[13px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>{formatPrice(c.market, c.current_price)} <span style={{ color: TEXT_FAINT }}>(스크리닝 시점가)</span></span>
               )}
             </div>
-            <h2 className="text-2xl font-black" style={{ color: NUM, letterSpacing: "-0.01em" }}>{c.symbol}</h2>
             {c.name && <p className="text-[13px] mt-0.5" style={{ color: TEXT_SECONDARY }}>{c.name}</p>}
             {c.sector && <p className="text-[11px] mt-0.5" style={{ color: TEXT_MUTED }}>{c.sector} · {formatCap(c.market, c.market_cap)}</p>}
           </div>
@@ -452,26 +434,9 @@ function DetailModal({ c, inList, inTopPicks, note, onAdd, onSaveNote, onClose }
             </div>
           </div>
 
-          {/* 핵심 재무·체제 지표 — 넓은 폭 활용 (적합점수 + 4지표) */}
+          {/* 핵심 재무·체제 지표 — 이 종목이 왜 후보인지에 대한 근거 (순위 아님) */}
           <div>
             <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>핵심 재무 · 체제 지표</p>
-            <div className="p-3 flex items-center justify-between mb-3" style={insetCard}>
-              <div>
-                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>시장 적합 점수</p>
-                <p className="text-2xl font-black" style={{ color: c.fit_score != null ? (c.fit_score >= 70 ? GOOD : c.fit_score >= 55 ? WARN : TEXT_SECONDARY) : TEXT_FAINT, fontVariantNumeric: "tabular-nums" }}>
-                  {c.fit_score != null ? c.fit_score.toFixed(0) : "-"}<span className="text-sm font-normal" style={{ color: TEXT_FAINT }}>/100</span>
-                </p>
-              </div>
-              <div className="text-right">
-                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>지수 대비 상대수익률</p>
-                <p className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
-                  3개월 <span style={{ color: c.rel_3m != null ? (c.rel_3m >= 0 ? GOOD : BAD) : TEXT_FAINT, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{c.rel_3m != null ? `${c.rel_3m > 0 ? "+" : ""}${c.rel_3m}%` : "-"}</span>
-                </p>
-                <p className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
-                  6개월 <span style={{ color: c.rel_6m != null ? (c.rel_6m >= 0 ? GOOD : BAD) : TEXT_FAINT, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{c.rel_6m != null ? `${c.rel_6m > 0 ? "+" : ""}${c.rel_6m}%` : "-"}</span>
-                </p>
-              </div>
-            </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {/* F-Score */}
@@ -623,8 +588,6 @@ export default function WatchlistPage() {
   const [selected, setSelected]     = useState<Candidate | null>(null);
   const [infoKey, setInfoKey]       = useState<keyof typeof INDICATOR_INFO | null>(null);
 
-  const [topPicks, setTopPicks] = useState<Set<string>>(new Set());
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -641,27 +604,6 @@ export default function WatchlistPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // 오늘의 종목 분석(top-picks) 등장 여부
-  useEffect(() => {
-    Promise.allSettled([
-      fetch("/api/data/reports?limit=1").then((r) => r.json()),
-      fetch("/api/data/kr/reports?limit=1").then((r) => r.json()),
-    ]).then(([usRes, krRes]) => {
-      const set = new Set<string>();
-      if (usRes.status === "fulfilled") {
-        ((usRes.value?.[0]?.picks ?? []) as { symbol?: string }[]).forEach((p) => {
-          if (p.symbol) set.add(`US:${p.symbol}`);
-        });
-      }
-      if (krRes.status === "fulfilled") {
-        ((krRes.value?.[0]?.picks ?? []) as { symbol?: string }[]).forEach((p) => {
-          if (p.symbol) set.add(`KR:${p.symbol}`);
-        });
-      }
-      setTopPicks(set);
-    });
   }, []);
 
   // 오늘 관심도 상승(COLD→WARM/HOT 등) 종목
@@ -729,7 +671,6 @@ export default function WatchlistPage() {
         <DetailModal
           c={selected}
           inList={addedSymbols.has(`${selected.market}:${selected.symbol}`)}
-          inTopPicks={topPicks.has(`${selected.market}:${selected.symbol}`)}
           note={myList.find((w) => w.market === selected.market && w.symbol === selected.symbol)?.note ?? null}
           onAdd={() => addToWatchlist(selected)}
           onSaveNote={(note) => saveNoteFromModal(selected, note)}
@@ -835,7 +776,7 @@ export default function WatchlistPage() {
                     <ColHeader label="마켓" />
                     <ColHeader label="티커" />
                     <ColHeader label="종목명" />
-                    <ColHeader label="적합점수" infoKey="fit" onInfo={setInfoKey} />
+                    <ColHeader label="현재가" />
                     <ColHeader label="시가총액" />
                     <ColHeader label="섹터" />
                     <ColHeader label="F-Score" infoKey="fscore" onInfo={setInfoKey} />
@@ -861,15 +802,9 @@ export default function WatchlistPage() {
                         </td>
                         <td style={{ padding: "8px 10px", fontWeight: 600, color: NUM, whiteSpace: "nowrap" }}>
                           {c.symbol}
-                          {topPicks.has(key) && (
-                            <span title="오늘 종목 분석 상위 종목에 포함"
-                              style={{ marginLeft: 6, background: ACCENT + "20", color: ACCENT, border: `1px solid ${ACCENT}40`, padding: "1px 5px", fontSize: 10, fontWeight: 700 }}>
-                              오늘픽
-                            </span>
-                          )}
                         </td>
                         <td style={{ padding: "8px 10px", color: TEXT_SECONDARY, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name ?? "-"}</td>
-                        <td style={{ padding: "8px 10px" }}><FitScoreBadge score={c.fit_score} /></td>
+                        <td style={{ padding: "8px 10px", color: NUM, fontVariantNumeric: "tabular-nums" }}>{formatPrice(c.market, c.current_price)}</td>
                         <td style={{ padding: "8px 10px", color: NUM, fontVariantNumeric: "tabular-nums" }}>{formatCap(c.market, c.market_cap)}</td>
                         <td style={{ padding: "8px 10px", color: TEXT_MUTED, fontSize: 11 }}>{c.sector ?? "-"}</td>
                         <td style={{ padding: "8px 10px" }}><PiotroskiBadge score={c.piotroski} /></td>
@@ -915,12 +850,6 @@ export default function WatchlistPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <span style={{ color: item.market === "US" ? INFO : BAD, fontSize: 11, fontWeight: 600, minWidth: 24 }}>{item.market}</span>
                   <span style={{ fontWeight: 700, fontSize: 15, minWidth: 60, color: NUM }}>{item.symbol}</span>
-                  {topPicks.has(`${item.market}:${item.symbol}`) && (
-                    <span title="오늘 종목 분석 상위 종목에 포함"
-                      style={{ background: ACCENT + "20", color: ACCENT, border: `1px solid ${ACCENT}40`, padding: "1px 6px", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
-                      오늘픽
-                    </span>
-                  )}
                   <span style={{ color: TEXT_SECONDARY, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name ?? ""}</span>
                   <span style={{ color: TEXT_FAINT, fontSize: 11 }}>{item.added_at.slice(0, 10)}</span>
                   <button onClick={() => removeFromWatchlist(item.id)} style={{ background: "transparent", color: TEXT_MUTED, border: `1px solid ${BORDER_CTRL}`, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>삭제</button>
