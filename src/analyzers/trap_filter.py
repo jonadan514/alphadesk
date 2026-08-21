@@ -1,12 +1,18 @@
 """함정 필터 + Piotroski F-Score.
 
+"명백히 위험한 것만 제외"가 아니라 "확실히 우량한 것만 통과"를 목표로 하는 임계값.
+(2026-08-21: 스크리닝 후보가 570종목 중 302개로 너무 많다는 판단에 따라 상향 조정 —
+전에는 Piotroski≥5/ROE≥8%/이자보상≥1배/부채비율≤200%로 "안 망한 회사"만 걸렀다면,
+지금은 "재무가 실제로 탄탄한 회사"로 기준을 올림.)
+
 필터 순서:
   1. 관리종목 / 감사의견 비적정 (KR)
-  2. 이자보상배율 < 1 (좀비기업)
+  2. 이자보상배율 < 3배 (안전마진 확보)
   3. 영업현금흐름 2년 연속 마이너스
-  4. 부채비율 > 200% (금융업 제외)
+  4. 부채비율 > 150% (금융업 제외)
   5. 매출 + 순이익 3년 연속 동시 감소
-  6. Piotroski F-Score ≤ 3
+  6. Piotroski F-Score < 6
+  7. ROE < 12%
 """
 from __future__ import annotations
 
@@ -141,8 +147,8 @@ def apply_trap_filters(item: dict) -> dict:
     interest_coverage: float | None = None
     if ebit is not None and interest and interest > 0:
         interest_coverage = ebit / interest
-        if interest_coverage < 1.0:
-            red_flags.append("이자보상배율<1 (좀비기업)")
+        if interest_coverage < 3.0:
+            red_flags.append("이자보상배율<3 (안전마진 부족)")
     elif ebit is not None and ebit < 0:
         red_flags.append("영업이익 적자")
     elif ebit is not None and ebit > 0:
@@ -170,8 +176,8 @@ def apply_trap_filters(item: dict) -> dict:
         equity = g_bs("Stockholders Equity") or g_bs("Total Stockholder Equity")
         if total_debt is not None and equity and equity > 0:
             debt_ratio = total_debt / equity * 100
-            if debt_ratio > 200:
-                red_flags.append(f"부채비율 {debt_ratio:.0f}% (200% 초과)")
+            if debt_ratio > 150:
+                red_flags.append(f"부채비율 {debt_ratio:.0f}% (150% 초과)")
         elif equity is not None and equity <= 0:
             # 대규모 자사주 매입 기업(DVA·SBUX 등)에서 흔함 — 탈락은 아니지만 알아야 할 정보
             data_notes["debt"] = "자본잠식(음수 자본)"
@@ -193,20 +199,20 @@ def apply_trap_filters(item: dict) -> dict:
         if "매출+순이익 3년 연속 감소" not in red_flags:
             red_flags.append("매출 2년 연속 감소")
 
-    # ── ROE < 8% ──
+    # ── ROE < 12% ──
     roe_pct: float | None = None
     net_income_cur = g_fin("Net Income")
     equity = g_bs("Stockholders Equity") or g_bs("Total Stockholder Equity")
     if net_income_cur is not None and equity and equity > 0:
         roe = net_income_cur / equity
         roe_pct = round(roe * 100, 1)
-        if roe < 0.08:
-            red_flags.append(f"ROE {roe*100:.1f}% (<8%)")
+        if roe < 0.12:
+            red_flags.append(f"ROE {roe*100:.1f}% (<12%)")
 
     # ── Piotroski F-Score ──
     piotroski, _ = calc_piotroski(fin, bs, cf)
-    if piotroski is not None and piotroski < 5:
-        red_flags.append(f"Piotroski {piotroski}/9 (<5 재무 취약)")
+    if piotroski is not None and piotroski < 6:
+        red_flags.append(f"Piotroski {piotroski}/9 (<6 재무 우량 기준 미달)")
 
     # ── 시장 체제별 적합도 판단 ──
     div_yield = info.get("dividendYield") or 0

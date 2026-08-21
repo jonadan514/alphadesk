@@ -212,7 +212,7 @@ function SignalCard({
 // 집계는 항상 안정적인 id 기준으로 하고, 화면 표시는 이 고정 맵을 쓴다.
 const CHECK_ID_LABEL: Record<string, string> = {
   gate: "시장 게이트 GO", regime: "체제 Risk-on/Neutral", watchlist: "워치리스트 후보 포함 (재무 필터 통과)",
-  risk: "리스크 허용 범위", piotroski: "Piotroski ≥ 5",
+  risk: "리스크 허용 범위", piotroski: "Piotroski ≥ 6",
   ai: "네러티브 브리프 확인", workbook: "정성 검증 완료", funds: "여유 자금 확인",
   stop: "손절가 설정", size: "매수 수량 확정",
 };
@@ -398,7 +398,7 @@ function PreTradeChecklist({
   useEffect(() => { setManualOk({}); }, [tickerUp]);
 
   const isKR      = market === "KR";
-  const piotroskiOk = pick ? (pick.piotroski ?? 0) >= 5 : false;
+  const piotroskiOk = pick ? (pick.piotroski ?? 0) >= 6 : false;
 
   const leadingList: string[] = isKR
     ? (sector?.leading ?? []).map((l: any) => l.sector)
@@ -512,8 +512,8 @@ function PreTradeChecklist({
             : "워치리스트 후보에 없음 — 재무 함정 필터 미통과이거나 아직 스크리닝 대상이 아닙니다. 워치리스트 탭에서 확인하세요." },
         { id: "risk",      label: "리스크 수준 허용 범위",                     status: stRisk,
           tip: isLongTerm ? "장기 모드: 참고 경고만 — 매수 차단 안 함." : "VaR·MDD 경고 없을 때 진입하세요." },
-        { id: "piotroski", label: `${tickerUp || "종목"} Piotroski ≥ 5`,   status: stPiotroski,
-          tip: `현재 Piotroski F-Score: ${pick?.piotroski ?? "—"}/9. 5점 미만은 재무 취약 신호입니다.` },
+        { id: "piotroski", label: `${tickerUp || "종목"} Piotroski ≥ 6`,   status: stPiotroski,
+          tip: `현재 Piotroski F-Score: ${pick?.piotroski ?? "—"}/9. 6점 미만은 재무 우량 기준 미달입니다.` },
         { id: "ai",        label: "네러티브 브리프 확인",                     status: stAi,     tip: aiOk ? `${tickerUp} 뉴스 기반 네러티브 브리프 있음 — 아래에서 확인하세요.` : "워치리스트 탭에서 해당 종목을 클릭해 투자 스토리와 리스크 요인을 확인하세요. 아직 생성 전일 수도 있습니다(주 1회 갱신)." },
       ],
     },
@@ -558,7 +558,7 @@ function PreTradeChecklist({
 
     const marketFail = ([["게이트", stGate], ["체제", stRegime], ["리스크", stRisk]] as const)
       .filter(([, s]) => s === "FAIL").map(([n]) => n);
-    const stockFail = ([["워치리스트 후보(재무 필터)", stWatch], ["Piotroski≥5", stPiotroski]] as const)
+    const stockFail = ([["워치리스트 후보(재무 필터)", stWatch], ["Piotroski≥6", stPiotroski]] as const)
       .filter(([, s]) => s === "FAIL").map(([n]) => n);
 
     // 참고성 경고 (매수를 막지는 않음)
