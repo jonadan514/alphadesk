@@ -6,7 +6,9 @@ KR: KOSPI + KOSDAQ (시가총액 2000억+, 한국상장중국기업 제외)
 from __future__ import annotations
 
 import logging
+import os
 import time
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -19,6 +21,13 @@ SP500_CSV = REPO_ROOT / "data" / "sp500_list.csv"
 
 US_MIN_CAP = 2_000_000_000        # $2B
 KR_MIN_CAP = 200_000_000_000      # 2000억원
+
+# 공공데이터포털 "금융위원회_KRX상장종목정보" — pykrx(data.krx.co.kr 스크래핑)가
+# 자동화된 접근을 IP 차단하는 문제(2026-07~08월 4주 연속 실패, pykrx GitHub #170/#151)를
+# 우회하기 위한 1차 소스. 무료·자동승인 공식 API라 차단 위험이 훨씬 낮다.
+# https://www.data.go.kr/data/15094775/openapi.do 에서 발급받은 서비스키를
+# DATA_GO_KR_API_KEY 환경변수(GitHub secret)로 넣어야 동작한다.
+KRX_LISTED_INFO_URL = "https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo"
 
 
 def get_us_universe() -> list[dict]:
@@ -40,11 +49,131 @@ def get_us_universe() -> list[dict]:
     return [{"market": "US", "symbol": t, "yf_symbol": t} for t in tickers]
 
 
-def _kr_universe_pykrx() -> list[dict]:
-    """KOSPI + KOSDAQ 전체 유니버스 (pykrx).
+def _recent_business_day() -> str:
+    """주말이면 직전 금요일로 — 크론이 주말에 돌 수 있어 항상 최근 영업일 기준."""
+    d = date.today()
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    return d.strftime("%Y%m%d")
 
-    주의: KRX가 데이터 API에 로그인을 요구하므로 KRX_ID / KRX_PW 환경변수가
-    필요하다 (data.krx.co.kr 계정). 없으면 빈 리스트 반환 → 폴백 사용.
+
+def _kr_all_symbols_public_api(service_key: str) -> list[dict]:
+    """공공데이터포털 KRX상장종목정보 API — 전체 KOSPI+KOSDAQ 종목코드 목록.
+
+    시가총액은 이 API에 없다 (기준일자·종목코드·종목명·시장구분만 제공).
+    무료·자동승인이라 pykrx처럼 IP 차단당할 위험이 없다.
+    """
+    import requests
+
+    base_dt = _recent_business_day()
+    items: list[dict] = []
+    page_no = 1
+    num_of_rows = 1000
+
+    while True:
+        try:
+            resp = requests.get(KRX_LISTED_INFO_URL, params={
+                "serviceKey": service_key,
+                "numOfRows": num_of_rows,
+                "pageNo": page_no,
+                "resultType": "json",
+                "basDt": base_dt,
+            }, timeout=30)
+            resp.raise_for_status()
+        except Exception as e:
+            logger.error("공공데이터포털 종목정보 조회 실패 (page %d): %s", page_no, e)
+            break
+
+        # 서비스키 미등록이어도 HTTP 200으로 응답하는 경우가 있어 본문을 직접 확인
+        if "SERVICE_KEY" in resp.text and "ERROR" in resp.text:
+            logger.error("공공데이터포털 서비스키 오류: %s", resp.text[:300])
+            break
+
+        try:
+            body = resp.json()["response"]
+        except Exception as e:
+            logger.error("공공데이터포털 응답 파싱 실패: %s / %s", e, resp.text[:300])
+            break
+
+        result_code = body.get("header", {}).get("resultCode", "")
+        if result_code != "00":
+            logger.error("공공데이터포털 API 에러 코드 %s: %s", result_code,
+                          body.get("header", {}).get("resultMsg", ""))
+            break
+
+        page_items = body.get("body", {}).get("items", {})
+        page_items = page_items.get("item", []) if page_items else []
+        if isinstance(page_items, dict):  # 결과 1건이면 리스트가 아니라 dict로 옴
+            page_items = [page_items]
+        if not page_items:
+            break
+
+        items.extend(page_items)
+        if len(page_items) < num_of_rows:
+            break
+        page_no += 1
+
+    return items
+
+
+def _kr_universe_public_api() -> list[dict]:
+    """공공데이터포털로 전체 종목코드를 받고, yfinance fast_info로 시가총액을
+    빠르게 조회해 2000억+ 만 남긴다 — 전체 재무제표(fetch_financials)는 이후
+    collect_universe 단계에서 이 필터를 통과한 종목만 대상으로 돈다.
+    """
+    service_key = os.environ.get("DATA_GO_KR_API_KEY", "").strip()
+    if not service_key:
+        return []
+
+    raw_items = _kr_all_symbols_public_api(service_key)
+    if not raw_items:
+        return []
+
+    candidates = []
+    for it in raw_items:
+        mkt = it.get("mrktCtg")
+        code = it.get("srtnCd")
+        if mkt not in ("KOSPI", "KOSDAQ") or not code:
+            continue
+        candidates.append({
+            "symbol": code,
+            "name": it.get("itmsNm") or code,
+            "exchange": mkt,
+            "yf_symbol": f"{code}.KS" if mkt == "KOSPI" else f"{code}.KQ",
+        })
+    logger.info("공공데이터포털: KOSPI+KOSDAQ %d 종목 코드 확보 — 시가총액 필터링 시작",
+                len(candidates))
+
+    result = []
+    for i, c in enumerate(candidates):
+        if i % 200 == 0:
+            logger.info("시가총액 조회 진행: %d / %d", i, len(candidates))
+        try:
+            cap = yf.Ticker(c["yf_symbol"]).fast_info.get("marketCap")
+        except Exception:
+            cap = None
+        if cap and cap >= KR_MIN_CAP:
+            result.append({
+                "market": "KR",
+                "symbol": c["symbol"],
+                "yf_symbol": c["yf_symbol"],
+                "name": c["name"],
+                "market_cap": int(cap),
+                "exchange": c["exchange"],
+            })
+        time.sleep(0.15)
+
+    logger.info("KR 유니버스(공공데이터포털+yfinance): %d 종목 (2000억+)", len(result))
+    return result
+
+
+def _kr_universe_pykrx() -> list[dict]:
+    """KOSPI + KOSDAQ 전체 유니버스 (pykrx) — 보조 폴백.
+
+    data.krx.co.kr을 직접 스크래핑하는 라이브러리라 자동화된(특히 클라우드/CI)
+    접근을 IP 차단하는 경우가 흔하다 (pykrx GitHub #170 "IP 차단", #151).
+    실제로 2026-07~08월 GitHub Actions에서 4주 연속 0종목으로 실패했다 —
+    1차 소스는 위 _kr_universe_public_api(), 이 함수는 그게 막혔을 때만 시도.
     크론이 주말에 돌 수 있으므로 최근 영업일 기준, 시장 전체 일괄 조회.
     """
     try:
@@ -56,11 +185,7 @@ def _kr_universe_pykrx() -> list[dict]:
     try:
         base_date = pykrx_stock.get_nearest_business_day_in_a_week()
     except Exception:
-        from datetime import date, timedelta
-        d = date.today()
-        while d.weekday() >= 5:  # 토/일 → 금요일로
-            d -= timedelta(days=1)
-        base_date = d.strftime("%Y%m%d")
+        base_date = _recent_business_day()
 
     result = []
     for exchange in ["KOSPI", "KOSDAQ"]:
@@ -118,14 +243,23 @@ def _kr_universe_fallback() -> list[dict]:
 
 
 def get_kr_universe() -> list[dict]:
-    """KR 유니버스. pykrx(전체) 우선, 실패 시 정적 대형주 리스트 폴백."""
+    """KR 유니버스. 공공데이터포털(전체, IP 차단 위험 낮음) → pykrx(전체, 종종 차단됨)
+    → 정적 대형주 리스트 순으로 시도."""
+    universe = _kr_universe_public_api()
+    if universe:
+        return universe
+    logger.warning(
+        "공공데이터포털 유니버스 수집 실패(DATA_GO_KR_API_KEY 미설정 또는 API 오류) "
+        "— pykrx로 재시도."
+    )
+
     universe = _kr_universe_pykrx()
     if universe:
         return universe
     logger.warning(
-        "pykrx 유니버스 수집 실패 — 정적 리스트로 폴백. "
-        "전체 KOSPI+KOSDAQ을 원하면 data.krx.co.kr 계정 생성 후 "
-        "KRX_ID/KRX_PW를 GitHub secrets에 등록하세요."
+        "pykrx 유니버스 수집도 실패 — 정적 리스트로 폴백. "
+        "https://www.data.go.kr/data/15094775/openapi.do 에서 서비스키를 발급받아 "
+        "DATA_GO_KR_API_KEY로 GitHub secrets에 등록하면 전체 KOSPI+KOSDAQ을 수집합니다."
     )
     return _kr_universe_fallback()
 
