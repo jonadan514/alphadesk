@@ -158,7 +158,10 @@ class _TursoConn:
         if isinstance(v, float):
             if math.isnan(v) or math.isinf(v):
                 return {"type": "null"}
-            return {"type": "float", "value": str(v)}
+            # Hrana 프로토콜은 integer는 문자열(64비트 정밀도 손실 방지)을 기대하지만
+            # float는 실제 JSON 숫자를 기대한다 — str(v)로 감싸면 "invalid type: string,
+            # expected f64" 400 에러가 남 (turso_http.py의 _arg()는 처음부터 올바르게 처리 중).
+            return {"type": "float", "value": v}
         return {"type": "text", "value": str(v)}
 
     def execute(self, sql: str, params=()):
