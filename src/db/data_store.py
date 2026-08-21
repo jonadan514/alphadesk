@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import sqlite3
 from datetime import date
@@ -155,6 +156,8 @@ class _TursoConn:
         if isinstance(v, int):
             return {"type": "integer", "value": str(v)}
         if isinstance(v, float):
+            if math.isnan(v) or math.isinf(v):
+                return {"type": "null"}
             return {"type": "float", "value": str(v)}
         return {"type": "text", "value": str(v)}
 
