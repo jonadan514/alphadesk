@@ -171,7 +171,14 @@ class _TursoConn:
             {"type": "close"},
         ]}
         r = _req.post(self._url, headers=self._headers, json=payload, timeout=30)
-        r.raise_for_status()
+        if r.status_code >= 400:
+            # raise_for_status()는 응답 본문을 버려 원인 파악이 어려움 — Turso가 돌려준
+            # 실제 에러 메시지(어떤 statement/인자가 문제인지)를 그대로 노출한다.
+            raise RuntimeError(
+                f"Turso HTTP {r.status_code} for statement: {sql[:200]!r}\n"
+                f"args: {stmt.get('args')}\n"
+                f"response: {r.text[:2000]}"
+            )
         data = r.json()
         res = data["results"][0]
         if res["type"] == "error":
