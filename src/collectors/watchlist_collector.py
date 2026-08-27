@@ -123,10 +123,13 @@ def _kr_universe_public_api() -> list[dict]:
     """
     service_key = os.environ.get("DATA_GO_KR_API_KEY", "").strip()
     if not service_key:
+        logger.warning("DATA_GO_KR_API_KEY 환경변수가 비어있음 (GitHub secret 미등록 또는 워크플로우에 안 넘어옴)")
         return []
+    logger.info("DATA_GO_KR_API_KEY 확인됨 (길이 %d자) — 공공데이터포털 조회 시작", len(service_key))
 
     raw_items = _kr_all_symbols_public_api(service_key)
     if not raw_items:
+        logger.warning("공공데이터포털에서 종목을 하나도 못 받음 — 위 에러 로그 확인 필요")
         return []
 
     candidates = []
