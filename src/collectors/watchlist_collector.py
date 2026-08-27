@@ -24,9 +24,14 @@ KR_MIN_CAP = 200_000_000_000      # 2000억원
 
 # 공공데이터포털 "금융위원회_KRX상장종목정보" — pykrx(data.krx.co.kr 스크래핑)가
 # 자동화된 접근을 IP 차단하는 문제(2026-07~08월 4주 연속 실패, pykrx GitHub #170/#151)를
-# 우회하기 위한 1차 소스. 무료·자동승인 공식 API라 차단 위험이 훨씬 낮다.
-# https://www.data.go.kr/data/15094775/openapi.do 에서 발급받은 서비스키를
-# DATA_GO_KR_API_KEY 환경변수(GitHub secret)로 넣어야 동작한다.
+# 우회해보려 했던 1차 소스. https://www.data.go.kr/data/15094775/openapi.do 에서
+# 발급받은 서비스키를 DATA_GO_KR_API_KEY 환경변수(GitHub secret)로 넣으면 동작.
+#
+# 2026-08-27 확인: 무료·자동승인 공식 API라 지역 차단이 없을 거라 기대했지만,
+# GitHub Actions에서 apis.data.go.kr로 TCP 연결 자체가 30초 타임아웃 남
+# (ConnectTimeoutError — 해외 IP 자체를 막는 것으로 추정, pykrx와 같은 근본
+# 원인). 로컬/한국 리전 환경에서는 될 수도 있어 코드는 그대로 두고 fallback
+# 체인의 1차 시도로만 남겨둠 — 실질적으로는 매번 pykrx→정적 리스트로 떨어짐.
 KRX_LISTED_INFO_URL = "https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo"
 
 
@@ -254,13 +259,16 @@ def _kr_universe_fallback() -> list[dict]:
 
 
 def get_kr_universe() -> list[dict]:
-    """KR 유니버스. 공공데이터포털(전체, IP 차단 위험 낮음) → pykrx(전체, 종종 차단됨)
-    → 정적 대형주 리스트 순으로 시도."""
+    """KR 유니버스. 공공데이터포털(전체) → pykrx(전체) → 정적 대형주 리스트 순으로
+    시도하지만, 둘 다 GitHub Actions에서는 확인상 매번 막혀서(2026-08-27, 아래 경고
+    참고) 실질적으로는 항상 정적 리스트로 귀결된다. 한국 리전 IP로 실행하면 앞의
+    둘도 될 가능성이 있어 fallback 체인 자체는 유지해둔다."""
     universe = _kr_universe_public_api()
     if universe:
         return universe
     logger.warning(
-        "공공데이터포털 유니버스 수집 실패(DATA_GO_KR_API_KEY 미설정 또는 API 오류) "
+        "공공데이터포털 유니버스 수집 실패(DATA_GO_KR_API_KEY 미설정 또는 API 오류 — "
+        "GitHub Actions에서는 apis.data.go.kr 자체가 연결 차단된 것으로 확인됨) "
         "— pykrx로 재시도."
     )
 
@@ -269,8 +277,8 @@ def get_kr_universe() -> list[dict]:
         return universe
     logger.warning(
         "pykrx 유니버스 수집도 실패 — 정적 리스트로 폴백. "
-        "https://www.data.go.kr/data/15094775/openapi.do 에서 서비스키를 발급받아 "
-        "DATA_GO_KR_API_KEY로 GitHub secrets에 등록하면 전체 KOSPI+KOSDAQ을 수집합니다."
+        "(공공데이터포털·pykrx 둘 다 GitHub Actions에서 IP 차단으로 확인됨 — "
+        "한국 리전 서버/프록시 없이는 근본 해결 불가, 정적 리스트가 현재 안정적인 상태)"
     )
     return _kr_universe_fallback()
 
