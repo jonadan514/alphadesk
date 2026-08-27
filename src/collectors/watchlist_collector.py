@@ -96,16 +96,24 @@ def _kr_all_symbols_public_api(service_key: str) -> list[dict]:
             break
 
         result_code = body.get("header", {}).get("resultCode", "")
+        result_msg = body.get("header", {}).get("resultMsg", "")
         if result_code != "00":
-            logger.error("공공데이터포털 API 에러 코드 %s: %s", result_code,
-                          body.get("header", {}).get("resultMsg", ""))
+            logger.error("공공데이터포털 API 에러 코드 %s: %s", result_code, result_msg)
             break
 
-        page_items = body.get("body", {}).get("items", {})
+        resp_body = body.get("body", {})
+        page_items = resp_body.get("items", {})
         page_items = page_items.get("item", []) if page_items else []
         if isinstance(page_items, dict):  # 결과 1건이면 리스트가 아니라 dict로 옴
             page_items = [page_items]
         if not page_items:
+            if page_no == 1:
+                logger.warning(
+                    "공공데이터포털 정상 응답(resultCode=%s %s)인데 종목 0건 — "
+                    "basDt=%s, totalCount=%s, body 원본: %s",
+                    result_code, result_msg, base_dt,
+                    resp_body.get("totalCount"), resp.text[:500],
+                )
             break
 
         items.extend(page_items)
