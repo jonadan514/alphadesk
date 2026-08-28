@@ -44,17 +44,10 @@ async function ensureTables(client: ReturnType<typeof getClient>, picksTable: st
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
     `),
-    client.execute(`
-      CREATE TABLE IF NOT EXISTS my_trade_returns (
-        trade_id INTEGER PRIMARY KEY, market TEXT NOT NULL, symbol TEXT NOT NULL, trade_date TEXT NOT NULL,
-        entry_price REAL, ${retCols},
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )
-    `),
   ]);
   // 이미 배포되어 있던(30/60/90일 컬럼만 있는) 테이블에 새 기간 컬럼을 뒤늦게 추가.
   // 컬럼이 이미 있으면 에러 — 하나씩 개별 실행하고 실패는 무시(멱등적).
-  for (const table of [picksTable, benchTable, "my_trade_returns"]) {
+  for (const table of [picksTable, benchTable]) {
     for (const col of RET_COLS) {
       try {
         await client.execute(`ALTER TABLE ${table} ADD COLUMN ${col} REAL`);
@@ -77,15 +70,11 @@ export async function GET(request: Request) {
 
     const retColList = RET_COLS.join(", ");
 
-    const [picksRes, benchRes, tradesRes] = await Promise.all([
+    const [picksRes, benchRes] = await Promise.all([
       client.execute(
         `SELECT date, symbol, grade, gate, regime, action, ${retColList} FROM ${picksTable}`
       ),
       client.execute(`SELECT date, ${retColList} FROM ${benchTable}`),
-      client.execute({
-        sql: `SELECT symbol, trade_date, ${retColList} FROM my_trade_returns WHERE market = ?`,
-        args: [market],
-      }),
     ]);
 
     // 앞쪽 6개 컬럼(date/symbol/grade/gate/regime/action) 뒤로 RET_COLS가 이어지는 고정 순서
@@ -102,16 +91,10 @@ export async function GET(request: Request) {
       RET_COLS.forEach((c, i) => { row[c] = r[1 + i] as number | null; });
       return row;
     });
-    const trades = tradesRes.rows.map((r) => {
-      const row: any = { symbol: r[0] as string, trade_date: r[1] as string };
-      RET_COLS.forEach((c, i) => { row[c] = r[2 + i] as number | null; });
-      return row;
-    });
 
     const comparison = {
       benchmark: bucket(bench),
       filtered_equal_weight: bucket(picks),
-      actual_trades: bucket(trades),
     };
 
     const byGrade: Record<string, Bucket> = {};
@@ -133,7 +116,6 @@ export async function GET(request: Request) {
       by_grade: byGrade,
       by_gate: byGate,
       total_picks: picks.length,
-      total_trades: trades.length,
       earliest_date: dates[0] ?? null,
       latest_date: dates[dates.length - 1] ?? null,
     });

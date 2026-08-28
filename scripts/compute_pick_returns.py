@@ -242,81 +242,6 @@ def run(market: str) -> None:
     _log(f"{market}: 총 {total}개 픽 수익률 upsert 완료")
 
 
-# ── 실거래(my_trades) 성과 ────────────────────────────────────────────────
-# "실제 매수한 종목" 트랙 — 성적표 3-way 비교의 세 번째 축.
-
-def _trade_returns_ddl() -> str:
-    cols = ",\n        ".join(f"{c} REAL" for c in RET_COLS)
-    return f"""
-        CREATE TABLE IF NOT EXISTS my_trade_returns (
-            trade_id     INTEGER PRIMARY KEY,
-            market       TEXT NOT NULL,
-            symbol       TEXT NOT NULL,
-            trade_date   TEXT NOT NULL,
-            entry_price  REAL,
-            {cols},
-            updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    """
-
-
-def _yahoo_symbol(market: str, symbol: str) -> str:
-    """KR 6자리 코드는 야후 조회용으로 .KS 접미사 부여. 이미 접미사 있으면 그대로."""
-    if market == "KR" and symbol.isdigit() and len(symbol) == 6:
-        return f"{symbol}.KS"
-    return symbol
-
-
-def run_trades() -> None:
-    conn = get_db()
-    conn.execute(_trade_returns_ddl())
-    _ensure_ret_columns(conn, "my_trade_returns")
-
-    rows = conn.execute(
-        "SELECT id, market, symbol, trade_date, price FROM my_trades WHERE type = 'buy'"
-    ).fetchall()
-    trades = [
-        {"id": r[0], "market": r[1], "symbol": r[2], "trade_date": r[3], "price": r[4]}
-        for r in rows
-    ]
-    _log(f"실거래: 매수 {len(trades)}건 로드")
-    if not trades:
-        return
-
-    fetcher = USPriceFetcher()
-    price_cache: dict[str, pd.DataFrame] = {}
-
-    ret_col_list = ", ".join(RET_COLS)
-    ret_placeholders = ", ".join("?" for _ in RET_COLS)
-    ret_coalesce = ",\n                ".join(
-        f"{c} = COALESCE(excluded.{c}, my_trade_returns.{c})" for c in RET_COLS
-    )
-
-    for t in trades:
-        ysym = _yahoo_symbol(t["market"], t["symbol"])
-        if ysym not in price_cache:
-            # 730일(2년) 전방 창까지 커버해야 하므로 넉넉하게 5y까지 확보
-            price_cache[ysym] = fetcher.fetch_ohlcv(ysym, period="5y")
-            time.sleep(0.2)
-
-        entry_date = date.fromisoformat(t["trade_date"])
-        fwd = _fwd_returns(price_cache[ysym], entry_date, t["price"])
-
-        conn.execute(f"""
-            INSERT INTO my_trade_returns (trade_id, market, symbol, trade_date, entry_price,
-                                           {ret_col_list}, updated_at)
-            VALUES (?, ?, ?, ?, ?, {ret_placeholders}, datetime('now'))
-            ON CONFLICT(trade_id) DO UPDATE SET
-                entry_price  = COALESCE(excluded.entry_price, my_trade_returns.entry_price),
-                {ret_coalesce},
-                updated_at   = datetime('now')
-        """, (t["id"], t["market"], t["symbol"], t["trade_date"], t["price"],
-              *[fwd.get(c) for c in RET_COLS]))
-
-    conn.commit() if hasattr(conn, "commit") else None
-    _log(f"실거래: {len(trades)}건 수익률 upsert 완료")
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--market", choices=["US", "KR", "ALL"], default="ALL")
@@ -325,7 +250,6 @@ def main() -> None:
     markets = ["US", "KR"] if args.market == "ALL" else [args.market]
     for m in markets:
         run(m)
-    run_trades()
 
 
 if __name__ == "__main__":

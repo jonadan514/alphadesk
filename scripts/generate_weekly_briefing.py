@@ -5,7 +5,7 @@
   2. 텔레그램으로 요약 발송
 
 섹션:
-  - 지난주 시장 궤적 (US/KR 게이트·체제·verdict 이력, 지수 주간 등락)
+  - 지난주 시장 궤적 (US/KR 지수 주간 등락)
   - 워치리스트 변동 (신규 진입/탈락 — watchlist_weekly_snapshots 비교)
   - 관심도 흐름 (한 주간 sentiment 상승 종목)
   - 다가오는 촉매 (내 워치리스트 종목의 네러티브 촉매 모음)
@@ -65,20 +65,7 @@ def _payload(rows: list[dict], key: str = "payload") -> list[dict]:
 # ── 섹션 수집 ────────────────────────────────────────────────────────────────
 
 def get_market_week(market: str) -> dict:
-    """최근 5거래일 verdict·regime 이력 + 현재 게이트."""
-    table = "kr_daily_reports" if market == "KR" else "data_daily_reports"
-    gate_table = "kr_market_gate" if market == "KR" else "data_market_gate"
-
-    reports = _payload(turso_exec(f"SELECT date, payload FROM {table} ORDER BY date DESC LIMIT 5"))
-    history = [
-        {"date": r["date"], "verdict": r["_data"].get("gate"), "regime": r["_data"].get("regime")}
-        for r in reversed(reports)
-    ]
-    gate_rows = _payload(turso_exec(f"SELECT payload FROM {gate_table} WHERE id = 1"))
-    gate = gate_rows[0]["_data"].get("gate") if gate_rows else None
-    regime = history[-1]["regime"] if history else None
-
-    # 지수 주간 등락 (yfinance)
+    """지수 주간 등락."""
     idx_chg = None
     try:
         import yfinance as yf
@@ -89,7 +76,7 @@ def get_market_week(market: str) -> dict:
     except Exception:
         pass
 
-    return {"gate": gate, "regime": regime, "history": history, "index_chg_1w": idx_chg}
+    return {"index_chg_1w": idx_chg}
 
 
 def get_watchlist_changes() -> dict:
@@ -192,8 +179,8 @@ def gpt_comment(briefing: dict) -> str:
     import requests
 
     compact = {
-        "us": {k: briefing["us"][k] for k in ("gate", "regime", "index_chg_1w", "history")},
-        "kr": {k: briefing["kr"][k] for k in ("gate", "regime", "index_chg_1w", "history")},
+        "us_index_chg_1w": briefing["us"]["index_chg_1w"],
+        "kr_index_chg_1w": briefing["kr"]["index_chg_1w"],
         "watchlist_added": [f"{a.get('name') or a['symbol']}" for a in briefing["watchlist"]["added"][:5]],
         "watchlist_removed": [f"{a.get('name') or a['symbol']}" for a in briefing["watchlist"]["removed"][:5]],
         "sentiment_heating": [f"{h.get('name') or h['symbol']} {h['path']}" for h in briefing["sentiment_heating"]],
@@ -203,7 +190,7 @@ def gpt_comment(briefing: dict) -> str:
 {json.dumps(compact, ensure_ascii=False, indent=1)}
 
 이 데이터만 근거로 다음 3개 문단의 주간 총평을 한국어로 작성하세요 (문단당 2~3문장, 마크다운 없이 평문):
-1. 지난주 시장 요약 — 미국·한국 체제/게이트 흐름과 지수 움직임
+1. 지난주 시장 요약 — 미국·한국 지수 움직임
 2. 워치리스트·관심도 변화의 의미 — 어떤 종류의 종목이 들어오고 나갔는지, 시장이 어디로 관심을 옮기는지
 3. 다음 주 관전 포인트 — 주의할 것과 지켜볼 것
 
@@ -247,10 +234,10 @@ def send_telegram_summary(b: dict) -> None:
 
     lines = [f"<b>📋 주간 브리핑 — {b['week']} 주</b>", ""]
     us, kr = b["us"], b["kr"]
-    lines.append(f"🇺🇸 {us.get('gate','?')} · {us.get('regime','?')}"
-                 + (f" · SPY 주간 {us['index_chg_1w']:+.1f}%" if us.get("index_chg_1w") is not None else ""))
-    lines.append(f"🇰🇷 {kr.get('gate','?')} · {kr.get('regime','?')}"
-                 + (f" · KOSPI 주간 {kr['index_chg_1w']:+.1f}%" if kr.get("index_chg_1w") is not None else ""))
+    if us.get("index_chg_1w") is not None:
+        lines.append(f"🇺🇸 SPY 주간 {us['index_chg_1w']:+.1f}%")
+    if kr.get("index_chg_1w") is not None:
+        lines.append(f"🇰🇷 KOSPI 주간 {kr['index_chg_1w']:+.1f}%")
 
     wl = b["watchlist"]
     if wl["has_prev"] and (wl["added"] or wl["removed"]):

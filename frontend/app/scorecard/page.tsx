@@ -14,11 +14,9 @@ type Bucket = Record<string, number | null> & { n: number };
 
 type ScorecardData = {
   market: string;
-  comparison: { benchmark: Bucket; filtered_equal_weight: Bucket; actual_trades: Bucket };
+  comparison: { benchmark: Bucket; filtered_equal_weight: Bucket };
   by_grade: Record<string, Bucket>;
-  by_gate: Record<string, Bucket>;
   total_picks: number;
-  total_trades: number;
   earliest_date: string | null;
   latest_date: string | null;
 };
@@ -74,7 +72,6 @@ export default function ScorecardPage() {
   const comparisonRows: { key: keyof ScorecardData["comparison"]; label: string; desc: string }[] = [
     { key: "benchmark", label: `${indexName} 단순 보유`, desc: "기준선" },
     { key: "filtered_equal_weight", label: "필터 통과 종목 균등매수", desc: "정량 필터가 값을 더했는가" },
-    { key: "actual_trades", label: "실제 매수한 종목", desc: "정성 판단이 값을 더했는가" },
   ];
   const bdCol = `fwd_${breakdownHorizon}d_ret`;
 
@@ -88,15 +85,15 @@ export default function ScorecardPage() {
         </div>
         <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
           {data.earliest_date && data.latest_date
-            ? `${data.earliest_date} ~ ${data.latest_date}  ·  픽 ${data.total_picks}개  ·  실거래 ${data.total_trades}건`
+            ? `${data.earliest_date} ~ ${data.latest_date}  ·  픽 ${data.total_picks}개`
             : "아직 집계된 데이터가 없습니다 (매주 일요일 자동 집계)."}
         </p>
       </div>
 
-      {/* 3-way 비교 — 30일~2년까지 한 번에 (단기 30/60/90 스윙 검증, 180일 이후는 장기 펀더멘털 검증) */}
+      {/* 2-way 비교 — 30일~2년까지 한 번에 (단기 30/60/90 스윙 검증, 180일 이후는 장기 펀더멘털 검증) */}
       <div className="bg-card rounded-xl p-3">
         <div className="flex items-center gap-2 mb-2">
-          <h2 className="stat-label">3-way 비교</h2>
+          <h2 className="stat-label">2-way 비교</h2>
           <InfoTooltip content="180일(6개월)부터는 1~3년 펀더멘털 보유 검증용입니다. 짧은 창(30~90일)은 참고용 스윙 검증입니다." />
         </div>
         <div className="overflow-x-auto">
@@ -132,11 +129,6 @@ export default function ScorecardPage() {
             </tbody>
           </table>
         </div>
-        {data.comparison.actual_trades.n === 0 && (
-          <p className="text-[11px] mt-2" style={{ color: "var(--text-faint)" }}>
-            실제 매수 기록이 없거나 아직 30일이 지나지 않았습니다. 포트폴리오 페이지에서 거래를 기록하면 여기 채워집니다.
-          </p>
-        )}
       </div>
 
       {/* 기간 선택 — 등급별/게이트별 카드에 공통 적용 */}
@@ -176,29 +168,6 @@ export default function ScorecardPage() {
         </div>
       </div>
 
-      {/* 게이트별 */}
-      <div className="bg-card rounded-xl p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <h2 className="stat-label">게이트 상태별 이후 {HORIZON_LABEL[breakdownHorizon]} 시장 수익률</h2>
-          <InfoTooltip content="마켓 게이트의 GO/CAUTION/STOP 구분이 실제로 의미가 있는지 확인합니다. 장기 보유라면 이 값이 낮아도 매수를 막을 이유는 아닙니다." />
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {Object.entries(data.by_gate).map(([gate, b]) => (
-            <div key={gate} className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-              <p className="text-[13px] font-black" style={{ color: "var(--text-primary)" }}>{gate}</p>
-              <p className="text-[16px] font-black font-mono mt-1" style={{ color: pctColor(b[bdCol]) }}>{pct(b[bdCol])}</p>
-              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-faint)" }}>n={b.n}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-card rounded-xl p-3">
-        <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>
-          손절 발동 종목의 손절 후 주가 추이는 페이퍼 포트폴리오 거래 이력이 충분히 쌓인 뒤 추가될 예정입니다.
-          장기(1y/3y) 페이퍼 포트폴리오는 가격 기준 자동 손절이 없고, 대신 포트폴리오 페이지에 하락·재무훼손 알림이 표시됩니다.
-        </p>
-      </div>
     </div>
   );
 }

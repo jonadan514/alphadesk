@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useMarket } from "@/src/contexts/MarketContext";
-
 type Mood = "go" | "caution" | "stop" | "all";
 interface Quote { text: string; ko: string; author: string; mood: Mood }
 
@@ -68,38 +65,15 @@ const QUOTES: Quote[] = [
   { text: "He who has a why to live can bear almost any how.", ko: "살아가야 할 이유가 있는 사람은 거의 모든 방법을 견딜 수 있다.", author: "Friedrich Nietzsche", mood: "all" },
 ];
 
-function pickQuote(verdict: string | null): Quote {
-  // 2시간마다 변경 (하루 12회)
+function pickQuote(): Quote {
+  // 2시간마다 변경 (하루 12회) — 전체 명언 풀에서 순환
   const slot = Math.floor(Date.now() / (2 * 3_600_000));
-  const mood: Mood =
-    verdict === "GO" ? "go" :
-    verdict === "CAUTION" ? "caution" :
-    verdict === "STOP" ? "stop" : "all";
-
-  const pool = QUOTES.filter(q => q.mood === mood || q.mood === "all");
-  return pool[slot % pool.length];
+  return QUOTES[slot % QUOTES.length];
 }
 
-const MOOD_COLOR: Record<string, string> = {
-  GO:      "#4ade80",
-  CAUTION: "#facc15",
-  STOP:    "#f87171",
-};
-
 export default function DailyQuote() {
-  const { market } = useMarket();
-  const [verdict, setVerdict] = useState<string | null>(null);
-
-  useEffect(() => {
-    const url = market === "KR" ? "/api/data/kr/market-gate" : "/api/data/market-gate";
-    fetch(url)
-      .then(r => r.json())
-      .then(d => setVerdict(d.gate ?? null))
-      .catch(() => {});
-  }, [market]);
-
-  const { text, ko, author } = pickQuote(verdict);
-  const accentColor = verdict ? (MOOD_COLOR[verdict] ?? "#726b58") : "#726b58";
+  const { text, ko, author } = pickQuote();
+  const accentColor = "#ffb020";
 
   return (
     <div className="hidden lg:flex items-center gap-3 min-w-0 flex-1">

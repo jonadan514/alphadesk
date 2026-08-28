@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMarket } from "@/src/contexts/MarketContext";
 
-// 사이드바 그룹 — 기능별이 아닌 사용자 투자 흐름 순서로 배치 (2026-07 UI 개선)
-// 오늘(판단) → 시장 → 종목 → 투자 실행 → 관리
+// 사이드바 그룹 — 기능별이 아닌 사용자 투자 흐름 순서로 배치
+// 오늘(판단) → 시장 → 종목 → 관리
 const NAV_GROUPS = [
   {
     label: "오늘",
@@ -18,7 +18,6 @@ const NAV_GROUPS = [
   {
     label: "시장",
     items: [
-      { href: "/regime",    label: "시장 체제", emoji: "🧭", color: "#ffb020" },
       { href: "/sector",    label: "섹터 분석", emoji: "🏭", color: "#ffb020" },
     ],
   },
@@ -29,16 +28,8 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "투자 실행",
-    items: [
-      { href: "/workflow",  label: "매수 체크",  emoji: "✅", color: "#ffb020" },
-      { href: "/portfolio", label: "포트폴리오",  emoji: "💼", color: "#ffb020" },
-    ],
-  },
-  {
     label: "관리",
     items: [
-      { href: "/risk",      label: "리스크",    emoji: "🛡️", color: "#ffb020" },
       { href: "/scorecard", label: "성적표",    emoji: "📈", color: "#ffb020" },
       { href: "/guide",     label: "가이드",     emoji: "📖", color: "#ffb020" },
     ],

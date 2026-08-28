@@ -2,7 +2,6 @@ import json
 import math
 import os
 import sqlite3
-from datetime import date
 from pathlib import Path
 
 DB_PATH = os.getenv("DATA_DB_PATH", "output/data.db")
@@ -243,21 +242,6 @@ def init_db(conn: sqlite3.Connection) -> None:
 # Writes  (Python-side only; frontend reads via SELECT)
 # --------------------------------------------------------------------------
 
-def upsert_daily_report(conn: sqlite3.Connection, date: str, data: dict) -> None:
-    payload = json.dumps(data, ensure_ascii=False, default=str)
-    conn.execute(
-        """
-        INSERT INTO data_daily_reports (date, payload)
-        VALUES (?, ?)
-        ON CONFLICT(date) DO UPDATE SET
-            payload    = excluded.payload,
-            created_at = datetime('now')
-        """,
-        (date, payload),
-    )
-    conn.commit()
-
-
 def _upsert_snapshot(conn: sqlite3.Connection, table: str, data: dict) -> None:
     payload = json.dumps(data, ensure_ascii=False, default=str)
     conn.execute(
@@ -273,49 +257,8 @@ def _upsert_snapshot(conn: sqlite3.Connection, table: str, data: dict) -> None:
     conn.commit()
 
 
-def upsert_regime(conn: sqlite3.Connection, data: dict) -> None:
-    _upsert_snapshot(conn, "data_regime", data)
-
-
-def upsert_regime_history(conn: sqlite3.Connection, as_of: str, data: dict, table: str = "data_regime_history") -> None:
-    """weighted_score+센서별 점수를 날짜별로 보존 — data_regime/kr_regime은 매일 덮어써져서
-    "오늘이 임계값에 얼마나 여유있는 GO/STOP인지"를 추세로 볼 수 없다."""
-    payload = json.dumps(data, ensure_ascii=False, default=str)
-    conn.execute(
-        f"""
-        INSERT INTO {table} (date, payload)
-        VALUES (?, ?)
-        ON CONFLICT(date) DO UPDATE SET
-            payload    = excluded.payload,
-            created_at = datetime('now')
-        """,
-        (as_of, payload),
-    )
-
-
-def upsert_market_gate(conn: sqlite3.Connection, data: dict) -> None:
-    _upsert_snapshot(conn, "data_market_gate", data)
-
-
 def upsert_gbm_predictions(conn: sqlite3.Connection, data: dict) -> None:
     _upsert_snapshot(conn, "data_gbm_predictions", data)
-
-
-def upsert_index_prediction(conn: sqlite3.Connection, data: dict) -> None:
-    _upsert_snapshot(conn, "data_index_prediction", data)
-    today = date.today().isoformat()
-    conn.execute("""
-        INSERT OR REPLACE INTO data_prediction_history (date, payload)
-        VALUES (?, ?)
-    """, (today, json.dumps(data, ensure_ascii=False)))
-
-
-def upsert_kr_index_prediction(conn: sqlite3.Connection, data: dict) -> None:
-    _upsert_snapshot(conn, "kr_index_prediction", data)
-
-
-def upsert_risk(conn: sqlite3.Connection, data: dict) -> None:
-    _upsert_snapshot(conn, "data_risk", data)
 
 
 def upsert_performance(conn: sqlite3.Connection, data: dict) -> None:
@@ -329,16 +272,6 @@ def upsert_costs(conn: sqlite3.Connection, data: dict) -> None:
 # --------------------------------------------------------------------------
 # Reads
 # --------------------------------------------------------------------------
-
-def get_latest_report(conn: sqlite3.Connection) -> dict:
-    row = conn.execute(
-        "SELECT payload FROM data_daily_reports ORDER BY date DESC LIMIT 1"
-    ).fetchone()
-    if row is None:
-        return {}
-    payload = row[0] if not hasattr(row, "keys") else row["payload"]
-    return json.loads(payload)
-
 
 def get_snapshot(conn: sqlite3.Connection, table: str) -> dict:
     row = conn.execute(f"SELECT payload FROM {table} WHERE id = 1").fetchone()

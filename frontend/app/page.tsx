@@ -4,207 +4,34 @@ import { useEffect, useState } from "react";
 import InfoTooltip from "@/src/components/InfoTooltip";
 import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
-import MiniPortfolio from "@/src/components/MiniPortfolio";
-
-const VERDICT_COLOR: Record<string, string> = {
-  GO:      "#4ade80",
-  CAUTION: "#facc15",
-  STOP:    "#f87171",
-};
-
-const US_SENSOR_LABEL: Record<string, string> = {
-  vix: "VIX", trend: "TREND", breadth: "BREADTH",
-  credit: "CREDIT", yield_curve: "YIELD CURVE", put_call: "PUT/CALL",
-};
-
-const KR_SENSOR_LABEL: Record<string, string> = {
-  trend: "TREND", volatility: "VOLATILITY", momentum: "MOMENTUM", breadth: "BREADTH",
-};
-
-function sensorInfo(score: number, isKR: boolean) {
-  if (isKR) {
-    if (score >= 1.5) return { text: "강세", color: "#4ade80" };
-    if (score >= 0.5) return { text: "중립", color: "#facc15" };
-    if (score >= 0)   return { text: "약세", color: "#fb923c" };
-    return { text: "위기", color: "#f87171" };
-  }
-  if (score <= 0.5) return { text: "위험 선호", color: "#4ade80" };
-  if (score <= 1.0) return { text: "중립",     color: "#facc15" };
-  if (score <= 2.0) return { text: "주의",     color: "#fb923c" };
-  return { text: "위험 회피", color: "#f87171" };
-}
 
 export default function HomePage() {
   const { market } = useMarket();
-  const [data, setData] = useState<any>(null);
+  const [candidateCount, setCandidateCount] = useState<number | null>(null);
 
   useEffect(() => {
-    setData(null);
-    if (market === "KR") {
-      Promise.allSettled([
-        fetch("/api/data/kr/market-gate").then(r => r.json()),
-        fetch("/api/data/kr/regime").then(r => r.json()),
-        fetch("/api/data/kr/reports?limit=1").then(r => r.json()),
-        fetch("/api/data/kr/forecast").then(r => r.json()),
-        fetch("/api/watchlist/candidates?market=KR").then(r => r.json()),
-      ]).then(([gateRes, regimeRes, reportsRes, predRes, candRes]) => {
-        setData({
-          gate:    gateRes.status    === "fulfilled" ? gateRes.value    : {},
-          regime:  regimeRes.status  === "fulfilled" ? regimeRes.value  : {},
-          report:  reportsRes.status === "fulfilled" ? (reportsRes.value[0] ?? {}) : {},
-          prediction: predRes.status === "fulfilled" ? predRes.value : null,
-          candidateCount: candRes.status === "fulfilled" ? ((candRes.value?.candidates ?? []).length) : 0,
-        });
-      });
-    } else {
-      Promise.allSettled([
-        fetch("/api/data/market-gate").then(r => r.json()),
-        fetch("/api/data/regime").then(r => r.json()),
-        fetch("/api/data/index-prediction").then(r => r.json()),
-        fetch("/api/data/reports?limit=1").then(r => r.json()),
-        fetch("/api/watchlist/candidates?market=US").then(r => r.json()),
-      ]).then(([gateRes, regimeRes, predRes, reportsRes, candRes]) => {
-        setData({
-          gate:       gateRes.status    === "fulfilled" ? gateRes.value    : {},
-          regime:     regimeRes.status  === "fulfilled" ? regimeRes.value  : {},
-          prediction: predRes.status    === "fulfilled" ? predRes.value    : {},
-          report:     reportsRes.status === "fulfilled" ? (reportsRes.value[0] ?? {}) : {},
-          candidateCount: candRes.status === "fulfilled" ? ((candRes.value?.candidates ?? []).length) : 0,
-        });
-      });
-    }
+    setCandidateCount(null);
+    fetch(`/api/watchlist/candidates?market=${market}`)
+      .then(r => r.json())
+      .then(d => setCandidateCount((d?.candidates ?? []).length))
+      .catch(() => setCandidateCount(0));
   }, [market]);
 
-  if (!data) return (
+  const isKR = market === "KR";
+  const indexName = isKR ? "KOSPI" : "S&P 500";
+
+  if (candidateCount === null) return (
     <div className="space-y-3">
       <div className="h-32 rounded-xl animate-pulse" style={{ background: "#111009" }} />
     </div>
   );
 
-  const isKR = market === "KR";
-  const { gate, regime, prediction, candidateCount } = data;
-  const spy = prediction?.spy ?? (prediction?.direction ? prediction : null);
-  const predTitle = isKR ? "KOSPI 예측" : "SPY 예측";
-  const dirInfo = (d?: string) =>
-    d === "bullish" ? { text: "강세", color: "#4ade80" } :
-    d === "bearish" ? { text: "약세", color: "#f87171" } :
-    { text: "중립", color: "#facc15" };
-  // 스윙 스크리너 제거 이후 "오늘의 종합 판단"은 마켓 게이트가 사실상의 신호다.
-  // (장기 투자에서는 게이트도 참고 지표일 뿐 — 상세 근거는 매수체크 탭에서 확인)
-  const verdict = gate.gate ?? "—";
-  const verdictColor = VERDICT_COLOR[verdict] ?? "#ece7d8";
-  const sensors: Record<string, number> = regime.sensor_scores ?? {};
-  const sensorLabel = isKR ? KR_SENSOR_LABEL : US_SENSOR_LABEL;
-  const indexName = isKR ? "KOSPI" : "S&P 500";
-
-  // ── 판단 → 행동 문장 (2026-07 UI 개선: 상태만이 아니라 "오늘 할 일"을 함께) ──
-  const verdictMeaning =
-    verdict === "GO" ? "신규 진입 가능" :
-    verdict === "CAUTION" ? "경계 — 신중하게 접근" :
-    verdict === "STOP" ? "신규 진입 자제" : "데이터 대기 중";
-  const verdictBg =
-    verdict === "GO" ? "#4ade8014" : verdict === "CAUTION" ? "#facc1514" : verdict === "STOP" ? "#f8717114" : "var(--bg-raised)";
-  const todayActions: string[] =
-    verdict === "GO" ? [`워치리스트 후보 ${candidateCount}개 직접 검토`, "장기(1~3년) 보유라면 게이트와 무관하게 진입 검토 가능", "신규 진입은 분할 매수 권장"] :
-    verdict === "CAUTION" ? ["신규 매수 자제 — 기존 포지션 유지", "장기 투자라면 참고 경고로만 취급 가능(매수체크 탭)", "손절선 재점검"] :
-    verdict === "STOP" ? ["단기 신규 진입 보류", "장기 투자라면 저평가 우량주 진입은 정당할 수 있음", "보유 종목 손절선 엄격 적용"] :
-    ["주간 분석 실행 후 재확인"];
-
-  // ── 모바일 요약 뷰 ──────────────────────────────────────
-  const MobileView = () => (
-    <div className="md:hidden space-y-3 pb-6">
-      {/* 내 포트폴리오 */}
-      <MiniPortfolio />
-
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FlagIcon market={isKR ? "KR" : "US"} size={16} />
-          <span className="text-base font-bold text-white">{isKR ? "한국 주식" : "미국 주식"}</span>
-        </div>
-        <span className="rounded px-2 py-0.5 text-[12px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
-          LIVE
-        </span>
-      </div>
-
-      {/* 종합 판단 */}
-      <div
-        className="rounded-xl p-5 flex flex-col items-center gap-1 text-center"
-        style={{
-          background: verdict === "GO" ? "#4ade8018" : verdict === "CAUTION" ? "#facc1518" : "#f8717118",
-          border: `1px solid ${verdictColor}44`,
-        }}
-      >
-        <p className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: verdictColor }}>종합 판단</p>
-        <p className="text-6xl font-black" style={{ color: verdictColor }}>{verdict}</p>
-        <p className="text-[13px] mt-1" style={{ color: "#a39c88" }}>
-          {verdict === "GO" ? "진입 가능" : verdict === "CAUTION" ? "경계 — 신중하게" : verdict === "STOP" ? "신규 진입 자제" : "—"}
-        </p>
-      </div>
-
-      {/* 핵심 지표 3개 */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: "체제 점수", value: regime.weighted_score != null ? regime.weighted_score.toFixed(2) : "—", sub: regime.regime_label ?? regime.regime ?? "—", color: "#ffb020" },
-          { label: "워치리스트", value: String(candidateCount), sub: isKR ? "KOSPI 후보 (순위 없음)" : "S&P 후보 (순위 없음)", color: "#ece7d8" },
-          { label: "마켓 게이트", value: gate.gate ?? "—", sub: isKR ? (gate.reason ?? "") : `avg ${gate.avg_score?.toFixed(1) ?? "—"}`, color: VERDICT_COLOR[gate.gate] ?? "#ece7d8" },
-        ].map(({ label, value, sub, color }) => (
-          <div key={label} className="rounded-xl p-3 flex flex-col gap-1" style={{ background: "var(--bg-card)" }}>
-            <p className="text-[11px] uppercase tracking-wide" style={{ color: "#726b58" }}>{label}</p>
-            <p className="text-2xl font-black leading-none" style={{ color }}>{value}</p>
-            <p className="text-[11px] truncate" style={{ color: "#726b58" }}>{sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* SPY / KOSPI 예측 */}
-      {spy && (
-        <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: "var(--bg-card)" }}>
-          <div>
-            <p className="text-[12px] uppercase tracking-wide mb-1" style={{ color: "#726b58" }}>{predTitle}</p>
-            <p className="text-xl font-black" style={{ color: dirInfo(spy.direction).color }}>
-              {dirInfo(spy.direction).text}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-[12px]" style={{ color: "#726b58" }}>확률</p>
-            <p className="text-xl font-bold text-white">
-              {spy.probability != null ? `${Math.round(spy.probability * 100)}%` : "—"}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* 워치리스트 후보 — 순위 없는 리스트업 */}
-      {candidateCount > 0 && (
-        <a href="/watchlist" className="block rounded-xl p-3" style={{ background: "var(--bg-card)" }}>
-          <p className="text-[12px] uppercase tracking-wide mb-1" style={{ color: "#726b58" }}>
-            이번 주 워치리스트 후보
-          </p>
-          <p className="text-2xl font-black" style={{ color: "#ffb020" }}>{candidateCount}개</p>
-          <p className="text-[12px] mt-1" style={{ color: "#726b58" }}>재무 필터 통과, 순위 없음 — 탭해서 확인</p>
-        </a>
-      )}
-
-      {candidateCount === 0 && Object.keys(sensors).length === 0 && (
-        <div className="rounded-xl p-4 text-center text-base" style={{ background: "var(--bg-card)", color: "#726b58" }}>
-          데이터 없음. 분석 실행 후 재확인하세요.
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="space-y-3">
-      <MobileView />
-
-      {/* 데스크톱 전용 ─────────────────────────────────── */}
-      <div className="hidden md:block space-y-2">
-
       {/* Title */}
       <div className="flex items-center gap-3">
         <span className="text-[13px] font-bold px-2 py-0.5 rounded" style={{ background: "#262112", color: "#726b58" }}>
-          <FlagIcon market={isKR ? "KR" : "US"} size={14} />{" "}{isKR ? "KOSPI" : "S&P 500"}
+          <FlagIcon market={isKR ? "KR" : "US"} size={14} />{" "}{indexName}
         </span>
         <h1 className="text-xl font-bold text-white">
           {isKR ? "한국 주식 마켓 인텔리전스" : "미국 주식 마켓 인텔리전스"}
@@ -214,172 +41,47 @@ export default function HomePage() {
         </span>
       </div>
 
-      {/* ── 오늘의 투자 판단 (Primary) — 상태 + 이유 + 행동을 한 카드에 통합 ── */}
-      <div className="card-primary" style={{ background: verdictBg, borderColor: `${verdictColor}44` }}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* 판단 */}
-          <div className="flex flex-col justify-center">
+      {/* 워치리스트 후보 — 순위 없는 리스트업 (Primary) */}
+      <a href="/watchlist" className="card-primary block" style={{ background: "var(--bg-raised)" }}>
+        <div className="flex items-center justify-between">
+          <div>
             <div className="flex items-center gap-1.5">
-              <p className="stat-label" style={{ fontSize: 13 }}>오늘의 투자 판단</p>
-              <InfoTooltip content="시장 체제·게이트·스크리닝 결과를 종합한 최종 판단입니다." />
+              <p className="stat-label" style={{ fontSize: 13 }}>이번 주 워치리스트 후보</p>
+              <InfoTooltip content="재무 건전성 필터(Piotroski 등)를 통과한 종목을 순위 없이 리스트업합니다. 매수 신호가 아닙니다." />
             </div>
-            <p className="text-5xl font-black mt-1" style={{ color: verdictColor }}>{verdict}</p>
-            <p className="text-[14px] mt-1" style={{ color: "var(--text-secondary)" }}>{verdictMeaning}</p>
+            <p className="text-5xl font-black mt-1" style={{ color: "#ffb020" }}>
+              {candidateCount}
+              <span className="text-lg font-normal ml-2" style={{ color: "var(--text-faint)" }}>개</span>
+            </p>
+            <p className="text-[13px] mt-1" style={{ color: "var(--text-secondary)" }}>
+              재무 필터 통과, 순위 없음 — 탭해서 직접 검토
+            </p>
           </div>
-
-          {/* 오늘 할 일 */}
-          <div className="md:border-l md:pl-4" style={{ borderColor: "var(--border-ctrl)" }}>
-            <p className="stat-label mb-1.5" style={{ fontSize: 13 }}>오늘 할 일</p>
-            <ol className="space-y-1">
-              {todayActions.map((a, i) => (
-                <li key={i} className="flex gap-2 text-[13px]" style={{ color: "var(--text-secondary)" }}>
-                  <span className="font-bold shrink-0" style={{ color: "#ffb020" }}>{i + 1}</span>
-                  <span>{a}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          {/* 주의 신호 */}
-          <div className="md:border-l md:pl-4" style={{ borderColor: "var(--border-ctrl)" }}>
-            <p className="stat-label mb-1.5" style={{ fontSize: 13 }}>주의 신호</p>
-            {spy ? (
-              <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-                {predTitle} 다음 주{" "}
-                <span className="font-bold" style={{ color: dirInfo(spy.direction).color }}>
-                  {dirInfo(spy.direction).text}
-                </span>
-                {spy.probability != null && (
-                  <span className="font-mono" style={{ color: "var(--text-primary)" }}> {Math.round(spy.probability * 100)}%</span>
-                )}
-                {spy.cv_accuracy != null && (
-                  <span style={{ color: "var(--text-faint)" }}> · 모델 정확도 {Math.round(spy.cv_accuracy * 100)}%</span>
-                )}
-              </div>
-            ) : (
-              <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>특이 주의 신호 없음</p>
-            )}
-          </div>
+          <span className="text-[13px] shrink-0" style={{ color: "var(--text-muted)" }}>확인하기 →</span>
         </div>
+      </a>
+
+      {candidateCount === 0 && (
+        <div className="bg-card rounded-lg p-3 text-center text-base" style={{ color: "#726b58" }}>
+          이번 주 통과 후보가 없습니다. GitHub → Actions → Weekly Watchlist Screen 실행 여부를 확인하세요.
+        </div>
+      )}
+
+      {/* 이동 링크 */}
+      <div className="grid grid-cols-2 gap-2">
+        <a href="/briefing" className="bg-card rounded-lg p-3 block">
+          <p className="stat-label mb-1" style={{ fontSize: 13 }}>주간 브리핑</p>
+          <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+            지난주 지수 흐름·워치리스트 변동·관심도 요약
+          </p>
+        </a>
+        <a href="/sector" className="bg-card rounded-lg p-3 block">
+          <p className="stat-label mb-1" style={{ fontSize: 13 }}>섹터 분석</p>
+          <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+            {indexName} 섹터별 상대강도
+          </p>
+        </a>
       </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        {/* Left: sensors + watchlist */}
-        <div className="col-span-2 space-y-2">
-          {/* Sensors */}
-          {Object.keys(sensors).length > 0 && (
-            <div className="bg-card rounded-lg p-2">
-              <div className="flex items-center gap-2 mb-1.5">
-                <h2 className="stat-label" style={{ fontSize: 13 }}>핵심 체제 지표</h2>
-                <InfoTooltip content="각 센서는 독립적으로 시장 국면을 측정합니다." />
-              </div>
-              {(() => {
-                const entries = Object.entries(sensors);
-                const cols = entries.length <= 4 ? entries.length : entries.length <= 6 ? 3 : 4;
-                return (
-                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-                    {entries.map(([key, val]) => {
-                      const info = sensorInfo(val, isKR);
-                      return (
-                        <div key={key} className="rounded-xl p-1.5" style={{ background: "var(--bg-inset)", border: `1px solid ${info.color}33` }}>
-                          <p className="text-[13px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>
-                            {sensorLabel[key] ?? key}
-                          </p>
-                          <p className="text-base font-bold" style={{ color: info.color }}>{info.text}</p>
-                          <p className="text-[13px] font-mono" style={{ color: "var(--text-faint)" }}>{val.toFixed(2)}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* 지수 주요 지표 (US/KR 공통) */}
-          {(() => {
-            const idxLast = isKR ? regime.kospi_last : regime.spy_last;
-            const idxSma  = isKR ? regime.kospi_sma200 : regime.spy_sma200;
-            if (!idxLast) return null;
-            return (
-              <div className="bg-card rounded-lg p-2">
-                <h2 className="stat-label mb-1.5" style={{ fontSize: 13 }}>{indexName} 주요 지표</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { label: isKR ? "KOSPI" : "S&P 500", val: idxLast?.toLocaleString(), color: "var(--text-primary)" },
-                    { label: "SMA 200", val: idxSma?.toLocaleString(), color: idxLast >= (idxSma ?? 0) ? "#4ade80" : "#f87171" },
-                    { label: "변동성(60일)", val: regime.vol_60d != null ? `${regime.vol_60d.toFixed(1)}%` : "—", color: regime.vol_60d > 25 ? "#f87171" : "#facc15" },
-                    { label: "모멘텀(20일)", val: regime.mom_20d != null ? `${regime.mom_20d >= 0 ? "+" : ""}${regime.mom_20d.toFixed(1)}%` : "—", color: regime.mom_20d != null ? (regime.mom_20d >= 0 ? "#4ade80" : "#f87171") : "var(--text-muted)" },
-                  ].map(({ label, val, color }) => (
-                    <div key={label} className="rounded-lg p-1.5 text-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-                      <p className="text-[13px] mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
-                      <p className="text-lg font-bold" style={{ color }}>{val ?? "—"}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* 워치리스트 후보 — 순위 없는 리스트업 */}
-          {candidateCount > 0 && (
-            <a href="/watchlist" className="block bg-card rounded-lg p-2">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="stat-label" style={{ fontSize: 13 }}>이번 주 워치리스트 후보</h2>
-                  <InfoTooltip content="재무 건전성 필터(Piotroski 등)를 통과한 종목을 순위 없이 리스트업합니다." />
-                </div>
-                <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>탭해서 확인 →</span>
-              </div>
-              <p className="text-3xl font-black" style={{ color: "#ffb020" }}>{candidateCount}<span className="text-base font-normal ml-1" style={{ color: "var(--text-faint)" }}>개</span></p>
-            </a>
-          )}
-
-          {!data || (candidateCount === 0 && Object.keys(sensors).length === 0) && (
-            <div className="bg-card rounded-lg p-3 text-center text-base text-[#726b58]">
-              데이터 없음. GitHub → Actions → Weekly Market Analysis 실행 후 재확인하세요.
-            </div>
-          )}
-        </div>
-
-        {/* Right */}
-        <div className="space-y-2">
-          {/* 근거 요약 — 판단을 뒷받침하는 보조 지표 (큰 KPI에서 강등) */}
-          <div className="bg-card rounded-lg p-2">
-            <h2 className="stat-label mb-1.5" style={{ fontSize: 13 }}>핵심 근거</h2>
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[13px]">
-                <span style={{ color: "var(--text-muted)" }}>시장 체제</span>
-                <span className="font-mono font-semibold" style={{ color: "var(--text-primary)" }}>
-                  {regime.regime?.replace("_", " ") ?? "—"}
-                  <span style={{ color: "var(--text-faint)" }}> · {regime.weighted_score?.toFixed(2) ?? "—"}</span>
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[13px]">
-                <span style={{ color: "var(--text-muted)" }}>마켓 게이트</span>
-                <span className="font-bold" style={{ color: VERDICT_COLOR[gate.gate] ?? "var(--text-primary)" }}>
-                  {gate.gate ?? "—"}
-                  {!isKR && gate.avg_score != null && (
-                    <span className="font-mono font-normal" style={{ color: "var(--text-faint)" }}> · avg {gate.avg_score.toFixed(2)}</span>
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[13px]">
-                <span style={{ color: "var(--text-muted)" }}>워치리스트 후보</span>
-                <span className="font-mono font-semibold" style={{ color: "var(--text-primary)" }}>{candidateCount}종목 (순위 없음)</span>
-              </div>
-              {isKR && gate.reason && (
-                <p className="text-[12px] pt-1" style={{ color: "var(--text-secondary)", borderTop: "1px solid var(--border)" }}>{gate.reason}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Mini portfolio */}
-          <MiniPortfolio />
-        </div>
-      </div>
-
-      </div> {/* end hidden md:block */}
     </div>
   );
 }

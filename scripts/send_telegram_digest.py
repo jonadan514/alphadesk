@@ -31,8 +31,6 @@ from src.db.turso_http import get_credentials, query as _turso_query
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-STOP_LOSS_PCT = {"risk_on": 10, "neutral": 8, "risk_off": 5, "crisis": 3}
-GATE_KO = {"GO": "GO (매수 가능)", "CAUTION": "CAUTION (신중)", "STOP": "STOP (관망)"}
 SENTIMENT_KO = {"HOT": "🔥HOT", "WARM": "🌤WARM", "COLD": "❄️COLD"}
 
 
@@ -53,16 +51,6 @@ def turso_query(sql: str, args: list | None = None) -> list[dict]:
         return []
 
 
-def get_snapshot(table: str) -> dict:
-    rows = turso_query(f"SELECT payload FROM {table} WHERE id = 1")
-    if not rows:
-        return {}
-    try:
-        return json.loads(rows[0]["payload"])
-    except Exception:
-        return {}
-
-
 def get_latest_timeseries(table: str) -> dict:
     rows = turso_query(f"SELECT payload FROM {table} ORDER BY date DESC LIMIT 1")
     if not rows:
@@ -73,29 +61,6 @@ def get_latest_timeseries(table: str) -> dict:
         return {}
 
 
-# ── 가격 조회 (yfinance) ────────────────────────────────────────────────────
-
-def fetch_prices(holdings: list[dict]) -> dict[str, float]:
-    if not holdings:
-        return {}
-    import yfinance as yf
-
-    out: dict[str, float] = {}
-    for h in holdings:
-        symbol, market = h["symbol"], h["market"]
-        candidates = [f"{symbol}.KS", f"{symbol}.KQ"] if market == "KR" else [symbol]
-        for ysym in candidates:
-            try:
-                info = yf.Ticker(ysym).fast_info
-                price = getattr(info, "last_price", None) or info.get("lastPrice")
-                if price:
-                    out[f"{market}:{symbol}"] = float(price)
-                    break
-            except Exception:
-                continue
-    return out
-
-
 # ── 데이터 수집 ──────────────────────────────────────────────────────────────
 
 def disp(market: str, symbol: str, name: str | None = None) -> str:
@@ -103,50 +68,6 @@ def disp(market: str, symbol: str, name: str | None = None) -> str:
     flag = "🇰🇷" if market == "KR" else "🇺🇸"
     label = (name or symbol) if market == "KR" else symbol
     return f"{flag} {label}"
-
-
-def compute_holdings(trades: list[dict]) -> list[dict]:
-    """my_trades → 현재 보유 종목 (프론트 portfolio 페이지와 동일한 로직)."""
-    acc: dict[str, dict] = {}
-    for t in sorted(trades, key=lambda r: (r.get("trade_date", ""), r.get("id", 0))):
-        key = f"{t['market']}:{t['symbol']}"
-        cur = acc.setdefault(key, {"market": t["market"], "symbol": t["symbol"],
-                                   "name": t.get("name"), "shares": 0.0, "cost": 0.0})
-        price, shares = float(t["price"]), float(t["shares"])
-        if t["type"] == "buy":
-            total_shares = cur["shares"] + shares
-            cur["cost"] = (cur["cost"] * cur["shares"] + price * shares) / total_shares if total_shares else 0
-            cur["shares"] = total_shares
-        else:
-            cur["shares"] = max(0.0, cur["shares"] - shares)
-    return [v for v in acc.values() if v["shares"] > 0]
-
-
-def get_stop_loss_alerts() -> list[str]:
-    trades = turso_query("SELECT market, symbol, name, type, trade_date, price, shares, id FROM my_trades")
-    holdings = compute_holdings(trades)
-    if not holdings:
-        return []
-
-    prices = fetch_prices(holdings)
-    regimes = {
-        "US": get_snapshot("data_regime").get("regime", "neutral"),
-        "KR": get_snapshot("kr_regime").get("regime", "neutral"),
-    }
-
-    alerts = []
-    for h in holdings:
-        price = prices.get(f"{h['market']}:{h['symbol']}")
-        if price is None or h["cost"] <= 0:
-            continue
-        pl_pct = (price / h["cost"] - 1) * 100
-        threshold = STOP_LOSS_PCT.get(regimes.get(h["market"], "neutral"), 8)
-        label = disp(h["market"], h["symbol"], h.get("name"))
-        if pl_pct <= -threshold:
-            alerts.append(f"🔴 {label} {pl_pct:+.1f}% — 손절선(-{threshold}%) 도달")
-        elif pl_pct <= -threshold + 2:
-            alerts.append(f"🟠 {label} {pl_pct:+.1f}% — 손절선 근접(-{threshold}%)")
-    return alerts
 
 
 def get_narrative_shifts() -> list[str]:
@@ -245,35 +166,25 @@ def mark_sent(signature: str) -> None:
 def main() -> None:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    us_gate = get_snapshot("data_market_gate")
-    kr_gate = get_snapshot("kr_market_gate")
-    stop_alerts = get_stop_loss_alerts()
     shifts = get_narrative_shifts()
     cross_hits = get_cross_hits()
 
-    us_g = us_gate.get("gate", "?")
-    kr_g = kr_gate.get("gate", "?")
-
     # 의미 있는 내용의 지문 — 날짜는 제외 (같은 내용이면 날짜만 달라도 중복)
     signature = json.dumps(
-        {"us": us_g, "kr": kr_g, "stop": stop_alerts, "cross": cross_hits, "shifts": shifts},
+        {"cross": cross_hits, "shifts": shifts},
         ensure_ascii=False, sort_keys=True,
     )
     if not should_send(signature):
         return
 
     lines = [f"<b>📊 AlphaDesk 주간 요약 — {today}</b>", ""]
-    lines.append(f"🇺🇸 US: {GATE_KO.get(us_g, us_g)}")
-    lines.append(f"🇰🇷 KR: {GATE_KO.get(kr_g, kr_g)}")
 
-    if stop_alerts:
-        lines += ["", "<b>⚠️ 손절선 경고</b>"] + stop_alerts
     if cross_hits:
         lines += ["", "<b>⭐ 워치리스트 ↔ 상위 종목 교차</b>"] + cross_hits
     if shifts:
         lines += ["", "<b>📈 관심도 상승</b>"] + shifts
 
-    if not (stop_alerts or cross_hits or shifts):
+    if not (cross_hits or shifts):
         lines += ["", "오늘은 별다른 신호 없음."]
 
     text = "\n".join(lines)

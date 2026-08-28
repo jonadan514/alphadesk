@@ -3,37 +3,12 @@
 import Link from "next/link";
 
 const GUIDE_SECTIONS = [
-  { href: "/",          icon: "⊡", label: "개요",        desc: "마켓 게이트·체제·상위 픽·지수 예측을 한 화면 요약. 오늘 시장 상태를 5초에 파악하는 시작점." },
-  { href: "/briefing",  icon: "📋", label: "주간 브리핑", desc: "매주 월요일 아침 자동 생성 — 지난주 시장 궤적·워치리스트 변동·관심도 흐름·다가오는 촉매·GPT 총평." },
-  { href: "/regime",    icon: "▦", label: "시장 체제",   desc: "지금 시장이 강세/약세/위기 중 어느 단계인지 판단. 체제별 권장 주식 비중·손절선 + 글로벌 매크로 스냅샷." },
-  { href: "/sector",    icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
-  { href: "/watchlist", icon: "🔖", label: "워치리스트",  desc: "재무 건전성 필터(Piotroski 등)를 통과한 후보를 순위 없이 리스트업(주간 갱신). 종목 클릭 시 재무 지표 + 뉴스 기반 네러티브 브리프 + 정성 체크리스트 + 메모까지 한 팝업에서." },
-  { href: "/workflow",  icon: "▶", label: "매수 체크",   desc: "주문 직전 최종 관문. 티커 입력 시 12개 조건 중 10개를 실시간 자동 판정 + 적정 수량 계산." },
-  { href: "/portfolio", icon: "◈", label: "포트폴리오",  desc: "실제 매수/매도 기록 + 현재가·평가손익 실시간 표시. 손절선 접근/도달 시 자동 경고." },
-  { href: "/risk",      icon: "⛨", label: "리스크",      desc: "시스템 시뮬레이션 포트폴리오의 위험 분석 — VaR·상관관계·종목별 낙폭." },
+  { href: "/",           icon: "⊡", label: "개요",        desc: "이번 주 워치리스트 후보 수 요약. 접속 시작점." },
+  { href: "/briefing",   icon: "📋", label: "주간 브리핑", desc: "매주 월요일 아침 자동 생성 — 지난주 지수 흐름·워치리스트 변동·관심도 흐름·다가오는 촉매·GPT 총평." },
+  { href: "/sector",     icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
+  { href: "/watchlist",  icon: "🔖", label: "워치리스트",  desc: "재무 건전성 필터(Piotroski 등)를 통과한 후보를 순위 없이 리스트업(주간 갱신). 종목 클릭 시 재무 지표 + 뉴스 기반 네러티브 브리프 + 정성 체크리스트 + 메모까지 한 팝업에서." },
+  { href: "/scorecard",  icon: "📈", label: "성적표",      desc: "과거 워치리스트 후보에 실제 주가를 대조한 사후 검증 — 지수 단순 보유 대비 필터가 값을 더했는지 확인." },
 ];
-
-const REGIME_ROWS = [
-  { regime: "risk_on",  label: "Risk On (강세)",  meaning: "추세 상승, 변동성 낮음",     strategy: "공격적, 성장주 중심", stop: "-10%", equity: "70~80%" },
-  { regime: "neutral",  label: "Neutral (중립)",  meaning: "혼조세, 방향 불명확",         strategy: "선별 매수, 균형",      stop: "-8%",  equity: "50~60%" },
-  { regime: "risk_off", label: "Risk Off (약세)", meaning: "하락 압력, 변동성 상승",      strategy: "방어주·배당주 중심",   stop: "-5%",  equity: "30~40%" },
-  { regime: "crisis",   label: "Crisis (위기)",   meaning: "급락 국면, 시스템 리스크",    strategy: "현금 최대화",           stop: "-3%",  equity: "10~20%" },
-];
-
-const STEPS = [
-  { n: 1, label: "시장 진입 여부",   auto: "자동",   check: "마켓 게이트·체제 신호 자동 표시",             go: "게이트 = GO" },
-  { n: 2, label: "체제 & 투자 비중", auto: "자동",   check: "현재 체제 → 권장 주식 비중 자동 제시",       go: "risk_on · neutral" },
-  { n: 3, label: "종목 후보 리스트", auto: "자동",   check: "재무 필터 통과 후보를 순위 없이 리스트업",   go: "후보 1개 이상" },
-  { n: 4, label: "종목별 분석",      auto: "자동",   check: "네러티브 브리프 + 재무 지표 확인 안내",       go: "항상 제공" },
-  { n: 5, label: "리스크 관리",      auto: "자동",   check: "VaR·MDD·체제별 손절선 자동 경보",            go: "경보 없음" },
-  { n: 6, label: "타이밍 확인",      auto: "자동",   check: "LightGBM SPY·KOSPI 방향 예측 자동 표시",     go: "강세 55%+" },
-];
-
-const AUTO_COLOR: Record<string, string> = {
-  "자동": "#ffb020",
-  "반자동": "#facc15",
-  "수동": "#a39c88",
-};
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -88,8 +63,8 @@ export default function GuidePage() {
           {[
             {
               step: "STEP 1", color: "#ffb020",
-              title: "시장이 사기 좋은 상황인가? → 개요·시장 체제",
-              body: "상단 마켓 게이트가 🟢 GO이면 사도 되는 시장입니다. 🟡 CAUTION이면 신중하게, 🔴 STOP이면 이번 달은 쉬세요. 체제가 risk_on일수록 공격적으로, crisis에 가까울수록 현금 비중을 높입니다.",
+              title: "이번 주 후보가 몇 개인가? → 개요",
+              body: "홈 화면에 이번 주 재무 필터를 통과한 워치리스트 후보 수가 뜹니다. 매수·매도 신호가 아니라 \"검토해볼 만한 후보 목록\"이라는 뜻입니다.",
             },
             {
               step: "STEP 2", color: "#facc15",
@@ -98,8 +73,8 @@ export default function GuidePage() {
             },
             {
               step: "STEP 3", color: "#6fb3b8",
-              title: "정말 사도 되나? 얼마나 살까? → 워치리스트 팝업 + 매수 체크",
-              body: "워치리스트에서 종목을 클릭하면 정성 체크리스트(스토리·촉매 점검)와 메모를 그 자리에서 남길 수 있습니다. 그다음 매수 체크 탭에 티커를 입력하면 게이트·체제·워치리스트 포함 여부·Piotroski·네러티브 브리프 등 여러 조건을 자동 판정하고 적정 매수 수량까지 계산해줍니다. 장기(1~3년) 모드에서는 시장 타이밍 조건(게이트·체제·리스크)이 매수를 막지 않고 참고 경고로만 표시됩니다.",
+              title: "정말 사도 되나? → 워치리스트 팝업에서 직접 판단",
+              body: "워치리스트에서 종목을 클릭하면 재무 지표·네러티브 브리프와 함께 정성 체크리스트(스토리·촉매 점검)와 메모를 그 자리에서 남길 수 있습니다. 매수 여부·수량·타이밍은 이 도구가 판정해주지 않습니다 — 재무가 건전한 후보 중 무엇을 살지는 항상 본인의 판단입니다.",
             },
           ].map(({ step, color, title, body }) => (
             <div key={step} className="rounded-xl p-4" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
@@ -116,9 +91,9 @@ export default function GuidePage() {
           <p className="text-[12px] font-bold" style={{ color: "#ffb020" }}>💡 가장 중요한 규칙 하나만 기억한다면</p>
           <p className="text-[13px] font-bold text-white mt-1">보유 이유가 사라졌는지 정기적으로 점검하고, 그렇다면 매도한다</p>
           <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-            AlphaDesk는 1~3년 펀더멘털 보유를 기본 전제로 합니다 — 단기 가격 변동에 따른 자동 손절은 없습니다.
-            대신 재무 훼손·큰 폭 하락 등을 감지하면 포트폴리오 탭에 <span className="text-white">알림만</span> 남기고, 실제 매도 여부는 항상 본인이 판단합니다.
-            (단기 스윙으로 접근한다면 체제별 손절선(강세 -10% ~ 위기 -3%)을 참고하세요 — 시장 체제 탭에서 확인 가능합니다.)
+            AlphaDesk는 1~3년 펀더멘털 보유를 기본 전제로 합니다 — 단기 가격 변동에 따른 자동 손절은 없고,
+            매수·매도 실행이나 보유 종목 추적 기능도 제공하지 않습니다. 재무 건전성 필터를 통과한 후보를
+            정기적으로 다시 훑어보고, 애초에 보유 이유였던 스토리·촉매가 사라졌는지 본인이 직접 점검하세요.
           </p>
         </div>
       </Card>
@@ -130,9 +105,9 @@ export default function GuidePage() {
           {[
             { label: "워치리스트 스크리닝 (주 1회)", color: "#6fb3b8", desc: "매주 일요일 밤 자동 실행 — 재무 건전성 필터(트랩 필터) 통과 종목 전부를 순위 없이 리스트업", tag: "자동" },
             { label: "네러티브 브리프 (주 1회)", color: "#f87171", desc: "워치리스트 스크리닝 직후 후보·내 워치리스트 종목별 최근 1주 뉴스를 수집해 GPT가 장기 스토리·촉매·리스크·시장 단기 관심도(HOT/WARM/COLD)를 생성", tag: "자동" },
-            { label: "시장 분석 (주 1회)", color: "#ffb020", desc: "GitHub Actions가 매주 월요일 자동 실행 — 체제·게이트·지수 예측·섹터 분석·포트폴리오 갱신", tag: "자동" },
-            { label: "텔레그램 요약 (자동)", color: "#6fb3b8", desc: "주간 시장 분석 완료 후 게이트 상태·손절 경고·워치리스트 교차 히트·관심도 상승을 폰으로 발송", tag: "자동" },
-            { label: "포트폴리오·정성 체크", color: "#a39c88", desc: "매수/매도 기록 및 종목별 체크리스트·메모는 내가 직접 입력", tag: "수동" },
+            { label: "시장 분석 (주 1회)", color: "#ffb020", desc: "GitHub Actions가 매주 월요일 자동 실행 — 섹터 분석 갱신", tag: "자동" },
+            { label: "텔레그램 요약 (자동)", color: "#6fb3b8", desc: "주간 시장 분석 완료 후 워치리스트 교차 히트·관심도 상승을 폰으로 발송", tag: "자동" },
+            { label: "정성 체크리스트", color: "#a39c88", desc: "종목별 체크리스트·메모는 내가 직접 입력", tag: "수동" },
           ].map(({ label, color, desc, tag }) => (
             <div key={label} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
               <div className="flex-1 min-w-0">
@@ -167,15 +142,11 @@ export default function GuidePage() {
         <SectionTitle>이 툴이 하는 것</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {[
-            ["시장 체제 감지",   "미국(5센서)·한국(5센서) 가중 합산 → risk_on / neutral / risk_off / crisis 판별"],
             ["워치리스트",      "재무 건전성 필터(Piotroski·ROE·부채비율·이자보상배율·현금흐름)를 통과한 종목을 주 1회, 순위 없이 리스트업"],
             ["네러티브 브리프",  "후보 종목별 최근 뉴스를 GPT가 요약 — 장기 투자 스토리·촉매·리스크·시장 단기 관심도(HOT/WARM/COLD)"],
             ["섹터 분석",       "경기 사이클 단계 판단 + 섹터별 KOSPI/SPY 대비 상대강도"],
-            ["손절선 모니터",   "포트폴리오 보유 종목이 체제별 손절선에 접근·도달하면 자동 경고"],
-            ["텔레그램 알림",   "주간 분석 후 행동이 필요한 신호만 요약해 폰으로 발송"],
-            ["포지션 사이징",   "고정 비율·켈리 검증으로 적정 매수 수량 자동 계산 (매수 체크 탭)"],
-            ["리스크 관리",     "VaR95·상관관계·낙폭 분석 (시스템 시뮬레이션 포트폴리오 기준)"],
-            ["포트폴리오",      "실거래 기록 + 현재가·평가손익 실시간 표시, 벤치마크 대비 성과 추적"],
+            ["텔레그램 알림",   "주간 분석 후 워치리스트 교차 히트·관심도 상승 신호를 요약해 폰으로 발송"],
+            ["성적표",          "과거 후보에 실제 주가를 대조한 사후 검증 — 지수 단순 보유 대비 필터가 값을 더했는지"],
             ["정성 체크리스트", "워치리스트 팝업에 내장된 종목별 스토리·촉매 체크 + 메모"],
           ].map(([title, desc]) => (
             <div key={title} className="rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
@@ -194,11 +165,9 @@ export default function GuidePage() {
         <SectionTitle>주간 투자 의사결정 루틴</SectionTitle>
         <div className="space-y-2 mb-4">
           {[
-            { n: "①", tab: "텔레그램 요약", action: "주간 분석 완료 후 요약 메시지 확인 — 게이트 STOP이거나 별다른 신호 없으면 이번 주는 끝", href: "/" },
-            { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 게이트·체제·지수 예측·이번 주 후보 수 확인",   href: "/" },
+            { n: "①", tab: "텔레그램 요약", action: "주간 분석 완료 후 요약 메시지 확인 — 별다른 신호 없으면 이번 주는 끝", href: "/" },
+            { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 이번 주 후보 수 확인",   href: "/" },
             { n: "③", tab: "워치리스트",    action: "관심도 상승 배너 확인 → 눈에 띄는 후보 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
-            { n: "④", tab: "매수 체크",     action: "티커 입력 → 워치리스트 포함·Piotroski·네러티브 등 자동 판정 + 적정 수량 계산 → 조건 충족 시 매수", href: "/workflow" },
-            { n: "⑤", tab: "포트폴리오",    action: "매수했으면 거래 기록 — 이후 손익·(장기 포지션은) 재무 훼손·하락 알림이 자동으로 표시됨", href: "/portfolio" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <span className="text-sm font-black shrink-0 w-5 text-center" style={{ color: "#ffb020" }}>{n}</span>
@@ -208,62 +177,6 @@ export default function GuidePage() {
               </div>
             </div>
           ))}
-        </div>
-
-        <SectionTitle>마켓 게이트 신호별 대응</SectionTitle>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {[
-            { signal: "GO",      color: "#4ade80", desc: "워치리스트 후보 검토 → 매수 체크 6단계 통과 후 매수." },
-            { signal: "CAUTION", color: "#facc15", desc: "신규 진입 시 포지션 50% 이하 축소. 장기 투자라면 참고 경고로만 취급 가능." },
-            { signal: "STOP",    color: "#f87171", desc: "단기 신규 진입 전면 보류. 장기 투자라면 저평가 우량주 진입은 정당할 수 있음." },
-          ].map(({ signal, color, desc }) => (
-            <div key={signal} className="rounded-xl p-3" style={{ background: "#262112", border: `1px solid ${color}33` }}>
-              <Badge text={signal} color={color} />
-              <p className="text-[12px] leading-relaxed mt-2" style={{ color: "var(--text-secondary)" }}>{desc}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Workflow 5 steps */}
-      <Card>
-        <SectionTitle>투자 워크플로우 6단계</SectionTitle>
-        <div className="space-y-1">
-          {STEPS.map((s) => (
-            <div key={s.n} className="flex items-center gap-3 py-2" style={{ borderBottom: "1px solid #262112" }}>
-              <span className="text-[12px] font-black w-5 text-center shrink-0" style={{ color: "#ffb020" }}>{s.n}</span>
-              <span className="text-[12px] font-semibold text-white w-28 shrink-0">{s.label}</span>
-              <span className="text-[12px] flex-1" style={{ color: "var(--text-muted)" }}>{s.check}</span>
-              <span className="text-[12px] font-bold px-1.5 py-0.5 rounded mr-2 shrink-0"
-                style={{ background: `${AUTO_COLOR[s.auto]}18`, color: AUTO_COLOR[s.auto], border: `1px solid ${AUTO_COLOR[s.auto]}44` }}>
-                {s.auto}
-              </span>
-              <Badge text={s.go} color="#4ade80" />
-            </div>
-          ))}
-        </div>
-        <p className="mt-3 text-[12px]" style={{ color: "var(--text-faint)" }}>
-          6개 신호 모두 초록(GO) → 하단 체크리스트에서 티커·손절가·수량 입력 후 매수 진행 · 하나라도 빨강(STOP) → 해당 조건 재검토
-        </p>
-      </Card>
-
-      {/* Regime + factor weights */}
-      <Card>
-        <SectionTitle>시장 체제별 전략</SectionTitle>
-        <div className="space-y-1 mb-5">
-          {REGIME_ROWS.map((r) => (
-            <div key={r.regime} className="flex items-center gap-3 py-2" style={{ borderBottom: "1px solid #262112" }}>
-              <span className="text-[12px] font-semibold w-32 shrink-0" style={{ color: "#ffb020" }}>{r.label}</span>
-              <span className="text-[12px] flex-1" style={{ color: "var(--text-secondary)" }}>{r.meaning}</span>
-              <span className="text-[12px] w-28 shrink-0 text-right" style={{ color: "var(--text-muted)" }}>{r.strategy}</span>
-              <span className="text-[12px] font-bold w-12 text-right shrink-0" style={{ color: "#6fb3b8" }}>{r.equity}</span>
-              <span className="text-[12px] font-bold w-10 text-right shrink-0" style={{ color: "#f87171" }}>{r.stop}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2 text-[12px]" style={{ color: "var(--text-faint)" }}>
-          <span className="font-bold" style={{ color: "#6fb3b8" }}>■</span> 권장 주식 비중
-          <span className="ml-3 font-bold" style={{ color: "#f87171" }}>■</span> 개별 종목 손절 기준
         </div>
       </Card>
 
@@ -292,9 +205,10 @@ export default function GuidePage() {
         <div className="rounded-xl p-3 mt-4" style={{ background: "#0e0d08", border: "1px solid #262112" }}>
           <p className="text-[12px] font-bold mb-1.5" style={{ color: "#facc15" }}>왜 모멘텀·기술적 지표는 안 보나?</p>
           <p className="text-[12px] leading-relaxed" style={{ color: "#a39c88" }}>
-            예전 버전은 기술적 지표·상대강도·거래량으로 &quot;지금 살 타이밍인가&quot;까지 점수화했지만,
-            1~3년 보유를 전제로 하면 그 시점의 단기 모멘텀은 큰 의미가 없다고 판단해 제거했습니다.
-            지금은 재무가 건전한 회사인지만 걸러내고, 진입 타이밍은 시장 체제·게이트를 참고 지표로만 삼아 본인이 판단합니다.
+            예전 버전은 기술적 지표·상대강도·거래량으로 &quot;지금 살 타이밍인가&quot;까지 점수화했고, 한때는
+            시장 체제·마켓 게이트로 진입 타이밍까지 판정했습니다. 1~3년 보유를 전제로 하면 그 시점의 단기
+            타이밍은 큰 의미가 없다고 판단해 모두 제거했습니다. 지금은 재무가 건전한 회사인지만 걸러내고,
+            언제·얼마나 살지는 전적으로 본인이 판단합니다.
           </p>
         </div>
       </Card>
@@ -376,8 +290,8 @@ export default function GuidePage() {
               a: "숫자가 없는 게 아니라 그 자체가 의미 있는 상태입니다. '무차입'은 이자비용이 없어 계산이 불필요한 좋은 상태, '자본잠식(음수 자본)'은 자기자본이 마이너스라 원인을 직접 확인해야 하는 주의 상태입니다. '데이터 없음'만 진짜 결측치입니다.",
             },
             {
-              q: "GO 신호가 떠도 손실이 날 수 있나요?",
-              a: "네. 모든 예측은 확률적 참고 자료입니다. 손절선 설정과 포지션 크기 관리를 항상 병행하세요.",
+              q: "재무 필터를 통과했는데도 손실이 날 수 있나요?",
+              a: "네. 필터는 재무가 명백히 부실한 종목을 걸러낼 뿐 매수·매도 신호가 아닙니다. 통과 종목이라도 주가가 하락할 수 있고, 이 도구는 손절선·포지션 크기를 계산해주지 않습니다.",
             },
             {
               q: "데이터가 없거나 '—' 표시가 뜨는 경우는?",

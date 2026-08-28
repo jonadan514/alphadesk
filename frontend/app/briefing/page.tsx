@@ -12,10 +12,7 @@ interface StockRef {
   catalysts?: string[];
 }
 interface MarketWeek {
-  gate: string | null;
-  regime: string | null;
   index_chg_1w: number | null;
-  history: { date: string; verdict: string; regime: string }[];
 }
 interface Briefing {
   week: string;
@@ -28,8 +25,6 @@ interface Briefing {
   gpt_comment: string;
 }
 
-const VERDICT_COLOR: Record<string, string> = { GO: "#4ade80", CAUTION: "#facc15", STOP: "#f87171" };
-
 function StockLabel({ s }: { s: StockRef }) {
   return (
     <span className="inline-flex items-center gap-1">
@@ -40,27 +35,16 @@ function StockLabel({ s }: { s: StockRef }) {
 }
 
 function MarketRow({ label, m }: { label: string; m: MarketWeek }) {
-  const gc = VERDICT_COLOR[m.gate ?? ""] ?? "#a39c88";
   return (
     <div className="flex items-center gap-3 flex-wrap rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
       <span className="text-[13px] font-bold text-white w-24 shrink-0">{label}</span>
-      <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: `${gc}18`, color: gc, border: `1px solid ${gc}33` }}>
-        {m.gate ?? "—"}
-      </span>
-      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{m.regime?.replace("_", " ") ?? "—"}</span>
-      {m.index_chg_1w != null && (
+      {m.index_chg_1w != null ? (
         <span className="text-[12px] font-bold" style={{ color: m.index_chg_1w >= 0 ? "#4ade80" : "#f87171" }}>
           주간 {m.index_chg_1w >= 0 ? "+" : ""}{m.index_chg_1w}%
         </span>
+      ) : (
+        <span className="text-[12px]" style={{ color: "var(--text-faint)" }}>—</span>
       )}
-      {/* 지난주 verdict 궤적 */}
-      <span className="flex items-center gap-1 ml-auto">
-        {(m.history ?? []).map((h) => (
-          <span key={h.date} title={`${h.date} · ${h.verdict}`}
-            className="w-2.5 h-2.5 rounded-full inline-block"
-            style={{ background: VERDICT_COLOR[h.verdict] ?? "#423e33" }} />
-        ))}
-      </span>
     </div>
   );
 }
@@ -84,7 +68,6 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
             <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>지난주 시장</p>
             <MarketRow label="🇺🇸 S&P 500" m={b.us} />
             <MarketRow label="🇰🇷 KOSPI" m={b.kr} />
-            <p className="text-[10px] text-right" style={{ color: "var(--text-faint)" }}>● 점 = 일별 종합 판단 (왼쪽이 과거)</p>
           </div>
 
           {/* GPT 총평 */}
