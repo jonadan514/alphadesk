@@ -175,15 +175,85 @@ KR쪽(`scripts/run_kr_analysis.py`)에는 애초에 포트폴리오 매수 로�
 
 ---
 
-## 4. 정리 — 실행 세션(세션 2) 전에 필요한 결정 체크리스트
+## 4. 결정 확정 (2026-08-28, 사용자 확인 완료)
 
-1. [ ] 게이트·체제판정·지수예측: 완전 삭제(A) / 계산 유지·매수엔 미사용(B) / 계산 삭제
-      + `/briefing`·텔레그램에서도 게이트 표시 제거(C) 중 선택
-2. [ ] `/regime` 페이지: 위 결정에 따라 자동으로 삭제 또는 유지
-3. [ ] `/portfolio`의 실거래 입력(`/api/trades`, `my_trades`, `trade_decision_snapshots`):
-      축소판으로 유지(A) / 지금 바로 외부 대시보드로 이관(B) / 잠시 끊어도 감수(C) 중 선택
-4. [ ] `/risk`가 다루는 두 종류의 "리스크"(Phase4 SPY 시장 리스크 vs Phase6 포트폴리오
-      리스크) 중 시장 리스크(SPY VaR/MDD)까지 지울지, 포트폴리오 관련분만 지울지 확인
+1. **게이트·체제판정·지수예측 — 완전 삭제.** 계산 코드뿐 아니라 `/briefing`·
+   텔레그램 다이제스트의 게이트·레짐 표시도 함께 제거한다. `/regime` 페이지도
+   자동으로 제거 대상.
+2. **`/portfolio` 실거래 기록 — 완전 삭제.** 별도 대시보드로 이관하지 않고
+   기능 자체를 없앤다. `my_trades`, `trade_decision_snapshots` 테이블 참조와
+   `/api/trades`, `/api/trades/[id]`, `/api/portfolio/performance` 라우트를
+   제거한다.
+3. **`/regime` — 삭제.** (1번의 직접 결과)
+4. **`/risk` — 삭제.** Phase4(SPY 시장 VaR/MDD, `data_risk`)와 Phase6(포트폴리오
+   리스크, `risk_portfolio`) 둘 다 `/workflow`·`/risk`(둘 다 제거 대상) 외에는
+   소비하는 곳이 없음을 코드로 확인했다 (KR쪽 `/api/data/kr/risk`도 `kr_regime`
+   파생이라 1번 결정에 이미 포함됨). 둘 다 제거.
 
-**이 네 가지가 정해지면 세션 2(실행)로 넘어갈 수 있다.** 결정 없이 그대로 실행하면
-1번·3번 선택에 따라 지우는 파일 목록 자체가 달라지므로, 순서상 반드시 먼저 정해야 한다.
+### 2번 결정의 추가 파급 — 성적표 3-way가 2-way로 축소된다
+
+`my_trades`를 없애기로 하면서 `scripts/compute_pick_returns.py`의 `run_trades()`
+(→ `my_trade_returns` 테이블)도 더 이상 채울 데이터가 없어진다. 이건 §3에서 확인한
+"performance-tracking.yml은 포트폴리오에 의존하지 않는다"는 결론과는 별개로, **이번
+결정 때문에 새로 생기는 축소**다.
+
+- `run_trades()` 함수와 `my_trade_returns` 테이블: 제거 대상에 추가
+- `frontend/app/api/data/scorecard/route.ts`가 `my_trade_returns`를 조회해 3-way
+  비교를 만드는 부분 제거 → **"필터 통과 종목 vs 지수" 2-way 비교로 축소**
+- `/scorecard` 화면(204줄)에서 "내 실제 매매" 관련 표시 제거
+- 기존에 쌓인 `my_trades`/`my_trade_returns` 데이터는 DB에서 DROP하지 않고 남겨둔다
+  (마스터플랜 공통 원칙 — 나중에 필요해지면 그때 판단)
+
+**`/scorecard` 자체는 지우지 않는다** — §0의 "충돌 1" 조사에서 확인했듯 이 화면은
+`performance-tracking.yml`(마스터플랜이 명시적으로 보존하라고 한 "필터 검증 유일한
+장치")의 사람이 보는 창구이므로, 내용만 3-way→2-way로 줄어들 뿐 화면은 유지한다.
+
+---
+
+## 5. 세션 2(실행) 착수 조건
+
+위 4가지 결정이 모두 확정됐으므로 실행 세션으로 넘어갈 준비가 됐다. 실행 시 지울
+목록(요약):
+
+**삭제할 파일**
+- `src/analyzers/market_regime.py`, `market_gate.py`, `kr_market_regime.py`,
+  `kr_index_predictor.py`
+- `src/us_market/index_predictor.py`
+- `src/portfolio/tracker.py`
+- `src/risk/portfolio_risk.py`
+- `frontend/app/{workflow,risk,portfolio,regime}/page.tsx` 및 각 하위 디렉터리
+- `frontend/app/api/{workflow,portfolio}/**`, `frontend/app/api/trades/**`
+- `frontend/app/api/data/{regime,market-gate,index-prediction,regime-history,risk,risk-detail}/route.ts`
+- `frontend/app/api/data/kr/{regime,market-gate,forecast,risk}/route.ts`
+
+**남기는 파일 (재사용/무관)**
+- `src/collectors/macro_collector.py` — Phase 2 레짐 모듈용으로 보존
+- `scripts/compute_pick_returns.py` — `run_trades()`만 제거, 나머지 그대로
+- `.github/workflows/performance-tracking.yml` — 변경 없음
+- `frontend/app/scorecard/page.tsx`, `/api/data/scorecard` — 3-way→2-way로만 축소
+
+**수정할 파일**
+- `scripts/run_integrated_analysis.py` — Phase1(게이트/체제/지수예측), Phase4(SPY
+  리스크), Phase5(포트폴리오 매수), Phase6(포트폴리오 리스크) 블록 제거. Phase0(데이터
+  갱신), Phase3 중 리포트 저장 로직 축소, Phase7(섹터) 유지
+- `scripts/run_kr_analysis.py` — Phase1(regime), Phase2(gate), Phase5(index
+  prediction) 제거. Phase4(섹터) 유지
+- `scripts/generate_weekly_briefing.py`, `scripts/send_telegram_digest.py` —
+  게이트·레짐 표시 제거
+- `frontend/app/page.tsx` (홈) — market-gate/regime/index-prediction fetch 제거,
+  "오늘의 판단"을 다른 내용으로 대체 (레이더 Phase A 완성 전까지는 임시 문구 필요)
+- `frontend/src/components/Navigation.tsx` — `/workflow`,`/portfolio`,`/risk`,
+  `/regime` 메뉴 항목 제거
+- `src/db/data_store.py` — `upsert_regime`, `upsert_regime_history`,
+  `upsert_market_gate`, `upsert_index_prediction`, `upsert_kr_index_prediction`,
+  `upsert_risk` 함수 제거 (호출부 없어지므로)
+- `.github/workflows/weekly-analysis.yml` — 7번 줄 주석 정리 (매수 반영 언급 삭제)
+
+**DB 테이블 — DROP 하지 않고 참조만 끊음**
+`pf_portfolios`, `pf_holdings`, `pf_trades`, `pf_snapshots`, `pf_benchmark`,
+`portfolio_alerts`, `data_regime`, `data_regime_history`, `data_market_gate`,
+`data_index_prediction`, `kr_regime`, `kr_regime_history`, `kr_market_gate`,
+`kr_index_prediction`, `data_risk`, `risk_portfolio`, `my_trades`,
+`trade_decision_snapshots`, `my_trade_returns`, `buy_check_log`
+
+이 목록으로 세션 2를 시작하면 된다.
