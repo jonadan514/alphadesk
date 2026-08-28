@@ -1,0 +1,49 @@
+name: Backfill Fundamentals Cache
+
+on:
+  workflow_dispatch:
+    inputs:
+      offset:
+        description: "유니버스 시작 인덱스 (0부터, 사전순 고정 정렬)"
+        required: true
+        default: "0"
+      limit:
+        description: "이번 실행에서 처리할 종목 수"
+        required: true
+        default: "50"
+      market:
+        description: "대상 시장"
+        required: true
+        default: "ALL"
+        type: choice
+        options:
+          - ALL
+          - US
+          - KR
+
+jobs:
+  backfill:
+    name: Backfill (offset=${{ inputs.offset }} limit=${{ inputs.limit }} market=${{ inputs.market }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run backfill
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: >
+          python scripts/backfill_fundamentals.py
+          --offset ${{ inputs.offset }}
+          --limit ${{ inputs.limit }}
+          --market ${{ inputs.market }}
