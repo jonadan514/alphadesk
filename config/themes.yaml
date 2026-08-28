@@ -1,0 +1,463 @@
+# 리서치 레이더 — 테마 정의
+#
+# 작성일: 2026-08-27
+# 용도: 주간 뉴스 건수 집계와 테마→기업 매핑의 기준 목록
+#
+# ── 유지보수 규칙 ─────────────────────────────────────────
+# 1. 테마를 뺄 때 삭제하지 말고 status: archived 로 바꾼다.
+#    과거 데이터가 살아있어야 "작년에 뜨다가 식은 테마"를 볼 수 있다.
+# 2. keywords 를 수정하면 keywords_changed_at 을 기록하고,
+#    그 이전 데이터와는 추이를 잇지 않는다. (기준선이 바뀌므로)
+# 3. 테마끼리 기업이 겹치는 것은 허용한다. 오히려 두 테마가
+#    동시에 움직이면 강한 신호다.
+# 4. 첫 실행 후 테마별 소속 기업 수를 반드시 확인한다.
+#    3개 이하 → 상위 테마에 합침 / 50개 이상 → 쪼갬
+#    목표 범위는 10~30개.
+# ──────────────────────────────────────────────────────────
+
+config:
+  # 뉴스 건수가 이 값 미만이면 변화율을 계산하지 않고 판정 보류.
+  # 기사 3건 → 6건도 +100%가 되어버리는 문제를 막는다.
+  default_min_articles: 10
+
+  # 뉴스 축 판정 구간 (이번 주 건수 / 직전 4주 평균)
+  news_thresholds:
+    strong_up: 2.0    # ↑↑  +100% 이상
+    up: 1.3           # ↑   +30% 이상
+    down: 0.7         # ↓   -30% 이하
+
+  # 실적 축 판정 구간 (소속 기업 중 매출 성장률이 직전 분기보다 개선된 비율)
+  earnings_thresholds:
+    strong_up: 0.70
+    up: 0.55
+    down: 0.45
+
+  # 주가 축: 소속 기업 4주 수익률 중앙값 - 시장 지수 4주 수익률
+  # 시장 지수는 US=S&P500, KR=KOSPI 로 각각 비교
+  price_thresholds:
+    strong_up: 0.08   # +8%p 이상
+    up: 0.03
+    down: -0.03
+
+themes:
+
+  # ═══════════════════════════════════════════════════
+  # A. AI·데이터센터
+  # ═══════════════════════════════════════════════════
+
+  - id: ai_semiconductor
+    name_ko: AI 반도체
+    name_en: AI Semiconductors
+    category: ai_datacenter
+    markets: [US, KR]
+    keywords_ko: [AI 반도체, HBM, AI 가속기, GPU 수요, 온디바이스 AI]
+    keywords_en: [AI chip, AI accelerator, HBM memory, GPU demand, inference chip]
+    status: active
+    added_at: 2026-08-27
+    note: 테마가 큰 편. 소속 기업 50개 넘으면 메모리/로직/네트워킹으로 분리 검토.
+
+  - id: datacenter_power
+    name_ko: 데이터센터 전력
+    name_en: Datacenter Power
+    category: ai_datacenter
+    markets: [US, KR]
+    keywords_ko: [데이터센터 전력, 수전설비, 데이터센터 전력수요, 전력 조달]
+    keywords_en: [datacenter power, data center electricity, grid interconnection, power capacity]
+    status: active
+    added_at: 2026-08-27
+    note: power_grid 와 기업이 크게 겹침. 둘이 동시에 뜨면 하나의 신호로 해석할 것.
+
+  - id: datacenter_cooling
+    name_ko: 데이터센터 냉각
+    name_en: Datacenter Cooling
+    category: ai_datacenter
+    markets: [US, KR]
+    keywords_ko: [데이터센터 냉각, 액침냉각, 서버 열관리, 공조 설비]
+    keywords_en: [datacenter cooling, liquid cooling, immersion cooling, thermal management]
+    min_articles: 6
+    status: active
+    added_at: 2026-08-27
+    note: 좁은 테마라 기사 수가 적음. min_articles 하향 조정. 기업 3개 이하면 datacenter_power 로 흡수.
+
+  - id: ai_software
+    name_ko: AI 소프트웨어·에이전트
+    name_en: AI Software & Agents
+    category: ai_datacenter
+    markets: [US]
+    keywords_ko: [AI 소프트웨어, AI 에이전트, 엔터프라이즈 AI, AI 수익화]
+    keywords_en: [AI software, AI agent, enterprise AI, AI monetization, LLM application]
+    status: active
+    added_at: 2026-08-27
+    note: 한국 상장사 중 순수 해당 기업이 적어 US 전용. 실적 축 판정이 어려운 테마(적자 기업 다수).
+
+  - id: semi_equipment
+    name_ko: 반도체 장비·소재
+    name_en: Semiconductor Equipment & Materials
+    category: ai_datacenter
+    markets: [US, KR]
+    keywords_ko: [반도체 장비, 반도체 소재, 웨이퍼 장비, 전공정 장비, 반도체 CAPEX]
+    keywords_en: [semiconductor equipment, wafer fab equipment, semicap, chip capex]
+    status: active
+    added_at: 2026-08-27
+
+  # ═══════════════════════════════════════════════════
+  # B. 에너지·전력
+  # ═══════════════════════════════════════════════════
+
+  - id: power_grid
+    name_ko: 전력망·송배전
+    name_en: Power Grid & Transmission
+    category: energy
+    markets: [US, KR]
+    keywords_ko: [전력망, 송배전, 변압기, 전력기기, 송전망 투자, 배전반]
+    keywords_en: [power grid, transmission, transformer, grid investment, switchgear]
+    status: active
+    added_at: 2026-08-27
+    note: 키워드에 "전력" 단독을 넣지 말 것. 전기요금 기사가 전부 걸림.
+
+  - id: nuclear_smr
+    name_ko: 원전·SMR
+    name_en: Nuclear & SMR
+    category: energy
+    markets: [US, KR]
+    keywords_ko: [원자력 발전, SMR, 소형모듈원자로, 원전 수주, 원전 해체]
+    keywords_en: [nuclear power, SMR, small modular reactor, nuclear reactor order]
+    status: active
+    added_at: 2026-08-27
+
+  - id: renewable_energy
+    name_ko: 재생에너지
+    name_en: Renewable Energy
+    category: energy
+    markets: [US, KR]
+    keywords_ko: [태양광, 풍력, 해상풍력, 재생에너지 발전]
+    keywords_en: [solar power, wind power, offshore wind, renewable energy]
+    status: active
+    added_at: 2026-08-27
+    note: 정책 의존도가 높은 테마. 보조금 변화 뉴스가 건수를 크게 흔들 수 있음.
+
+  - id: energy_storage
+    name_ko: 에너지저장(ESS)
+    name_en: Energy Storage
+    category: energy
+    markets: [US, KR]
+    keywords_ko: [에너지저장장치, ESS, 계통 안정화, 전력저장]
+    keywords_en: [energy storage, ESS, grid storage, battery storage system]
+    min_articles: 6
+    status: active
+    added_at: 2026-08-27
+    note: battery 테마와 기업이 겹침.
+
+  - id: lng_gas
+    name_ko: 천연가스·LNG
+    name_en: Natural Gas & LNG
+    category: energy
+    markets: [US, KR]
+    keywords_ko: [천연가스, LNG, 가스 발전, LNG 수출, LNG 운반선]
+    keywords_en: [natural gas, LNG, gas turbine, LNG export terminal]
+    status: active
+    added_at: 2026-08-27
+    note: shipbuilding 과 LNG 운반선에서 겹침.
+
+  - id: cable_wire
+    name_ko: 전선·케이블
+    name_en: Cable & Wire
+    category: energy
+    markets: [KR, US]
+    keywords_ko: [해저케이블, 전력케이블, 초고압 케이블, HVDC]
+    keywords_en: [submarine cable, power cable, HVDC cable, high voltage cable]
+    min_articles: 6
+    status: active
+    added_at: 2026-08-27
+    note: power_grid 와 상당 부분 겹침. 첫 실행 후 기업 수 보고 통합 검토.
+
+  # ═══════════════════════════════════════════════════
+  # C. 산업·인프라
+  # ═══════════════════════════════════════════════════
+
+  - id: shipbuilding
+    name_ko: 조선
+    name_en: Shipbuilding
+    category: industrial
+    markets: [KR]
+    keywords_ko: [조선업, 선박 수주, LNG선, 컨테이너선, 조선 신조선가]
+    keywords_en: [shipbuilding, ship order, LNG carrier, newbuilding price]
+    status: active
+    added_at: 2026-08-27
+    note: 한국 전용. Phase A(미국만)에서는 결과가 나오지 않음.
+
+  - id: defense
+    name_ko: 방산
+    name_en: Defense
+    category: industrial
+    markets: [US, KR]
+    keywords_ko: [방위산업, 방산 수출, 국방예산, 무기 수주, K-방산]
+    keywords_en: [defense contractor, defense budget, weapons order, military spending]
+    status: active
+    added_at: 2026-08-27
+
+  - id: aerospace_space
+    name_ko: 항공우주·위성
+    name_en: Aerospace & Space
+    category: industrial
+    markets: [US, KR]
+    keywords_ko: [항공기 부품, 우주 발사체, 위성 통신, 저궤도 위성]
+    keywords_en: [aerospace parts, space launch, satellite constellation, low earth orbit]
+    status: active
+    added_at: 2026-08-27
+
+  - id: construction_machinery
+    name_ko: 건설기계·인프라
+    name_en: Construction Machinery & Infrastructure
+    category: industrial
+    markets: [US, KR]
+    keywords_ko: [건설기계, 굴착기, 인프라 투자, 건설 수주]
+    keywords_en: [construction equipment, excavator, infrastructure spending, heavy machinery]
+    status: active
+    added_at: 2026-08-27
+
+  - id: factory_automation
+    name_ko: 산업자동화
+    name_en: Factory Automation
+    category: industrial
+    markets: [US, KR]
+    keywords_ko: [산업자동화, 스마트팩토리, 공작기계, 산업용 로봇, 물류자동화]
+    keywords_en: [factory automation, industrial robot, smart factory, machine tools]
+    status: active
+    added_at: 2026-08-27
+    note: humanoid_robot 과 구분할 것. 이쪽은 이미 매출이 나는 기존 산업.
+
+  # ═══════════════════════════════════════════════════
+  # D. 헬스케어
+  # ═══════════════════════════════════════════════════
+
+  - id: glp1_obesity
+    name_ko: 비만치료제
+    name_en: GLP-1 / Obesity Drugs
+    category: healthcare
+    markets: [US, KR]
+    keywords_ko: [비만치료제, GLP-1, 위고비, 젭바운드, 경구용 비만약]
+    keywords_en: [GLP-1, obesity drug, weight loss drug, semaglutide, tirzepatide]
+    status: active
+    added_at: 2026-08-27
+
+  - id: biosimilar
+    name_ko: 바이오시밀러
+    name_en: Biosimilars
+    category: healthcare
+    markets: [US, KR]
+    keywords_ko: [바이오시밀러, 바이오 복제약, 시밀러 허가]
+    keywords_en: [biosimilar, biosimilar approval, interchangeable biosimilar]
+    min_articles: 6
+    status: active
+    added_at: 2026-08-27
+
+  - id: cdmo
+    name_ko: CDMO·위탁생산
+    name_en: CDMO / Contract Manufacturing
+    category: healthcare
+    markets: [US, KR]
+    keywords_ko: [CDMO, 위탁생산, 바이오 위탁개발, 생산능력 증설]
+    keywords_en: [CDMO, contract manufacturing, biologics manufacturing, fill finish]
+    status: active
+    added_at: 2026-08-27
+
+  - id: medical_device
+    name_ko: 의료기기
+    name_en: Medical Devices
+    category: healthcare
+    markets: [US, KR]
+    keywords_ko: [의료기기, 수술 로봇, 진단기기, 임플란트]
+    keywords_en: [medical device, surgical robot, diagnostic device, implant]
+    status: active
+    added_at: 2026-08-27
+
+  - id: neuro_alzheimer
+    name_ko: 치매·신경질환
+    name_en: Neuro & Alzheimer's
+    category: healthcare
+    markets: [US, KR]
+    keywords_ko: [알츠하이머 치료제, 치매 신약, 신경질환 치료제, 파킨슨병]
+    keywords_en: [Alzheimer drug, dementia treatment, neurodegenerative, Parkinson therapy]
+    min_articles: 6
+    status: active
+    added_at: 2026-08-27
+
+  # ═══════════════════════════════════════════════════
+  # E. 소비·유통
+  # ═══════════════════════════════════════════════════
+
+  - id: k_beauty
+    name_ko: K-뷰티
+    name_en: K-Beauty
+    category: consumer
+    markets: [KR]
+    keywords_ko: [K뷰티, 화장품 수출, 인디 브랜드, 화장품 ODM]
+    keywords_en: [K-beauty, Korean cosmetics, beauty export]
+    status: active
+    added_at: 2026-08-27
+    note: 한국 전용. Phase A에서 결과 없음.
+
+  - id: k_food
+    name_ko: K-푸드
+    name_en: K-Food
+    category: consumer
+    markets: [KR]
+    keywords_ko: [K푸드, 식품 수출, 라면 수출, 냉동식품 수출]
+    keywords_en: [K-food, Korean food export, instant noodle export]
+    status: active
+    added_at: 2026-08-27
+    note: 한국 전용.
+
+  - id: k_content
+    name_ko: K-콘텐츠·엔터
+    name_en: K-Content & Entertainment
+    category: consumer
+    markets: [KR]
+    keywords_ko: [K콘텐츠, 엔터테인먼트 실적, 앨범 판매, 공연 매출, 드라마 제작]
+    keywords_en: [K-content, K-pop, Korean drama production]
+    status: active
+    added_at: 2026-08-27
+    note: 한국 전용.
+
+  - id: travel_airline
+    name_ko: 여행·항공
+    name_en: Travel & Airlines
+    category: consumer
+    markets: [US, KR]
+    keywords_ko: [여행 수요, 항공 여객, 면세점, 호텔 객실단가]
+    keywords_en: [travel demand, airline traffic, duty free, hotel RevPAR]
+    status: active
+    added_at: 2026-08-27
+
+  # ═══════════════════════════════════════════════════
+  # F. 모빌리티
+  # ═══════════════════════════════════════════════════
+
+  - id: battery
+    name_ko: 2차전지
+    name_en: Batteries
+    category: mobility
+    markets: [US, KR]
+    keywords_ko: [2차전지, 배터리 소재, 양극재, 전고체 배터리, 배터리 수주]
+    keywords_en: [EV battery, cathode material, solid state battery, battery cell]
+    status: active
+    added_at: 2026-08-27
+
+  - id: ev_value_chain
+    name_ko: 전기차 밸류체인
+    name_en: EV Value Chain
+    category: mobility
+    markets: [US, KR]
+    keywords_ko: [전기차 판매, 전기차 부품, 충전 인프라, 전기차 보조금]
+    keywords_en: [electric vehicle sales, EV parts, charging infrastructure, EV subsidy]
+    status: active
+    added_at: 2026-08-27
+    note: battery 와 겹침. 이쪽은 완성차·부품·충전 쪽.
+
+  - id: autonomous_driving
+    name_ko: 자율주행
+    name_en: Autonomous Driving
+    category: mobility
+    markets: [US, KR]
+    keywords_ko: [자율주행, 로보택시, 라이다, ADAS]
+    keywords_en: [autonomous driving, robotaxi, lidar, ADAS]
+    status: active
+    added_at: 2026-08-27
+
+  - id: physical_ai
+    name_ko: 피지컬 AI
+    name_en: Physical AI
+    category: mobility
+    markets: [US, KR]
+    keywords_ko: [피지컬 AI, 로봇 파운데이션 모델, 머신비전, 엣지 AI, 로봇 구동부, 산업용 AI]
+    keywords_en: [physical AI, embodied AI, robot foundation model, machine vision, edge AI, robotics platform]
+    status: active
+    added_at: 2026-08-27
+    note: |
+      AI가 소프트웨어 밖으로 나와 기계를 움직이는 단계 전반.
+      매핑 기준은 "피지컬 AI 회사"가 아니라 가치사슬 위치로 잡는다:
+      센서(비전·라이다), 엣지 AI 연산, 구동부(액추에이터·감속기·모터),
+      로봇 제어 소프트웨어, 이를 채택하는 장비·설비 업체.
+      humanoid_robot, factory_automation, autonomous_driving 과 기업이 겹치나,
+      이 테마는 세 곳에 부품·연산을 공급하는 층을 본다.
+      휴머노이드와 달리 이미 매출이 발생하는 기업이 많아 실적 축 판정이 유효하다.
+
+  - id: humanoid_robot
+    name_ko: 휴머노이드 로봇
+    name_en: Humanoid Robots
+    category: mobility
+    markets: [US, KR]
+    keywords_ko: [휴머노이드, 휴머노이드 로봇, 이족보행 로봇, 로봇 양산]
+    keywords_en: [humanoid robot, bipedal robot, humanoid production]
+    min_articles: 6
+    status: active
+    added_at: 2026-08-27
+    note: |
+      상용화 시점이 먼 테마. 소속 기업 다수가 관련 매출이 거의 없어
+      실적 축 판정이 왜곡되기 쉽다. 실적 ↑↑가 떠도 본업 실적일 가능성이 높으니
+      그대로 믿지 말 것. 뉴스 축과 과열 경계 판정에 주로 쓴다.
+      실제 투자 후보 발굴은 physical_ai 쪽이 더 유효하다.
+
+  # ═══════════════════════════════════════════════════
+  # G. 소재·화학
+  # ═══════════════════════════════════════════════════
+
+  - id: rare_earth
+    name_ko: 희토류·핵심광물
+    name_en: Rare Earths & Critical Minerals
+    category: materials
+    markets: [US, KR]
+    keywords_ko: [희토류, 핵심광물, 영구자석, 광물 수출 통제]
+    keywords_en: [rare earth, critical minerals, permanent magnet, mineral export control]
+    status: active
+    added_at: 2026-08-27
+
+  - id: copper_metals
+    name_ko: 구리·산업금속
+    name_en: Copper & Industrial Metals
+    category: materials
+    markets: [US, KR]
+    keywords_ko: [구리 가격, 전기동, 알루미늄 가격, 니켈 가격]
+    keywords_en: [copper price, copper demand, aluminum price, industrial metals]
+    status: active
+    added_at: 2026-08-27
+
+  - id: specialty_gas
+    name_ko: 특수가스·소재
+    name_en: Specialty Gases & Materials
+    category: materials
+    markets: [US, KR]
+    keywords_ko: [특수가스, 반도체 소재 국산화, 산업용 가스, 전자재료]
+    keywords_en: [specialty gas, electronic materials, industrial gas]
+    min_articles: 6
+    status: active
+    added_at: 2026-08-27
+    note: semi_equipment 과 겹침.
+
+  - id: petrochemical
+    name_ko: 석유화학 업황
+    name_en: Petrochemicals
+    category: materials
+    markets: [US, KR]
+    keywords_ko: [석유화학, 에틸렌 스프레드, 정제마진, 화학 업황]
+    keywords_en: [petrochemical, ethylene spread, refining margin, chemical downturn]
+    status: active
+    added_at: 2026-08-27
+    note: 경기민감 사이클 테마. "바닥 통과" 판정을 보기 좋은 대상.
+
+# ══════════════════════════════════════════════════════════
+# 별도 처리 — 테마 아님
+# ══════════════════════════════════════════════════════════
+#
+# 아래는 산업이 아니라 "시장 조건"이라 소속 기업을 셀 수 없다.
+# 테마 목록에 넣지 않고 레짐 모듈(기획서 6절)에서 다룬다.
+#
+#   - 금리 인하 수혜
+#   - 환율 (원/달러)
+#   - 관세·공급망 재편
+#   - 밸류업·주주환원
+#   - 스테이블코인·디지털자산
+#
+# 단, 관세와 밸류업은 향후 소속 기업을 정의할 수 있게 되면
+# 테마로 승격 검토 가능.
