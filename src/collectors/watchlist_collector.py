@@ -8,11 +8,24 @@ from __future__ import annotations
 import logging
 import os
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
 import yfinance as yf
+
+try:
+    from db.data_store import get_db
+    from db.fundamentals_cache import (
+        ensure_schema, upsert_statement_rows, upsert_fetch_status,
+        get_cached_financials, select_refresh_targets,
+    )
+except ImportError:
+    from src.db.data_store import get_db
+    from src.db.fundamentals_cache import (
+        ensure_schema, upsert_statement_rows, upsert_fetch_status,
+        get_cached_financials, select_refresh_targets,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -318,36 +331,74 @@ def is_chinese_kr_listing(info: dict) -> bool:
     return country in ("china", "cn", "hong kong", "hk")
 
 
-def collect_universe(markets: list[str] = ("US", "KR")) -> list[dict]:
-    """전체 유니버스 수집 + 재무 데이터 포함."""
+def _fetch_and_cache(conn, item: dict) -> dict | None:
+    """라이브로 재무 데이터를 받아오고, 성공/실패 여부와 무관하게 즉시
+    fetch_status·fundamentals_cache에 기록한다 (SPEC §3 — 예산에 든 종목만
+    이 경로를 탄다)."""
+    data = fetch_financials(item["yf_symbol"])
+    # KR: .KS가 실패했거나 "반쪽 응답"(코스닥 종목을 .KS로 조회하면
+    # 재무제표는 오지만 시총·섹터가 비어 옴)이면 코스닥(.KQ)으로 재시도
+    needs_kq_retry = (
+        item["market"] == "KR"
+        and item["yf_symbol"].endswith(".KS")
+        and (data is None or not data["info"].get("marketCap"))
+    )
+    if needs_kq_retry:
+        kq_symbol = item["yf_symbol"].replace(".KS", ".KQ")
+        kq_data = fetch_financials(kq_symbol)
+        if kq_data is not None and kq_data["info"].get("marketCap"):
+            data = kq_data
+            item["yf_symbol"] = kq_symbol
+            item["exchange"] = "KOSDAQ"
+
+    now = datetime.utcnow().isoformat()
+    if data is None:
+        upsert_fetch_status(conn, item["symbol"], item["market"], now, status="no_data")
+        conn.commit()
+        return None
+
+    upsert_statement_rows(conn, item["symbol"], item["market"], "income", data["financials"], now)
+    upsert_statement_rows(conn, item["symbol"], item["market"], "balance", data["balance_sheet"], now)
+    upsert_statement_rows(conn, item["symbol"], item["market"], "cashflow", data["cashflow"], now)
+    upsert_fetch_status(conn, item["symbol"], item["market"], now, status="ok", info=data["info"], success_at=now)
+    conn.commit()
+    return data
+
+
+def collect_universe(markets: list[str] = ("US", "KR"), refresh_budget: int | None = None) -> list[dict]:
+    """전체 유니버스 수집 + 재무 데이터 포함.
+
+    refresh_budget을 주면 SPEC §3 예산제가 적용된다 — fetch_status 우선순위
+    (rate_limited 우선 → last_success_at 오래된 순)로 상위 refresh_budget개만
+    야후에서 실제로 갱신(하고 캐시에 기록)하고, 나머지는 캐시에 저장된 값을
+    그대로 읽는다(라이브 호출 없음). None이면 전부 라이브로 조회한다.
+    """
     items = []
     if "US" in markets:
         items += get_us_universe()
     if "KR" in markets:
         items += get_kr_universe()
 
-    logger.info("총 유니버스: %d 종목 (재무 수집 시작)", len(items))
+    conn = get_db()
+    ensure_schema(conn)
+
+    if refresh_budget is not None:
+        to_refresh, to_cache = select_refresh_targets(conn, items, refresh_budget)
+        refresh_keys = {(it["market"], it["symbol"]) for it in to_refresh}
+        logger.info("총 유니버스: %d 종목 — 이번 주 갱신 %d / 캐시 사용 %d",
+                    len(items), len(to_refresh), len(to_cache))
+    else:
+        refresh_keys = None
+        logger.info("총 유니버스: %d 종목 (예산제 미적용 — 전부 라이브 조회)", len(items))
 
     result = []
     for i, item in enumerate(items):
         if i % 50 == 0:
             logger.info("진행: %d / %d", i, len(items))
 
-        data = fetch_financials(item["yf_symbol"])
-        # KR: .KS가 실패했거나 "반쪽 응답"(코스닥 종목을 .KS로 조회하면
-        # 재무제표는 오지만 시총·섹터가 비어 옴)이면 코스닥(.KQ)으로 재시도
-        needs_kq_retry = (
-            item["market"] == "KR"
-            and item["yf_symbol"].endswith(".KS")
-            and (data is None or not data["info"].get("marketCap"))
-        )
-        if needs_kq_retry:
-            kq_symbol = item["yf_symbol"].replace(".KS", ".KQ")
-            kq_data = fetch_financials(kq_symbol)
-            if kq_data is not None and kq_data["info"].get("marketCap"):
-                data = kq_data
-                item["yf_symbol"] = kq_symbol
-                item["exchange"] = "KOSDAQ"
+        use_live = refresh_keys is None or (item["market"], item["symbol"]) in refresh_keys
+        data = _fetch_and_cache(conn, item) if use_live else get_cached_financials(conn, item["symbol"])
+
         if data is None:
             continue
 
@@ -356,7 +407,10 @@ def collect_universe(markets: list[str] = ("US", "KR")) -> list[dict]:
             logger.debug("한국상장중국기업 제외: %s", item["symbol"])
             continue
 
-        # 시가총액 필터 (US는 yfinance에서 다시 확인)
+        # 시가총액 필터. 캐시로 읽은 종목은 최대 예산 회전 주기(현재 REFRESH_BUDGET
+        # 기준 약 10주)만큼 묵은 시총을 쓴다 — SPEC §7(시가총액 배치화)에서 별도로
+        # 매주 신선하게 갱신하도록 고칠 예정이라 그 전까지는 감수하기로 함
+        # (2026-08-31 상의 후 결정).
         if item["market"] == "US":
             cap = data["info"].get("marketCap") or 0
             if cap < US_MIN_CAP:
@@ -370,7 +424,8 @@ def collect_universe(markets: list[str] = ("US", "KR")) -> list[dict]:
         item["financials_data"] = data
 
         result.append(item)
-        time.sleep(0.3)  # rate limiting
+        if use_live:
+            time.sleep(0.3)  # rate limiting — 캐시 읽기는 호출이 없으니 안 쉼
 
     logger.info("재무 데이터 수집 완료: %d 종목", len(result))
     return result

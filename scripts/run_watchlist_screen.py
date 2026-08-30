@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sqlite3
 import sys
 from datetime import datetime
@@ -25,6 +26,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 DB_PATH = ROOT / "output" / "data.db"
+
+# SPEC_fundamentals_cache.md §3 — 매주 이만큼만 야후에서 실제로 갱신하고
+# 나머지는 캐시를 읽는다. 환경변수로 노출(기본 60).
+REFRESH_BUDGET = int(os.getenv("REFRESH_BUDGET", "60"))
 
 CREATE_TABLE_SQL = """CREATE TABLE IF NOT EXISTS watchlist_candidates (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -230,10 +235,10 @@ def main():
 
     markets = ["US", "KR"] if args.market == "ALL" else [args.market]
 
-    logger.info("=== 워치리스트 스크리닝 시작 (시장: %s) ===", markets)
+    logger.info("=== 워치리스트 스크리닝 시작 (시장: %s, REFRESH_BUDGET=%d) ===", markets, REFRESH_BUDGET)
 
-    # 1. 유니버스 수집 + 재무 데이터
-    universe = collect_universe(markets=markets)
+    # 1. 유니버스 수집 + 재무 데이터 (예산 내 종목만 라이브 갱신, 나머지는 캐시)
+    universe = collect_universe(markets=markets, refresh_budget=REFRESH_BUDGET)
 
     if not universe:
         logger.error("유니버스 데이터 없음. 종료.")

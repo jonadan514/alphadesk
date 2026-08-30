@@ -1,6 +1,6 @@
 """Phase 0: 재무제표 캐시 스키마 + 읽기/쓰기 함수.
 
-SPEC: docs/radar/SPEC_fundamentals_cache.md §2, §4
+SPEC: docs/radar/SPEC_fundamentals_cache.md §2, §3, §4
 """
 from __future__ import annotations
 
@@ -187,3 +187,26 @@ def get_cached_financials(conn, ticker: str) -> dict | None:
         "balance_sheet": _to_df(by_statement["balance"]),
         "cashflow": _to_df(by_statement["cashflow"]),
     }
+
+
+def select_refresh_targets(conn, universe: list[dict], budget: int) -> tuple[list[dict], list[dict]]:
+    """유니버스를 (이번 주 라이브로 갱신할 것, 캐시를 그대로 쓸 것)으로 나눈다.
+
+    SPEC §3 우선순위: rate_limited 상태 종목이 최우선, 그 다음은
+    last_success_at 오래된 순 — 한 번도 성공한 적 없는 종목(fetch_status에
+    행이 아예 없거나 last_success_at이 NULL인 경우)이 가장 먼저 오도록
+    빈 문자열로 취급해 정렬한다(어떤 날짜 문자열보다 사전순으로 앞선다).
+
+    universe의 각 항목은 최소 {"market", "symbol"}을 가져야 한다.
+    """
+    status_rows = conn.execute("SELECT ticker, status, last_success_at FROM fetch_status").fetchall()
+    status_map = {row[0]: {"status": row[1], "last_success_at": row[2]} for row in status_rows}
+
+    def priority_key(item: dict) -> tuple[int, str]:
+        st = status_map.get(item["symbol"])
+        if st and st["status"] == "rate_limited":
+            return (0, "")
+        return (1, (st["last_success_at"] if st else None) or "")
+
+    ordered = sorted(universe, key=priority_key)
+    return ordered[:budget], ordered[budget:]
