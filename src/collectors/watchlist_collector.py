@@ -363,6 +363,86 @@ def is_chinese_kr_listing(info: dict) -> bool:
     return country in ("china", "cn", "hong kong", "hk")
 
 
+# SPEC §7 — 시가총액은 예산 회전(최대 10주)과 무관하게 매주 신선해야 유니버스
+# 선별이 정확하다. 발행주식수(재무상태표, 이미 캐시됨)는 그대로 두고 가격만
+# yf.download()로 배치 조회해서 종목당 개별 .info 호출 없이 갱신한다.
+MARKET_CAP_BATCH_SIZE = 100
+SHARES_OUTSTANDING_FIELDS = ("Ordinary Shares Number", "Share Issued")
+
+
+def latest_shares_outstanding(balance_sheet: pd.DataFrame) -> float | None:
+    """재무상태표 최신 회계기간(idx=0)의 발행주식수."""
+    if balance_sheet is None or balance_sheet.empty:
+        return None
+    for field in SHARES_OUTSTANDING_FIELDS:
+        if field not in balance_sheet.index:
+            continue
+        series = balance_sheet.loc[field].dropna()
+        if not series.empty:
+            return float(series.iloc[0])
+    return None
+
+
+def fetch_latest_prices_batch(yf_symbols: list[str], batch_size: int = MARKET_CAP_BATCH_SIZE) -> dict[str, float]:
+    """다수 티커의 최신 종가를 yf.download()로 배치 조회한다 (SPEC §7).
+
+    배치 호출도 rate limit 대상이라(SPEC §7 주의사항) §6.1과 동일한 백오프를
+    적용한다. 배치 하나가 끝내 실패하면 그 배치의 종목들은 결과에서 빠지고
+    (호출부가 직전 캐시 시가총액으로 대체), 나머지 배치는 계속 시도한다.
+
+    단, 배치 하나가 rate limit 백오프(최대 840초)를 전부 소진하면 이후 배치는
+    재시도 없이 즉시 건너뛴다 — 590종목 기준 최대 6배치 전부가 이 상황이면
+    840초×6=84분이 걸려 그것만으로 GitHub Actions 90분 제한을 위협한다
+    (§6.1의 종목별 회로차단기와 같은 이유의 안전장치, SPEC엔 없음).
+    """
+    prices: dict[str, float] = {}
+    if not yf_symbols:
+        return prices
+
+    rate_limited_this_run = False
+    for i in range(0, len(yf_symbols), batch_size):
+        chunk = yf_symbols[i:i + batch_size]
+
+        if rate_limited_this_run:
+            logger.warning("이전 배치가 rate limit로 소진됨 — %d번째 배치는 재시도 없이 건너뜀",
+                            i // batch_size)
+            continue
+
+        df = None
+        rate_limit_attempt = 0
+        while True:
+            try:
+                df = yf.download(chunk, period="5d", progress=False, group_by="ticker", threads=True)
+                break
+            except Exception as e:
+                if isinstance(e, YFRateLimitError) and rate_limit_attempt < len(RATE_LIMIT_BACKOFF):
+                    wait = RATE_LIMIT_BACKOFF[rate_limit_attempt]
+                    rate_limit_attempt += 1
+                    logger.warning("시가총액 가격 배치 조회 rate limit — %d초 대기 후 재시도 (%d/%d)",
+                                   wait, rate_limit_attempt, len(RATE_LIMIT_BACKOFF))
+                    time.sleep(wait)
+                    continue
+                if isinstance(e, YFRateLimitError):
+                    rate_limited_this_run = True
+                logger.warning("시가총액 가격 배치 조회 실패(%d개 종목, %d번째 배치): %s",
+                                len(chunk), i // batch_size, e)
+                df = None
+                break
+
+        if df is None or df.empty:
+            continue
+
+        for sym in chunk:
+            try:
+                closes = df[sym]["Close"].dropna()
+                if not closes.empty:
+                    prices[sym] = float(closes.iloc[-1])
+            except (KeyError, TypeError):
+                continue
+
+    return prices
+
+
 # SPEC엔 없는 안전장치(2026-08-31 상의 후 추가): 연속으로 이만큼 rate_limited가
 # 나오면 "이번 실행은 야후 세션 전체가 막혔다"고 판단하고, 남은 예산 종목은
 # 재시도 없이 바로 캐시로 돌린다. 없으면 예산 60종목이 전부 막힌 상황에서
@@ -480,6 +560,11 @@ def collect_universe(markets: list[str] = ("US", "KR"), refresh_budget: int | No
         cache_lookup = {}
         logger.info("총 유니버스: %d 종목 (예산제 미적용 — 전부 라이브 조회)", len(items))
 
+    # SPEC §7 — 시가총액은 예산 회전과 무관하게 매주 신선해야 한다. 발행주식수는
+    # 캐시된 재무상태표에서 읽고, 가격만 전 종목 배치로 새로 받는다.
+    price_lookup = fetch_latest_prices_batch([it["yf_symbol"] for it in items])
+    logger.info("시가총액용 가격 배치 조회: %d/%d 종목 성공", len(price_lookup), len(items))
+
     result = []
     for i, item in enumerate(items):
         if i % 50 == 0:
@@ -496,17 +581,24 @@ def collect_universe(markets: list[str] = ("US", "KR"), refresh_budget: int | No
             logger.debug("한국상장중국기업 제외: %s", item["symbol"])
             continue
 
-        # 시가총액 필터. 캐시로 읽은 종목은 최대 예산 회전 주기(현재 REFRESH_BUDGET
-        # 기준 약 10주)만큼 묵은 시총을 쓴다 — SPEC §7(시가총액 배치화)에서 별도로
-        # 매주 신선하게 갱신하도록 고칠 예정이라 그 전까지는 감수하기로 함
-        # (2026-08-31 상의 후 결정).
-        if item["market"] == "US":
+        # 시가총액 필터 — 배치로 받은 최신 가격 × 캐시된 발행주식수로 계산해
+        # 예산 회전과 무관하게 매주 신선한 값을 쓴다(SPEC §7). 가격 배치 조회가
+        # 실패했거나 발행주식수를 못 구하면 직전 캐시 시가총액(info.marketCap)으로
+        # 대체.
+        shares = latest_shares_outstanding(data.get("balance_sheet"))
+        price = price_lookup.get(item["yf_symbol"])
+        if price and shares:
+            cap = price * shares
+        else:
             cap = data["info"].get("marketCap") or 0
+            logger.debug("%s: 배치 가격/발행주식수 없음 — 직전 캐시 시가총액으로 대체", item["symbol"])
+
+        if item["market"] == "US":
             if cap < US_MIN_CAP:
                 continue
             item["market_cap"] = cap
         elif "market_cap" not in item:
-            item["market_cap"] = data["info"].get("marketCap") or 0
+            item["market_cap"] = cap
 
         item["name"] = item.get("name") or data["info"].get("shortName") or item["symbol"]
         item["sector"] = data["info"].get("sector") or data["info"].get("industry") or "Unknown"
