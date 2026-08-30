@@ -18,13 +18,13 @@ try:
     from db.data_store import get_db
     from db.fundamentals_cache import (
         ensure_schema, upsert_statement_rows, upsert_fetch_status,
-        get_cached_financials, select_refresh_targets,
+        get_cached_financials_bulk, select_refresh_targets,
     )
 except ImportError:
     from src.db.data_store import get_db
     from src.db.fundamentals_cache import (
         ensure_schema, upsert_statement_rows, upsert_fetch_status,
-        get_cached_financials, select_refresh_targets,
+        get_cached_financials_bulk, select_refresh_targets,
     )
 
 logger = logging.getLogger(__name__)
@@ -385,10 +385,14 @@ def collect_universe(markets: list[str] = ("US", "KR"), refresh_budget: int | No
     if refresh_budget is not None:
         to_refresh, to_cache = select_refresh_targets(conn, items, refresh_budget)
         refresh_keys = {(it["market"], it["symbol"]) for it in to_refresh}
+        # 캐시 대상 전체를 여기서 한꺼번에 읽어둔다 — 종목마다 개별 조회하면
+        # Turso 왕복이 그만큼 쌓여 실측 약 7분이 추가로 걸렸다(2026-08-31).
+        cache_lookup = get_cached_financials_bulk(conn, [it["symbol"] for it in to_cache])
         logger.info("총 유니버스: %d 종목 — 이번 주 갱신 %d / 캐시 사용 %d",
                     len(items), len(to_refresh), len(to_cache))
     else:
         refresh_keys = None
+        cache_lookup = {}
         logger.info("총 유니버스: %d 종목 (예산제 미적용 — 전부 라이브 조회)", len(items))
 
     result = []
@@ -397,7 +401,7 @@ def collect_universe(markets: list[str] = ("US", "KR"), refresh_budget: int | No
             logger.info("진행: %d / %d", i, len(items))
 
         use_live = refresh_keys is None or (item["market"], item["symbol"]) in refresh_keys
-        data = _fetch_and_cache(conn, item) if use_live else get_cached_financials(conn, item["symbol"])
+        data = _fetch_and_cache(conn, item) if use_live else cache_lookup.get(item["symbol"])
 
         if data is None:
             continue

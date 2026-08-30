@@ -137,13 +137,35 @@ def upsert_fetch_status(conn, ticker: str, market: str, attempt_at: str, status:
 _STATEMENT_TO_KEY = {"income": "financials", "balance": "balance_sheet", "cashflow": "cashflow"}
 
 
+def _to_df(period_dict: dict[str, dict]) -> pd.DataFrame:
+    if not period_dict:
+        return pd.DataFrame()
+    cols_desc = sorted(period_dict.keys(), reverse=True)  # 최신 회계기간이 idx=0
+    return pd.DataFrame({pd.Timestamp(c): pd.Series(period_dict[c]) for c in cols_desc})
+
+
+def _reconstruct(by_statement: dict[str, dict[str, dict]], info_payload: str | None) -> dict:
+    """fetch_financials()와 동일한 shape({"info", "financials", "balance_sheet",
+    "cashflow"})로 재구성 — 단일 조회(get_cached_financials)와 벌크 조회
+    (get_cached_financials_bulk)가 공유하는 조립 로직."""
+    info: dict = {}
+    if info_payload:
+        try:
+            info = json.loads(info_payload)
+        except (TypeError, ValueError):
+            info = {}
+    return {
+        "info": info,
+        "financials": _to_df(by_statement.get("income", {})),
+        "balance_sheet": _to_df(by_statement.get("balance", {})),
+        "cashflow": _to_df(by_statement.get("cashflow", {})),
+    }
+
+
 def get_cached_financials(conn, ticker: str) -> dict | None:
     """fundamentals_cache + fetch_status에서 watchlist_collector.fetch_financials()와
-    동일한 shape({"info", "financials", "balance_sheet", "cashflow"})로 재구성한다.
-
-    트랩 필터가 라이브 호출로 받은 데이터와 캐시에서 재구성한 데이터를 구분 없이
-    똑같이 다룰 수 있어야 하므로, 컬럼(회계기간)도 yfinance 관례대로 최신이
-    idx=0이 되게 내림차순 정렬한다.
+    동일한 shape로 재구성한다. 종목 하나만 필요할 때 쓴다 — 유니버스 전체를
+    돌 때는 get_cached_financials_bulk()를 써서 Turso 왕복 횟수를 줄일 것.
 
     캐시에 아무 것도 없으면(재무제표도 info도 없음) None.
     """
@@ -156,15 +178,9 @@ def get_cached_financials(conn, ticker: str) -> dict | None:
         (ticker,),
     ).fetchone()
 
-    if not rows and not (status_row and status_row[0]):
+    info_payload = status_row[0] if status_row else None
+    if not rows and not info_payload:
         return None
-
-    info: dict = {}
-    if status_row and status_row[0]:
-        try:
-            info = json.loads(status_row[0])
-        except (TypeError, ValueError):
-            info = {}
 
     by_statement: dict[str, dict[str, dict]] = {"income": {}, "balance": {}, "cashflow": {}}
     for statement, period_end, data in rows:
@@ -175,18 +191,59 @@ def get_cached_financials(conn, ticker: str) -> dict | None:
         except (TypeError, ValueError):
             continue
 
-    def _to_df(period_dict: dict[str, dict]) -> pd.DataFrame:
-        if not period_dict:
-            return pd.DataFrame()
-        cols_desc = sorted(period_dict.keys(), reverse=True)  # 최신 회계기간이 idx=0
-        return pd.DataFrame({pd.Timestamp(c): pd.Series(period_dict[c]) for c in cols_desc})
+    return _reconstruct(by_statement, info_payload)
 
-    return {
-        "info": info,
-        "financials": _to_df(by_statement["income"]),
-        "balance_sheet": _to_df(by_statement["balance"]),
-        "cashflow": _to_df(by_statement["cashflow"]),
-    }
+
+def get_cached_financials_bulk(conn, tickers: list[str]) -> dict[str, dict | None]:
+    """get_cached_financials()를 여러 종목에 대해 한 번에 처리한다.
+
+    Turso는 execute() 호출 한 번이 곧 HTTP 왕복 한 번이라, 종목마다 개별
+    조회하면 그 횟수만큼 지연이 그대로 쌓인다 — 실측 결과 530종목을 개별
+    조회하니 주간 파이프라인 실행 시간에 약 7분이 추가로 붙었다(2026-08-31).
+    쿼리 횟수를 종목 수와 무관한 고정 횟수로 줄여서 이 비용을 없앤다.
+
+    반환: {ticker: 재구성된 dict 또는 None(캐시 없음)}. 인자로 준 tickers의
+    모든 항목에 대해 키가 존재한다.
+    """
+    if not tickers:
+        return {}
+
+    CHUNK = 200  # IN() 절 파라미터 수를 안전한 범위로 제한
+    fund_by_ticker: dict[str, dict[str, dict[str, dict]]] = {}
+    info_by_ticker: dict[str, str] = {}
+
+    for i in range(0, len(tickers), CHUNK):
+        chunk = tickers[i:i + CHUNK]
+        placeholders = ",".join("?" for _ in chunk)
+
+        for ticker, statement, period_end, data in conn.execute(
+            f"SELECT ticker, statement, period_end, data FROM fundamentals_cache WHERE ticker IN ({placeholders})",
+            chunk,
+        ).fetchall():
+            bucket = fund_by_ticker.setdefault(ticker, {"income": {}, "balance": {}, "cashflow": {}})
+            if statement not in bucket:
+                continue
+            try:
+                bucket[statement][period_end] = json.loads(data)
+            except (TypeError, ValueError):
+                continue
+
+        for ticker, info_payload in conn.execute(
+            f"SELECT ticker, info_payload FROM fetch_status WHERE ticker IN ({placeholders})",
+            chunk,
+        ).fetchall():
+            if info_payload:
+                info_by_ticker[ticker] = info_payload
+
+    result: dict[str, dict | None] = {}
+    for ticker in tickers:
+        by_statement = fund_by_ticker.get(ticker)
+        info_payload = info_by_ticker.get(ticker)
+        if not by_statement and not info_payload:
+            result[ticker] = None
+        else:
+            result[ticker] = _reconstruct(by_statement or {}, info_payload)
+    return result
 
 
 def select_refresh_targets(conn, universe: list[dict], budget: int) -> tuple[list[dict], list[dict]]:
