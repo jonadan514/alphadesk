@@ -13,6 +13,7 @@ import logging
 import os
 import sqlite3
 import sys
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -30,6 +31,10 @@ DB_PATH = ROOT / "output" / "data.db"
 # SPEC_fundamentals_cache.md §3 — 매주 이만큼만 야후에서 실제로 갱신하고
 # 나머지는 캐시를 읽는다. 환경변수로 노출(기본 60).
 REFRESH_BUDGET = int(os.getenv("REFRESH_BUDGET", "60"))
+
+# SPEC §6.3 — 이번 주 갱신 대상 중 (라이브 성공 + 캐시 폴백)/전체 시도 비율이
+# 이 아래로 떨어지면 텔레그램 경고. job은 실패 처리하지 않는다.
+CACHE_HIT_RATE_THRESHOLD = 0.70
 
 CREATE_TABLE_SQL = """CREATE TABLE IF NOT EXISTS watchlist_candidates (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -228,6 +233,28 @@ def push_to_turso(candidates: list[dict]) -> None:
     logger.info("Turso 업로드 완료: 총 %d 종목", len(candidates))
 
 
+def send_telegram_warning(text: str) -> None:
+    """SPEC §6.3 — 캐시 적중률 저하·회로차단기 작동 경고 발송. 미설정이면 조용히
+    건너뛴다(다른 스크립트의 텔레그램 발송부와 동일 패턴)."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        logger.info("TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID 미설정 — 경고 발송 건너뜀")
+        return
+
+    body = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML"}).encode()
+    req = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        data=body, headers={"Content-Type": "application/json"}, method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp.read()
+        logger.info("텔레그램 경고 발송 완료")
+    except Exception as e:
+        logger.error("텔레그램 경고 발송 실패: %s", e)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--market", choices=["US", "KR", "ALL"], default="ALL")
@@ -238,14 +265,14 @@ def main():
     logger.info("=== 워치리스트 스크리닝 시작 (시장: %s, REFRESH_BUDGET=%d) ===", markets, REFRESH_BUDGET)
 
     # 1. 유니버스 수집 + 재무 데이터 (예산 내 종목만 라이브 갱신, 나머지는 캐시)
-    universe = collect_universe(markets=markets, refresh_budget=REFRESH_BUDGET)
+    universe, run_state = collect_universe(markets=markets, refresh_budget=REFRESH_BUDGET)
 
     if not universe:
         logger.error("유니버스 데이터 없음. 종료.")
         sys.exit(1)
 
     # 2. 함정 필터 적용 (순위 없음 — 통과한 종목 전부가 후보)
-    passed, failed = run_screen(universe)
+    passed, failed, insufficient = run_screen(universe)
 
     # 3. SQLite 저장 (로컬 백업)
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -260,13 +287,31 @@ def main():
     # 4. Turso 업로드 (프론트엔드용)
     push_to_turso(passed)
 
-    # 4. 결과 요약
+    # 5. 캐시 적중률 확인 — 낮거나 회로차단기가 작동했으면 텔레그램 경고만
+    #    보내고 job은 그대로 성공 처리한다 (SPEC §6.3, job 실패 처리 안 함)
+    attempted = run_state["live_ok"] + run_state["cache_fallback"] + run_state["no_data_at_all"]
+    coverage_rate = (run_state["live_ok"] + run_state["cache_fallback"]) / attempted if attempted else 1.0
+    if run_state["circuit_tripped"] or coverage_rate < CACHE_HIT_RATE_THRESHOLD:
+        lines = [f"⚠️ <b>워치리스트 스크리닝 경고</b> ({datetime.utcnow().strftime('%Y-%m-%d')})"]
+        if run_state["circuit_tripped"]:
+            lines.append("야후 rate limit으로 회로차단기가 작동해 일부 종목을 캐시로 대체했습니다.")
+        if coverage_rate < CACHE_HIT_RATE_THRESHOLD:
+            lines.append(
+                f"이번 주 갱신 대상 커버리지 {coverage_rate*100:.0f}% "
+                f"(라이브 성공 {run_state['live_ok']} / 캐시 폴백 {run_state['cache_fallback']} / "
+                f"완전 실패 {run_state['no_data_at_all']})"
+            )
+        logger.warning("캐시 적중률 낮음 또는 회로차단기 작동 — 텔레그램 경고 발송")
+        send_telegram_warning("\n".join(lines))
+
+    # 6. 결과 요약
     print("\n" + "=" * 60)
     print(f"  워치리스트 스크리닝 결과")
     print("=" * 60)
     print(f"  유니버스:      {len(universe):>4} 종목")
     print(f"  필터 통과:     {len(passed):>4} 종목 (= 최종 후보, 순위 없음)")
     print(f"  탈락:          {len(failed):>4} 종목 ({len(failed)/len(universe)*100:.1f}%)")
+    print(f"  데이터부족:    {len(insufficient):>4} 종목 ({len(insufficient)/len(universe)*100:.1f}%)")
 
     for market in ("US", "KR"):
         group = [c for c in passed if c["market"] == market]

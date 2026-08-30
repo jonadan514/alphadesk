@@ -271,9 +271,10 @@ def apply_trap_filters(item: dict) -> dict:
     }
 
 
-def run_screen(items: list[dict]) -> tuple[list[dict], list[dict]]:
-    """전체 유니버스에 필터 적용. (통과, 탈락) 리스트 반환."""
-    passed, failed = [], []
+def run_screen(items: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
+    """전체 유니버스에 필터 적용. (통과, 탈락, 데이터부족) 3분류 리스트 반환
+    (SPEC_fundamentals_cache.md §4)."""
+    passed, failed, insufficient = [], [], []
 
     for item in items:
         result = apply_trap_filters(item)
@@ -295,10 +296,13 @@ def run_screen(items: list[dict]) -> tuple[list[dict], list[dict]]:
             "current_price": info.get("currentPrice"),
             "data_notes":  result["data_notes"],
         }
-        if result["pass"]:
+        if result["status"] == "insufficient_data":
+            insufficient.append(entry)
+        elif result["status"] == "pass":
             passed.append(entry)
         else:
             failed.append(entry)
 
-    logger.info("스크리닝 완료 — 통과: %d, 탈락: %d", len(passed), len(failed))
-    return passed, failed
+    logger.info("스크리닝 완료 — 통과: %d, 탈락: %d, 데이터부족: %d",
+                len(passed), len(failed), len(insufficient))
+    return passed, failed, insufficient

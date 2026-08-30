@@ -32,6 +32,10 @@ jobs:
           # https://www.data.go.kr/data/15094775/openapi.do 에서 발급.
           # 없으면 pykrx로 재시도 후, 그마저 실패하면 KOSPI 대형주 정적 리스트로 폴백.
           DATA_GO_KR_API_KEY: ${{ secrets.DATA_GO_KR_API_KEY }}
+          # SPEC §6.3 — 캐시 적중률 저하·rate limit 회로차단기 작동 시 경고 발송용.
+          # 미설정이면 조용히 건너뜀(파이프라인 안 막음).
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/run_watchlist_screen.py --market ALL
 
       - name: Upload data.db artifact
