@@ -4,6 +4,61 @@ HOWTO_claude_code.md §5 규칙대로, 세션(작업 단위)이 끝날 때마다
 
 ---
 
+## 2026-08-31 — Phase A-2 (테마→기업 매핑) 구현, 파일럿 대기 중
+
+**무엇을 구현했는지**
+- `src/db/theme_mapping.py`: `theme_members`·`mapping_runs` 스키마 + 쓰기 함수
+  (SPEC §5). 같은 (theme_id, ticker, run_id)는 `INSERT OR IGNORE`로 중복 무시.
+- `scripts/map_theme_companies.py`: 테마별로 경로 A(유니버스 200개씩 청크 제약
+  선택) + 경로 B(자유 생성) 호출 → 합집합 → 코드 검증(§4: 티커 실재·시가총액
+  하한·evidence 품질 15자 이상+금칙어 flagged·중복 제거) → `theme_members`에
+  `approved=0`으로 저장.
+- `.github/workflows/theme-mapping.yml`: `workflow_dispatch`, 기본 입력값을
+  파일럿 3개 테마(nuclear_smr, physical_ai, shipbuilding)로 설정해둠 — 사용자가
+  "먼저 2-3개로 품질 체크" 요청.
+- `requirements.txt`에 PyYAML 추가 (기존엔 없었음, 로컬엔 있어서 몰랐음).
+
+**명세와 다르게 구현한 것**
+- **재무 데이터 존재 확인(SPEC §4 step3)을 매핑 단계에서 탈락 사유로 안 씀.**
+  `theme_members` 스키마엔 "데이터부족"을 담을 컬럼이 없어서(confidence는
+  high/normal만), 재무제표가 아직 캐시 안 된 기업도 일단 매핑에는 포함시키고
+  — 나중에 실적 축 계산(A-4)이 그 시점 `fundamentals_cache`로 자연히
+  데이터부족 판정하게 함. 매핑 단계는 "테마 소속 여부"만 정하는 걸로 스코프를
+  좁힘.
+- 시가총액 확인(§4 step2)은 별도 라이브 조회 없이 Phase 0이 이미 캐시해둔
+  `fetch_status.info_payload`를 재사용 — 새 API 호출 안 늘어남.
+- 티커 대소문자 정규화 추가(SPEC엔 명시 안 됨) — LLM이 소문자로 답할 경우
+  유니버스 매칭이 깨지는 걸 방지.
+
+**검증 (OpenAI 호출 없이 로컬에서 확인 가능한 부분만 — API 키가 로컬에
+없어서 실제 LLM 응답 품질은 아직 못 봄)**
+- `load_themes()`: 테마 3개 필터링 정상
+- `build_universe_and_names()`: US+KR 합쳐 590종목, 이름 매핑 590/590(100%) —
+  US는 `sp500_list.csv`, KR은 `get_kr_universe()`가 이미 이름 포함
+- `validate_members()`: mock 데이터로 5가지 케이스 전부 확인 — 정상 통과,
+  유니버스 밖 티커 거부, 짧은 evidence 거부, 시가총액 미달 거부, 금칙어 있어도
+  탈락 아니라 flagged=True로 통과, 경로A+B 둘 다 나오면 confidence=high,
+  소문자 티커 정규화
+- `theme_mapping.py` 스키마·쓰기 함수: 로컬 DB에 실제 insert 후 중복 무시·
+  승인 기본값 0 확인
+
+**다음 세션에서 이어서 할 것**
+- **사용자가 GitHub Actions에서 `Theme Company Mapping` 워크플로를 파일럿
+  3개 테마로 직접 실행** (OPENAI_API_KEY는 GitHub secret에 있고 로컬엔 없어서
+  Claude가 대신 실행 불가). 로그의 테마별 "통과/티커실패/시총미달/evidence탈락/
+  경로B폐기율" 수치와 실제 evidence 문장 품질을 같이 확인.
+- 품질 괜찮으면: (a) 2차 비판 패스 추가 여부 결정, (b) 나머지 31개 테마로 확대,
+  (c) 사람 검토용 CSV 출력 + 승인(`approved=1`) 스크립트 작성(SPEC §7 — 아직
+  안 만듦, 지금은 Turso 콘솔에서 직접 UPDATE 해야 함).
+- 품질 안 좋으면: 프롬프트(`_theme_description`, `MEMBER_FIELDS_INSTRUCTION`)
+  재검토.
+
+**확인 필요한 미결 사항**
+- 파일럿 실행 결과 대기 중. 특히 경로 B(자유 생성)의 한국 기업 인식률이
+  SPEC이 경고한 대로 낮게 나올지("경로 A가 특히 중요"), physical_ai처럼
+  가치사슬 설명(note)이 있는 테마와 nuclear_smr처럼 없는 테마의 결과 품질
+  차이가 있는지 확인 필요.
+
 ## 2026-08-31 — Phase 0 §7 (시가총액 배치화) — Phase 0 전체 완료
 
 **무엇을 구현했는지**

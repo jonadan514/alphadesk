@@ -1,0 +1,34 @@
+name: Theme Company Mapping
+
+on:
+  workflow_dispatch:
+    inputs:
+      theme_ids:
+        description: "테마 ID 공백 구분 (비우면 전체 34개 — 첫 실행은 파일럿으로 2-3개만 권장)"
+        required: false
+        default: "nuclear_smr physical_ai shipbuilding"
+
+jobs:
+  map:
+    name: Map theme companies
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run theme mapping
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DATA_GO_KR_API_KEY: ${{ secrets.DATA_GO_KR_API_KEY }}
+        run: python scripts/map_theme_companies.py --theme-id ${{ inputs.theme_ids }}
