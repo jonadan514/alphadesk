@@ -1,9 +1,6 @@
-"""Phase 0: 재무제표 캐시 스키마 + 쓰기 함수.
+"""Phase 0: 재무제표 캐시 스키마 + 읽기/쓰기 함수.
 
-SPEC: docs/radar/SPEC_fundamentals_cache.md §2
-
-이번 세션 범위는 §2(스키마)와 §5(백필 워크플로)뿐이다. 트랩 필터가 이 캐시를
-읽게 바꾸는 §4는 다음 세션 — 이 모듈에 읽기 함수가 아직 없는 게 정상이다.
+SPEC: docs/radar/SPEC_fundamentals_cache.md §2, §4
 """
 from __future__ import annotations
 
@@ -135,3 +132,58 @@ def upsert_fetch_status(conn, ticker: str, market: str, attempt_at: str, status:
         """,
         (ticker, market, attempt_at, success_at, status, 0 if status == "ok" else 1, info_payload),
     )
+
+
+_STATEMENT_TO_KEY = {"income": "financials", "balance": "balance_sheet", "cashflow": "cashflow"}
+
+
+def get_cached_financials(conn, ticker: str) -> dict | None:
+    """fundamentals_cache + fetch_status에서 watchlist_collector.fetch_financials()와
+    동일한 shape({"info", "financials", "balance_sheet", "cashflow"})로 재구성한다.
+
+    트랩 필터가 라이브 호출로 받은 데이터와 캐시에서 재구성한 데이터를 구분 없이
+    똑같이 다룰 수 있어야 하므로, 컬럼(회계기간)도 yfinance 관례대로 최신이
+    idx=0이 되게 내림차순 정렬한다.
+
+    캐시에 아무 것도 없으면(재무제표도 info도 없음) None.
+    """
+    rows = conn.execute(
+        "SELECT statement, period_end, data FROM fundamentals_cache WHERE ticker = ?",
+        (ticker,),
+    ).fetchall()
+    status_row = conn.execute(
+        "SELECT info_payload FROM fetch_status WHERE ticker = ?",
+        (ticker,),
+    ).fetchone()
+
+    if not rows and not (status_row and status_row[0]):
+        return None
+
+    info: dict = {}
+    if status_row and status_row[0]:
+        try:
+            info = json.loads(status_row[0])
+        except (TypeError, ValueError):
+            info = {}
+
+    by_statement: dict[str, dict[str, dict]] = {"income": {}, "balance": {}, "cashflow": {}}
+    for statement, period_end, data in rows:
+        if statement not in by_statement:
+            continue
+        try:
+            by_statement[statement][period_end] = json.loads(data)
+        except (TypeError, ValueError):
+            continue
+
+    def _to_df(period_dict: dict[str, dict]) -> pd.DataFrame:
+        if not period_dict:
+            return pd.DataFrame()
+        cols_desc = sorted(period_dict.keys(), reverse=True)  # 최신 회계기간이 idx=0
+        return pd.DataFrame({pd.Timestamp(c): pd.Series(period_dict[c]) for c in cols_desc})
+
+    return {
+        "info": info,
+        "financials": _to_df(by_statement["income"]),
+        "balance_sheet": _to_df(by_statement["balance"]),
+        "cashflow": _to_df(by_statement["cashflow"]),
+    }

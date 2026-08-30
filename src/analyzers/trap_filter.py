@@ -13,6 +13,14 @@
   5. 매출 + 순이익 3년 연속 동시 감소
   6. Piotroski F-Score < 6
   7. ROE < 12%
+
+`apply_trap_filters()`의 반환값에는 `status`(pass/fail/insufficient_data) 3분류가
+들어있다 (SPEC_fundamentals_cache.md §4). 재무 데이터가 아예 없거나 3분류 판정에
+필요한 최소 회계기간(MIN_INCOME_PERIODS 등)이 안 되면 탈락이 아니라
+insufficient_data — 상장 3년 미만·회계연도 변경 기업이 F-Score 낮음으로 조용히
+탈락하는 걸 막기 위함. `pass`/`red_flags`는 하위 호환을 위해 그대로 두었다
+(insufficient_data도 pass=False로 나가며, run_screen()은 아직 이 둘을 구분하지
+않는다 — 실제 파이프라인 반영은 §3에서).
 """
 from __future__ import annotations
 
@@ -24,6 +32,13 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 FINANCIAL_SECTORS = {"Financial Services", "Banking", "Insurance", "금융", "은행", "보험"}
+
+# 3분류(통과/탈락/데이터부족) 판정에 필요한 최소 회계기간 수 (SPEC_fundamentals_cache.md §4).
+# 매출·순이익 3년 연속 감소 체크에 손익계산서 3개년이 필요하고, Piotroski와
+# 영업현금흐름 2년 체크에는 각각 전년 대비 비교가 필요해 2개년이 최소치다.
+MIN_INCOME_PERIODS = 3
+MIN_BALANCE_PERIODS = 2
+MIN_CASHFLOW_PERIODS = 2
 
 
 def _safe(series: pd.Series | None, col: str, idx: int = 0) -> float | None:
@@ -120,11 +135,27 @@ def apply_trap_filters(item: dict) -> dict:
     red_flags: list[str] = []
     sector = item.get("sector", "")
 
-    # 재무제표가 아예 없으면 지표 계산 불가 — 명시적으로 탈락
+    # 재무제표가 아예 없거나 3분류 판정에 필요한 최소 기간이 안 되면 탈락이
+    # 아니라 데이터부족으로 분류한다 (SPEC §4) — 상장 3년 미만·회계연도 변경·
+    # 스핀오프 직후 기업은 F-Score가 낮은 게 아니라 계산 자체가 불가능한
+    # 것이라 탈락과 구분해야 한다. red_flags는 기존 그대로(문구만 유지)
+    # 채워서, 아직 안 바꾼 주간 파이프라인의 화면 표시는 오늘 그대로 간다 —
+    # 새로 추가된 status 필드만 3분류를 구분해서 알려준다.
+    insufficient_reason: str | None = None
     if fin.empty and bs.empty and cf.empty:
+        insufficient_reason = "재무 데이터 없음"
+    elif len(fin.columns) < MIN_INCOME_PERIODS:
+        insufficient_reason = f"손익계산서 {len(fin.columns)}개년 (3개년 미만)"
+    elif len(bs.columns) < MIN_BALANCE_PERIODS:
+        insufficient_reason = f"재무상태표 {len(bs.columns)}개년 (2개년 미만)"
+    elif len(cf.columns) < MIN_CASHFLOW_PERIODS:
+        insufficient_reason = f"현금흐름표 {len(cf.columns)}개년 (2개년 미만)"
+
+    if insufficient_reason:
         return {
             "pass": False,
-            "red_flags": ["재무 데이터 없음"],
+            "status": "insufficient_data",
+            "red_flags": [insufficient_reason],
             "piotroski": None,
             "debt_ratio": None,
             "interest_coverage": None,
@@ -228,6 +259,7 @@ def apply_trap_filters(item: dict) -> dict:
 
     return {
         "pass": len(red_flags) == 0,
+        "status": "pass" if len(red_flags) == 0 else "fail",
         "red_flags": red_flags,
         "piotroski": piotroski,
         "debt_ratio": round(debt_ratio, 1) if debt_ratio is not None else None,
