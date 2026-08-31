@@ -1,0 +1,32 @@
+name: Export Theme Mapping Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "run_id (비우면 가장 최근 run)"
+        required: false
+        default: ""
+
+jobs:
+  export:
+    name: Export review CSV
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Export review CSV
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: python scripts/export_theme_mapping_review.py --run-id "${{ inputs.run_id }}"
