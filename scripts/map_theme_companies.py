@@ -35,8 +35,10 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-09-01-v2"
+PROMPT_VERSION = "2026-09-01-v3"
 UNIVERSE_CHUNK_SIZE = 200
+PATH_A_RUNS = 2  # 파일럿에서 경로 A 결과가 회차마다 크게 흔들리는 현상을 발견 —
+                 # 반복 실행 후 티커 기준 합집합으로 완화
 MIN_EVIDENCE_LEN = 15
 BANNED_EVIDENCE_PHRASES = ["관련 사업", "수혜 예상", "테마주", "관련주"]
 HALLUCINATION_WARN_RATE = 0.30  # SPEC §4 — 경로 B 폐기율 30% 넘으면 로그로 경고
@@ -44,6 +46,11 @@ HALLUCINATION_WARN_RATE = 0.30  # SPEC §4 — 경로 B 폐기율 30% 넘으면 
 
 def _log(msg: str) -> None:
     print(f"[map_theme] {msg}")
+
+
+def _norm_ticker(m: dict) -> str:
+    """LLM이 대소문자를 안 지킬 수 있어 정규화 — KR 코드는 숫자라 upper()가 no-op."""
+    return str(m.get("ticker", "")).strip().upper()
 
 
 def load_themes(theme_ids: list[str] | None) -> list[dict]:
@@ -152,6 +159,25 @@ def path_a_universe_constrained(theme: dict, universe: list[dict], names: dict[s
     return results
 
 
+def path_a_stable(theme: dict, universe: list[dict], names: dict[str, str], api_key: str) -> list[dict]:
+    """경로 A를 PATH_A_RUNS회 반복해 티커 기준 합집합으로 합친다.
+
+    파일럿에서 동일 프롬프트·낮은 temperature(0.2)에도 청크 호출 결과가
+    회차마다 크게 흔들리는 걸 발견함(physical_ai 국내 대형주 7개가 한 번은
+    전부 잡히고 한 번은 전부 빠짐). 한 번이라도 잡히면 포함되도록 반복 후
+    합쳐서 누락 확률을 낮춘다.
+    """
+    merged: dict[str, dict] = {}
+    for run in range(PATH_A_RUNS):
+        raw = path_a_universe_constrained(theme, universe, names, api_key)
+        _log(f"  경로 A 실행 {run + 1}/{PATH_A_RUNS}: {len(raw)}개")
+        for m in raw:
+            ticker = _norm_ticker(m)
+            if ticker and ticker not in merged:
+                merged[ticker] = m
+    return list(merged.values())
+
+
 def path_b_free_generation(theme: dict, api_key: str) -> list[dict]:
     """목록 없이 자유 생성 — 유니버스 밖 신규 상장 종목 포착용. 결과는 §4 검증을 반드시 통과해야 함."""
     desc = _theme_description(theme)
@@ -178,15 +204,11 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
     담는 컬럼이 없으므로 그냥 포함시켜 후속 단계에서 자연히 데이터부족으로
     처리되게 한다).
     """
-    # LLM이 대소문자를 안 지킬 수 있어 정규화 — KR 코드는 숫자라 upper()가 no-op.
-    def _norm(m: dict) -> str:
-        return str(m.get("ticker", "")).strip().upper()
-
-    tickers_a = {_norm(m) for m in raw_a}
-    tickers_b = {_norm(m) for m in raw_b}
+    tickers_a = {_norm_ticker(m) for m in raw_a}
+    tickers_b = {_norm_ticker(m) for m in raw_b}
     merged_by_ticker: dict[str, dict] = {}
     for m in raw_a + raw_b:
-        t = _norm(m)
+        t = _norm_ticker(m)
         if t and t not in merged_by_ticker:
             merged_by_ticker[t] = m
 
@@ -265,7 +287,7 @@ def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_k
         return {}
     out: dict[str, str] = {}
     for item in parsed["flag"]:
-        ticker = str(item.get("ticker", "")).strip().upper()
+        ticker = _norm_ticker(item)
         if ticker:
             out[ticker] = str(item.get("reason", "")).strip()
     return out
@@ -315,8 +337,8 @@ def main() -> None:
         theme_id = theme["id"]
         _log(f"=== {theme_id} ({theme['name_ko']}) ===")
 
-        raw_a = path_a_universe_constrained(theme, universe, names, api_key)
-        _log(f"  경로 A 후보: {len(raw_a)}개")
+        raw_a = path_a_stable(theme, universe, names, api_key)
+        _log(f"  경로 A 후보({PATH_A_RUNS}회 합집합): {len(raw_a)}개")
         raw_b = path_b_free_generation(theme, api_key)
         _log(f"  경로 B 후보: {len(raw_b)}개")
 
