@@ -35,7 +35,7 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-08-31-v1"
+PROMPT_VERSION = "2026-09-01-v2"
 UNIVERSE_CHUNK_SIZE = 200
 MIN_EVIDENCE_LEN = 15
 BANNED_EVIDENCE_PHRASES = ["관련 사업", "수혜 예상", "테마주", "관련주"]
@@ -234,6 +234,43 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
     return out, stats
 
 
+def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_key: str) -> dict[str, str]:
+    """SPEC §3.4 2차 비판 패스. 1차 통과 목록을 같은 LLM에게 다시 보여주고 근거가
+    약한 후보를 지적하게 한다. 삭제하지 않고 flagged=1만 세팅해 사람 검토 우선순위를
+    올린다 (§7). 반환값은 {ticker: reason}."""
+    if not members:
+        return {}
+    desc = _theme_description(theme)
+    listing = "\n".join(
+        f"- {m['ticker']} ({names.get(m['ticker'], '')}): {m['evidence']}" for m in members
+    )
+    prompt = f"""{desc}
+
+아래는 위 테마의 1차 통과 후보 목록과 각각의 근거다.
+
+{listing}
+
+이 중 해당 테마 관련 매출이 전체의 10% 미만일 것으로 보이는 기업, 또는 근거가
+막연하거나 사실관계가 의심스러워 제외를 검토해야 할 기업을 지적하시오. 확실히
+문제없는 기업은 포함하지 마시오.
+
+반드시 아래 JSON 형식으로만 답하시오:
+{{"flag": [{{"ticker": "...", "reason": "..."}}]}}"""
+    parsed = _openai_json(
+        prompt,
+        "당신은 까다로운 산업 분석가입니다. 근거가 약하거나 사실과 다른 후보를 엄격히 지적합니다.",
+        api_key,
+    )
+    if not parsed or not isinstance(parsed.get("flag"), list):
+        return {}
+    out: dict[str, str] = {}
+    for item in parsed["flag"]:
+        ticker = str(item.get("ticker", "")).strip().upper()
+        if ticker:
+            out[ticker] = str(item.get("reason", "")).strip()
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--theme-id", nargs="*", default=None, help="특정 테마만 (비우면 전체)")
@@ -287,6 +324,16 @@ def main() -> None:
         _log(f"  검증 결과: {stats}")
         if stats["경로B_폐기율"] > HALLUCINATION_WARN_RATE * 100:
             _log(f"  ⚠ 경로 B 환각 폐기율 {stats['경로B_폐기율']}% — 30% 초과, 프롬프트 재검토 필요")
+
+        critique = critique_pass(theme, validated, names, api_key)
+        newly_flagged = 0
+        for m in validated:
+            if m["ticker"] in critique:
+                if not m["flagged"]:
+                    newly_flagged += 1
+                m["flagged"] = True
+                _log(f"  비판 패스 flagged: {m['ticker']} — {critique[m['ticker']]}")
+        stats["비판패스_flagged"] = len(critique)
         overall_stats[theme_id] = stats
 
         created_at = datetime.utcnow().isoformat()
@@ -304,7 +351,8 @@ def main() -> None:
     for theme_id, stats in overall_stats.items():
         print(f"  {theme_id:25s} 통과 {stats['통과']:>3d}  "
               f"(티커실패 {stats['티커실재실패']} / 시총미달 {stats['시가총액미달']} / "
-              f"evidence탈락 {stats['evidence품질실패']} / 경로B폐기율 {stats['경로B_폐기율']}%)")
+              f"evidence탈락 {stats['evidence품질실패']} / 경로B폐기율 {stats['경로B_폐기율']}% / "
+              f"비판패스flagged {stats.get('비판패스_flagged', 0)})")
     print("=" * 60)
     print("이 run은 approved=0 상태입니다 — 사람이 검토 후 승인해야 테마 보드에 반영됩니다.")
 
