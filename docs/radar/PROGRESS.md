@@ -319,3 +319,69 @@ SPEC_fundamentals_cache.md §2~§7 전체 구현 완료. 애초 목표(야후 �
   no_data 1 — rate limit 패턴 아님, 정상 범위) → 계속 진행 중.
 - 셀프 리뷰 습관: 이번 세션부터 코드를 쓰면 커밋 전에 반드시 한 번 스스로
   리뷰하고 무엇을 확인·수정했는지 보고하기로 함(사용자 요청, 2026-08-28).
+
+---
+
+## 2026-08-30~09-01 — Phase A-2 테마→기업 매핑: 구현 + 파일럿 2회 + 2차 비판 패스
+
+**무엇을 구현했는지**
+- `src/db/theme_mapping.py`: `theme_members`/`mapping_runs` 스키마(§5) +
+  `ensure_schema`/`start_mapping_run`/`finish_mapping_run`/`insert_theme_member`.
+- `scripts/map_theme_companies.py`: 경로 A(유니버스 제약, 200개씩 청크) + 경로
+  B(자유 생성) → 합집합 → §4 코드 검증(티커실재/시총하한/evidence품질/중복제거)
+  → `approved=0`으로 저장. 재무데이터 존재 확인(§4 step3)은 이 단계에서 탈락
+  사유로 안 씀 — `theme_members`에 insufficient_data를 담을 컬럼이 없어서,
+  Phase A-4 실적 축 계산이 그 시점 캐시로 자연히 데이터부족 처리하도록 미룸.
+- `scripts/export_theme_mapping_review.py` + `.github/workflows/
+  export-theme-mapping-review.yml`: OpenAI 호출 없는 읽기 전용 CSV 출력(§7).
+- `.github/workflows/theme-mapping.yml`: `workflow_dispatch`, 기본값이 파일럿
+  3테마(`nuclear_smr physical_ai shipbuilding`).
+- `requirements.txt`에 `PyYAML` 추가 — 로컬엔 있었지만 requirements.txt에 빠져
+  있던 걸 이번에 발견(간접 의존성이라 여태 안 걸렸음).
+- 1차 커밋: `f601456`
+
+**파일럿 1회차 결과 (run_id=20260830225751-3f8a54, 총 21건)**
+- nuclear_smr 5 / physical_ai 11 / shipbuilding 5.
+- CSV 검토 중 **Boeing(BA)이 shipbuilding에 "잘못" 포함된 걸 발견** — evidence가
+  "Boeing's defense division builds naval ships and submarines"인데 사실이
+  아님(보잉은 항공기 회사, 군함은 General Dynamics/HII 쪽). 티커 실재·시총·
+  evidence 길이 검증은 전부 통과하는 종류의 오류라 §4 코드 검증으로는 못 거름 —
+  SPEC §3.4가 권장한 2차 비판 패스가 정확히 이런 걸 잡기 위한 장치라고 판단,
+  바로 추가하기로 함(사용자 승인).
+
+**2차 비판 패스 추가 (SPEC §3.4)**
+- `critique_pass()`: 1차 통과 목록을 같은 LLM에게 다시 보여주고 "테마 관련
+  매출 10% 미만으로 보이는 기업 / 근거가 약하거나 사실관계가 의심스러운 기업"을
+  지적하게 함. 삭제하지 않고 `flagged=1`만 세팅 — 사람 검토 우선순위만 올림.
+  `PROMPT_VERSION`을 `2026-09-01-v2`로 올림.
+- 목업(`_openai_json` patch) 로컬 스모크테스트로 정규화(대소문자)·빈 목록
+  스킵(비용 절약)·비정상 응답 처리를 확인 후 커밋: `f51f0e9`.
+
+**파일럿 2회차 결과 (run_id=20260831150421-95d6c1, 총 13건, 동일 3테마 재실행)**
+- **Boeing이 이번엔 정확히 flagged=1로 잡힘** — 비판 패스가 의도대로 동작함
+  확인. SK(034730, 원전 해체 근거 약함)·NEE·한화오션(042660)·AAPL(LiDAR 비중
+  근거 약함)도 함께 flagged — 과포함 방향의 오탐(예: 한국전력 015760도
+  flagged됐는데 이건 원전 운영사로서 근거가 명확해 오탐으로 보임)도 있지만,
+  SPEC이 원래 "삭제 아님, 우선순위만"으로 설계한 이유가 이거라 문제는 아님.
+- **다만 파일럿 1·2회차 사이 개수 변동이 예상보다 큼**: physical_ai가
+  11건 → 4건으로 줄었는데, 원인은 경로 A(유니버스 제약)가 1회차에서 잡았던
+  한국 대형주 7개(기아·현대차·삼성전자·삼성전기·현대모비스·LG화학·LG전자)를
+  2회차에선 전혀 못 잡음(경로 A 후보 1개뿐). 프롬프트·코드는 동일, 온도 0.2인데
+  이 정도 변동은 이번에 처음 확인됨 — 다음 세션에서 판단 필요한 사항으로 아래에
+  남김.
+
+**다음 세션에서 이어서 할 것**
+- **판단 필요**: 경로 A 결과의 회차 간 변동폭이 큰 문제를 어떻게 다룰지 결정.
+  옵션: (a) 그냥 재현성 이슈로 받아들이고 사람 검토(§7)의 "빠진 기업 확인"에
+  맡긴다, (b) 경로 A 청크 호출을 1회가 아니라 2회 돌려 합집합으로 안정화한다,
+  (c) 우선 전체 34개 테마로 확대해서 이게 physical_ai 특이 케이스인지 일반적
+  패턴인지 더 데이터를 본다.
+- 위 결정 이후: 전체 34개 테마로 확대 실행 (§8 완료조건 — 테마별 10~30개,
+  환각폐기율 30% 미만 — 기준으로 `themes.yaml` 조정).
+- 사람 승인 메커니즘이 아직 없음 — 현재는 Turso에 직접 SQL로
+  `UPDATE theme_members SET approved=1 WHERE run_id=?` 하는 수밖에 없음. 검토
+  끝나면 작은 승인 스크립트를 만들지, 그냥 수동 SQL로 갈지 결정 필요.
+
+**확인 필요한 미결 사항 / 진행 현황**
+- 두 파일럿 run_id 모두 `approved=0`으로 DB에 남아있음(정상 — 검토 전).
+- Phase A-3~6(뉴스/실적/주가 축, 테마 보드 화면)은 이 매핑이 승인된 뒤 시작.
