@@ -1,0 +1,28 @@
+name: Backfill Quarterly Financials
+
+on:
+  workflow_dispatch:   # 승인된 테마 매핑 종목의 분기 재무제표 백필/갱신 - 수동 실행
+                        # (분기당 1회 정도면 충분 - 매주 돌 필요 없음)
+
+jobs:
+  backfill:
+    name: Backfill quarterly financials
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Backfill
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: python scripts/backfill_quarterly_financials.py
