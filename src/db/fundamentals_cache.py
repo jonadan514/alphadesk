@@ -147,7 +147,12 @@ def _to_df(period_dict: dict[str, dict]) -> pd.DataFrame:
 def _reconstruct(by_statement: dict[str, dict[str, dict]], info_payload: str | None) -> dict:
     """fetch_financials()와 동일한 shape({"info", "financials", "balance_sheet",
     "cashflow"})로 재구성 — 단일 조회(get_cached_financials)와 벌크 조회
-    (get_cached_financials_bulk)가 공유하는 조립 로직."""
+    (get_cached_financials_bulk)가 공유하는 조립 로직.
+
+    "financials_quarterly"는 Phase A-4(실적 축)를 위해 추가됨 - 연간
+    재무제표만 있던 기존 캐시에 분기 재무제표(statement="income_quarterly")도
+    선택적으로 들어올 수 있게 함. 기존 호출부는 이 키를 그냥 무시하면 되므로
+    하위 호환에 영향 없음."""
     info: dict = {}
     if info_payload:
         try:
@@ -159,6 +164,7 @@ def _reconstruct(by_statement: dict[str, dict[str, dict]], info_payload: str | N
         "financials": _to_df(by_statement.get("income", {})),
         "balance_sheet": _to_df(by_statement.get("balance", {})),
         "cashflow": _to_df(by_statement.get("cashflow", {})),
+        "financials_quarterly": _to_df(by_statement.get("income_quarterly", {})),
     }
 
 
@@ -182,7 +188,7 @@ def get_cached_financials(conn, ticker: str) -> dict | None:
     if not rows and not info_payload:
         return None
 
-    by_statement: dict[str, dict[str, dict]] = {"income": {}, "balance": {}, "cashflow": {}}
+    by_statement: dict[str, dict[str, dict]] = {"income": {}, "balance": {}, "cashflow": {}, "income_quarterly": {}}
     for statement, period_end, data in rows:
         if statement not in by_statement:
             continue
@@ -220,7 +226,9 @@ def get_cached_financials_bulk(conn, tickers: list[str]) -> dict[str, dict | Non
             f"SELECT ticker, statement, period_end, data FROM fundamentals_cache WHERE ticker IN ({placeholders})",
             chunk,
         ).fetchall():
-            bucket = fund_by_ticker.setdefault(ticker, {"income": {}, "balance": {}, "cashflow": {}})
+            bucket = fund_by_ticker.setdefault(
+                ticker, {"income": {}, "balance": {}, "cashflow": {}, "income_quarterly": {}}
+            )
             if statement not in bucket:
                 continue
             try:
