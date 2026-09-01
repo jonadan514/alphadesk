@@ -78,3 +78,26 @@ def insert_theme_member(conn, theme_id: str, ticker: str, market: str, stage: st
         (theme_id, ticker, market, stage, evidence, linkage, confidence,
          1 if flagged else 0, run_id, created_at),
     )
+
+
+def approve_theme_members(conn, run_id: str, exclude: set[tuple[str, str]] | None = None) -> tuple[int, int]:
+    """run_id의 theme_members를 승인 처리한다(§7). exclude에 있는 (theme_id,
+    ticker) 쌍은 approved=0으로 남겨두고 건너뛴다 — 삭제하지 않는다(이력 보존,
+    §5). 반환: (승인 건수, 제외 건수)."""
+    exclude = exclude or set()
+    rows = conn.execute(
+        "SELECT theme_id, ticker FROM theme_members WHERE run_id = ?", (run_id,)
+    ).fetchall()
+    approved = 0
+    excluded = 0
+    for theme_id, ticker in rows:
+        if (theme_id, ticker) in exclude:
+            excluded += 1
+            continue
+        conn.execute(
+            "UPDATE theme_members SET approved = 1 WHERE run_id = ? AND theme_id = ? AND ticker = ?",
+            (run_id, theme_id, ticker),
+        )
+        approved += 1
+    conn.commit()
+    return approved, excluded

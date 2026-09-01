@@ -1,0 +1,36 @@
+name: Approve Theme Mapping
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "run_id (비우면 가장 최근 run)"
+        required: false
+        default: ""
+      exclude:
+        description: "제외할 항목, 공백 구분 THEME_ID:TICKER (예: nuclear_smr:034730 shipbuilding:BA)"
+        required: false
+        default: ""
+
+jobs:
+  approve:
+    name: Approve theme mapping run
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Approve
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: python scripts/approve_theme_mapping.py --run-id "${{ inputs.run_id }}" --exclude ${{ inputs.exclude }}
