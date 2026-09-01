@@ -475,7 +475,14 @@ SPEC_fundamentals_cache.md §2~§7 전체 구현 완료. 애초 목표(야후 �
 - `docs/radar/review_20260901012050-53eebe.csv`에 최종 run(266건) 검토용
   CSV 저장 — 사람 검토(§7)의 실제 입력 자료.
 
+**사람 검토·승인 완료 (2026-09-01)**
+- 사용자가 CSV(266건) 검토 후 "괜찮은 것 같다, 그대로 해도 될 것 같다" —
+  제외 없이 전체 승인하기로 결정.
+- `approve-theme-mapping.yml` 실행 → `run_id=20260901012050-53eebe: 승인
+  266건 / 제외 0건`. **Phase A-2(테마→기업 매핑) 완료.**
+- 현재 유효 매핑은 이 run_id + `approved=1`로 조회하면 됨(SPEC §5).
+
 **다음 세션에서 이어서 할 것**
-- 사용자가 위 CSV를 검토 → 문제 있는 항목 있으면 `--exclude`로 넘길 목록
-  정리 → `approve-theme-mapping.yml` workflow_dispatch 실행으로 승인 확정.
-- 승인 끝나면 Phase A-3(뉴스 축 계산)으로 이동.
+- Phase A-3(뉴스 축 계산, `SPEC_phase_a_signals.md`)로 이동.
+- 미뤄둔 항목: humanoid_robot(0개 — 빈 테마 처리 방식 결정 필요), 3개 이하
+  테마 9개(`themes.yaml` 조정은 보류 상태, 필요시 나중에 재검토).
