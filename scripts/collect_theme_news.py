@@ -121,6 +121,10 @@ def main() -> None:
 
             prior_counts = get_prior_news_counts(conn, theme_id, "US", week_start.isoformat(), weeks=4)
             baseline, ratio, arrow = compute_news_arrow(news_count, min_articles, prior_counts, thresholds)
+            ratio_str = f"{ratio:.2f}" if ratio is not None else "-"
+            baseline_str = f"{baseline:.1f}" if baseline is not None else "-"
+            _log(f"  -> baseline={baseline_str} ratio={ratio_str} arrow={arrow} "
+                 f"(backfilled={backfilled}, 직전주 {len(prior_counts)}개 확보)")
 
             upsert_news_signal(
                 conn, theme_id, "US", week_start.isoformat(), news_count, baseline,
