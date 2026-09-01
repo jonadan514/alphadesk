@@ -482,7 +482,74 @@ SPEC_fundamentals_cache.md §2~§7 전체 구현 완료. 애초 목표(야후 �
   266건 / 제외 0건`. **Phase A-2(테마→기업 매핑) 완료.**
 - 현재 유효 매핑은 이 run_id + `approved=1`로 조회하면 됨(SPEC §5).
 
+**미뤄둔 항목 처리 (2026-09-01)**
+- humanoid_robot: `themes.yaml`에서 삭제 대신 `status: archived` 처리(파일
+  자체 관례 - 삭제 금지, archived로 바꿈). 33개 active 테마로 정리.
+- 3개 이하 테마 9개는 그대로 유지하기로 결정(사용자 판단 - "결국 사람이
+  보는 도구").
+
+---
+
+## 2026-09-01 — Phase A-3: 뉴스 축 수집 + 콜드스타트 백필 완료
+
+**무엇을 구현했는지**
+- `src/db/theme_signals.py`: `theme_news`/`theme_signals` 스키마 +
+  `insert_theme_news_bulk`/`get_prior_news_counts`/`upsert_news_signal`.
+  SPEC 원안엔 없던 `news_backfilled` 컬럼 추가(§2.4 텍스트 요구사항인데
+  스키마에 빠져있던 걸 채움).
+- `src/collectors/theme_news_collector.py`: 테마 키워드별로 Google News
+  RSS를 따로 검색해 합친 뒤(사용자 결정 - "옵션 B", 나중에 어떤 키워드가
+  건수를 과도하게 밀어올리는지 진단 가능하려고) URL 해시 + 제목 정규화/
+  유사도(difflib, 90%+) 2단계로 중복 제거.
+- `scripts/collect_theme_news.py`: `--weeks-back`(기본 1) 하나로 평시
+  주간 실행과 8주 백필을 겸함 - 둘 다 after:/before: 날짜범위 조회로
+  로직이 동일해서. `compute_news_arrow()`로 판정 로직 분리(테스트 가능하게).
+- `.github/workflows/collect-theme-news.yml`: 매주 일요일 22:00 UTC 크론
+  + workflow_dispatch(weeks_back/theme_id 수동 조정 가능).
+- 커밋: `0f8de80`, `9aa64ab`
+
+**발견 및 수정한 버그**
+1. `normalize_title`이 구두점을 삭제(치환 아님)해서 "AI-powered"가
+   "aipowered"로 붙어버려 다른 매체의 "AI powered"와 매칭이 깨지는 문제 -
+   로컬 스모크테스트로 발견, 공백 치환으로 수정.
+2. **Turso 정수-문자열 버그**: `_TursoConn.fetchall()`이 INTEGER 컬럼 값을
+   타입 변환 없이 그대로 반환하는데, Hrana 프로토콜은 정수를 문자열로
+   실어 보낸다(64비트 정밀도 손실 방지). `sum(prior_counts)`가 baseline
+   4주차가 처음 채워지는 시점(5번째 주)에 `int + str` TypeError로 크래시 -
+   8주 백필 실행 중 실제로 크래시남. `get_prior_news_counts`에서 `int()`
+   명시적 캐스팅으로 좁게 수정(근본 수정은 `_TursoConn` 자체인데, 이미
+   프로덕션 전체가 쓰는 클래스라 영향범위 파악 없이 지금 건드리는 건
+   보류 - 알려진 이슈로 남겨둠).
+3. **성능 - Phase 0 §3와 같은 패턴 반복**: `insert_theme_news`를 기사마다
+   개별 호출해서 8주 백필이 55분 넘게 걸려도 테마 하나를 못 끝냄 -
+   `insert_theme_news_bulk()`(200건씩 청크 INSERT)로 교체 후 6분 45초에
+   무거운 테마 3개×8주 처리, 전체 29개×8주는 53분 35초.
+- 커밋: `33b7bb6`, `69c701e`
+
+**콜드스타트 백필 실행 결과 (29개 US 테마 × 8주 = 232건)**
+- na(baseline 4주 미만, 1~4주차) 116건 - 정확히 29×4로 예상과 일치.
+- 나머지 116건: flat 95 / down 17 / up1 4 / up2 0.
+- up1 4건(ai_semiconductor, datacenter_cooling×2, petrochemical)은 전부
+  완성된 과거 주 데이터 - 정상적인 신호로 보임.
+- **알려진 아티팩트**: 백필을 화요일에 돌려서 마지막 주(진행 중인 이번
+  주, `backfilled=False`)는 29개 테마 거의 전부 down/flat으로 나옴 -
+  실제 하락이 아니라 그 주 데이터가 절반도 안 모인 상태에서 측정된 것.
+  `ON CONFLICT DO UPDATE` upsert라 이번 주 일요일 22:00 UTC 정식 크론이
+  같은 주를 다시 계산하면 자동 정정됨 - SPEC §2.4의 "첫 4주 판정은
+  참고용" 원칙과 같은 맥락이라 별도 조치 안 함.
+- `keywords_en` 중 일부(AI chip, nuclear power, autonomous driving 등
+  광범위한 키워드)가 Google News RSS의 쿼리당 자연 상한(100건)에 자주
+  도달함 - API 자체의 한계(페이지네이션 미지원), 코드 버그 아님. 너무
+  넓은 키워드일 가능성도 있어 첫 4주 실데이터 쌓이면 SPEC §8 캘리브레이션
+  때 같이 볼 것.
+
+**발견했지만 미해결로 남긴 것**
+- `shipbuilding`의 `markets:` 필드가 `[KR]`뿐인데 Phase A-2 매핑에서
+  실제 미국 기업(Boeing, HII)이 승인됨 - Phase A(미국만) 뉴스 수집
+  대상에서 빠짐. `[US, KR]`로 고칠지는 사용자 판단 필요(k_beauty/k_food/
+  k_content는 원래 한국 특화 테마라 KR 전용이 맞음 - shipbuilding만 다름).
+
 **다음 세션에서 이어서 할 것**
-- Phase A-3(뉴스 축 계산, `SPEC_phase_a_signals.md`)로 이동.
-- 미뤄둔 항목: humanoid_robot(0개 — 빈 테마 처리 방식 결정 필요), 3개 이하
-  테마 9개(`themes.yaml` 조정은 보류 상태, 필요시 나중에 재검토).
+- Phase A-4(실적 축, `SPEC_phase_a_signals.md` §3)로 이동.
+- shipbuilding markets 필드 결정.
+- 첫 4주 실데이터 쌓이면 SPEC §8 캘리브레이션(키워드 과다 여부 등) 확인.
