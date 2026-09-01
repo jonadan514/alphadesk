@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
-from src.db.theme_signals import ensure_schema, insert_theme_news, get_prior_news_counts, upsert_news_signal
+from src.db.theme_signals import ensure_schema, insert_theme_news_bulk, get_prior_news_counts, upsert_news_signal
 from collectors.theme_news_collector import collect_theme_news
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
@@ -109,11 +109,7 @@ def main() -> None:
             backfilled = week_start != current_week
 
             articles, stats = collect_theme_news(keywords, week_start, week_end)
-            for a in articles:
-                insert_theme_news(
-                    conn, theme_id, "US", a["_url_hash"], a["title"], a["url"],
-                    a["published_at"], a["source"], week_start.isoformat(),
-                )
+            insert_theme_news_bulk(conn, theme_id, "US", week_start.isoformat(), articles)
             news_count = len(articles)
             _log(f"{theme_id} {week_start.isoformat()}: 원본 {stats['raw_total']}건 -> "
                  f"URL중복제거후 {stats['after_url_dedup']}건 -> 제목중복제거후 {news_count}건 "

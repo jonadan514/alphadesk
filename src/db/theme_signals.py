@@ -73,6 +73,34 @@ def insert_theme_news(conn, theme_id: str, market: str, url_hash: str, title: st
     )
 
 
+def insert_theme_news_bulk(conn, theme_id: str, market: str, week_start: str,
+                            articles: list[dict], chunk_size: int = 200) -> None:
+    """articles를 chunk_size 단위로 묶어 한 번의 INSERT로 저장한다.
+
+    기사마다 insert_theme_news()를 개별 호출하면 Turso HTTP 클라이언트는
+    호출 하나마다 실제 HTTP 왕복을 하므로(Phase 0 §3에서 겪은 것과 같은
+    문제), 뉴스가 많은 테마 하나의 한 주 분량(수백 건)만으로도 왕복이
+    폭증한다. get_cached_financials_bulk()와 같은 처방 - 여러 값을 한
+    INSERT 문의 VALUES에 묶는다."""
+    if not articles:
+        return
+    for i in range(0, len(articles), chunk_size):
+        chunk = articles[i:i + chunk_size]
+        placeholders = ", ".join(["(?, ?, ?, ?, ?, ?, ?, ?)"] * len(chunk))
+        params: list = []
+        for a in chunk:
+            params.extend([
+                theme_id, market, a["_url_hash"], a["title"], a["url"],
+                a["published_at"], a["source"], week_start,
+            ])
+        conn.execute(
+            "INSERT OR IGNORE INTO theme_news "
+            "(theme_id, market, url_hash, title, url, published_at, source, week_start) "
+            f"VALUES {placeholders}",
+            tuple(params),
+        )
+
+
 def get_prior_news_counts(conn, theme_id: str, market: str, week_start: str, weeks: int = 4) -> list[int]:
     """week_start 이전 주들의 news_count를 최대 weeks개 가져온다 (baseline 계산용).
     news_count가 NULL인 행(계산 실패)은 제외한다.
