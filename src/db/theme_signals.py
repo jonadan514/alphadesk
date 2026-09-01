@@ -75,7 +75,13 @@ def insert_theme_news(conn, theme_id: str, market: str, url_hash: str, title: st
 
 def get_prior_news_counts(conn, theme_id: str, market: str, week_start: str, weeks: int = 4) -> list[int]:
     """week_start 이전 주들의 news_count를 최대 weeks개 가져온다 (baseline 계산용).
-    news_count가 NULL인 행(계산 실패)은 제외한다."""
+    news_count가 NULL인 행(계산 실패)은 제외한다.
+
+    Turso HTTP 클라이언트(_TursoConn)는 정수 컬럼 값을 문자열로 반환한다
+    (Hrana 프로토콜이 64비트 정밀도 손실 방지를 위해 정수를 문자열로 실어
+    보내는데, _TursoConn.fetchall()이 타입 변환 없이 그대로 넘김) - 로컬
+    sqlite3 폴백은 이미 int를 반환하므로 int()가 양쪽 다 안전하게 처리한다.
+    """
     rows = conn.execute(
         """
         SELECT news_count FROM theme_signals
@@ -84,7 +90,7 @@ def get_prior_news_counts(conn, theme_id: str, market: str, week_start: str, wee
         """,
         (theme_id, market, week_start, weeks),
     ).fetchall()
-    return [r[0] for r in rows]
+    return [int(r[0]) for r in rows]
 
 
 def upsert_news_signal(conn, theme_id: str, market: str, week_start: str,
