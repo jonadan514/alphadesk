@@ -1,0 +1,42 @@
+name: Collect Theme News
+
+on:
+  schedule:
+    - cron: "0 22 * * 0"   # 매주 일요일 22:00 UTC (월요일 07:00 KST) - SPEC §7
+  workflow_dispatch:
+    inputs:
+      weeks_back:
+        description: "처리할 주 수 (1=이번 주만, 8=콜드스타트 백필)"
+        required: false
+        default: "1"
+      theme_id:
+        description: "테마 ID 공백 구분 (비우면 전체)"
+        required: false
+        default: ""
+
+jobs:
+  collect:
+    name: Collect theme news
+    runs-on: ubuntu-latest
+    # 백필(weeks_back=8)은 테마당 키워드별로 요청 사이 1초씩 쉬므로 시간이 걸림
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Collect news
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: >
+          python scripts/collect_theme_news.py
+          --weeks-back "${{ inputs.weeks_back || '1' }}"
+          --theme-id ${{ inputs.theme_id }}
