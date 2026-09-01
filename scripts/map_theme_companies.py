@@ -35,7 +35,7 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-09-01-v3"
+PROMPT_VERSION = "2026-09-01-v4"
 UNIVERSE_CHUNK_SIZE = 200
 PATH_A_RUNS = 2  # 파일럿에서 경로 A 결과가 회차마다 크게 흔들리는 현상을 발견 —
                  # 반복 실행 후 티커 기준 합집합으로 완화
@@ -87,7 +87,7 @@ def build_universe_and_names() -> tuple[list[dict], dict[str, str]]:
     return us_items + kr_items, names
 
 
-def _openai_json(prompt: str, system: str, api_key: str) -> dict | None:
+def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.2) -> dict | None:
     try:
         resp = requests.post(
             "https://api.openai.com/v1/chat/completions",
@@ -98,7 +98,7 @@ def _openai_json(prompt: str, system: str, api_key: str) -> dict | None:
                     {"role": "system", "content": system},
                     {"role": "user", "content": prompt},
                 ],
-                "temperature": 0.2,
+                "temperature": temperature,
                 "max_tokens": 2000,
                 "response_format": {"type": "json_object"},
             },
@@ -179,15 +179,38 @@ def path_a_stable(theme: dict, universe: list[dict], names: dict[str, str], api_
 
 
 def path_b_free_generation(theme: dict, api_key: str) -> list[dict]:
-    """목록 없이 자유 생성 — 유니버스 밖 신규 상장 종목 포착용. 결과는 §4 검증을 반드시 통과해야 함."""
+    """목록 없이 자유 생성 — 유니버스 밖 신규 상장 종목 포착용. 결과는 §4 검증을 반드시 통과해야 함.
+
+    34개 테마 전체 실행(2026-09-01)에서 경로 B 환각 폐기율이 34개 중 23개
+    테마(68%)에서 30% 기준을 넘는 걸 확인 — 프롬프트를 더 보수적으로 손봄.
+    확인된 실패 패턴 두 가지를 직접 겨냥함:
+    1) 존재 자체가 불확실한 회사/티커를 지어냄
+    2) 실존 대기업인데 "이 회사의 한 사업부가 XX를 한다"는, 확인하기 어렵고
+       특히 틀리기 쉬운 사업부 단위 주장을 근거로 씀 (예: "Boeing 방산 부문이
+       군함을 만든다" — 사실이 아닌데도 그럴듯하게 답한 실제 사례)
+    temperature도 0.2 → 0.1로 낮춰 좀 더 보수적으로 만듦.
+    """
     desc = _theme_description(theme)
     prompt = f"""{desc}
 
 위 테마에 해당하는 실제 상장기업(미국 또는 한국 증시)을 아는 대로 답하시오.
-확실하지 않은 기업은 포함하지 마시오.
+
+반드시 지킬 것:
+- 회사의 **주력 사업**으로서 이 테마에 속한다고 확실히 아는 경우만 답하시오.
+  "이 회사의 한 사업부가 관련 있을 것"이라는 추측은 특히 틀리기 쉽다 —
+  사업부 단위 주장은 그 사업부가 그 회사의 잘 알려진 핵심 사업일 때만 쓰시오.
+- 회사명·티커의 존재 자체가 불확실하면 절대 포함하지 마시오.
+- 확신이 없으면 억지로 채우지 말고 빈 목록을 반환하시오. 개수를 채우는 것보다
+  정확한 게 훨씬 중요하다.
 
 {MEMBER_FIELDS_INSTRUCTION}"""
-    parsed = _openai_json(prompt, "당신은 신중한 산업 분석가입니다. 확실하지 않으면 답하지 않습니다.", api_key)
+    parsed = _openai_json(
+        prompt,
+        "당신은 매우 신중한 산업 분석가입니다. 사업부 단위의 막연한 추측으로 "
+        "회사를 포함시키지 않으며, 확신이 없으면 빈 목록을 반환합니다.",
+        api_key,
+        temperature=0.1,
+    )
     if parsed and isinstance(parsed.get("members"), list):
         return parsed["members"]
     return []
