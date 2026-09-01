@@ -391,13 +391,19 @@ themes:
     keywords_ko: [휴머노이드, 휴머노이드 로봇, 이족보행 로봇, 로봇 양산]
     keywords_en: [humanoid robot, bipedal robot, humanoid production]
     min_articles: 6
-    status: active
+    status: archived
     added_at: 2026-08-27
+    archived_at: 2026-09-01
     note: |
       상용화 시점이 먼 테마. 소속 기업 다수가 관련 매출이 거의 없어
       실적 축 판정이 왜곡되기 쉽다. 실적 ↑↑가 떠도 본업 실적일 가능성이 높으니
       그대로 믿지 말 것. 뉴스 축과 과열 경계 판정에 주로 쓴다.
       실제 투자 후보 발굴은 physical_ai 쪽이 더 유효하다.
+
+      2026-09-01: Phase A-2 매핑 결과 소속 기업 0개(경로 A/B 둘 다 후보를
+      못 찾음) — 위 우려가 그대로 실현됨. 실적축/주가축 계산 자체가 안 되는
+      빈 테마라 archived 처리. 뉴스 축만으로 계속 보고 싶으면 나중에 다시
+      active로 되돌릴 것(과거 뉴스 추이 데이터는 살아있음).
 
   # ═══════════════════════════════════════════════════
   # G. 소재·화학
