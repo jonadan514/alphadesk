@@ -464,3 +464,18 @@ SPEC_fundamentals_cache.md §2~§7 전체 구현 완료. 애초 목표(야후 �
   2. 남은 30%+ 환각률 테마 10개는 더 손보지 않고 사람 검토(§7)로 넘김.
   3. 다음 단계로 승인 메커니즘을 만들어 이번 run(run_id=20260901012050-53eebe)
      검토·승인 절차를 실제로 진행하기로 함.
+
+**승인 메커니즘 추가 + 검토 자료 준비 (커밋 `ffb8961`)**
+- `src/db/theme_mapping.py`에 `approve_theme_members(conn, run_id, exclude)`
+  추가 — run 전체를 approved=1로 확정하되, `exclude`에 있는 (theme_id,
+  ticker) 쌍은 approved=0으로 남김(삭제 안 함, 이력 보존).
+- `scripts/approve_theme_mapping.py` + `.github/workflows/
+  approve-theme-mapping.yml` — `--run-id`(비우면 최신) `--exclude
+  THEME_ID:TICKER ...` 형태로 실행.
+- `docs/radar/review_20260901012050-53eebe.csv`에 최종 run(266건) 검토용
+  CSV 저장 — 사람 검토(§7)의 실제 입력 자료.
+
+**다음 세션에서 이어서 할 것**
+- 사용자가 위 CSV를 검토 → 문제 있는 항목 있으면 `--exclude`로 넘길 목록
+  정리 → `approve-theme-mapping.yml` workflow_dispatch 실행으로 승인 확정.
+- 승인 끝나면 Phase A-3(뉴스 축 계산)으로 이동.
