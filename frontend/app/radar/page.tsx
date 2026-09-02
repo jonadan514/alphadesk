@@ -102,6 +102,23 @@ function LabelBadge({ label }: { label: string }) {
   );
 }
 
+const LINKAGE_STYLE: Record<string, { label: string; fg: string; bg: string }> = {
+  direct: { label: "주력", fg: "#4ade80", bg: "rgba(74,222,128,0.14)" },
+  partial: { label: "일부", fg: "#6fb3b8", bg: "rgba(111,179,184,0.14)" },
+  peripheral: { label: "간접", fg: FAINT, bg: "transparent" },
+};
+function LinkageBadge({ linkage }: { linkage: string }) {
+  const s = LINKAGE_STYLE[linkage] ?? { label: linkage, fg: MUTED, bg: "transparent" };
+  return (
+    <span
+      className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+      style={{ background: s.bg, color: s.fg, border: s.bg === "transparent" ? "1px solid var(--border)" : "none" }}
+    >
+      {s.label}
+    </span>
+  );
+}
+
 function MembersTable({ members, loading }: { members: Member[]; loading: boolean }) {
   if (loading) return <div className="py-4 text-[12px]" style={{ color: MUTED }}>불러오는 중...</div>;
   if (members.length === 0) return <div className="py-4 text-[12px]" style={{ color: MUTED }}>소속 기업 정보를 찾을 수 없습니다.</div>;
@@ -137,8 +154,8 @@ function MembersTable({ members, loading }: { members: Member[]; loading: boolea
                 </div>
               </td>
               <td className="max-w-[360px] px-3 py-2 align-top text-[12.5px]" style={{ color: MUTED }}>{m.evidence ?? "-"}</td>
-              <td className="px-3 py-2 align-top" style={{ color: m.linkage === "peripheral" ? FAINT : "var(--text-secondary)", opacity: m.linkage === "peripheral" ? 0.7 : 1 }}>
-                {m.linkage}
+              <td className="px-3 py-2 align-top">
+                <LinkageBadge linkage={m.linkage} />
               </td>
             </tr>
           ))}
