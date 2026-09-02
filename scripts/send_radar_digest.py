@@ -27,10 +27,10 @@ THEMES_YAML = ROOT / "config" / "themes.yaml"
 RADAR_URL = "https://alphadesk-eta.vercel.app/radar"
 
 # SPEC §6.2 순서 그대로 - 순위가 아니라 편집 방침.
-LABEL_ORDER = ["조용히 좋아짐", "바닥 통과 가능", "새로 부상", "관심 강화", "과열 경계", "약화"]
+LABEL_ORDER = ["Quiet Strength", "Quiet Recovery", "Early Buzz", "Full Alignment", "Overheated Buzz", "Full Decline"]
 LABEL_EMOJI = {
-    "조용히 좋아짐": "🟢", "바닥 통과 가능": "🔵", "새로 부상": "🟡",
-    "관심 강화": "🟠", "과열 경계": "🔴", "약화": "⚫",
+    "Quiet Strength": "🟢", "Quiet Recovery": "🔵", "Early Buzz": "🟡",
+    "Full Alignment": "🟠", "Overheated Buzz": "🔴", "Full Decline": "⚫",
 }
 ARROW_GLYPH = {"up2": "↑↑", "up1": "↑", "flat": "→", "down": "↓", "na": "–"}
 

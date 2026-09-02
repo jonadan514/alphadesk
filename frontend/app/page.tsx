@@ -6,7 +6,7 @@ import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
 
 // radar/page.tsx의 편집 방침과 같은 순서 (SPEC §6.2) — 페이지별 상수 유지 관행.
-const LABEL_ORDER = ["조용히 좋아짐", "바닥 통과 가능", "새로 부상", "관심 강화", "과열 경계", "약화"];
+const LABEL_ORDER = ["Quiet Strength", "Quiet Recovery", "Early Buzz", "Full Alignment", "Overheated Buzz", "Full Decline"];
 
 interface RadarSignal { label: string | null }
 

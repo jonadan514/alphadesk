@@ -17,10 +17,10 @@
 
                    뉴스   실적   주가
 ──────────────────────────────────────────
-조선                →     ↑↑     →     조용히 좋아짐
+조선                →     ↑↑     →     Quiet Strength
   10개사 중 8개 매출 개선. 뉴스는 4주 평균 수준.
 
-원전·SMR           ↑↑     →      ↑     새로 부상
+원전·SMR           ↑↑     →      ↑     Early Buzz
   뉴스 4주 평균 대비 +180%. 실적 변화는 아직 없음.
 ```
 
@@ -244,12 +244,12 @@ price_excess <= -0.03       → 'down'
 
 | 뉴스 | 실적 | 주가 | 라벨 |
 |---|---|---|---|
-| up2 | flat | up1/up2 | 새로 부상 |
-| up1/up2 | up1/up2 | up1/up2 | 관심 강화 |
-| flat/down | up2 | flat | **조용히 좋아짐** |
-| up2 | down | up2 | 과열 경계 |
-| down | down | down | 약화 |
-| down | up1/up2 | down | 바닥 통과 가능 |
+| up2 | flat | up1/up2 | Early Buzz |
+| up1/up2 | up1/up2 | up1/up2 | Full Alignment |
+| flat/down | up2 | flat | **Quiet Strength** |
+| up2 | down | up2 | Overheated Buzz |
+| down | down | down | Full Decline |
+| down | up1/up2 | down | Quiet Recovery |
 
 **위 6개에 해당하지 않으면 `label = NULL`이고 화살표만 표시한다.**
 
@@ -272,21 +272,21 @@ price_excess <= -0.03       → 'down'
 **라벨별로 묶어서 보여준다.** 순위를 매기지 않는다.
 
 ```
-1. 조용히 좋아짐      ← 이 툴의 존재 이유. 맨 위
-2. 바닥 통과 가능
-3. 새로 부상
-4. 관심 강화
-5. 과열 경계
-6. 약화
+1. Quiet Strength      ← 이 툴의 존재 이유. 맨 위
+2. Quiet Recovery
+3. Early Buzz
+4. Full Alignment
+5. Overheated Buzz
+6. Full Decline
 7. (라벨 없음 — 화살표만 움직인 것들)
 ```
 
-이 순서는 **점수가 아니라 편집 방침**이다. "조용히 좋아짐"을 위에 두는 것은 그것이 뉴스만 봐서는 찾을 수 없는 정보이기 때문이다.
+이 순서는 **점수가 아니라 편집 방침**이다. "Quiet Strength"을 위에 두는 것은 그것이 뉴스만 봐서는 찾을 수 없는 정보이기 때문이다.
 
 ### 6.3 각 행에 들어갈 것
 
 ```
-조선                →     ↑↑     →     조용히 좋아짐
+조선                →     ↑↑     →     Quiet Strength
   실적: 10개사 중 8개 매출 개선 (2026 Q2 기준)
   뉴스: 이번 주 14건 / 4주 평균 13건
   [소속 기업 보기]  [기사 보기]

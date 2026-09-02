@@ -13,12 +13,12 @@ UP = ("up1", "up2")
 # 순서가 뚜렷한 우선순위는 없다(동시에 두 규칙에 걸리는 경우가 안 생기게
 # 규칙 자체가 서로 겹치지 않게 설계돼 있음 - SPEC 표를 그대로 옮김).
 _RULES: list[tuple[set[str], set[str], set[str], str]] = [
-    ({"up2"}, {"flat"}, set(UP), "새로 부상"),
-    (set(UP), set(UP), set(UP), "관심 강화"),
-    ({"flat", "down"}, {"up2"}, {"flat"}, "조용히 좋아짐"),
-    ({"up2"}, {"down"}, {"up2"}, "과열 경계"),
-    ({"down"}, {"down"}, {"down"}, "약화"),
-    ({"down"}, set(UP), {"down"}, "바닥 통과 가능"),
+    ({"up2"}, {"flat"}, set(UP), "Early Buzz"),
+    (set(UP), set(UP), set(UP), "Full Alignment"),
+    ({"flat", "down"}, {"up2"}, {"flat"}, "Quiet Strength"),
+    ({"up2"}, {"down"}, {"up2"}, "Overheated Buzz"),
+    ({"down"}, {"down"}, {"down"}, "Full Decline"),
+    ({"down"}, set(UP), {"down"}, "Quiet Recovery"),
 ]
 
 

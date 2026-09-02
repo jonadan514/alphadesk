@@ -169,7 +169,7 @@ export default function GuidePage() {
           {[
             { n: "①", tab: "텔레그램 요약", action: "주간 분석 완료 후 요약 메시지 확인 — 별다른 신호 없으면 이번 주는 끝", href: "/" },
             { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 이번 주 후보 수 + 테마 레이더 라벨 요약 확인", href: "/" },
-            { n: "③", tab: "테마 레이더",   action: "라벨 붙은 테마가 있으면 훑어보기 — 특히 \"조용히 좋아짐\"은 뉴스만 봐서는 못 찾는 신호", href: "/radar" },
+            { n: "③", tab: "테마 레이더",   action: "라벨 붙은 테마가 있으면 훑어보기 — 특히 \"Quiet Strength\"는 뉴스만 봐서는 못 찾는 신호", href: "/radar" },
             { n: "④", tab: "워치리스트",    action: "관심도 상승 배너 확인 → 눈에 띄는 후보 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>

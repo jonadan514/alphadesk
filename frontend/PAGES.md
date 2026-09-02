@@ -17,7 +17,7 @@
 - 소스: `/api/data/sector`, `/api/data/kr/sector`
 
 ### 테마 레이더 `/radar` (미국만, Phase A)
-미국 산업 테마 약 30개를 뉴스·실적·주가 세 축으로 매주 관찰. 종합 점수 없이 화살표만 표시하고, 정해진 6개 조합에만 라벨("조용히 좋아짐" 등)을 붙인다. 테마 카드를 펼치면 소속 기업(가치사슬 단계·근거·주력/일부/간접·재무 통과 여부)과 이번 주 수집 기사 목록.
+미국 산업 테마 약 30개를 뉴스·실적·주가 세 축으로 매주 관찰. 종합 점수 없이 화살표만 표시하고, 정해진 6개 조합에만 라벨("Quiet Strength" 등)을 붙인다. 테마 카드를 펼치면 소속 기업(가치사슬 단계·근거·주력/일부/간접·재무 통과 여부)과 이번 주 수집 기사 목록.
 - 소스: `/api/radar`, `/api/radar/{members,news,ticker-themes}`
 - 배경: `docs/radar/MASTER_PLAN_research_radar.md`, `docs/radar/SPEC_phase_a_signals.md`
 

@@ -55,16 +55,17 @@ interface Article {
   published_at: string | null;
 }
 
-// SPEC §6.2 - 순위가 아니라 편집 방침. "조용히 좋아짐"이 맨 위인 이유는
-// 뉴스만 봐서는 못 찾는 정보라서.
-const LABEL_ORDER = ["조용히 좋아짐", "바닥 통과 가능", "새로 부상", "관심 강화", "과열 경계", "약화"];
+// SPEC §6.2 - 순위가 아니라 편집 방침. "Quiet Strength"가 맨 위인 이유는
+// 뉴스만 봐서는 못 찾는 정보라서. 2026-09 라벨 개편 - Quiet(펀더멘털 선행)·
+// Buzz(뉴스 선행)·Full(삼박자 동반) 세 쌍으로 구조를 그대로 드러내는 이름.
+const LABEL_ORDER = ["Quiet Strength", "Quiet Recovery", "Early Buzz", "Full Alignment", "Overheated Buzz", "Full Decline"];
 const LABEL_NOTE: Record<string, string> = {
-  "조용히 좋아짐": "뉴스는 잠잠하거나 줄었는데 실적은 실제로 개선된 테마.",
-  "바닥 통과 가능": "뉴스도 주가도 안 좋은데 실적은 개선된 테마 - 시장이 아직 못 따라잡았을 가능성.",
-  "새로 부상": "뉴스가 급증했지만 실적은 아직 안 나온 테마.",
-  "관심 강화": "뉴스·실적·주가가 다 같은 방향으로 움직이는 테마.",
-  "과열 경계": "뉴스·주가는 뜨거운데 실적은 식은 테마.",
-  "약화": "세 축 다 하락한 테마.",
+  "Quiet Strength": "뉴스는 잠잠하거나 줄었는데 실적은 실제로 개선된 테마.",
+  "Quiet Recovery": "뉴스도 주가도 안 좋은데 실적은 개선된 테마 - 시장이 아직 못 따라잡았을 가능성.",
+  "Early Buzz": "뉴스가 급증했지만 실적은 아직 안 나온 테마.",
+  "Full Alignment": "뉴스·실적·주가가 다 같은 방향으로 움직이는 테마.",
+  "Overheated Buzz": "뉴스·주가는 뜨거운데 실적은 식은 테마.",
+  "Full Decline": "세 축 다 하락한 테마.",
 };
 
 function arrowGlyph(a: Arrow): string {
