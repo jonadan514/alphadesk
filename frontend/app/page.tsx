@@ -10,10 +10,30 @@ const LABEL_ORDER = ["조용히 좋아짐", "바닥 통과 가능", "새로 부�
 
 interface RadarSignal { label: string | null }
 
+// 매크로 패널 — 등급·판정 없이 원자료만 (src/analyzers/macro_snapshot.py의 items 키와 동일 순서)
+const MACRO_ORDER = ["us10y", "us30y", "spread_10y_2y", "usdkrw", "vix", "dxy", "wti"];
+interface MacroItem { value: number | null; chg_1d: number | null; chg_1w: number | null; label: string; unit: string }
+interface MacroSnapshot { date: string; items: Record<string, MacroItem> }
+
+function fmtMacroValue(item: MacroItem): string {
+  if (item.value == null) return "-";
+  if (item.unit === "원") return `₩${Math.round(item.value).toLocaleString()}`;
+  if (item.unit === "$") return `$${item.value.toFixed(2)}`;
+  if (item.unit === "%p" || item.unit === "%") return `${item.value.toFixed(2)}${item.unit}`;
+  return item.value.toFixed(2);
+}
+function fmtMacroChg(item: MacroItem): string {
+  if (item.chg_1d == null) return "-";
+  const sign = item.chg_1d >= 0 ? "+" : "";
+  const digits = item.unit === "원" ? 1 : 2;
+  return `${sign}${item.chg_1d.toFixed(digits)}`;
+}
+
 export default function HomePage() {
   const { market } = useMarket();
   const [candidateCount, setCandidateCount] = useState<number | null>(null);
   const [radarCounts, setRadarCounts] = useState<Record<string, number> | null>(null);
+  const [macro, setMacro] = useState<MacroSnapshot | null>(null);
 
   useEffect(() => {
     setCandidateCount(null);
@@ -37,6 +57,14 @@ export default function HomePage() {
       })
       .catch(() => setRadarCounts({}));
   }, [market]);
+
+  // 매크로 지표는 시장 토글과 무관하게 항상 같은 값 (US/KR 둘 다에 걸치는 배경 정보).
+  useEffect(() => {
+    fetch("/api/data/macro")
+      .then(r => r.json())
+      .then(setMacro)
+      .catch(() => setMacro(null));
+  }, []);
 
   const isKR = market === "KR";
   const indexName = isKR ? "KOSPI" : "S&P 500";
@@ -127,6 +155,36 @@ export default function HomePage() {
           </p>
         </a>
       </div>
+
+      {/* 매크로 패널 — 매일 갱신, 등급·판정 없이 원자료만 (US/KR 공통 배경 정보) */}
+      {macro && (
+        <div className="bg-card rounded-lg p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <p className="stat-label" style={{ fontSize: 13 }}>매크로 지표</p>
+            <InfoTooltip content="시장 전체의 배경 지표를 판단 없이 숫자 그대로 보여줍니다. 등급·추천이 아니며, 매일 갱신됩니다." />
+            <span className="ml-auto text-[11px]" style={{ color: "var(--text-faint)" }}>{macro.date} 기준</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {MACRO_ORDER.map((key) => {
+              const item = macro.items[key];
+              if (!item) return null;
+              const chg = item.chg_1d;
+              const chgColor = chg == null ? "var(--text-faint)" : chg > 0 ? "#4ade80" : chg < 0 ? "#f87171" : "var(--text-muted)";
+              return (
+                <div key={key} className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)" }}>
+                  <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>{item.label}</p>
+                  <p className="text-[16px] font-bold mt-0.5" style={{ color: "var(--text-primary)", fontVariantNumeric: "tabular-nums" }}>
+                    {fmtMacroValue(item)}
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: chgColor, fontVariantNumeric: "tabular-nums" }}>
+                    {fmtMacroChg(item)} <span style={{ color: "var(--text-faint)" }}>(1일)</span>
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
