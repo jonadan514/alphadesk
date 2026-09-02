@@ -1,4 +1,4 @@
-"""Phase A-3~5: 테마 신호(theme_news, theme_signals) 스키마 + 쓰기 함수.
+"""Phase A-3~6: 테마 신호(theme_news, theme_signals) 스키마 + 쓰기 함수.
 
 SPEC: docs/radar/SPEC_phase_a_signals.md §1
 """
@@ -200,6 +200,27 @@ def upsert_price_signal(conn, theme_id: str, market: str, week_start: str,
         """,
         (theme_id, market, week_start, price_median_ret, price_index_ret, price_excess,
          price_arrow, member_count, mapping_run_id, computed_at),
+    )
+
+
+def get_week_signals(conn, market: str, week_start: str) -> list[dict]:
+    """해당 주의 theme_signals 전체 행을 라벨 계산에 필요한 컬럼만 가져온다."""
+    rows = conn.execute(
+        """
+        SELECT theme_id, news_arrow, earn_arrow, price_arrow
+        FROM theme_signals WHERE market = ? AND week_start = ?
+        """,
+        (market, week_start),
+    ).fetchall()
+    return [{"theme_id": r[0], "news_arrow": r[1], "earn_arrow": r[2], "price_arrow": r[3]} for r in rows]
+
+
+def update_theme_label(conn, theme_id: str, market: str, week_start: str, label: str | None) -> None:
+    """이미 존재하는 행(뉴스/실적/주가 축 upsert로 먼저 생성됨)의 label만 갱신한다.
+    라벨은 세 축이 다 있어야 계산되므로 새 행을 만들 일이 없다 - UPDATE만."""
+    conn.execute(
+        "UPDATE theme_signals SET label = ? WHERE theme_id = ? AND market = ? AND week_start = ?",
+        (label, theme_id, market, week_start),
     )
 
 

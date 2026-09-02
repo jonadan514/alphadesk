@@ -1,0 +1,29 @@
+name: Compute Theme Labels
+
+on:
+  schedule:
+    - cron: "45 22 * * 0"   # 뉴스(22:00)·실적(22:15)·주가(22:30) 전부 끝난 뒤 - SPEC §7
+  workflow_dispatch:
+
+jobs:
+  compute:
+    name: Compute labels
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compute labels
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: python scripts/compute_theme_labels.py
