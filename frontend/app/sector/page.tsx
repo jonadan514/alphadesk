@@ -142,7 +142,7 @@ export default function SectorPage() {
           <div>
             <div className="flex items-center gap-1.5 mb-1">
               <p className="text-[13px] font-bold" style={{ color: "#ffb020" }}>↑ 선행 섹터</p>
-              <InfoTooltip content="최근 1개월 시장 대비 상대강도(RS)가 가장 높은 상위 3개 섹터입니다. 자금이 집중되고 있는 섹터로, 포트폴리오 편입 우선순위가 높습니다." />
+              <InfoTooltip content="최근 1개월 시장 대비 상대강도(RS)가 가장 높은 상위 3개 섹터입니다. 최근 시장보다 상대적으로 강했다는 뜻입니다." />
             </div>
             <div className="flex flex-wrap gap-1">
               {leading.map((l: any, i: number) => (
@@ -157,7 +157,7 @@ export default function SectorPage() {
           <div>
             <div className="flex items-center gap-1.5 mb-1">
               <p className="text-[13px] font-bold" style={{ color: "#f87171" }}>↓ 후행 섹터</p>
-              <InfoTooltip content="최근 1개월 시장 대비 상대강도(RS)가 가장 낮은 하위 3개 섹터입니다(음수만). 자금이 빠지고 있는 섹터로, 비중 축소를 고려할 수 있습니다." />
+              <InfoTooltip content="최근 1개월 시장 대비 상대강도(RS)가 가장 낮은 하위 3개 섹터입니다(음수만). 최근 시장보다 상대적으로 약했다는 뜻입니다." />
             </div>
             <div className="flex flex-wrap gap-1">
               {lagging.map((l: any, i: number) => (
@@ -308,9 +308,18 @@ export default function SectorPage() {
                           style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
                           <span className="font-bold text-white">{s.symbol}</span>
                           {isKR && s.name && <span style={{ color: "#a39c88" }}>{s.name}</span>}
-                          <span className="px-1 rounded text-[12px] font-bold badge-go">{s.grade}</span>
-                          {s.score != null && (
-                            <span style={{ color: "var(--text-muted)" }}>{s.score.toFixed(0)}점</span>
+                          {s.piotroski != null ? (
+                            <span
+                              className="px-1.5 rounded text-[11px] font-bold"
+                              style={{
+                                background: (s.piotroski >= 7 ? "#4ade80" : s.piotroski >= 5 ? "#facc15" : "#f87171") + "20",
+                                color: s.piotroski >= 7 ? "#4ade80" : s.piotroski >= 5 ? "#facc15" : "#f87171",
+                              }}
+                            >
+                              F{s.piotroski}
+                            </span>
+                          ) : (
+                            <span style={{ color: "var(--text-faint)" }}>재무 데이터 없음</span>
                           )}
                         </div>
                       ))}

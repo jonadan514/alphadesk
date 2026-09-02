@@ -91,25 +91,25 @@ def _weekly_ret(closes: pd.DataFrame, ticker: str, weeks_ago: int) -> float | No
 
 
 def _get_sector_stocks() -> dict[str, list[dict]]:
-    """daily report picks에서 섹터별 종목 추출"""
+    """워치리스트 스크리닝 통과 종목(watchlist_candidates)에서 섹터별로 묶는다.
+
+    예전엔 data_daily_reports.payload.picks(모멘텀 스코어링 픽)에서 읽었는데,
+    그 picks 필드 자체가 스윙 스크리너 제거("0번 기능제거")로 없어져서 이
+    함수가 조용히 죽어있었다(2026-09-03 발견 - 항상 빈 dict 반환). 등급/점수
+    대신 실제 재무 지표(Piotroski F-Score)로 교체 - "종합 점수 없음" 원칙에
+    맞춤."""
     try:
         with get_db() as con:
-            row = con.execute(
-                "SELECT payload FROM data_daily_reports ORDER BY date DESC LIMIT 1"
-            ).fetchone()
-        if not row:
-            return {}
-        picks = json.loads(row[0]).get("picks", [])
+            rows = con.execute(
+                "SELECT symbol, sector, piotroski FROM watchlist_candidates WHERE market = 'US'"
+            ).fetchall()
         result: dict[str, list[dict]] = {}
-        for p in picks:
-            etf = SECTOR_TO_ETF.get(p.get("sector", ""), "Other")
-            if etf not in result:
-                result[etf] = []
-            result[etf].append({
-                "symbol":    p["symbol"],
-                "grade":     p.get("grade", "—"),
-                "score":     p.get("composite_score"),
-                "sector":    p.get("sector", ""),
+        for symbol, sector, piotroski in rows:
+            etf = SECTOR_TO_ETF.get(sector or "", "Other")
+            result.setdefault(etf, []).append({
+                "symbol":    symbol,
+                "piotroski": piotroski,
+                "sector":    sector or "",
             })
     except Exception:
         result = {}
