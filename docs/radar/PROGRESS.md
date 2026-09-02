@@ -600,7 +600,31 @@ g_t/g_t-1 비교 대신 g_yoy>0만 봄.
 compute-theme-earnings.yml`(일요일 22:15 UTC 크론, 뉴스 수집 22:00과
 15분 차이).
 
+---
+
+## 2026-09-02 — Phase A-5: 주가 축 계산
+
+**구현물**: `src/collectors/theme_price_collector.py`(4주=20거래일 수익률
+배치조회, yf.download() 한 번으로 - SPEC §4.3 종목별 개별호출 금지.
+상장 4주 미만·거래정지(최근 3일 연속 거래량 0)는 None 처리),
+`src/analyzers/theme_price.py`(중앙값 - 평균 아님, SPEC §4.1 - 대비
+시장지수 초과수익률), `scripts/compute_theme_price.py`(지수 ^GSPC도
+같은 배치 호출에 얹어서 조회, 별도 호출 안 만듦).
+
+로컬 스모크테스트: MultiIndex DataFrame 목업으로 정상/상장4주미만/
+거래정지 케이스, 중앙값이 평균과 다름을 보여주는 급등 케이스 확인.
+실행 전 ^GSPC가 실제로 0이 아닌 거래량을 보고하는지 확인해서(지수라
+거래량이 0으로 나와 거래정지로 오판될 위험이 있었음) 안전 확인 후 진행.
+
+**실행 결과**: down 8 / flat 4 / up1 2 / up2 1(petrochemical) / na 14
+(대부분 기존에 알던 얇은 테마 - 5명 미만). 실적 축과 달리 한쪽으로
+쏠리지 않고 잘 갈라짐 - 계산이 정상 작동하는 것으로 보임.
+S&P500 지수 4주 수익률 -1.36%로 합리적인 범위.
+
+`.github/workflows/compute-theme-price.yml`: 일요일 22:30 UTC 크론
+(뉴스 22:00, 실적 22:15 다음 순서).
+
 **다음 세션에서 이어서 할 것**
-- Phase A-5(주가 축, `SPEC_phase_a_signals.md` §4)로 이동.
+- Phase A-6(조합 라벨 + 테마 보드 화면, `SPEC_phase_a_signals.md` §5~6)로 이동.
 - shipbuilding markets 필드 결정 - 계속 미결.
 - 첫 몇 주 지나면 실적 축 임계값 재검토 + 뉴스 축 §8 캘리브레이션 같이 확인.
