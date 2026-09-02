@@ -1,13 +1,25 @@
-"""Phase A-4: 실적 축(매출 성장률 가속도) 계산.
+"""Phase A-4: 실적 축(매출 성장률) 계산.
 
 SPEC: docs/radar/SPEC_phase_a_signals.md §3
+
+SPEC 원안은 "가속도"(g_t > g_t-1, 6분기 필요)를 계산하지만, 실제 백필해보니
+yfinance 무료 분기 재무제표(quarterly_financials/quarterly_income_stmt 둘 다)가
+사실상 5분기까지만 준다(2026-09-01 확인 - AAPL 등 다수 종목이 정확히 5분기,
+그 이상 있는 종목도 오래된 분기는 Total Revenue 자체가 비어있음). 6분기가
+필요한 "가속도" 공식은 구조적으로 계산이 안 되어 전체 종목이 데이터부족으로
+나오는 문제를 실제로 겪음.
+
+사용자 결정(2026-09-01): 5분기로 계산 가능한 "전년동기 대비 성장" 하나만
+본다 - "가속" 개념은 포기하되, 계절성 보정(전년동기 비교)은 유지. 이 도구가
+심화분석 이전의 1차 스크리닝 용도라 이 정도 단순화로 충분하다는 판단.
 """
 from __future__ import annotations
 
 import pandas as pd
 
-# 6개 분기 필요 - g_t(t/t-4)와 g_t-1(t-1/t-5) 계산에 t-5까지 있어야 함 (인덱스 0~5).
-MIN_QUARTERS = 6
+# 5개 분기 필요 - g_yoy(t/t-4) 계산에 t-4까지 있어야 함 (인덱스 0~4).
+# yfinance 무료 API가 실질적으로 제공하는 상한이 5분기라 이 이상 요구할 수 없음.
+MIN_QUARTERS = 5
 
 
 def _quarter_label(ts) -> str:
@@ -19,19 +31,19 @@ def classify_company_earnings(quarterly_revenue: pd.Series | None) -> tuple[str,
     """분기별 매출 Series(index=기간, 최신이 0번째, NaN 제거됨)를 받아
     (status, quarter_label)을 반환한다. status는 'improved'|'not_improved'|'insufficient'.
 
+    전년동기 대비 성장률(g_yoy = 이번 분기 / 작년 같은 분기 - 1)이 양수면 improved.
     분모가 0이거나 없는 경우도 insufficient로 처리 - 성장률 자체가 정의 안 됨.
     """
     if quarterly_revenue is None or len(quarterly_revenue) < MIN_QUARTERS:
         return "insufficient", None
 
     r = quarterly_revenue
-    denom_t4, denom_t5 = r.iloc[4], r.iloc[5]
-    if not denom_t4 or not denom_t5:
+    denom_yoy = r.iloc[4]
+    if not denom_yoy:
         return "insufficient", None
 
-    g_t = r.iloc[0] / denom_t4 - 1
-    g_t1 = r.iloc[1] / denom_t5 - 1
-    status = "improved" if g_t > g_t1 else "not_improved"
+    g_yoy = r.iloc[0] / denom_yoy - 1
+    status = "improved" if g_yoy > 0 else "not_improved"
     return status, _quarter_label(r.index[0])
 
 
