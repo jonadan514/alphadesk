@@ -1,0 +1,42 @@
+name: Compute Theme Price
+
+on:
+  schedule:
+    - cron: "30 22 * * 0"   # 뉴스(22:00)·실적(22:15) 다음, 15분 더 띄움 - SPEC §7
+  workflow_dispatch:
+    inputs:
+      theme_id:
+        description: "테마 ID 공백 구분 (비우면 전체)"
+        required: false
+        default: ""
+      include_peripheral:
+        description: "linkage=peripheral도 포함할지"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  compute:
+    name: Compute price axis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compute
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: >
+          python scripts/compute_theme_price.py
+          --theme-id ${{ inputs.theme_id }}
+          ${{ inputs.include_peripheral == 'true' && '--include-peripheral' || '' }}
