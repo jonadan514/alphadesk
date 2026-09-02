@@ -549,7 +549,58 @@ SPEC_fundamentals_cache.md §2~§7 전체 구현 완료. 애초 목표(야후 �
   대상에서 빠짐. `[US, KR]`로 고칠지는 사용자 판단 필요(k_beauty/k_food/
   k_content는 원래 한국 특화 테마라 KR 전용이 맞음 - shipbuilding만 다름).
 
+**미해결로 남긴 것 (여전히 미결)**
+- shipbuilding markets 필드 결정 - 아직 미결정.
+- 첫 4주 실데이터 쌓이면 SPEC §8 캘리브레이션(키워드 과다 여부 등) 확인 필요.
+
+---
+
+## 2026-09-01~02 — Phase A-4: 실적 축 계산 (블로커 2개 발견·해결)
+
+**Phase 0 확장**: `fundamentals_cache`는 원래 연간 재무제표만 캐시(Phase 0
+설계) - 실적 축은 분기 데이터가 필요해 `financials_quarterly` 버킷을
+추가함(기존 반환 shape에 순수 추가, 하위호환 영향 없음). 승인된 테마
+매핑의 US 종목(140개)만 대상으로 좁혀 백필(사용자 결정 - 전체
+유니버스 캐시 확장보다 필요한 범위만, 옵션 2). `scripts/
+backfill_quarterly_financials.py`, 기존 fetch_status는 안 건드림
+(주간 예산제 로직과 분리).
+
+**블로커 1 - SPEC 원안 자체가 불가능함이 확인됨**: SPEC §3.1의 "가속도"
+공식(g_t > g_t-1)은 6분기가 필요한데, 실제 백필해보니 yfinance 무료
+API(`quarterly_financials`/`quarterly_income_stmt` 둘 다 확인)가
+사실상 5분기까지만 제공함(AAPL 등 다수가 정확히 5분기, TSLA는 컬럼은
+7개 있지만 오래된 2개는 Total Revenue 자체가 비어있어 사실상 5분기).
+140/140 백필 성공했는데도 29개 테마 전부 100% insufficient로 나와서
+발견 - 코드 버그 아니라 데이터 소스의 구조적 한계임을 직접 확인
+(quarterly_income_stmt도 동일 결과, 페이지네이션 옵션 없음).
+
+**사용자 결정**: "가속도" 대신 5분기로 계산 가능한 "전년동기 대비
+성장률(g_yoy) 양수 여부" 하나로 단순화. 계절성 보정은 유지, 가속도
+개념은 포기 - "주니어 애널리스트 1차 스크리닝" 용도로는 이 정도면
+충분하다는 판단. `MIN_QUARTERS` 6->5, `classify_company_earnings()`가
+g_t/g_t-1 비교 대신 g_yoy>0만 봄.
+
+**재실행 결과 (수정 후)**: insufficient=0으로 전부 해소. 다만 표본이
+충분한 14개 테마 전부가 예외 없이 up2(ratio 0.75~1.0)로 나옴 - TSLA
+수치 직접 검산(+25.5% YoY)해서 계산 버그는 아님을 확인, "전년동기 대비
+매출 증가"라는 기준 자체가 정상적인 대형주 대부분이 인플레이션만으로도
+매년 충족하는 낮은 문턱이라 변별력이 약할 수 있음. SPEC §8이 이미
+"임계값은 임의값, 첫 몇 주 실데이터로 조정"이라 명시해서 지금 당장은
+손대지 않고 관찰하기로 함 - 계속 전부 up2만 뜨면 임계값(0.70/0.55/0.45)
+상향 조정 검토.
+
+**구현물**: `src/analyzers/theme_earnings.py`(분류/집계 로직, 로컬
+스모크테스트로 improved/not_improved/insufficient·na조건·임계값 전부
+검증), `src/db/theme_signals.py`의 `upsert_earn_signal`/
+`get_approved_theme_members`(SPEC §5 "최신 run_id" 그대로 구현 - 나중에
+재매핑 승인 시 중복집계 방지), `scripts/compute_theme_earnings.py`
+(테마별 개별조회 대신 전체 필요 티커 한 번에 벌크조회),
+`.github/workflows/backfill-quarterly-financials.yml`(workflow_dispatch
+전용 - 분기 데이터라 매주 돌 필요 없음), `.github/workflows/
+compute-theme-earnings.yml`(일요일 22:15 UTC 크론, 뉴스 수집 22:00과
+15분 차이).
+
 **다음 세션에서 이어서 할 것**
-- Phase A-4(실적 축, `SPEC_phase_a_signals.md` §3)로 이동.
-- shipbuilding markets 필드 결정.
-- 첫 4주 실데이터 쌓이면 SPEC §8 캘리브레이션(키워드 과다 여부 등) 확인.
+- Phase A-5(주가 축, `SPEC_phase_a_signals.md` §4)로 이동.
+- shipbuilding markets 필드 결정 - 계속 미결.
+- 첫 몇 주 지나면 실적 축 임계값 재검토 + 뉴스 축 §8 캘리브레이션 같이 확인.
