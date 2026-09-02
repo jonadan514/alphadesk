@@ -7,6 +7,7 @@ export const THEME_NAMES: Record<string, { ko: string; en: string }> = {
   ai_software: { ko: "AI 소프트웨어·에이전트", en: "AI Software & Agents" },
   semi_equipment: { ko: "반도체 장비·소재", en: "Semiconductor Equipment & Materials" },
   power_grid: { ko: "전력망·송배전", en: "Power Grid & Transmission" },
+  shipbuilding: { ko: "조선", en: "Shipbuilding" },
   nuclear_smr: { ko: "원전·SMR", en: "Nuclear & SMR" },
   renewable_energy: { ko: "재생에너지", en: "Renewable Energy" },
   energy_storage: { ko: "에너지저장(ESS)", en: "Energy Storage" },

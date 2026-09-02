@@ -179,11 +179,13 @@ themes:
     name_ko: 조선
     name_en: Shipbuilding
     category: industrial
-    markets: [KR]
+    markets: [US, KR]
     keywords_ko: [조선업, 선박 수주, LNG선, 컨테이너선, 조선 신조선가]
     keywords_en: [shipbuilding, ship order, LNG carrier, newbuilding price]
     status: active
     added_at: 2026-08-27
+    # 2026-09-02: 원래 KR 전용이었으나 Phase A-2 매핑에서 실제 미국 기업(Boeing,
+    # HII)이 승인돼 US도 추가함 - Phase A 뉴스/실적/주가 축 대상에 포함시키기 위함.
     note: 한국 전용. Phase A(미국만)에서는 결과가 나오지 않음.
 
   - id: defense
