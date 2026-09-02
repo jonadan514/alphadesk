@@ -19,6 +19,7 @@ const NAV_GROUPS = [
     label: "시장",
     items: [
       { href: "/sector",    label: "섹터 분석", emoji: "🏭", color: "#ffb020" },
+      { href: "/radar",     label: "테마 레이더", emoji: "📡", color: "#ffb020" },
     ],
   },
   {
