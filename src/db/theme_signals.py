@@ -178,6 +178,31 @@ def upsert_earn_signal(conn, theme_id: str, market: str, week_start: str,
     )
 
 
+def upsert_price_signal(conn, theme_id: str, market: str, week_start: str,
+                         price_median_ret: float | None, price_index_ret: float | None,
+                         price_excess: float | None, price_arrow: str,
+                         member_count: int, mapping_run_id: str, computed_at: str) -> None:
+    """theme_signals에 주가 축만 채워 넣는다(뉴스/실적 축은 건드리지 않음)."""
+    conn.execute(
+        """
+        INSERT INTO theme_signals
+          (theme_id, market, week_start, price_median_ret, price_index_ret, price_excess,
+           price_arrow, member_count, mapping_run_id, computed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(theme_id, market, week_start) DO UPDATE SET
+          price_median_ret = excluded.price_median_ret,
+          price_index_ret = excluded.price_index_ret,
+          price_excess = excluded.price_excess,
+          price_arrow = excluded.price_arrow,
+          member_count = excluded.member_count,
+          mapping_run_id = excluded.mapping_run_id,
+          computed_at = excluded.computed_at
+        """,
+        (theme_id, market, week_start, price_median_ret, price_index_ret, price_excess,
+         price_arrow, member_count, mapping_run_id, computed_at),
+    )
+
+
 def get_approved_theme_members(conn, theme_id: str, market: str,
                                 linkages: tuple[str, ...] = ("direct", "partial")) -> list[dict]:
     """SPEC §5 - "현재 유효 매핑은 최신 run_id + approved=1로 조회한다"를 그대로
