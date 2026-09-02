@@ -45,6 +45,14 @@ interface Member {
   confidence: string;
   flagged: number;
   other_themes: string[];
+  finance: { status: "pass" | "unknown"; piotroski: number | null };
+}
+
+interface Article {
+  title: string;
+  url: string;
+  source: string | null;
+  published_at: string | null;
 }
 
 // SPEC §6.2 - 순위가 아니라 편집 방침. "조용히 좋아짐"이 맨 위인 이유는
@@ -119,6 +127,23 @@ function LinkageBadge({ linkage }: { linkage: string }) {
   );
 }
 
+function FinanceBadge({ finance }: { finance: Member["finance"] }) {
+  if (finance.status === "pass") {
+    return (
+      <span className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ background: GOOD_SOFT, color: GOOD }}>
+        재무 통과{finance.piotroski != null && ` (F${finance.piotroski})`}
+      </span>
+    );
+  }
+  // 워치리스트 스크리닝(트랩필터)에 없다고 "탈락"으로 단정하지 않는다 - 이번 주
+  // 갱신 예산에 안 들었거나 유니버스 밖일 수도 있어 "미확인"으로만 표시.
+  return (
+    <span className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px]" style={{ color: FAINT, border: "1px solid var(--border)" }}>
+      미확인
+    </span>
+  );
+}
+
 function MembersTable({ members, loading }: { members: Member[]; loading: boolean }) {
   if (loading) return <div className="py-4 text-[12px]" style={{ color: MUTED }}>불러오는 중...</div>;
   if (members.length === 0) return <div className="py-4 text-[12px]" style={{ color: MUTED }}>소속 기업 정보를 찾을 수 없습니다.</div>;
@@ -128,7 +153,7 @@ function MembersTable({ members, loading }: { members: Member[]; loading: boolea
       <table className="w-full text-[13px]" style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ background: "var(--bg-inset)" }}>
-            {["티커", "가치사슬 단계", "근거", "구분"].map((h) => (
+            {["티커", "가치사슬 단계", "근거", "구분", "재무"].map((h) => (
               <th key={h} className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide" style={{ color: FAINT, borderBottom: "1px solid var(--border)" }}>
                 {h}
               </th>
@@ -157,6 +182,9 @@ function MembersTable({ members, loading }: { members: Member[]; loading: boolea
               <td className="px-3 py-2 align-top">
                 <LinkageBadge linkage={m.linkage} />
               </td>
+              <td className="px-3 py-2 align-top">
+                <FinanceBadge finance={m.finance} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -165,10 +193,32 @@ function MembersTable({ members, loading }: { members: Member[]; loading: boolea
   );
 }
 
+function NewsList({ articles, loading }: { articles: Article[]; loading: boolean }) {
+  if (loading) return <div className="py-3 text-[12px]" style={{ color: MUTED }}>불러오는 중...</div>;
+  if (articles.length === 0) return <div className="py-3 text-[12px]" style={{ color: MUTED }}>이번 주 수집된 기사가 없습니다.</div>;
+  return (
+    <ul className="flex flex-col gap-1.5">
+      {articles.map((a, i) => (
+        <li key={i} className="text-[12.5px]">
+          <a href={a.url} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: "var(--text-secondary)" }}>
+            {a.title}
+          </a>
+          <span className="ml-1.5" style={{ color: FAINT }}>
+            {a.source ?? ""}{a.published_at ? ` · ${a.published_at}` : ""}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function ThemeCard({ signal }: { signal: ThemeSignal }) {
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<Member[] | null>(null);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [showNews, setShowNews] = useState(false);
+  const [articles, setArticles] = useState<Article[] | null>(null);
+  const [loadingNews, setLoadingNews] = useState(false);
   const { ko, en } = themeName(signal.theme_id);
 
   const toggle = useCallback(() => {
@@ -182,6 +232,18 @@ function ThemeCard({ signal }: { signal: ThemeSignal }) {
         .finally(() => setLoadingMembers(false));
     }
   }, [members, loadingMembers, signal.theme_id]);
+
+  const toggleNews = useCallback(() => {
+    setShowNews((s) => !s);
+    if (!articles && !loadingNews) {
+      setLoadingNews(true);
+      fetch(`/api/radar/news?theme_id=${encodeURIComponent(signal.theme_id)}`)
+        .then((r) => r.json())
+        .then((d) => setArticles(d.articles ?? []))
+        .catch(() => setArticles([]))
+        .finally(() => setLoadingNews(false));
+    }
+  }, [articles, loadingNews, signal.theme_id]);
 
   return (
     <div className="mb-3 overflow-hidden rounded-2xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
@@ -237,6 +299,19 @@ function ThemeCard({ signal }: { signal: ThemeSignal }) {
             </div>
           </div>
           <MembersTable members={members ?? []} loading={loadingMembers} />
+
+          <button
+            onClick={toggleNews}
+            className="mt-3 rounded-lg px-3 py-1.5 text-[12px] font-semibold"
+            style={{ border: "1px solid var(--border)", color: showNews ? ACCENT : MUTED, background: showNews ? ACCENT_SOFT : "transparent" }}
+          >
+            기사 보기{showNews ? " ▴" : " ▾"}
+          </button>
+          {showNews && (
+            <div className="mt-2 rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
+              <NewsList articles={articles ?? []} loading={loadingNews} />
+            </div>
+          )}
         </div>
       )}
     </div>

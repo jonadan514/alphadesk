@@ -59,7 +59,32 @@ export async function GET(request: Request) {
       });
     }
 
-    const enriched = members.map((m) => ({ ...m, other_themes: crossByTicker[m.ticker] ?? [] }));
+    // 재무 통과 여부 - 기존 워치리스트 스크리닝(watchlist_candidates)은 트랩필터를
+    // "통과"한 종목만 담고 fail/insufficient는 행 자체가 없다(SPEC_fundamentals_cache.md
+    // §4의 3분류 중 pass만 구분 가능) - 없다고 "탈락"이라 단정하지 않고 "미확인"으로 둔다.
+    const financeByTicker: Record<string, { piotroski: number | null }> = {};
+    if (tickers.length > 0) {
+      const placeholders = tickers.map(() => "?").join(",");
+      try {
+        const financeRes = await client.execute({
+          sql: `SELECT symbol, piotroski FROM watchlist_candidates WHERE market = 'US' AND symbol IN (${placeholders})`,
+          args: tickers,
+        });
+        financeRes.rows.forEach((r) => {
+          financeByTicker[r[0] as string] = { piotroski: r[1] as number | null };
+        });
+      } catch {
+        // watchlist_candidates 조회 실패해도 소속 기업 목록 자체는 보여준다
+      }
+    }
+
+    const enriched = members.map((m) => ({
+      ...m,
+      other_themes: crossByTicker[m.ticker] ?? [],
+      finance: financeByTicker[m.ticker]
+        ? { status: "pass" as const, piotroski: financeByTicker[m.ticker].piotroski }
+        : { status: "unknown" as const, piotroski: null },
+    }));
     return NextResponse.json({ members: enriched });
   } catch (err) {
     console.error("[api/radar/members] error:", err);
