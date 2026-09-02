@@ -13,4 +13,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install requests
-      - run: python scripts/debug_encoding.py
+      - env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: python scripts/debug_encoding.py

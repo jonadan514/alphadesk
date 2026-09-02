@@ -1,41 +1,40 @@
-"""매크로 스냅샷 한글 라벨 깨짐 원인 추적용 임시 스크립트 - 확인 후 삭제."""
-import json
-import locale
-import os
+"""매크로 스냅샷 한글 라벨 깨짐 원인 추적용 임시 스크립트 - 확인 후 삭제.
+
+1단계(완료) - 나가는 HTTP 요청 바이트는 완벽하게 올바름을 확인.
+2단계 - 실제 Turso에 써보고 바로 다시 읽어서, 저장 자체가 깨지는지 확인.
+"""
 import sys
+from pathlib import Path
 
-print("=== 환경 ===")
-print("locale.getpreferredencoding():", locale.getpreferredencoding())
-print("sys.getdefaultencoding():", sys.getdefaultencoding())
-print("sys.stdout.encoding:", sys.stdout.encoding)
-print("LANG:", os.environ.get("LANG"))
-print("LC_ALL:", os.environ.get("LC_ALL"))
-print("PYTHONIOENCODING:", os.environ.get("PYTHONIOENCODING"))
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
-label = "미국 10년물 국채금리"
-print()
-print("=== 문자열 원본 ===")
-print("repr:", repr(label))
-print("utf-8 bytes:", label.encode("utf-8"))
-print("len(label):", len(label))
+from src.db.data_store import get_db
 
-# _TursoConn._arg()가 하는 것과 동일 - str(v)
-val = str(label)
-print()
-print("=== str(v) 이후 ===")
-print("동일한가:", val == label)
-print("utf-8 bytes:", val.encode("utf-8"))
+TEST_LABEL = "미국 10년물 국채금리"
 
-# json.dumps 이후
-dumped = json.dumps({"value": val})
-print()
-print("=== json.dumps 이후 ===")
-print("repr:", repr(dumped))
+with get_db() as con:
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS debug_encoding_test (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            val TEXT NOT NULL
+        )
+    """)
+    con.execute("DELETE FROM debug_encoding_test")
+    con.execute("INSERT INTO debug_encoding_test (val) VALUES (?)", (TEST_LABEL,))
 
-# requests의 json= 파라미터가 실제로 보내는 바이트 확인
-import requests
-req = requests.Request("POST", "https://example.com", json={"label": val}).prepare()
-print()
-print("=== requests가 실제로 보낼 body 바이트 ===")
-print(req.body)
-print("utf-8로 디코드 시도:", req.body.decode("utf-8"))
+    row = con.execute("SELECT val FROM debug_encoding_test").fetchone()
+    got = row[0]
+
+print("보낸 값 repr:", repr(TEST_LABEL))
+print("받은 값 repr:", repr(got))
+print("동일한가:", got == TEST_LABEL)
+print("받은 값 utf-8 인코딩 시도:", end=" ")
+try:
+    print(got.encode("utf-8"))
+except UnicodeEncodeError as e:
+    print("실패:", e)
+
+# 정리
+with get_db() as con:
+    con.execute("DROP TABLE IF EXISTS debug_encoding_test")
