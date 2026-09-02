@@ -624,7 +624,33 @@ S&P500 지수 4주 수익률 -1.36%로 합리적인 범위.
 `.github/workflows/compute-theme-price.yml`: 일요일 22:30 UTC 크론
 (뉴스 22:00, 실적 22:15 다음 순서).
 
+---
+
+## 2026-09-02 — Phase A-6: 조합 라벨 계산 (화면 제외 - 백엔드까지)
+
+**구현물**: `src/analyzers/theme_labels.py`(SPEC §5 표의 6개 조합만
+라벨 부여, 나머지 None - "억지 분류 금지" 원칙. 축 하나라도 na/None이면
+무조건 라벨 없음). 로컬 테스트에서 SPEC 표 6개 케이스 + na가드 +
+무매칭케이스 + **64개 조합 전수 검사로 규칙 간 중복매칭 없음**까지 확인.
+
+`scripts/compute_theme_labels.py` + `.github/workflows/
+compute-theme-labels.yml`(일요일 22:45 UTC - 뉴스/실적/주가 세 축
+계산이 전부 끝난 뒤 돌게 크론 순서 배치).
+
+**실행 결과**: 29개 테마 중 **7개 라벨 부여** - SPEC §8 목표치("주당
+3~10개")에 정확히 부합. "조용히 좋아짐" 4개(power_grid, renewable_energy,
+medical_device, autonomous_driving), "바닥 통과 가능" 3개
+(datacenter_cooling, semi_equipment, defense). 실적축이 대부분 up2로
+쏠렸던 것이, 오히려 "뉴스/주가는 안 좋은데 실적만 좋다"는 조합을 잡아내는
+데 유용하게 작용함 - SPEC이 "이 툴의 존재 이유"라 명시한 라벨("조용히
+좋아짐")이 실제로 다수 나온 것은 파이프라인이 의도대로 작동한다는 신호.
+
+**Phase A 백엔드 파이프라인 완성**: 뉴스 축(A-3) -> 실적 축(A-4) ->
+주가 축(A-5) -> 라벨(A-6 계산부)까지 전부 매주 자동 실행되는 상태.
+남은 건 A-6의 화면(프론트엔드) 부분뿐.
+
 **다음 세션에서 이어서 할 것**
-- Phase A-6(조합 라벨 + 테마 보드 화면, `SPEC_phase_a_signals.md` §5~6)로 이동.
+- Phase A-6 화면(테마 보드 프론트엔드, SPEC §6.1~6.5) - 아직 시작 안 함.
+  라벨별 그룹핑, 각 행 표시 내용(§6.3), 소속 기업 보기(§6.4) 등.
 - shipbuilding markets 필드 결정 - 계속 미결.
 - 첫 몇 주 지나면 실적 축 임계값 재검토 + 뉴스 축 §8 캘리브레이션 같이 확인.
