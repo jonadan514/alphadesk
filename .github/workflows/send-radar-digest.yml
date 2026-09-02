@@ -1,0 +1,31 @@
+name: Send Radar Digest
+
+on:
+  schedule:
+    - cron: "0 23 * * 0"   # 뉴스(22:00)·실적(22:15)·주가(22:30)·라벨(22:45) 다 끝난 뒤
+  workflow_dispatch:
+
+jobs:
+  digest:
+    name: Send weekly digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send digest
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/send_radar_digest.py
