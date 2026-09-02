@@ -97,7 +97,11 @@ def _get_sector_stocks() -> dict[str, list[dict]]:
     그 picks 필드 자체가 스윙 스크리너 제거("0번 기능제거")로 없어져서 이
     함수가 조용히 죽어있었다(2026-09-03 발견 - 항상 빈 dict 반환). 등급/점수
     대신 실제 재무 지표(Piotroski F-Score)로 교체 - "종합 점수 없음" 원칙에
-    맞춤."""
+    맞춤.
+
+    Turso HTTP 클라이언트는 INTEGER 컬럼을 문자열로 반환한다(Phase A-3에서
+    이미 한 번 겪은 문제 - get_prior_news_counts 참고) - json.dumps로 그대로
+    저장하면 프론트가 문자열로 받게 되므로 여기서 명시적으로 int() 캐스팅."""
     try:
         with get_db() as con:
             rows = con.execute(
@@ -108,7 +112,7 @@ def _get_sector_stocks() -> dict[str, list[dict]]:
             etf = SECTOR_TO_ETF.get(sector or "", "Other")
             result.setdefault(etf, []).append({
                 "symbol":    symbol,
-                "piotroski": piotroski,
+                "piotroski": int(piotroski) if piotroski is not None else None,
                 "sector":    sector or "",
             })
     except Exception:
