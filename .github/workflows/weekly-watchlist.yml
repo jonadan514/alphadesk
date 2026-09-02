@@ -77,7 +77,7 @@ jobs:
           python-version: "3.11"
           cache: "pip"
       - name: Install dependencies
-        run: pip install requests yfinance
+        run: pip install requests yfinance pyyaml
       - name: Generate weekly briefing
         env:
           TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
