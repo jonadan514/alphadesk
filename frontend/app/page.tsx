@@ -5,9 +5,15 @@ import InfoTooltip from "@/src/components/InfoTooltip";
 import { useMarket } from "@/src/contexts/MarketContext";
 import FlagIcon from "@/src/components/FlagIcon";
 
+// radar/page.tsx의 편집 방침과 같은 순서 (SPEC §6.2) — 페이지별 상수 유지 관행.
+const LABEL_ORDER = ["조용히 좋아짐", "바닥 통과 가능", "새로 부상", "관심 강화", "과열 경계", "약화"];
+
+interface RadarSignal { label: string | null }
+
 export default function HomePage() {
   const { market } = useMarket();
   const [candidateCount, setCandidateCount] = useState<number | null>(null);
+  const [radarCounts, setRadarCounts] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
     setCandidateCount(null);
@@ -15,6 +21,21 @@ export default function HomePage() {
       .then(r => r.json())
       .then(d => setCandidateCount((d?.candidates ?? []).length))
       .catch(() => setCandidateCount(0));
+  }, [market]);
+
+  // 테마 레이더는 아직 미국 시장만 지원 (Phase A 범위) - KR에서는 카드 자체를 숨긴다.
+  useEffect(() => {
+    if (market !== "US") { setRadarCounts(null); return; }
+    fetch("/api/radar")
+      .then(r => r.json())
+      .then(d => {
+        const counts: Record<string, number> = {};
+        (d?.signals ?? []).forEach((s: RadarSignal) => {
+          if (s.label) counts[s.label] = (counts[s.label] ?? 0) + 1;
+        });
+        setRadarCounts(counts);
+      })
+      .catch(() => setRadarCounts({}));
   }, [market]);
 
   const isKR = market === "KR";
@@ -65,6 +86,30 @@ export default function HomePage() {
         <div className="bg-card rounded-lg p-3 text-center text-base" style={{ color: "#726b58" }}>
           이번 주 통과 후보가 없습니다. GitHub → Actions → Weekly Watchlist Screen 실행 여부를 확인하세요.
         </div>
+      )}
+
+      {/* 이번 주 테마 레이더 — 뉴스/실적/주가 축이 만드는 라벨 요약 (US만) */}
+      {radarCounts && (
+        <a href="/radar" className="card-secondary rounded-lg block">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="stat-label" style={{ fontSize: 13 }}>이번 주 테마 레이더</p>
+                <InfoTooltip content="뉴스·실적·주가 세 축이 정해진 조합으로 겹칠 때만 라벨을 붙입니다. 종합 점수나 매수 추천이 아닙니다." />
+              </div>
+              {Object.keys(radarCounts).length === 0 ? (
+                <p className="text-[13px] mt-1" style={{ color: "var(--text-secondary)" }}>
+                  이번 주 라벨 부여된 테마 없음
+                </p>
+              ) : (
+                <p className="text-[13px] mt-1 truncate" style={{ color: "var(--text-secondary)" }}>
+                  {LABEL_ORDER.filter(l => radarCounts[l]).map(l => `${l} ${radarCounts[l]}`).join(" · ")}
+                </p>
+              )}
+            </div>
+            <span className="text-[13px] shrink-0" style={{ color: "var(--text-muted)" }}>확인하기 →</span>
+          </div>
+        </a>
       )}
 
       {/* 이동 링크 */}
