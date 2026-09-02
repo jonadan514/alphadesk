@@ -24,6 +24,8 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -33,6 +35,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 SENTIMENT_RANK = {"COLD": 0, "WARM": 1, "HOT": 2}
+THEMES_YAML = ROOT / "config" / "themes.yaml"
+
+
+def load_theme_names() -> dict[str, str]:
+    """scripts/send_radar_digest.py와 동일한 패턴."""
+    with open(THEMES_YAML, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return {t["id"]: t["name_ko"] for t in data["themes"]}
 
 
 # ── Turso (Hrana v2 HTTP) — 다른 스크립트와 동일 패턴 ──────────────────────
@@ -146,6 +156,44 @@ def get_sentiment_week() -> list[dict]:
     return heating[:10]
 
 
+def get_theme_label_changes() -> dict:
+    """테마 레이더 라벨 변동 - 계산된 가장 최근 두 주 비교.
+
+    라벨 계산(compute-theme-labels.yml)은 이 브리핑과 별도 워크플로우로, 일요일
+    22:45 UTC에 돌아 이 브리핑(22:00~ 시작)보다 늦게 끝날 수 있다. 그래서 "이번 주"라고
+    단정하지 않고 실제로 계산이 끝난 week_start를 그대로 노출한다 - 못 미더운 값을
+    맞다고 우기는 것보다, 실제 기준 주를 정직하게 보여주는 쪽이 낫다.
+    """
+    weeks = turso_exec(
+        "SELECT DISTINCT week_start FROM theme_signals WHERE market = 'US' "
+        "ORDER BY week_start DESC LIMIT 2"
+    )
+    if not weeks:
+        return {"week_start": None, "new_labels": [], "dropped_labels": []}
+
+    latest = weeks[0]["week_start"]
+    cur_rows = turso_exec(
+        "SELECT theme_id, label FROM theme_signals "
+        "WHERE market = 'US' AND week_start = ? AND label IS NOT NULL",
+        [latest],
+    )
+    cur_map = {r["theme_id"]: r["label"] for r in cur_rows}
+
+    prev_map: dict[str, str] = {}
+    if len(weeks) > 1:
+        prev_rows = turso_exec(
+            "SELECT theme_id, label FROM theme_signals "
+            "WHERE market = 'US' AND week_start = ? AND label IS NOT NULL",
+            [weeks[1]["week_start"]],
+        )
+        prev_map = {r["theme_id"]: r["label"] for r in prev_rows}
+
+    new_labels     = [{"theme_id": t, "label": l} for t, l in cur_map.items() if t not in prev_map]
+    dropped_labels = [{"theme_id": t, "label": l} for t, l in prev_map.items() if t not in cur_map]
+
+    return {"week_start": latest, "new_labels": new_labels, "dropped_labels": dropped_labels}
+
+
 def get_upcoming_catalysts() -> list[dict]:
     """내 워치리스트 종목의 네러티브 촉매 모음."""
     my = turso_exec("SELECT market, symbol, name FROM my_watchlist")
@@ -251,6 +299,14 @@ def send_telegram_summary(b: dict) -> None:
         for h in b["sentiment_heating"][:3]:
             lines.append(f"  {disp(h)} {h['path']}")
 
+    tl = b.get("theme_labels") or {}
+    if tl.get("new_labels"):
+        names = load_theme_names()
+        lines.append("")
+        lines.append(f"<b>📡 테마 레이더 신규 라벨</b> ({tl['week_start']} 기준)")
+        for t in tl["new_labels"][:5]:
+            lines.append(f"  {names.get(t['theme_id'], t['theme_id'])} — {t['label']}")
+
     if b.get("gpt_comment"):
         first_para = b["gpt_comment"].split("\n")[0][:200]
         lines += ["", f"💬 {first_para}"]
@@ -291,6 +347,7 @@ def main() -> None:
         "watchlist": get_watchlist_changes(),
         "sentiment_heating": get_sentiment_week(),
         "catalysts": get_upcoming_catalysts(),
+        "theme_labels": get_theme_label_changes(),
     }
     briefing["gpt_comment"] = gpt_comment(briefing)
 
@@ -304,9 +361,10 @@ def main() -> None:
         "ON CONFLICT(week) DO UPDATE SET payload=excluded.payload, created_at=datetime('now')",
         [week, json.dumps(briefing, ensure_ascii=False)],
     )
-    logger.info("저장 완료 — 워치리스트 신규 %d·탈락 %d, 관심도 상승 %d, 촉매 %d종목",
+    logger.info("저장 완료 — 워치리스트 신규 %d·탈락 %d, 관심도 상승 %d, 촉매 %d종목, 테마 라벨 신규 %d·소멸 %d",
                 len(briefing["watchlist"]["added"]), len(briefing["watchlist"]["removed"]),
-                len(briefing["sentiment_heating"]), len(briefing["catalysts"]))
+                len(briefing["sentiment_heating"]), len(briefing["catalysts"]),
+                len(briefing["theme_labels"]["new_labels"]), len(briefing["theme_labels"]["dropped_labels"]))
 
     if not args.no_telegram:
         send_telegram_summary(briefing)

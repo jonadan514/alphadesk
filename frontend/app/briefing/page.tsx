@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import FlagIcon from "@/src/components/FlagIcon";
+import { themeName } from "@/src/lib/themeNames";
 
 interface StockRef {
   market: string;
@@ -14,6 +15,8 @@ interface StockRef {
 interface MarketWeek {
   index_chg_1w: number | null;
 }
+interface ThemeLabelChange { theme_id: string; label: string }
+interface ThemeLabelChanges { week_start: string | null; new_labels: ThemeLabelChange[]; dropped_labels: ThemeLabelChange[] }
 interface Briefing {
   week: string;
   generated_at: string;
@@ -23,6 +26,7 @@ interface Briefing {
   sentiment_heating: StockRef[];
   catalysts: StockRef[];
   gpt_comment: string;
+  theme_labels?: ThemeLabelChanges;
 }
 
 function StockLabel({ s }: { s: StockRef }) {
@@ -69,6 +73,39 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
             <MarketRow label="🇺🇸 S&P 500" m={b.us} />
             <MarketRow label="🇰🇷 KOSPI" m={b.kr} />
           </div>
+
+          {/* 테마 레이더 라벨 변동 — 라벨 계산은 별도 워크플로우라 이 브리핑보다 늦게
+              끝날 수 있어서, "이번 주"라 단정하지 않고 실제 기준 주를 그대로 보여준다. */}
+          {b.theme_labels && (b.theme_labels.new_labels.length > 0 || b.theme_labels.dropped_labels.length > 0) && (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
+                📡 테마 레이더 라벨 변동 <span style={{ color: "var(--text-faint)" }}>({b.theme_labels.week_start} 기준)</span>
+              </p>
+              <div className="rounded-xl p-3 space-y-2" style={{ background: "#ffb02008", border: "1px solid #ffb02022" }}>
+                {b.theme_labels.new_labels.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-bold mb-1" style={{ color: "#ffb020" }}>+ 신규 라벨 ({b.theme_labels.new_labels.length})</p>
+                    {b.theme_labels.new_labels.map((t) => (
+                      <p key={t.theme_id} className="text-[12px] py-0.5">
+                        <span className="font-bold text-white">{themeName(t.theme_id).ko}</span>
+                        <span className="ml-1.5" style={{ color: "var(--text-muted)" }}>{t.label}</span>
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {b.theme_labels.dropped_labels.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-bold mb-1" style={{ color: "var(--text-faint)" }}>− 소멸 라벨 ({b.theme_labels.dropped_labels.length})</p>
+                    {b.theme_labels.dropped_labels.map((t) => (
+                      <p key={t.theme_id} className="text-[12px] py-0.5" style={{ color: "var(--text-faint)" }}>
+                        {themeName(t.theme_id).ko} <span>({t.label})</span>
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* GPT 총평 */}
           {b.gpt_comment && (

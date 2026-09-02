@@ -6,6 +6,7 @@ const GUIDE_SECTIONS = [
   { href: "/",           icon: "⊡", label: "개요",        desc: "이번 주 워치리스트 후보 수 요약. 접속 시작점." },
   { href: "/briefing",   icon: "📋", label: "주간 브리핑", desc: "매주 월요일 아침 자동 생성 — 지난주 지수 흐름·워치리스트 변동·관심도 흐름·다가오는 촉매·GPT 총평." },
   { href: "/sector",     icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
+  { href: "/radar",      icon: "📡", label: "테마 레이더", desc: "미국 산업 테마 약 30개를 뉴스·실적·주가 세 축으로 매주 관찰. 종합 점수 없이, 정해진 조합에만 라벨을 붙임." },
   { href: "/watchlist",  icon: "🔖", label: "워치리스트",  desc: "재무 건전성 필터(Piotroski 등)를 통과한 후보를 순위 없이 리스트업(주간 갱신). 종목 클릭 시 재무 지표 + 뉴스 기반 네러티브 브리프 + 정성 체크리스트 + 메모까지 한 팝업에서." },
   { href: "/scorecard",  icon: "📈", label: "성적표",      desc: "과거 워치리스트 후보에 실제 주가를 대조한 사후 검증 — 지수 단순 보유 대비 필터가 값을 더했는지 확인." },
 ];
@@ -145,6 +146,7 @@ export default function GuidePage() {
             ["워치리스트",      "재무 건전성 필터(Piotroski·ROE·부채비율·이자보상배율·현금흐름)를 통과한 종목을 주 1회, 순위 없이 리스트업"],
             ["네러티브 브리프",  "후보 종목별 최근 뉴스를 GPT가 요약 — 장기 투자 스토리·촉매·리스크·시장 단기 관심도(HOT/WARM/COLD)"],
             ["섹터 분석",       "경기 사이클 단계 판단 + 섹터별 KOSPI/SPY 대비 상대강도"],
+            ["테마 레이더",     "미국 산업 테마 약 30개를 뉴스·실적·주가 세 축으로 주 1회 관찰, 정해진 조합에만 라벨 부여(미국만)"],
             ["텔레그램 알림",   "주간 분석 후 워치리스트 교차 히트·관심도 상승 신호를 요약해 폰으로 발송"],
             ["성적표",          "과거 후보에 실제 주가를 대조한 사후 검증 — 지수 단순 보유 대비 필터가 값을 더했는지"],
             ["정성 체크리스트", "워치리스트 팝업에 내장된 종목별 스토리·촉매 체크 + 메모"],
@@ -166,8 +168,9 @@ export default function GuidePage() {
         <div className="space-y-2 mb-4">
           {[
             { n: "①", tab: "텔레그램 요약", action: "주간 분석 완료 후 요약 메시지 확인 — 별다른 신호 없으면 이번 주는 끝", href: "/" },
-            { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 이번 주 후보 수 확인",   href: "/" },
-            { n: "③", tab: "워치리스트",    action: "관심도 상승 배너 확인 → 눈에 띄는 후보 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
+            { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 이번 주 후보 수 + 테마 레이더 라벨 요약 확인", href: "/" },
+            { n: "③", tab: "테마 레이더",   action: "라벨 붙은 테마가 있으면 훑어보기 — 특히 \"조용히 좋아짐\"은 뉴스만 봐서는 못 찾는 신호", href: "/radar" },
+            { n: "④", tab: "워치리스트",    action: "관심도 상승 배너 확인 → 눈에 띄는 후보 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <span className="text-sm font-black shrink-0 w-5 text-center" style={{ color: "#ffb020" }}>{n}</span>

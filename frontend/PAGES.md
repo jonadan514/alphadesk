@@ -1,6 +1,6 @@
 # 페이지 구성 안내
 
-사이드바 탭별 내용과 데이터 소스 정리. (2026-08 기준 — 상세 사용법은 앱 내 가이드 탭 참고)
+사이드바 탭별 내용과 데이터 소스 정리. (2026-09 기준 — 상세 사용법은 앱 내 가이드 탭 참고)
 
 모든 시장 구분 페이지는 상단 탭으로 🇺🇸 미국 / 🇰🇷 한국을 전환한다 (`MarketContext`, localStorage 유지).
 
@@ -9,17 +9,22 @@
 ## 시장 분석
 
 ### 개요 `/`
-이번 주 워치리스트 후보 수(순위 없음) 중심의 최소 화면. 주간 브리핑·섹터 분석으로 이동하는 링크.
-- 소스: `/api/watchlist/candidates`
+이번 주 워치리스트 후보 수(순위 없음) + 테마 레이더 라벨 요약(미국만) 중심의 최소 화면. 주간 브리핑·섹터 분석으로 이동하는 링크.
+- 소스: `/api/watchlist/candidates`, `/api/radar`
 
 ### 섹터 분석 `/sector`
-경기 사이클 판단(회복/성장/과열/침체), 선행·후행 섹터(1개월 RS 상위/하위 3), 주간 RS 추이(4주), 섹터별 수익률·상대강도 히트맵(섹터 클릭 시 구성 종목).
+경기 사이클 판단(회복/성장/과열/침체), 선행·후행 섹터(1개월 RS 상위/하위 3), 주간 RS 추이(4주), 섹터별 수익률·상대강도 히트맵(섹터 클릭 시 구성 종목 + Piotroski F-Score).
 - 소스: `/api/data/sector`, `/api/data/kr/sector`
+
+### 테마 레이더 `/radar` (미국만, Phase A)
+미국 산업 테마 약 30개를 뉴스·실적·주가 세 축으로 매주 관찰. 종합 점수 없이 화살표만 표시하고, 정해진 6개 조합에만 라벨("조용히 좋아짐" 등)을 붙인다. 테마 카드를 펼치면 소속 기업(가치사슬 단계·근거·주력/일부/간접·재무 통과 여부)과 이번 주 수집 기사 목록.
+- 소스: `/api/radar`, `/api/radar/{members,news,ticker-themes}`
+- 배경: `docs/radar/MASTER_PLAN_research_radar.md`, `docs/radar/SPEC_phase_a_signals.md`
 
 ## 내 투자
 
 ### 워치리스트 `/watchlist`
-주간 스크리닝: 함정 필터(Piotroski·ROE·부채·현금흐름) 통과 종목을 순위 없이 리스트업(모멘텀 랭킹 없음 — 1~3년 펀더멘털 투자용). 종목 클릭 → 재무 지표 + 네러티브 브리프(장기 스토리·촉매·리스크·시장 단기 관심도 HOT/WARM/COLD·전일 대비 전환) + 종목별 정성 체크리스트(구 투자 워크북, stock_checklist에 독립 저장) + 매수 이유 메모.
+주간 스크리닝: 함정 필터(Piotroski·ROE·부채·현금흐름) 통과 종목을 순위 없이 리스트업(모멘텀 랭킹 없음 — 1~3년 펀더멘털 투자용). 종목 클릭 → 재무 지표 + 소속 테마 레이더 배지(있는 경우) + 네러티브 브리프(장기 스토리·촉매·리스크·시장 단기 관심도 HOT/WARM/COLD·전일 대비 전환) + 종목별 정성 체크리스트(구 투자 워크북, stock_checklist에 독립 저장) + 매수 이유 메모.
 - 소스: `/api/watchlist/{candidates,my,narrative,narrative-shifts,checklist}`
 
 ## 도구
@@ -37,10 +42,12 @@
 
 | 워크플로우 | 주기 | 하는 일 |
 |---|---|---|
-| Weekly Watchlist Screen | 일요일 22:00 UTC | 함정 필터 → 순위 없는 후보 리스트 갱신 → 네러티브 브리프 생성 → 주간 브리핑 |
+| Weekly Watchlist Screen | 일요일 22:00 UTC | 함정 필터 → 순위 없는 후보 리스트 갱신 → 네러티브 브리프 생성 → 주간 브리핑(테마 레이더 라벨 변동 포함) |
 | Weekly Market Analysis | 월요일 22:00 UTC | US/KR 섹터 분석 갱신 → 텔레그램 요약 발송 |
 | Performance Tracking | 일요일 23:00 UTC | 과거 후보들의 30~730일 후 실제 수익률 계산 (성적표) |
+| Collect Theme News → Compute Theme Earnings → Compute Theme Price → Compute Theme Labels → Send Radar Digest | 일요일 22:00~23:00 UTC (15분 간격 순차) | 테마 레이더 뉴스·실적·주가 세 축 계산 → 라벨 부여 → 텔레그램 발송. Weekly Watchlist Screen과 별개 워크플로우라 브리핑 생성 시점엔 아직 이번 주 라벨이 안 끝나 있을 수 있음(주간 브리핑은 그래서 실제 계산 완료 주를 그대로 표시). |
 
 데이터 저장소: Turso (libsql). 프론트는 읽기 전용 API로 접근.
 
 **2026-08 제거**: 마켓 게이트·체제 판정·지수 예측(`/regime`), 리스크 분석(`/risk`), 페이퍼 포트폴리오·실거래 기록(`/portfolio`), 매수 체크(`/workflow`) — 순위 없는 리스트업 도구로 전환하며 정리. 배경은 `docs/radar/REMOVAL_PLAN.md` 참고.
+**2026-09 추가**: 테마 레이더(`/radar`, Phase A, 미국만) — 배경은 `docs/radar/MASTER_PLAN_research_radar.md` 참고.

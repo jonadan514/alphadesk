@@ -97,14 +97,24 @@ export async function GET(request: Request) {
       filtered_equal_weight: bucket(picks),
     };
 
-    const byGrade: Record<string, Bucket> = {};
-    for (const grade of ["A", "B", "C", "D", "F"]) {
-      byGrade[grade] = bucket(picks.filter((p) => p.grade === grade));
-    }
-
-    const byGate: Record<string, Bucket> = {};
-    for (const gate of ["GO", "CAUTION", "STOP"]) {
-      byGate[gate] = bucket(picks.filter((p) => p.gate === gate));
+    // "grade" 컬럼은 예전엔 A~F 문자 등급이었지만, 순위 없는 리스트업 도구로
+    // 전환하며 compute_pick_returns.py가 Piotroski F-Score(0~9)를 그대로 저장하도록
+    // 바뀌었다(scripts/compute_pick_returns.py 참고). 문자 등급으로 필터링하면
+    // 숫자와 절대 안 맞아 항상 빈 결과였던 걸 발견해 구간 필터로 교체 - 워치리스트
+    // 페이지의 PiotroskiBadge와 동일한 경계값(7+/5+/그 미만)을 쓴다.
+    // 리팩터링 이전 날짜의 옛 문자 등급 행은 숫자로 안 읽히므로 이 구간 통계에서는
+    // 자연히 제외된다(이력 자체는 테이블에 그대로 남아있음).
+    const PIOTROSKI_TIERS: { key: string; test: (g: number) => boolean }[] = [
+      { key: "7-9 (우수)", test: (g) => g >= 7 },
+      { key: "5-6 (보통)", test: (g) => g >= 5 && g < 7 },
+      { key: "0-4 (취약)", test: (g) => g < 5 },
+    ];
+    const byPiotroski: Record<string, Bucket> = {};
+    for (const tier of PIOTROSKI_TIERS) {
+      byPiotroski[tier.key] = bucket(picks.filter((p) => {
+        const g = p.grade != null ? Number(p.grade) : NaN;
+        return Number.isFinite(g) && tier.test(g);
+      }));
     }
 
     const dates = picks.map((p) => p.date).sort();
@@ -113,8 +123,7 @@ export async function GET(request: Request) {
       market,
       horizons: HORIZONS,
       comparison,
-      by_grade: byGrade,
-      by_gate: byGate,
+      by_piotroski: byPiotroski,
       total_picks: picks.length,
       earliest_date: dates[0] ?? null,
       latest_date: dates[dates.length - 1] ?? null,

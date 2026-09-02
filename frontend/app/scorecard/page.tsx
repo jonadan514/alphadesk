@@ -15,7 +15,7 @@ type Bucket = Record<string, number | null> & { n: number };
 type ScorecardData = {
   market: string;
   comparison: { benchmark: Bucket; filtered_equal_weight: Bucket };
-  by_grade: Record<string, Bucket>;
+  by_piotroski: Record<string, Bucket>;
   total_picks: number;
   earliest_date: string | null;
   latest_date: string | null;
@@ -151,16 +151,16 @@ export default function ScorecardPage() {
         </div>
       </div>
 
-      {/* 등급별 */}
+      {/* Piotroski 구간별 */}
       <div className="bg-card rounded-xl p-3">
         <div className="flex items-center gap-2 mb-2">
-          <h2 className="stat-label">등급별 이후 {HORIZON_LABEL[breakdownHorizon]} 수익률</h2>
-          <InfoTooltip content="등급(A~F) 구분이 실제 수익률 순서와 대응하는지 확인합니다." />
+          <h2 className="stat-label">Piotroski 구간별 이후 {HORIZON_LABEL[breakdownHorizon]} 수익률</h2>
+          <InfoTooltip content="스크리닝 시점 Piotroski F-Score 구간이 실제 수익률 순서와 대응하는지 확인합니다. 점수가 높을수록 수익률도 높다면 필터가 실제로 값을 더하고 있다는 뜻입니다." />
         </div>
-        <div className="grid grid-cols-5 gap-2">
-          {Object.entries(data.by_grade).map(([grade, b]) => (
-            <div key={grade} className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-              <p className="text-[13px] font-black" style={{ color: "var(--text-primary)" }}>{grade}</p>
+        <div className="grid grid-cols-3 gap-2">
+          {Object.entries(data.by_piotroski).map(([tier, b]) => (
+            <div key={tier} className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
+              <p className="text-[13px] font-black" style={{ color: "var(--text-primary)" }}>{tier}</p>
               <p className="text-[16px] font-black font-mono mt-1" style={{ color: pctColor(b[bdCol]) }}>{pct(b[bdCol])}</p>
               <p className="text-[11px] mt-0.5" style={{ color: "var(--text-faint)" }}>n={b.n}</p>
             </div>

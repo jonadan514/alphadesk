@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import { X, Info, Pencil } from "lucide-react";
 import StockTechPanel from "@/src/components/StockTechPanel";
+import { themeName } from "@/src/lib/themeNames";
 
 interface Candidate {
   market: string;
@@ -373,6 +373,19 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
 }) {
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState(note ?? "");
+  const [relatedThemes, setRelatedThemes] = useState<{ theme_id: string; label: string | null }[]>([]);
+
+  // 이 종목이 어느 테마 레이더 테마에 속하는지 — 테마 레이더는 아직 미국 시장만 지원.
+  useEffect(() => {
+    if (c.market !== "US") { setRelatedThemes([]); return; }
+    let cancelled = false;
+    fetch(`/api/radar/ticker-themes?symbol=${encodeURIComponent(c.symbol)}`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setRelatedThemes(d.themes ?? []); })
+      .catch(() => { if (!cancelled) setRelatedThemes([]); });
+    return () => { cancelled = true; };
+  }, [c.market, c.symbol]);
+
   const coverColor = (v: number | null) => {
     if (!v) return TEXT_MUTED;
     return v >= 5 ? GOOD : v >= 3 ? WARN : v >= 1 ? CAUTION : BAD;
@@ -424,6 +437,25 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
             <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>한 줄 결론</p>
             <p className="text-[14px] font-semibold" style={{ color: TEXT_PRIMARY }}>{conclusion}</p>
           </div>
+
+          {/* 소속 테마 — 테마 레이더와의 연결 다리 (미국만) */}
+          {relatedThemes.length > 0 && (
+            <div className="p-3" style={insetCard}>
+              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>테마 레이더 소속</p>
+              <div className="flex flex-wrap gap-1.5">
+                {relatedThemes.map((t) => (
+                  <a
+                    key={t.theme_id}
+                    href="/radar"
+                    className="text-[12px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80"
+                    style={{ background: ACCENT + "18", color: ACCENT, border: `1px solid ${ACCENT}33` }}
+                  >
+                    {themeName(t.theme_id).ko}{t.label ? ` · ${t.label}` : ""}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 2단: 투자 논리(네러티브) | 기술적 타이밍(차트) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
@@ -533,22 +565,14 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
             </div>
           )}
 
-          {/* 버튼 — 워치리스트 추가 + 매수 체크로 이동 (다음 행동 유도) */}
-          <div className="flex gap-2">
-            <button
-              onClick={onAdd}
-              disabled={inList}
-              className="flex-1 py-2.5 text-[13px] font-bold transition-opacity disabled:opacity-40"
-              style={{ background: inList ? PANEL_BG : ACCENT + "18", color: inList ? TEXT_FAINT : ACCENT, border: `1px solid ${inList ? BORDER : ACCENT + "33"}` }}>
-              {inList ? "이미 워치리스트에 추가됨" : "+ 내 워치리스트에 추가"}
-            </button>
-            <Link
-              href={`/workflow?symbol=${encodeURIComponent(c.symbol)}&market=${c.market}`}
-              className="flex-1 py-2.5 text-[13px] font-bold text-center transition-opacity"
-              style={{ background: INFO + "14", color: INFO, border: `1px solid ${INFO}33` }}>
-              매수 체크로 이동 →
-            </Link>
-          </div>
+          {/* 버튼 — 워치리스트 추가 (다음 행동 유도) */}
+          <button
+            onClick={onAdd}
+            disabled={inList}
+            className="w-full py-2.5 text-[13px] font-bold transition-opacity disabled:opacity-40"
+            style={{ background: inList ? PANEL_BG : ACCENT + "18", color: inList ? TEXT_FAINT : ACCENT, border: `1px solid ${inList ? BORDER : ACCENT + "33"}` }}>
+            {inList ? "이미 워치리스트에 추가됨" : "+ 내 워치리스트에 추가"}
+          </button>
         </div>
       </div>
     </div>
@@ -685,7 +709,7 @@ export default function WatchlistPage() {
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: "-0.01em", color: TEXT_PRIMARY }}>워치리스트</h1>
         <p style={{ color: TEXT_MUTED, fontSize: 13, marginTop: 4 }}>
-          함정 필터 통과 → 시장 적합 점수(품질·모멘텀·체제) 시장별 상위 50종목
+          재무 건전성 필터(함정 필터) 통과 종목 전부, 순위 없이 리스트업
           {screened_at && (
             <span style={{ marginLeft: 8, color: TEXT_FAINT }}>(스크리닝: {screened_at.slice(0, 10)})</span>
           )}
