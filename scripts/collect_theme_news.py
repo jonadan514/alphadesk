@@ -1,7 +1,9 @@
-"""Phase A-3: 테마별 뉴스 수집 + 뉴스 축 신호 계산.
+"""Phase A-3/B-1: 테마별 뉴스 수집 + 뉴스 축 신호 계산.
 
 SPEC: docs/radar/SPEC_phase_a_signals.md §2
-Phase A는 미국 시장만 대상으로 한다(한국은 Phase B).
+Phase A는 미국 시장만 대상이었으나, Phase B에서 한국(keywords_ko)도 같은
+로직으로 처리한다 - 시장별로 그 시장에 해당하는 테마만 순회한다
+(themes.yaml의 markets 필드 기준).
 
 weeks-back 하나로 평시 주간 실행과 콜드스타트 백필을 겸한다 - 매주 도는
 정상 실행(weeks-back=1)과 최초 8주 백필(weeks-back=8)이 로직상 동일하고
@@ -92,41 +94,44 @@ def main() -> None:
     current_week = _current_week_monday(date.today())
     weeks = [current_week - timedelta(weeks=i) for i in range(args.weeks_back - 1, -1, -1)]
 
-    us_themes = [t for t in themes if "US" in t.get("markets", [])]
-    _log(f"대상 테마 {len(us_themes)}개(US), 처리 주 {len(weeks)}개 "
-         f"({weeks[0].isoformat()} ~ {weeks[-1].isoformat()})")
+    KEYWORD_FIELD = {"US": "keywords_en", "KR": "keywords_ko"}
 
-    for theme in us_themes:
-        theme_id = theme["id"]
-        keywords = theme.get("keywords_en", [])
-        if not keywords:
-            _log(f"{theme_id}: keywords_en 없음 - 건너뜀")
-            continue
-        min_articles = theme.get("min_articles", default_min_articles)
+    for market, keyword_field in KEYWORD_FIELD.items():
+        market_themes = [t for t in themes if market in t.get("markets", [])]
+        _log(f"대상 테마 {len(market_themes)}개({market}), 처리 주 {len(weeks)}개 "
+             f"({weeks[0].isoformat()} ~ {weeks[-1].isoformat()})")
 
-        for week_start in weeks:
-            week_end = week_start + timedelta(days=7)  # before: 는 배타적이라 +7로 일요일까지 포함
-            backfilled = week_start != current_week
+        for theme in market_themes:
+            theme_id = theme["id"]
+            keywords = theme.get(keyword_field, [])
+            if not keywords:
+                _log(f"{theme_id}({market}): {keyword_field} 없음 - 건너뜀")
+                continue
+            min_articles = theme.get("min_articles", default_min_articles)
 
-            articles, stats = collect_theme_news(keywords, week_start, week_end)
-            insert_theme_news_bulk(conn, theme_id, "US", week_start.isoformat(), articles)
-            news_count = len(articles)
-            _log(f"{theme_id} {week_start.isoformat()}: 원본 {stats['raw_total']}건 -> "
-                 f"URL중복제거후 {stats['after_url_dedup']}건 -> 제목중복제거후 {news_count}건 "
-                 f"(키워드별 {stats['per_keyword']})")
+            for week_start in weeks:
+                week_end = week_start + timedelta(days=7)  # before: 는 배타적이라 +7로 일요일까지 포함
+                backfilled = week_start != current_week
 
-            prior_counts = get_prior_news_counts(conn, theme_id, "US", week_start.isoformat(), weeks=4)
-            baseline, ratio, arrow = compute_news_arrow(news_count, min_articles, prior_counts, thresholds)
-            ratio_str = f"{ratio:.2f}" if ratio is not None else "-"
-            baseline_str = f"{baseline:.1f}" if baseline is not None else "-"
-            _log(f"  -> baseline={baseline_str} ratio={ratio_str} arrow={arrow} "
-                 f"(backfilled={backfilled}, 직전주 {len(prior_counts)}개 확보)")
+                articles, stats = collect_theme_news(keywords, week_start, week_end, market=market)
+                insert_theme_news_bulk(conn, theme_id, market, week_start.isoformat(), articles)
+                news_count = len(articles)
+                _log(f"{theme_id}({market}) {week_start.isoformat()}: 원본 {stats['raw_total']}건 -> "
+                     f"URL중복제거후 {stats['after_url_dedup']}건 -> 제목중복제거후 {news_count}건 "
+                     f"(키워드별 {stats['per_keyword']})")
 
-            upsert_news_signal(
-                conn, theme_id, "US", week_start.isoformat(), news_count, baseline,
-                ratio, arrow, backfilled, datetime.utcnow().isoformat(),
-            )
-            conn.commit()
+                prior_counts = get_prior_news_counts(conn, theme_id, market, week_start.isoformat(), weeks=4)
+                baseline, ratio, arrow = compute_news_arrow(news_count, min_articles, prior_counts, thresholds)
+                ratio_str = f"{ratio:.2f}" if ratio is not None else "-"
+                baseline_str = f"{baseline:.1f}" if baseline is not None else "-"
+                _log(f"  -> baseline={baseline_str} ratio={ratio_str} arrow={arrow} "
+                     f"(backfilled={backfilled}, 직전주 {len(prior_counts)}개 확보)")
+
+                upsert_news_signal(
+                    conn, theme_id, market, week_start.isoformat(), news_count, baseline,
+                    ratio, arrow, backfilled, datetime.utcnow().isoformat(),
+                )
+                conn.commit()
 
     conn.close()
     _log("완료")

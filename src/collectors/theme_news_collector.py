@@ -1,7 +1,9 @@
-"""Phase A-3: 테마 키워드 기반 뉴스 수집 (Google News RSS).
+"""Phase A-3/B-1: 테마 키워드 기반 뉴스 수집 (Google News RSS).
 
 SPEC: docs/radar/SPEC_phase_a_signals.md §2
-Phase A는 미국 시장만 대상 - keywords_en으로 검색한다.
+Phase A는 미국 시장만 대상이었으나(keywords_en), Phase B에서 한국어 검색
+(keywords_ko)을 추가한다 - normalize_title()이 애초에 한글 범위(가-힣)를
+포함하고 있어 이 확장을 이미 염두에 두고 설계돼 있었다.
 
 키워드별로 따로 검색해서 합친 뒤 중복 제거한다(§3 논의에서 정한 "옵션 B") -
 어떤 키워드가 건수를 과도하게 밀어올리는지 나중에 진단할 수 있어야 하기 때문
@@ -56,12 +58,13 @@ def _title_similarity(a: str, b: str) -> float:
     return SequenceMatcher(None, a, b).ratio()
 
 
-def search_google_news_en(keyword: str, after: date, before: date, limit: int = 100) -> list[dict]:
+def _search_google_news(keyword: str, after: date, before: date, *,
+                         hl: str, gl: str, ceid: str, limit: int = 100) -> list[dict]:
     """단일 키워드로 Google News RSS 검색, after~before 날짜 범위로 제한한다
     (before는 배타적 - Google 검색 연산자 규칙).
     반환 필드: title, url, published_at('YYYY-MM-DD' 또는 ''), source."""
     query = f"{keyword} after:{after.isoformat()} before:{before.isoformat()}"
-    url = f"https://news.google.com/rss/search?q={quote(query)}&hl=en-US&gl=US&ceid=US:en"
+    url = f"https://news.google.com/rss/search?q={quote(query)}&hl={hl}&gl={gl}&ceid={ceid}"
     try:
         resp = requests.get(url, headers=HEADERS, timeout=15)
         resp.raise_for_status()
@@ -94,13 +97,22 @@ def search_google_news_en(keyword: str, after: date, before: date, limit: int = 
     return results
 
 
-def collect_theme_news(keywords: list[str], after: date, before: date) -> tuple[list[dict], dict]:
+def search_google_news_en(keyword: str, after: date, before: date, limit: int = 100) -> list[dict]:
+    return _search_google_news(keyword, after, before, hl="en-US", gl="US", ceid="US:en", limit=limit)
+
+
+def search_google_news_kr(keyword: str, after: date, before: date, limit: int = 100) -> list[dict]:
+    return _search_google_news(keyword, after, before, hl="ko", gl="KR", ceid="KR:ko", limit=limit)
+
+
+def collect_theme_news(keywords: list[str], after: date, before: date, market: str = "US") -> tuple[list[dict], dict]:
     """키워드별로 따로 검색 -> 합치기 -> URL 해시 중복 제거 -> 제목 정규화/유사도
     중복 제거. 반환: (중복 제거된 기사 목록 - 각 항목에 '_url_hash' 추가됨, 통계 dict)."""
+    search_fn = search_google_news_kr if market == "KR" else search_google_news_en
     raw: list[dict] = []
     per_keyword_counts: dict[str, int] = {}
     for kw in keywords:
-        articles = search_google_news_en(kw, after, before)
+        articles = search_fn(kw, after, before)
         per_keyword_counts[kw] = len(articles)
         raw.extend(articles)
         time.sleep(KEYWORD_SLEEP_SEC)
