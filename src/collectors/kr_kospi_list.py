@@ -100,7 +100,14 @@ KOSPI_STOCKS = [
     ("004370", "농심",             "Consumer Defensive"),
     ("003230", "삼양식품",         "Consumer Defensive"),
     ("001680", "대상",             "Consumer Defensive"),
-    ("280360", "롯데웰푸드",       "Consumer Defensive"),
+    # 롯데웰푸드는 1차 재매핑 결과 근거("김치·즉석식품 생산")가 이 회사의
+    # 실제 주력 사업(과자·아이스크림·초콜릿)과 안 맞아 보여 제외(사용자 확인).
+    ("005180", "빙그레",           "Consumer Defensive"),
+    ("007310", "오뚜기",           "Consumer Defensive"),
+    ("017810", "풀무원",           "Consumer Defensive"),
+    ("005610", "SPC삼립",          "Consumer Defensive"),
+    ("018250", "애경산업",         "Consumer Defensive"),
+    ("226320", "잇츠한불",         "Consumer Defensive"),
 ]
 
 
