@@ -92,6 +92,15 @@ KOSPI_STOCKS = [
     ("023530", "롯데쇼핑",         "Consumer Cyclical"),
     ("005490", "POSCO홀딩스",      "Basic Materials"),
     ("018260", "삼성SDS",          "Technology"),
+    # 2026-09 추가 - k_beauty/k_food 테마 재매핑용 (기존 유니버스에 후보가
+    # 너무 적어 표본 부족 상태였음). yfinance .info의 exchange 필드로 전부
+    # KSC(코스피) 확인 후 추가 - .KS 접미사 정확함.
+    ("161890", "한국콜마",         "Consumer Defensive"),
+    ("192820", "코스맥스",         "Consumer Defensive"),
+    ("004370", "농심",             "Consumer Defensive"),
+    ("003230", "삼양식품",         "Consumer Defensive"),
+    ("001680", "대상",             "Consumer Defensive"),
+    ("280360", "롯데웰푸드",       "Consumer Defensive"),
 ]
 
 
