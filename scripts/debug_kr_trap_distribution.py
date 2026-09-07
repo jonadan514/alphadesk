@@ -119,6 +119,18 @@ def main() -> None:
     print(f"  F>=6 인 종목: {sum(1 for v in pio_vals if v >= 6)}개")
     print(f"  F>=5 인 종목: {sum(1 for v in pio_vals if v >= 5)}개")
     print()
+    # ROE 기준을 바꿨을 때 실제로 몇 개가 "전체 필터"를 통과하는지 시뮬레이션.
+    # ROE 외 사유가 하나라도 있으면 여전히 탈락이므로, "ROE만 걸린" 종목 중
+    # 새 기준을 넘는 것만 순증분이 된다.
+    print("=== ROE 기준별 전체 통과 종목 수 시뮬레이션 ===")
+    for thr in (12, 10, 9, 8, 7):
+        extra = [(n, roe) for n, roe, pio, cats in detail
+                 if cats == ["ROE <12%"] and roe is not None and roe >= thr]
+        print(f"  ROE >={thr}%: 통과 {passed + len(extra)}개 "
+              f"(현재 {passed} + 순증 {len(extra)})")
+        if thr in (8, 10):
+            print(f"     추가되는 종목: {', '.join(f'{n}({roe}%)' for n, roe in sorted(extra, key=lambda x: -x[1]))}")
+    print()
     print("탈락 종목 상세(상위 25개):")
     for name, roe, pio, cats in detail[:25]:
         print(f"  {name}: ROE={roe} F={pio} 사유={','.join(cats)}")
