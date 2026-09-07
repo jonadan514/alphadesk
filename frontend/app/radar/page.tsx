@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { themeName } from "@/src/lib/themeNames";
 import { useMarket } from "@/src/contexts/MarketContext";
+import { krStockName } from "@/src/lib/krStockNames";
 
 // globals.css의 앱 전역 토큰을 그대로 쓴다 (워치리스트 페이지와 같은 터미널·앰버 룩).
 const ACCENT = "var(--accent)";
@@ -146,7 +147,7 @@ function FinanceBadge({ finance }: { finance: Member["finance"] }) {
   );
 }
 
-function MembersTable({ members, loading }: { members: Member[]; loading: boolean }) {
+function MembersTable({ members, loading, market }: { members: Member[]; loading: boolean; market: string }) {
   if (loading) return <div className="py-4 text-[12px]" style={{ color: MUTED }}>불러오는 중...</div>;
   if (members.length === 0) return <div className="py-4 text-[12px]" style={{ color: MUTED }}>소속 기업 정보를 찾을 수 없습니다.</div>;
 
@@ -155,7 +156,7 @@ function MembersTable({ members, loading }: { members: Member[]; loading: boolea
       <table className="w-full text-[13px]" style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ background: "var(--bg-inset)" }}>
-            {["티커", "가치사슬 단계", "근거", "구분", "재무"].map((h) => (
+            {[market === "KR" ? "종목" : "티커", "가치사슬 단계", "근거", "구분", "재무"].map((h) => (
               <th key={h} className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide" style={{ color: FAINT, borderBottom: "1px solid var(--border)" }}>
                 {h}
               </th>
@@ -165,7 +166,20 @@ function MembersTable({ members, loading }: { members: Member[]; loading: boolea
         <tbody>
           {members.map((m) => (
             <tr key={m.ticker} style={{ borderBottom: "1px solid var(--border)" }}>
-              <td className="px-3 py-2 font-bold" style={{ fontFamily: MONO, color: "var(--num)" }}>{m.ticker}</td>
+              <td className="px-3 py-2 align-top">
+                {market === "KR" ? (
+                  // 한국 종목코드(6자리 숫자)는 사람이 못 읽으니 회사명을 앞세우고
+                  // 코드는 보조로 작게 - 미국은 티커 자체가 식별자라 그대로 둔다.
+                  <div className="flex flex-col">
+                    <span className="whitespace-nowrap font-bold" style={{ color: "var(--text-primary)" }}>
+                      {krStockName(m.ticker)}
+                    </span>
+                    <span className="text-[11px]" style={{ fontFamily: MONO, color: FAINT }}>{m.ticker}</span>
+                  </div>
+                ) : (
+                  <span className="font-bold" style={{ fontFamily: MONO, color: "var(--num)" }}>{m.ticker}</span>
+                )}
+              </td>
               <td className="px-3 py-2 align-top">
                 <div className="flex flex-wrap gap-1">
                   {m.stage && (
@@ -300,7 +314,7 @@ function ThemeCard({ signal, market }: { signal: ThemeSignal; market: string }) 
               {signal.price_excess != null && <> · 지수 대비 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>{pct(signal.price_excess)}p</b></>}
             </div>
           </div>
-          <MembersTable members={members ?? []} loading={loadingMembers} />
+          <MembersTable members={members ?? []} loading={loadingMembers} market={market} />
 
           <button
             onClick={toggleNews}
