@@ -1,8 +1,37 @@
 """
-KOSPI 주요 종목 리스트 (KOSPI 100 수준)
-yfinance .KS 티커 기준
+한국 주요 종목 리스트 (KOSPI 대형주 + 일부 코스닥 대형주)
+yfinance 티커 기준 - 거래소에 따라 .KS(코스피)/.KQ(코스닥)를 붙인다.
 """
 import pandas as pd
+
+# 코스닥 상장 종목. 나머지는 전부 코스피(.KS).
+#
+# 2026-09-07 전수 스캔으로 확정 - 그 전까지 이 파일은 전 종목에 .KS를 붙이고
+# 있었는데, 코스닥 종목을 .KS로 조회하면 yfinance가 에러 대신 "조용히 잘못된"
+# 응답을 준다: 종목명이 "035900.KS,0P0000EQNH,607656" 같은 내부 ID 문자열,
+# 섹터·시총·현재가는 None, 그리고 결정적으로 **가격 시계열이 다른 값**이 온다
+# (알테오젠 4주 수익률: .KS -1.7% vs .KQ -5.6%, 같은 배치 호출 기준).
+# 그래서 화면의 "Unknown 섹터"뿐 아니라 테마 레이더 주가 축까지 조용히
+# 틀린 숫자를 쓰고 있었다. 분기 재무제표는 양쪽이 동일해 실적 축은 무영향.
+KOSDAQ_CODES = {
+    "035900",  # JYP Ent.
+    "041510",  # 에스엠
+    "058470",  # 리노공업
+    "068760",  # 셀트리온제약
+    "086520",  # 에코프로
+    "196170",  # 알테오젠
+    "247540",  # 에코프로비엠
+    "263750",  # 펄어비스
+}
+
+
+def yf_suffix(code: str) -> str:
+    """야후 파이낸스 조회용 거래소 접미사."""
+    return ".KQ" if code in KOSDAQ_CODES else ".KS"
+
+
+def exchange_of(code: str) -> str:
+    return "KOSDAQ" if code in KOSDAQ_CODES else "KOSPI"
 
 KOSPI_STOCKS = [
     ("005930", "삼성전자",        "Technology"),
@@ -113,7 +142,7 @@ KOSPI_STOCKS = [
 
 def get_kospi_list() -> pd.DataFrame:
     rows = [
-        {"Symbol": f"{code}.KS", "Code": code, "Name": name, "Sector": sector}
+        {"Symbol": f"{code}{yf_suffix(code)}", "Code": code, "Name": name, "Sector": sector}
         for code, name, sector in KOSPI_STOCKS
     ]
     return pd.DataFrame(rows)

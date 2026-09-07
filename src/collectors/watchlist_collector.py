@@ -254,17 +254,19 @@ def _kr_universe_fallback() -> list[dict]:
     시가총액은 이후 collect_universe의 yfinance 조회에서 채워진다.
     """
     try:
-        from collectors.kr_kospi_list import KOSPI_STOCKS
+        from collectors.kr_kospi_list import KOSPI_STOCKS, yf_suffix, exchange_of
     except ImportError:
-        from src.collectors.kr_kospi_list import KOSPI_STOCKS
+        from src.collectors.kr_kospi_list import KOSPI_STOCKS, yf_suffix, exchange_of
 
+    # 거래소별로 접미사를 붙인다 - 코스닥 종목에 .KS를 붙이면 yfinance가
+    # 에러 대신 조용히 잘못된 응답을 준다(kr_kospi_list.py 주석 참고).
     result = [
         {
             "market": "KR",
             "symbol": code,
-            "yf_symbol": f"{code}.KS",
+            "yf_symbol": f"{code}{yf_suffix(code)}",
             "name": name,
-            "exchange": "KOSPI",
+            "exchange": exchange_of(code),
         }
         for code, name, _sector in KOSPI_STOCKS
     ]

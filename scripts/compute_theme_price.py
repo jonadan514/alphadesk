@@ -28,6 +28,7 @@ from src.db.data_store import get_db
 from src.db.theme_signals import ensure_schema, get_approved_theme_members, upsert_price_signal
 from analyzers.theme_price import compute_price_signal
 from collectors.theme_price_collector import compute_return_batch
+from collectors.kr_kospi_list import yf_suffix as kr_yf_suffix
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 
@@ -46,10 +47,11 @@ def _current_week_monday(today: date) -> date:
 
 def to_yf_symbol(ticker: str, market: str) -> str:
     """theme_members.ticker(캐시 키)를 yfinance 조회용 심볼로 변환.
-    US는 동일. KR은 6자리 코드라 거래소 접미사가 필요한데, 정적 유니버스가
-    전부 코스피라 .KS를 쓴다(실측상 yfinance는 한국 종목에 대해 .KS/.KQ
-    어느 쪽으로 조회해도 같은 시세를 돌려주지만, 명시적으로 맞는 쪽을 쓴다)."""
-    return ticker if market != "KR" else f"{ticker}.KS"
+    US는 동일. KR은 6자리 코드라 거래소 접미사가 필요하고, 코스피(.KS)/
+    코스닥(.KQ)을 정확히 구분해야 한다 - 코스닥 종목에 .KS를 붙이면
+    yfinance가 에러 없이 **다른 가격 시계열**을 돌려준다(2026-09-07 발견,
+    kr_kospi_list.py 주석 참고)."""
+    return ticker if market != "KR" else f"{ticker}{kr_yf_suffix(ticker)}"
 
 
 def load_active_themes(theme_ids: list[str] | None) -> tuple[list[dict], dict]:

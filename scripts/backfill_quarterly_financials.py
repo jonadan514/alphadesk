@@ -35,6 +35,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
 from src.db.fundamentals_cache import ensure_schema, upsert_statement_rows
+from src.collectors.kr_kospi_list import yf_suffix as kr_yf_suffix
 
 RATE_LIMIT_BACKOFF = [60, 180, 600]
 TICKER_SLEEP_SEC = 1.0
@@ -54,11 +55,15 @@ def get_approved_tickers(conn, market: str) -> list[str]:
 
 def yf_symbol_candidates(ticker: str, market: str) -> list[str]:
     """야후 파이낸스 조회용 심볼 후보 - 실패하면 순서대로 다음 걸 시도한다.
-    US는 캐시 키와 yfinance 심볼이 동일. KR은 코스피(.KS) 우선, 안 되면
-    코스닥(.KQ) - watchlist_collector.py의 기존 관례와 동일."""
+    US는 캐시 키와 yfinance 심볼이 동일. KR은 정적 리스트가 아는 거래소
+    접미사를 먼저 쓰고, 혹시 목록에 없거나 틀렸을 경우를 대비해 반대쪽도
+    폴백으로 시도한다(분기 재무제표는 .KS/.KQ가 동일하지만, 목록에 없는
+    티커가 들어올 수 있으므로 폴백은 유지)."""
     if market != "KR":
         return [ticker]
-    return [f"{ticker}.KS", f"{ticker}.KQ"]
+    primary = f"{ticker}{kr_yf_suffix(ticker)}"
+    other = f"{ticker}.KQ" if primary.endswith(".KS") else f"{ticker}.KS"
+    return [primary, other]
 
 
 def fetch_quarterly_financials(yf_symbol: str, retries: int = 2):
