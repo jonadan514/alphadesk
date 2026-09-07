@@ -1011,5 +1011,41 @@ baseline이 전부 확보돼 첫 주부터 정상적으로 판정되는 것까�
 Phase A-3 때는 첫 4주가 baseline 부족으로 na였던 것과 대조적 - 이번엔
 8주를 한 번에 채워서 넣었기 때문).
 
-**Phase B-1 완료.** 다음은 B-2(실적 축 한국 확장 - yfinance 분기 데이터
-백필 + `compute_theme_earnings.py`의 US 하드코딩 제거)부터 이어서.
+**Phase B-1 완료.**
+
+---
+
+## 2026-09-07 — Phase B-2: 실적 축 한국 확장
+
+**구현**: `backfill_quarterly_financials.py`의 US 하드코딩을 시장
+파라미터화(`--market`, 기본값 US+KR 둘 다). KR은 캐시 키
+(`theme_members.ticker` = 접미사 없는 6자리 코드)와 yfinance 조회 심볼이
+달라서, `watchlist_collector.py`의 기존 관례와 동일하게 `.KS` 우선 조회
+후 실패하면 `.KQ`로 재시도하는 `yf_symbol_candidates()` 추가(rate limit인
+경우엔 다음 접미사도 어차피 막히므로 재시도 안 함).
+`compute_theme_earnings.py`는 테마 순회를 US 고정에서 (테마,시장) 쌍
+순회로 변경 - 재무 캐시 벌크 조회는 US+KR 티커를 하나로 합쳐 한 번에
+처리(US는 알파벳, KR은 6자리 숫자라 문자열이 겹칠 일 없음). 판정 로직
+(`theme_earnings.py`)은 완전히 시장 무관이라 무변경.
+
+**백필 결과**: KR 59종목 중 58종목 성공(no_data 1건). **미국과 달리
+한국은 6~7분기씩 들어옴** - Phase A-4에서 yfinance가 5분기까지만 줘서
+SPEC의 "가속도" 공식을 포기해야 했던 것과 대조적으로, 한국 데이터가
+오히려 더 넉넉함(`insufficient`가 20개 테마 통틀어 1건뿐).
+
+**실적 축 계산 결과 (KR 20개 테마)**: 표본 5개 이상이라 실제 화살표가
+나온 건 8개 - up2 7개(semi_equipment, biosimilar, k_beauty, k_food,
+k_content, ev_value_chain, petrochemical), up1 1개(battery). 나머지
+12개는 예상대로 표본 부족(na). **직전 라운드에서 표본 보강한
+k_beauty(5개 전원 개선)·k_food(7개 전원 개선)가 실제로 up2 신호를 냄** -
+보강 안 했으면 둘 다 na로 남았을 자리라 그 작업이 실제로 값을 만들었음을
+확인. US 30개 테마도 같은 실행에서 정상 계산됨(회귀 없음).
+
+**관찰 사항**: 미국에서 관찰됐던 "up2 쏠림"이 한국에서도 동일하게 나타남
+(화살표가 나온 8개 중 7개가 up2). SPEC §8이 이미 "임계값은 임의값, 첫
+몇 주 실데이터로 조정"이라 명시해둔 항목이라 지금은 손대지 않고 관찰만
+함 - US/KR 양쪽에서 같은 패턴이 확인된 만큼, 나중에 임계값을 조정한다면
+두 시장에 함께 적용하는 게 맞아 보임.
+
+**Phase B-2 완료.** 다음은 B-3(주가 축 - `compute_theme_price.py`에
+KOSPI 지수(`^KS11`) 추가 + US 하드코딩 제거).
