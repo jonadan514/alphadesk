@@ -974,8 +974,42 @@ flagged=0) - 둘 다 5개 문턱 통과. 절차 중 실수로 구버전 k_beauty
 `MAX(run_id)` 조회 관례상 최신(교정판)만 실제로 쓰임.
 
 **다음 세션에서 이어서 할 것**
-- Phase B 본작업: B-1(뉴스 축 한국어 확장)부터 순서대로 시작.
 - Wikipedia KOSPI 200 확장은 별도 검증(GH Actions 접근성) 후 착수 여부
   결정 - 아직 미착수.
 - 동원산업(동원F&B 흡수 주체) 등 추가 K-푸드 후보는 필요 시 재검토
   (지금 7개로 이미 충분해 급하지 않음).
+
+---
+
+## 2026-09-05~07 — Phase B-1: 뉴스 축 한국어 확장
+
+**구현**: `theme_news_collector.py`의 `search_google_news_en()`을 공통
+`_search_google_news(hl, gl, ceid)`로 분리하고 `search_google_news_kr()`
+(hl=ko&gl=KR&ceid=KR:ko) 추가. `normalize_title()`은 Phase A-3 때부터 이미
+한글 범위(가-힣)를 포함하고 있어 이 확장을 염두에 두고 설계돼 있었음 -
+수정 불필요. `collect_theme_news()`에 `market` 파라미터 추가(기본값 US로
+하위호환). `collect_theme_news.py`의 테마 순회를 US 고정 리스트에서
+시장 루프(US: keywords_en, KR: keywords_ko)로 변경 - 워크플로우 자체는
+무변경(스크립트 내부에서 양쪽 다 처리하므로).
+
+**검증 순서**: (1) 로컬에서 실제 Google News RSS로 한국어 검색
+스모크테스트(K뷰티 100건, 2키워드 합쳐 156→140건 정상 중복제거) (2)
+GH Actions에서 k_beauty/k_food 대상 1주 파일럿 (3) 32개 KR 대상 테마
+전체 8주 콜드스타트 백필.
+
+**백필 중 발견한 것**: 32개 테마 전체를 한 워크플로 실행에 넣었더니
+정확히 90분 타임아웃에 걸려 24/32에서 취소됨(travel_airline까지 완료,
+battery 도중 중단) - Phase A-3의 29개 US 테마 백필(53분)보다 KR 쪽
+결과 건수가 커서(테마당 100+건씩, 키워드 상한에 자주 도달) 시간이 더
+걸린 것으로 보임. `upsert`가 멱등적이라 안전하게 남은 8개 테마
+(battery부터 petrochemical까지)만 골라 재실행해서 마무리 - 데이터
+손실이나 중복 없음.
+
+**최종 검증**: `theme_signals`에 32개 테마 전부 KR 뉴스 신호 존재 확인,
+최신 주(2026-08-31) 화살표 분포 flat 17개·up1 15개·na 0개 - 8주치
+baseline이 전부 확보돼 첫 주부터 정상적으로 판정되는 것까지 확인(미국
+Phase A-3 때는 첫 4주가 baseline 부족으로 na였던 것과 대조적 - 이번엔
+8주를 한 번에 채워서 넣었기 때문).
+
+**Phase B-1 완료.** 다음은 B-2(실적 축 한국 확장 - yfinance 분기 데이터
+백필 + `compute_theme_earnings.py`의 US 하드코딩 제거)부터 이어서.
