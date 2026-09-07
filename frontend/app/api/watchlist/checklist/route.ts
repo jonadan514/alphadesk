@@ -5,13 +5,20 @@ export const dynamic = "force-dynamic";
 
 // 종목별 정성 체크리스트 — 워치리스트 상세 팝업에 흡수된 워크북 기능.
 // 전역 상태였던 옛 workbook_checklist와 달리 (market, symbol)별로 독립 저장된다.
+//
+// 2026-09-07: 5개 -> 3개로 축소. 뺀 두 항목은 화면이 이미 자동으로 보여주는 것을
+// 사람에게 다시 묻고 있었다:
+//   - "6개월 내 촉매가 있는가?" -> 네러티브 브리프의 "다가오는 촉매"가 바로 위에 있음
+//   - "관심도가 상승 중인가?"   -> HOT/WARM/COLD 배지와 상승 전환 배지가 자동 계산됨.
+//     게다가 가이드는 관심도를 "보조 정보일 뿐 핵심 지표 아님"이라 설명하는데
+//     체크 항목으로 두면 판단 기준처럼 보여 자기 모순이었다.
+// 남긴 3개는 이 툴이 "시스템이 대신 판단할 수 없다"고 반복해서 말하는 질문들이다.
 const DEFAULT_ITEMS = [
   { id: "cl-story",    text: "네러티브를 읽고, 이 종목의 스토리를 한 문장으로 말할 수 있는가?", checked: false },
-  { id: "cl-catalyst", text: "6개월 내 촉매(실적발표·신제품·정책·계약)가 있는가?", checked: false },
   { id: "cl-risk",     text: "스토리가 깨지는 조건을 알고 있는가?", checked: false },
-  { id: "cl-heat",     text: "관심도가 상승 중인가? (식어가는 종목은 아닌지)", checked: false },
   { id: "cl-durable",  text: "이 스토리가 1년 후에도 유효할 것 같은가? (일시적 이슈가 아닌 구조적 동력인지)", checked: false },
 ];
+const ITEM_IDS = DEFAULT_ITEMS.map((it) => it.id);
 
 async function ensureTable() {
   const client = getClient();
@@ -51,14 +58,25 @@ export async function GET(request: Request) {
       sql: "SELECT items FROM stock_checklist WHERE market = ? AND symbol = ?",
       args: [market, symbol],
     });
+    // 저장된 값이 있어도 항목 구성은 항상 현재 DEFAULT_ITEMS 기준으로 맞춘다
+    // (체크 상태만 이어받음) - 항목을 줄이거나 문구를 고쳤을 때 이미 저장된
+    // 종목만 옛 항목을 계속 보여주는 문제를 막기 위함. 원본 이력은
+    // stock_checklist_history에 그대로 남아 있다.
     const row = res.rows[0];
-    let items = DEFAULT_ITEMS;
+    let checkedById: Record<string, boolean> = {};
     if (row) {
       try {
         const parsed = JSON.parse(row[0] as string);
-        if (Array.isArray(parsed) && parsed.length > 0) items = parsed;
+        if (Array.isArray(parsed)) {
+          for (const it of parsed) {
+            if (it && typeof it.id === "string" && ITEM_IDS.includes(it.id)) {
+              checkedById[it.id] = Boolean(it.checked);
+            }
+          }
+        }
       } catch {}
     }
+    const items = DEFAULT_ITEMS.map((it) => ({ ...it, checked: checkedById[it.id] ?? false }));
     return NextResponse.json({ items });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
