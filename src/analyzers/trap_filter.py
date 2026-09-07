@@ -12,7 +12,7 @@
   4. 부채비율 > 150% (금융업 제외)
   5. 매출 + 순이익 3년 연속 동시 감소
   6. Piotroski F-Score < 6
-  7. ROE < 12%
+  7. ROE < 시장별 하한 (미국 12% / 한국 8%)
 
 `apply_trap_filters()`의 반환값에는 `status`(pass/fail/insufficient_data) 3분류가
 들어있다 (SPEC_fundamentals_cache.md §4). 재무 데이터가 아예 없거나 3분류 판정에
@@ -36,6 +36,24 @@ FINANCIAL_SECTORS = {"Financial Services", "Banking", "Insurance", "금융", "�
 # 3분류(통과/탈락/데이터부족) 판정에 필요한 최소 회계기간 수 (SPEC_fundamentals_cache.md §4).
 # 매출·순이익 3년 연속 감소 체크에 손익계산서 3개년이 필요하고, Piotroski와
 # 영업현금흐름 2년 체크에는 각각 전년 대비 비교가 필요해 2개년이 최소치다.
+# ROE 하한 - 시장별로 다르다(2026-09-07 결정).
+#
+# 미국 12%는 유지. 한국은 8%로 낮춘다 - MASTER_PLAN §8의 열린 항목
+# ("한국 ROE 기준을 미국 12% 그대로 쓸지 - 데이터 확보 후 결정")을 실제
+# 분포로 판단한 결과다. 한국 유니버스 97종목의 ROE 중앙값은 6.0%로, 미국
+# 기준 12%는 중앙값의 2배라 상위 20%만 넘었고 통과율이 미국(약 30%)의
+# 절반(14%)이었다. 탈락 사유를 집계하니 ROE가 단독 병목이었고("ROE만
+# 걸린" 종목 24개), 8%로 낮췄을 때 새로 통과하는 9종목이 삼성전자·KB금융·
+# 포스코홀딩스·유한양행 등 한국 대표 우량주였다 - 기업 품질이 아니라
+# 기준이 시장에 안 맞았다는 뜻.
+#
+# 8%는 한국 중앙값(6.0%)을 넘어 "평균 이상"이라는 의미를 유지하면서
+# 통과율을 24%로 만들어 미국과 비슷한 수준이 된다.
+# 임의로 바꾸지 말 것(CLAUDE.md 원칙 3) - 바꾸려면 위와 같이 분포를
+# 다시 뽑아 근거를 남길 것.
+ROE_MIN_BY_MARKET = {"US": 0.12, "KR": 0.08}
+ROE_MIN_DEFAULT = 0.12
+
 MIN_INCOME_PERIODS = 3
 MIN_BALANCE_PERIODS = 2
 MIN_CASHFLOW_PERIODS = 2
@@ -230,15 +248,16 @@ def apply_trap_filters(item: dict) -> dict:
         if "매출+순이익 3년 연속 감소" not in red_flags:
             red_flags.append("매출 2년 연속 감소")
 
-    # ── ROE < 12% ──
+    # ── ROE 하한 미달 (시장별 기준 - ROE_MIN_BY_MARKET 주석 참고) ──
+    roe_min = ROE_MIN_BY_MARKET.get(item.get("market"), ROE_MIN_DEFAULT)
     roe_pct: float | None = None
     net_income_cur = g_fin("Net Income")
     equity = g_bs("Stockholders Equity") or g_bs("Total Stockholder Equity")
     if net_income_cur is not None and equity and equity > 0:
         roe = net_income_cur / equity
         roe_pct = round(roe * 100, 1)
-        if roe < 0.12:
-            red_flags.append(f"ROE {roe*100:.1f}% (<12%)")
+        if roe < roe_min:
+            red_flags.append(f"ROE {roe*100:.1f}% (<{roe_min*100:.0f}%)")
 
     # ── Piotroski F-Score ──
     piotroski, _ = calc_piotroski(fin, bs, cf)
