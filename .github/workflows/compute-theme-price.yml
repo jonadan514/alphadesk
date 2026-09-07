@@ -9,7 +9,6 @@ on:
         description: "기준 주 월요일 YYYY-MM-DD (비우면 오늘이 속한 주)"
         required: false
         default: ""
-    inputs:
       theme_id:
         description: "테마 ID 공백 구분 (비우면 전체)"
         required: false
