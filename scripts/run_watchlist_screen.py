@@ -64,9 +64,9 @@ CREATE_TABLE_SQL = """CREATE TABLE IF NOT EXISTS watchlist_candidates (
 # 순위 없는 재무 건전성 후보 목록으로 전환. current_price는 성적표 배치(진입가)와
 # 페이퍼 포트폴리오 매수용으로 스크리닝 시점 가격을 남겨둔다.
 
-# 매주 전체 교체 (이번 주 통과 종목만 유지 — 지난주 잔존 방지)
+# 매주 교체하되 시장 단위로만 지운다(아래 ensure_schema 참고) — DROP TABLE로
+# 통째로 날리면 한쪽 시장만 돌렸을 때 다른 시장 후보가 조용히 사라진다.
 SCHEMA = f"""
-DROP TABLE IF EXISTS watchlist_candidates;
 {CREATE_TABLE_SQL};
 CREATE INDEX IF NOT EXISTS idx_wl_market ON watchlist_candidates(market);
 CREATE INDEX IF NOT EXISTS idx_wl_regime ON watchlist_candidates(regime_fit);
@@ -90,9 +90,13 @@ HISTORY_TABLE_SQL = """CREATE TABLE IF NOT EXISTS watchlist_candidate_history (
 )"""
 
 
-def ensure_schema(conn: sqlite3.Connection) -> None:
+def ensure_schema(conn: sqlite3.Connection, markets: list[str] | None = None) -> None:
+    """테이블을 만들고, 이번에 스크리닝하는 시장의 기존 행만 비운다.
+    markets가 None이면 아무것도 지우지 않는다(스키마만 보장)."""
     conn.executescript(SCHEMA)
     conn.execute(HISTORY_TABLE_SQL)
+    for mkt in markets or []:
+        conn.execute("DELETE FROM watchlist_candidates WHERE market = ?", (mkt,))
     conn.commit()
 
 
@@ -180,14 +184,23 @@ def push_to_turso(candidates: list[dict]) -> None:
 
     BATCH = 50
 
-    # 상위 N개만 유지하므로 매주 전체 교체 (DROP → CREATE → INSERT).
-    # watchlist_candidate_history는 절대 DROP하지 않는다 — 성적표가 과거 스크리닝
-    # 시점의 후보/가격을 계속 참조해야 하기 때문.
+    # 매주 전체 교체하되, **이번에 스크리닝한 시장만** 지운다.
+    #
+    # 예전엔 DROP TABLE로 통째로 날렸는데, 그러면 `--market KR`처럼 한쪽만
+    # 돌렸을 때 다른 시장 후보가 조용히 전멸한다(2026-09-07에 실제로 미국
+    # 149종목이 사라짐 - 전체 점검에서 "워치리스트 US 0개"로 발견). 테이블을
+    # 지우는 대신 해당 시장 행만 DELETE한다.
+    #
+    # watchlist_candidate_history는 어느 경우에도 건드리지 않는다 — 성적표가
+    # 과거 스크리닝 시점의 후보/가격을 계속 참조해야 하기 때문.
+    screened_markets = sorted({c["market"] for c in candidates})
     init_statements = [
-        ("DROP TABLE IF EXISTS watchlist_candidates", None),
         (CREATE_TABLE_SQL, None),
         (HISTORY_TABLE_SQL, None),
     ]
+    for mkt in screened_markets:
+        init_statements.append(("DELETE FROM watchlist_candidates WHERE market = ?", [mkt]))
+    logger.info("Turso 교체 대상 시장: %s (다른 시장 후보는 유지)", screened_markets)
 
     for i in range(0, len(candidates), BATCH):
         chunk = candidates[i : i + BATCH]
@@ -280,7 +293,7 @@ def main():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     try:
-        ensure_schema(conn)
+        ensure_schema(conn, markets)
         save_candidates(conn, passed)
         save_history(conn, passed, datetime.utcnow().strftime("%Y-%m-%d"))
     finally:
