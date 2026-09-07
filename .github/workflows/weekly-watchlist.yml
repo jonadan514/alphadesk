@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: "0 22 * * 0"   # 매주 일요일 22:00 UTC (월요일 07:00 KST)
   workflow_dispatch:         # 수동 실행
+    inputs:
+      market:
+        description: "US | KR | ALL (비우면 ALL)"
+        required: false
+        default: ""
+      refresh_budget:
+        description: "이번 실행에서 라이브 갱신할 종목 수 (비우면 60)"
+        required: false
+        default: ""
 
 jobs:
   screen:
@@ -36,7 +45,10 @@ jobs:
           # 미설정이면 조용히 건너뜀(파이프라인 안 막음).
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/run_watchlist_screen.py --market ALL
+          # 특정 시장만 전량 강제 갱신해야 할 때 수동 실행에서 올린다
+          # (예: 거래소 접미사 수정 후 캐시에 남은 잘못된 값을 걷어낼 때).
+          REFRESH_BUDGET: ${{ inputs.refresh_budget }}
+        run: python scripts/run_watchlist_screen.py --market "${{ inputs.market || 'ALL' }}"
 
       - name: Upload data.db artifact
         uses: actions/upload-artifact@v4

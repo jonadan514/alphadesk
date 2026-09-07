@@ -30,7 +30,9 @@ DB_PATH = ROOT / "output" / "data.db"
 
 # SPEC_fundamentals_cache.md §3 — 매주 이만큼만 야후에서 실제로 갱신하고
 # 나머지는 캐시를 읽는다. 환경변수로 노출(기본 60).
-REFRESH_BUDGET = int(os.getenv("REFRESH_BUDGET", "60"))
+# 워크플로가 빈 문자열을 넘길 수 있어(수동 실행 입력 미기입) or로 폴백한다 -
+# os.getenv의 기본값은 "미설정"일 때만 쓰여서 빈 문자열이면 int("")로 죽는다.
+REFRESH_BUDGET = int(os.getenv("REFRESH_BUDGET") or "60")
 
 # SPEC §6.3 — 이번 주 갱신 대상 중 (라이브 성공 + 캐시 폴백)/전체 시도 비율이
 # 이 아래로 떨어지면 텔레그램 경고. job은 실패 처리하지 않는다.
