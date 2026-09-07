@@ -81,9 +81,9 @@ def main() -> None:
     rows = conn.execute(
         """
         SELECT theme_id, news_arrow, earn_arrow, price_arrow, label,
-               earn_members, earn_improved
+               earn_members, earn_improved, market
         FROM theme_signals
-        WHERE market = 'US' AND week_start = ? AND label IS NOT NULL
+        WHERE market IN ('US', 'KR') AND week_start = ? AND label IS NOT NULL
         """,
         (week_start,),
     ).fetchall()
@@ -94,21 +94,30 @@ def main() -> None:
         return
 
     names = load_theme_names()
-    by_label: dict[str, list] = {}
-    for r in rows:
-        by_label.setdefault(r[4], []).append(r)
 
+    # 시장별로 섹션을 나눈다 - 같은 테마(예: 반도체 장비)가 미국/한국에서
+    # 서로 다른 라벨을 받을 수 있어, 섞어 놓으면 어느 시장 얘기인지 헷갈린다.
     lines = [f"📡 <b>이번 주 테마 레이더</b> ({week_start} 기준)", f"{len(rows)}개 테마 라벨 부여\n"]
-    for label in LABEL_ORDER:
-        items = by_label.get(label)
-        if not items:
+    for market, flag in (("US", "🇺🇸"), ("KR", "🇰🇷")):
+        market_rows = [r for r in rows if r[7] == market]
+        if not market_rows:
             continue
-        lines.append(f"{LABEL_EMOJI.get(label, '•')} <b>{label}</b>")
-        for theme_id, news_a, earn_a, price_a, _label, earn_members, earn_improved in items:
-            name = names.get(theme_id, theme_id)
-            detail = f"({earn_members}개사 중 {earn_improved}개 매출개선)" if earn_members is not None else ""
-            lines.append(f"  • {name}: 뉴스{arrow(news_a)} 실적{arrow(earn_a)} 주가{arrow(price_a)} {detail}")
-        lines.append("")
+        lines.append(f"{flag} <b>{market}</b> ({len(market_rows)}개)")
+
+        by_label: dict[str, list] = {}
+        for r in market_rows:
+            by_label.setdefault(r[4], []).append(r)
+
+        for label in LABEL_ORDER:
+            items = by_label.get(label)
+            if not items:
+                continue
+            lines.append(f"{LABEL_EMOJI.get(label, '•')} <b>{label}</b>")
+            for theme_id, news_a, earn_a, price_a, _label, earn_members, earn_improved, _mkt in items:
+                name = names.get(theme_id, theme_id)
+                detail = f"({earn_members}개사 중 {earn_improved}개 매출개선)" if earn_members is not None else ""
+                lines.append(f"  • {name}: 뉴스{arrow(news_a)} 실적{arrow(earn_a)} 주가{arrow(price_a)} {detail}")
+            lines.append("")
 
     lines.append(f'<a href="{RADAR_URL}">전체 보기</a>')
     text = "\n".join(lines)

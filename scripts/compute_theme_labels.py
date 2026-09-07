@@ -1,8 +1,10 @@
-"""Phase A-6: 세 축이 다 채워진 뒤 조합 라벨을 부여.
+"""Phase A-6/B-4: 세 축이 다 채워진 뒤 조합 라벨을 부여.
 
 SPEC: docs/radar/SPEC_phase_a_signals.md §5
 뉴스(22:00 UTC)/실적(22:15)/주가(22:30) 축 계산이 전부 끝난 뒤 돌아야 한다 -
 워크플로 크론을 22:45로 둬서 순서를 보장한다.
+Phase B에서 한국도 같은 규칙으로 처리한다(라벨 규칙 자체는 시장 무관 -
+세 축 화살표만 보고 판정하므로 US/KR에 그대로 적용).
 
 Usage:
   python scripts/compute_theme_labels.py
@@ -35,22 +37,35 @@ def main() -> None:
     ensure_schema(conn)
 
     week_start = _current_week_monday(date.today()).isoformat()
-    rows = get_week_signals(conn, "US", week_start)
-    if not rows:
-        _log(f"{week_start}에 해당하는 theme_signals 행이 없음 - 뉴스/실적/주가 축을 먼저 돌릴 것")
+
+    total_rows = 0
+    total_labeled = 0
+    for market in ("US", "KR"):
+        rows = get_week_signals(conn, market, week_start)
+        if not rows:
+            _log(f"{market}: {week_start}에 해당하는 theme_signals 행이 없음 - 건너뜀")
+            continue
+
+        labeled = 0
+        for row in rows:
+            label = compute_label(row["news_arrow"], row["earn_arrow"], row["price_arrow"])
+            update_theme_label(conn, row["theme_id"], market, week_start, label)
+            if label:
+                labeled += 1
+                _log(f"{row['theme_id']}({market}): "
+                     f"{row['news_arrow']}/{row['earn_arrow']}/{row['price_arrow']} -> {label}")
+        conn.commit()
+        _log(f"{market}: {len(rows)}개 테마 중 {labeled}개 라벨 부여")
+        total_rows += len(rows)
+        total_labeled += labeled
+
+    if total_rows == 0:
+        _log("어느 시장에도 해당 주 행이 없음 - 뉴스/실적/주가 축을 먼저 돌릴 것")
+        conn.close()
         sys.exit(1)
 
-    labeled = 0
-    for row in rows:
-        label = compute_label(row["news_arrow"], row["earn_arrow"], row["price_arrow"])
-        update_theme_label(conn, row["theme_id"], "US", week_start, label)
-        if label:
-            labeled += 1
-            _log(f"{row['theme_id']}: {row['news_arrow']}/{row['earn_arrow']}/{row['price_arrow']} -> {label}")
-    conn.commit()
-
     conn.close()
-    _log(f"완료 - {len(rows)}개 테마 중 {labeled}개 라벨 부여")
+    _log(f"전체 완료 - {total_rows}개 중 {total_labeled}개 라벨 부여")
 
 
 if __name__ == "__main__":
