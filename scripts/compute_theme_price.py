@@ -67,6 +67,10 @@ def main() -> None:
     parser.add_argument("--theme-id", nargs="*", default=None, help="특정 테마만 (비우면 전체)")
     parser.add_argument("--include-peripheral", action="store_true",
                          help="linkage=peripheral도 포함 (SPEC §10 옵션 - 기본은 제외)")
+    parser.add_argument("--week-start", default=None,
+                         help="기준 주 월요일(YYYY-MM-DD). 비우면 오늘이 속한 주 - "
+                              "주 초에 수동 실행할 때 아직 데이터가 없는 새 주를 잡지 "
+                              "않도록 명시적으로 지정하기 위한 옵션.")
     args = parser.parse_args()
 
     themes, config = load_active_themes(args.theme_id)
@@ -79,7 +83,7 @@ def main() -> None:
     conn = get_db()
     ensure_schema(conn)
 
-    week_start = _current_week_monday(date.today()).isoformat()
+    week_start = args.week_start or _current_week_monday(date.today()).isoformat()
 
     members_by_theme_market: dict[tuple[str, str], list[dict]] = {}
     yf_symbols: set[str] = set()

@@ -11,6 +11,7 @@ Usage:
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -33,10 +34,17 @@ def _current_week_monday(today: date) -> date:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--week-start", default=None,
+                         help="기준 주 월요일(YYYY-MM-DD). 비우면 오늘이 속한 주 - "
+                              "주 초에 수동 실행할 때 세 축이 아직 안 채워진 새 주를 "
+                              "잡지 않도록 명시적으로 지정하기 위한 옵션.")
+    args = parser.parse_args()
+
     conn = get_db()
     ensure_schema(conn)
 
-    week_start = _current_week_monday(date.today()).isoformat()
+    week_start = args.week_start or _current_week_monday(date.today()).isoformat()
 
     total_rows = 0
     total_labeled = 0

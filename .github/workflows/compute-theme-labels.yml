@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "45 22 * * 0"   # 뉴스(22:00)·실적(22:15)·주가(22:30) 전부 끝난 뒤 - SPEC §7
   workflow_dispatch:
+    inputs:
+      week_start:
+        description: "기준 주 월요일 YYYY-MM-DD (비우면 오늘이 속한 주)"
+        required: false
+        default: ""
 
 jobs:
   compute:
@@ -26,4 +31,4 @@ jobs:
         env:
           TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
-        run: python scripts/compute_theme_labels.py
+        run: python scripts/compute_theme_labels.py --week-start "${{ inputs.week_start }}"

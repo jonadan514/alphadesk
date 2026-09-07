@@ -59,6 +59,11 @@ def main() -> None:
     parser.add_argument("--theme-id", nargs="*", default=None, help="특정 테마만 (비우면 전체)")
     parser.add_argument("--include-peripheral", action="store_true",
                          help="linkage=peripheral도 포함 (SPEC §3.2 옵션 - 기본은 제외)")
+    parser.add_argument("--week-start", default=None,
+                         help="기준 주 월요일(YYYY-MM-DD). 비우면 오늘이 속한 주 - "
+                              "평시 크론(일요일 밤)은 방금 끝난 주를 잡지만, 주 초에 "
+                              "수동 실행하면 아직 데이터가 없는 새 주를 잡게 되므로 "
+                              "그때 명시적으로 지정하기 위한 옵션.")
     args = parser.parse_args()
 
     themes, config = load_active_themes(args.theme_id)
@@ -72,7 +77,7 @@ def main() -> None:
     ensure_fundamentals_schema(conn)
     ensure_schema(conn)
 
-    week_start = _current_week_monday(date.today()).isoformat()
+    week_start = args.week_start or _current_week_monday(date.today()).isoformat()
 
     # (테마, 시장) 쌍별 소속 기업을 먼저 다 모아서, 필요한 티커 전체(US+KR
     # 합쳐)에 대해 재무 캐시를 한 번만 벌크 조회한다 - 개별 조회하면 겹치는
