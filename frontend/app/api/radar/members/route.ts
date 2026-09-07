@@ -13,12 +13,13 @@ export async function GET(request: Request) {
   }
 
   try {
+    const market = searchParams.get("market") === "KR" ? "KR" : "US";
     const client = getClient();
 
     // SPEC §5 - "최신 run_id + approved=1"
     const runRes = await client.execute({
-      sql: "SELECT MAX(run_id) FROM theme_members WHERE theme_id = ? AND market = 'US' AND approved = 1",
-      args: [themeId],
+      sql: "SELECT MAX(run_id) FROM theme_members WHERE theme_id = ? AND market = ? AND approved = 1",
+      args: [themeId, market],
     });
     const runId = runRes.rows[0]?.[0] as string | null;
     if (!runId) {
@@ -29,10 +30,10 @@ export async function GET(request: Request) {
       sql: `
         SELECT ticker, stage, evidence, linkage, confidence, flagged
         FROM theme_members
-        WHERE theme_id = ? AND market = 'US' AND run_id = ? AND approved = 1
+        WHERE theme_id = ? AND market = ? AND run_id = ? AND approved = 1
         ORDER BY CASE linkage WHEN 'direct' THEN 0 WHEN 'partial' THEN 1 ELSE 2 END, ticker
       `,
-      args: [themeId, runId],
+      args: [themeId, market, runId],
     });
     const members = res.rows.map((r) => {
       const obj: Record<string, unknown> = {};
@@ -47,9 +48,9 @@ export async function GET(request: Request) {
       const crossRes = await client.execute({
         sql: `
           SELECT ticker, theme_id FROM theme_members
-          WHERE ticker IN (${placeholders}) AND market = 'US' AND approved = 1 AND theme_id != ?
+          WHERE ticker IN (${placeholders}) AND market = ? AND approved = 1 AND theme_id != ?
         `,
-        args: [...tickers, themeId],
+        args: [...tickers, market, themeId],
       });
       crossRes.rows.forEach((r) => {
         const ticker = r[0] as string;
@@ -67,8 +68,8 @@ export async function GET(request: Request) {
       const placeholders = tickers.map(() => "?").join(",");
       try {
         const financeRes = await client.execute({
-          sql: `SELECT symbol, piotroski FROM watchlist_candidates WHERE market = 'US' AND symbol IN (${placeholders})`,
-          args: tickers,
+          sql: `SELECT symbol, piotroski FROM watchlist_candidates WHERE market = ? AND symbol IN (${placeholders})`,
+          args: [market, ...tickers],
         });
         financeRes.rows.forEach((r) => {
           financeByTicker[r[0] as string] = { piotroski: r[1] as number | null };

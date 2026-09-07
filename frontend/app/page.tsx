@@ -43,10 +43,10 @@ export default function HomePage() {
       .catch(() => setCandidateCount(0));
   }, [market]);
 
-  // 테마 레이더는 아직 미국 시장만 지원 (Phase A 범위) - KR에서는 카드 자체를 숨긴다.
+  // Phase B에서 한국도 지원 - 선택된 시장의 라벨 요약을 보여준다.
   useEffect(() => {
-    if (market !== "US") { setRadarCounts(null); return; }
-    fetch("/api/radar")
+    setRadarCounts(null);
+    fetch(`/api/radar?market=${market}`)
       .then(r => r.json())
       .then(d => {
         const counts: Record<string, number> = {};

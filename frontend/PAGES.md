@@ -9,15 +9,15 @@
 ## 시장 분석
 
 ### 개요 `/`
-이번 주 워치리스트 후보 수(순위 없음) + 테마 레이더 라벨 요약(미국만) 중심의 최소 화면. 주간 브리핑·섹터 분석으로 이동하는 링크.
+이번 주 워치리스트 후보 수(순위 없음) + 테마 레이더 라벨 요약 중심의 최소 화면. 주간 브리핑·섹터 분석으로 이동하는 링크.
 - 소스: `/api/watchlist/candidates`, `/api/radar`
 
 ### 섹터 분석 `/sector`
 경기 사이클 판단(회복/성장/과열/침체), 선행·후행 섹터(1개월 RS 상위/하위 3), 주간 RS 추이(4주), 섹터별 수익률·상대강도 히트맵(섹터 클릭 시 구성 종목 + Piotroski F-Score).
 - 소스: `/api/data/sector`, `/api/data/kr/sector`
 
-### 테마 레이더 `/radar` (미국만, Phase A)
-미국 산업 테마 약 30개를 뉴스·실적·주가 세 축으로 매주 관찰. 종합 점수 없이 화살표만 표시하고, 정해진 6개 조합에만 라벨("Quiet Strength" 등)을 붙인다. 테마 카드를 펼치면 소속 기업(가치사슬 단계·근거·주력/일부/간접·재무 통과 여부)과 이번 주 수집 기사 목록.
+### 테마 레이더 `/radar` (미국·한국)
+미국·한국 산업 테마를 뉴스·실적·주가 세 축으로 매주 관찰. 종합 점수 없이 화살표만 표시하고, 정해진 6개 조합에만 라벨("Quiet Strength" 등)을 붙인다. 테마 카드를 펼치면 소속 기업(가치사슬 단계·근거·주력/일부/간접·재무 통과 여부)과 이번 주 수집 기사 목록.
 - 소스: `/api/radar`, `/api/radar/{members,news,ticker-themes}`
 - 배경: `docs/radar/MASTER_PLAN_research_radar.md`, `docs/radar/SPEC_phase_a_signals.md`
 
@@ -50,4 +50,4 @@
 데이터 저장소: Turso (libsql). 프론트는 읽기 전용 API로 접근.
 
 **2026-08 제거**: 마켓 게이트·체제 판정·지수 예측(`/regime`), 리스크 분석(`/risk`), 페이퍼 포트폴리오·실거래 기록(`/portfolio`), 매수 체크(`/workflow`) — 순위 없는 리스트업 도구로 전환하며 정리. 배경은 `docs/radar/REMOVAL_PLAN.md` 참고.
-**2026-09 추가**: 테마 레이더(`/radar`, Phase A, 미국만) — 배경은 `docs/radar/MASTER_PLAN_research_radar.md` 참고.
+**2026-09 추가**: 테마 레이더(`/radar`, 미국·한국) — 배경은 `docs/radar/MASTER_PLAN_research_radar.md` 참고.

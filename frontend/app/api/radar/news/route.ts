@@ -12,11 +12,13 @@ export async function GET(request: Request) {
   }
 
   try {
+    const market = searchParams.get("market") === "KR" ? "KR" : "US";
     const client = getClient();
 
-    const weekRes = await client.execute(
-      "SELECT MAX(week_start) FROM theme_signals WHERE market = 'US'"
-    );
+    const weekRes = await client.execute({
+      sql: "SELECT MAX(week_start) FROM theme_signals WHERE market = ?",
+      args: [market],
+    });
     const weekStart = weekRes.rows[0]?.[0] as string | null;
     if (!weekStart) {
       return NextResponse.json({ articles: [] });
@@ -26,11 +28,11 @@ export async function GET(request: Request) {
       sql: `
         SELECT title, url, source, published_at
         FROM theme_news
-        WHERE theme_id = ? AND market = 'US' AND week_start = ?
+        WHERE theme_id = ? AND market = ? AND week_start = ?
         ORDER BY published_at DESC
         LIMIT 30
       `,
-      args: [themeId, weekStart],
+      args: [themeId, market, weekStart],
     });
     const articles = res.rows.map((r) => {
       const obj: Record<string, unknown> = {};

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { themeName } from "@/src/lib/themeNames";
+import { useMarket } from "@/src/contexts/MarketContext";
 
 // globals.css의 앱 전역 토큰을 그대로 쓴다 (워치리스트 페이지와 같은 터미널·앰버 룩).
 const ACCENT = "var(--accent)";
@@ -213,7 +214,7 @@ function NewsList({ articles, loading }: { articles: Article[]; loading: boolean
   );
 }
 
-function ThemeCard({ signal }: { signal: ThemeSignal }) {
+function ThemeCard({ signal, market }: { signal: ThemeSignal; market: string }) {
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<Member[] | null>(null);
   const [loadingMembers, setLoadingMembers] = useState(false);
@@ -226,25 +227,25 @@ function ThemeCard({ signal }: { signal: ThemeSignal }) {
     setOpen((o) => !o);
     if (!members && !loadingMembers) {
       setLoadingMembers(true);
-      fetch(`/api/radar/members?theme_id=${encodeURIComponent(signal.theme_id)}`)
+      fetch(`/api/radar/members?theme_id=${encodeURIComponent(signal.theme_id)}&market=${market}`)
         .then((r) => r.json())
         .then((d) => setMembers(d.members ?? []))
         .catch(() => setMembers([]))
         .finally(() => setLoadingMembers(false));
     }
-  }, [members, loadingMembers, signal.theme_id]);
+  }, [members, loadingMembers, signal.theme_id, market]);
 
   const toggleNews = useCallback(() => {
     setShowNews((s) => !s);
     if (!articles && !loadingNews) {
       setLoadingNews(true);
-      fetch(`/api/radar/news?theme_id=${encodeURIComponent(signal.theme_id)}`)
+      fetch(`/api/radar/news?theme_id=${encodeURIComponent(signal.theme_id)}&market=${market}`)
         .then((r) => r.json())
         .then((d) => setArticles(d.articles ?? []))
         .catch(() => setArticles([]))
         .finally(() => setLoadingNews(false));
     }
-  }, [articles, loadingNews, signal.theme_id]);
+  }, [articles, loadingNews, signal.theme_id, market]);
 
   return (
     <div className="mb-3 overflow-hidden rounded-2xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
@@ -320,19 +321,22 @@ function ThemeCard({ signal }: { signal: ThemeSignal }) {
 }
 
 export default function RadarPage() {
+  const { market } = useMarket();
   const [weekStart, setWeekStart] = useState<string | null>(null);
   const [signals, setSignals] = useState<ThemeSignal[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/radar")
+    setLoading(true);
+    fetch(`/api/radar?market=${market}`)
       .then((r) => r.json())
       .then((d) => {
         setWeekStart(d.week_start ?? null);
         setSignals(d.signals ?? []);
       })
+      .catch(() => { setWeekStart(null); setSignals([]); })
       .finally(() => setLoading(false));
-  }, []);
+  }, [market]);
 
   const labeled = signals.filter((s) => s.label);
   const unlabeledMoving = signals.filter(
@@ -353,7 +357,7 @@ export default function RadarPage() {
         </p>
         {weekStart && (
           <p className="mt-2 text-[12px]" style={{ color: FAINT, fontFamily: MONO }}>
-            기준 주 {weekStart} · 미국 시장 {signals.length}개 테마 중 {labeled.length}개 라벨 부여
+            기준 주 {weekStart} · {market === "KR" ? "한국" : "미국"} 시장 {signals.length}개 테마 중 {labeled.length}개 라벨 부여
           </p>
         )}
       </div>
@@ -379,7 +383,7 @@ export default function RadarPage() {
                 <span className="text-[12px]" style={{ color: FAINT, fontFamily: MONO }}>{g.items.length}개 테마</span>
               </div>
               <p className="mb-3 max-w-[68ch] text-[13px]" style={{ color: MUTED }}>{LABEL_NOTE[g.label]}</p>
-              {g.items.map((s) => <ThemeCard key={s.theme_id} signal={s} />)}
+              {g.items.map((s) => <ThemeCard key={s.theme_id} signal={s} market={market} />)}
             </div>
           ))}
 
@@ -392,7 +396,7 @@ export default function RadarPage() {
               <p className="mb-3 max-w-[68ch] text-[13px]" style={{ color: MUTED }}>
                 6개 조합 표에 안 맞으면 억지로 이름 붙이지 않습니다. 화살표만 보고 판단은 직접.
               </p>
-              {unlabeledMoving.map((s) => <ThemeCard key={s.theme_id} signal={s} />)}
+              {unlabeledMoving.map((s) => <ThemeCard key={s.theme_id} signal={s} market={market} />)}
             </div>
           )}
         </>

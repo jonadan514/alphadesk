@@ -3,14 +3,17 @@ import { getClient } from "@/src/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// Phase A는 미국 시장만 (SPEC_phase_a_signals.md 범위) - market='US' 고정.
-export async function GET() {
+// Phase B에서 한국 추가 - ?market=KR로 조회(생략 시 US, 기존 호출 하위호환).
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const market = searchParams.get("market") === "KR" ? "KR" : "US";
     const client = getClient();
 
-    const weekRes = await client.execute(
-      "SELECT MAX(week_start) FROM theme_signals WHERE market = 'US'"
-    );
+    const weekRes = await client.execute({
+      sql: "SELECT MAX(week_start) FROM theme_signals WHERE market = ?",
+      args: [market],
+    });
     const weekStart = weekRes.rows[0]?.[0] as string | null;
     if (!weekStart) {
       return NextResponse.json({ week_start: null, signals: [] });
@@ -23,9 +26,9 @@ export async function GET() {
                price_median_ret, price_index_ret, price_excess, price_arrow,
                label, member_count, mapping_run_id
         FROM theme_signals
-        WHERE market = 'US' AND week_start = ?
+        WHERE market = ? AND week_start = ?
       `,
-      args: [weekStart],
+      args: [market, weekStart],
     });
 
     const signals = res.rows.map((r) => {

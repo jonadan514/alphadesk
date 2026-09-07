@@ -6,7 +6,7 @@ import US from "country-flag-icons/react/3x2/US";
 import KR from "country-flag-icons/react/3x2/KR";
 
 // 시장(미국/한국) 구분이 있는 페이지에서만 탭 노출
-const MARKET_PAGES = ["/sector"];
+const MARKET_PAGES = ["/sector", "/radar"];
 
 export default function PageMarketTabs() {
   const pathname = usePathname();

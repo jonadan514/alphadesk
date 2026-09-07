@@ -375,11 +375,10 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
   const [noteDraft, setNoteDraft] = useState(note ?? "");
   const [relatedThemes, setRelatedThemes] = useState<{ theme_id: string; label: string | null }[]>([]);
 
-  // 이 종목이 어느 테마 레이더 테마에 속하는지 — 테마 레이더는 아직 미국 시장만 지원.
+  // 이 종목이 어느 테마 레이더 테마에 속하는지 (Phase B에서 한국도 지원).
   useEffect(() => {
-    if (c.market !== "US") { setRelatedThemes([]); return; }
     let cancelled = false;
-    fetch(`/api/radar/ticker-themes?symbol=${encodeURIComponent(c.symbol)}`)
+    fetch(`/api/radar/ticker-themes?symbol=${encodeURIComponent(c.symbol)}&market=${c.market}`)
       .then((r) => r.json())
       .then((d) => { if (!cancelled) setRelatedThemes(d.themes ?? []); })
       .catch(() => { if (!cancelled) setRelatedThemes([]); });
