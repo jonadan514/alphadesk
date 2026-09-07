@@ -1,10 +1,13 @@
-"""Phase A-5: 테마별 주가 축 계산.
+"""Phase A-5/B-3: 테마별 주가 축 계산.
 
 SPEC: docs/radar/SPEC_phase_a_signals.md §4
-Phase A는 미국 시장만 대상 - 시장지수는 S&P 500(^GSPC).
+Phase A는 미국 시장만 대상이었으나(^GSPC), Phase B에서 한국(^KS11, KOSPI)을
+추가한다 - SPEC §4.1의 "시장 지수는 US=S&P 500, KR=KOSPI로 각각 비교한다"
+그대로. 시장별로 그 시장의 지수와 비교해야 코리아 디스카운트 같은 시장 간
+구조적 차이가 신호를 오염시키지 않는다.
 
 Usage:
-  python scripts/compute_theme_price.py                        # 전체 US 테마
+  python scripts/compute_theme_price.py                        # 전체 US+KR 테마
   python scripts/compute_theme_price.py --theme-id nuclear_smr   # 특정 테마만
   python scripts/compute_theme_price.py --include-peripheral     # peripheral 포함(옵션)
 """
@@ -27,7 +30,10 @@ from analyzers.theme_price import compute_price_signal
 from collectors.theme_price_collector import compute_return_batch
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
-US_INDEX_SYMBOL = "^GSPC"
+
+# SPEC §4.1 - 시장별로 그 시장의 지수와 비교한다. ^KS11(KOSPI)은
+# kr_sector_analyzer.py가 이미 쓰고 있는, 검증된 티커.
+INDEX_SYMBOL = {"US": "^GSPC", "KR": "^KS11"}
 
 
 def _log(msg: str) -> None:
@@ -38,10 +44,18 @@ def _current_week_monday(today: date) -> date:
     return today - timedelta(days=today.weekday())
 
 
-def load_active_us_themes(theme_ids: list[str] | None) -> tuple[list[dict], dict]:
+def to_yf_symbol(ticker: str, market: str) -> str:
+    """theme_members.ticker(캐시 키)를 yfinance 조회용 심볼로 변환.
+    US는 동일. KR은 6자리 코드라 거래소 접미사가 필요한데, 정적 유니버스가
+    전부 코스피라 .KS를 쓴다(실측상 yfinance는 한국 종목에 대해 .KS/.KQ
+    어느 쪽으로 조회해도 같은 시세를 돌려주지만, 명시적으로 맞는 쪽을 쓴다)."""
+    return ticker if market != "KR" else f"{ticker}.KS"
+
+
+def load_active_themes(theme_ids: list[str] | None) -> tuple[list[dict], dict]:
     with open(THEMES_YAML, encoding="utf-8") as f:
         data = yaml.safe_load(f)
-    themes = [t for t in data["themes"] if t.get("status") == "active" and "US" in t.get("markets", [])]
+    themes = [t for t in data["themes"] if t.get("status") == "active"]
     if theme_ids:
         wanted = set(theme_ids)
         themes = [t for t in themes if t["id"] in wanted]
@@ -55,7 +69,7 @@ def main() -> None:
                          help="linkage=peripheral도 포함 (SPEC §10 옵션 - 기본은 제외)")
     args = parser.parse_args()
 
-    themes, config = load_active_us_themes(args.theme_id)
+    themes, config = load_active_themes(args.theme_id)
     if not themes:
         _log("대상 테마 없음")
         sys.exit(1)
@@ -67,39 +81,48 @@ def main() -> None:
 
     week_start = _current_week_monday(date.today()).isoformat()
 
-    members_by_theme: dict[str, list[dict]] = {}
-    all_tickers: set[str] = set()
+    members_by_theme_market: dict[tuple[str, str], list[dict]] = {}
+    yf_symbols: set[str] = set()
     for theme in themes:
-        members = get_approved_theme_members(conn, theme["id"], "US", linkages)
-        members_by_theme[theme["id"]] = members
-        all_tickers.update(m["ticker"] for m in members)
+        for market in theme.get("markets", []):
+            if market not in INDEX_SYMBOL:
+                continue
+            members = get_approved_theme_members(conn, theme["id"], market, linkages)
+            if not members:
+                continue
+            members_by_theme_market[(theme["id"], market)] = members
+            yf_symbols.update(to_yf_symbol(m["ticker"], market) for m in members)
 
-    _log(f"대상 테마 {len(themes)}개, 소속 기업(중복제거) {len(all_tickers)}개, 기준 주 {week_start}")
+    _log(f"대상 (테마,시장) {len(members_by_theme_market)}개, "
+         f"소속 기업(중복제거) {len(yf_symbols)}개, 기준 주 {week_start}")
 
-    # 지수(^GSPC)도 같은 배치 호출에 얹어서 조회 - 종목별 개별 호출 금지(SPEC §4.3).
-    query_tickers = sorted(all_tickers) + [US_INDEX_SYMBOL]
-    returns = compute_return_batch(query_tickers)
-    index_return = returns.get(US_INDEX_SYMBOL)
-    if index_return is None:
-        _log(f"⚠ {US_INDEX_SYMBOL} 수익률 조회 실패 - 이번 실행은 전 테마 na로 처리됨")
+    # 지수(^GSPC/^KS11)도 같은 배치 호출에 얹어서 조회 - 종목별 개별 호출 금지(SPEC §4.3).
+    query_symbols = sorted(yf_symbols) + sorted(INDEX_SYMBOL.values())
+    raw_returns = compute_return_batch(query_symbols)
+
+    index_returns = {mkt: raw_returns.get(sym) for mkt, sym in INDEX_SYMBOL.items()}
+    for mkt, ret in index_returns.items():
+        if ret is None:
+            _log(f"⚠ {INDEX_SYMBOL[mkt]} 수익률 조회 실패 - {mkt} 테마는 전부 na로 처리됨")
 
     now = datetime.utcnow().isoformat()
-    for theme in themes:
-        theme_id = theme["id"]
-        members = members_by_theme[theme_id]
-        if not members:
-            _log(f"{theme_id}: 승인된 소속 기업 없음 - 건너뜀")
-            continue
+    for (theme_id, market), members in members_by_theme_market.items():
+        # compute_price_signal은 원본 ticker 키로 조회하므로, yf 심볼로 받은
+        # 결과를 이 테마의 티커 기준으로 되돌려 넘긴다.
+        returns_by_ticker = {
+            m["ticker"]: raw_returns.get(to_yf_symbol(m["ticker"], market)) for m in members
+        }
+        index_return = index_returns[market]
 
-        result = compute_price_signal(members, returns, index_return, thresholds)
+        result = compute_price_signal(members, returns_by_ticker, index_return, thresholds)
         run_id = members[0]["run_id"]
         median_str = f"{result['median_ret']:.3f}" if result["median_ret"] is not None else "-"
         excess_str = f"{result['excess']:.3f}" if result["excess"] is not None else "-"
-        _log(f"{theme_id}: valid={result['valid_count']}/{len(members)} "
+        _log(f"{theme_id}({market}): valid={result['valid_count']}/{len(members)} "
              f"median={median_str} index={index_return} excess={excess_str} arrow={result['arrow']}")
 
         upsert_price_signal(
-            conn, theme_id, "US", week_start,
+            conn, theme_id, market, week_start,
             result["median_ret"], result["index_ret"], result["excess"], result["arrow"],
             len(members), run_id, now,
         )
