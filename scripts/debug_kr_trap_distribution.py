@@ -64,7 +64,11 @@ def main() -> None:
         if data is None:
             insufficient += 1
             continue
-        item = {**data, "info": info_by.get(code, {}), "symbol": code, "market": "KR"}
+        # apply_trap_filters는 item["financials_data"] 안에서 재무제표를 읽는다
+        # (info도 그 안에 있어야 함) - 최상위에 두면 전부 데이터부족으로 나온다.
+        fd = {**data, "info": info_by.get(code, {})}
+        item = {"financials_data": fd, "symbol": code, "market": "KR",
+                "sector": (info_by.get(code, {}) or {}).get("sector", "")}
         try:
             r = apply_trap_filters(item)
         except Exception as e:
