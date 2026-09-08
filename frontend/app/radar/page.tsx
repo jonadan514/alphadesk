@@ -47,7 +47,7 @@ interface Member {
   confidence: string;
   flagged: number;
   other_themes: string[];
-  finance: { status: "pass" | "unknown"; piotroski: number | null };
+  finance: { status: string; piotroski: number | null; reasons?: string[] };
 }
 
 interface Article {
@@ -130,18 +130,52 @@ function LinkageBadge({ linkage }: { linkage: string }) {
   );
 }
 
+// 탈락 사유 문자열("ROE 5.0% (<8%)")을 배지에 넣을 짧은 말로 줄인다.
+function shortReason(flag: string): string {
+  if (flag.startsWith("Piotroski")) return "F-Score";
+  if (flag.startsWith("ROE")) return "ROE";
+  if (flag.startsWith("부채비율")) return "부채";
+  if (flag.startsWith("이자보상")) return "이자보상";
+  if (flag.includes("현금흐름")) return "현금흐름";
+  if (flag.includes("감소")) return "매출감소";
+  return flag.split(" ")[0];
+}
+
 function FinanceBadge({ finance }: { finance: Member["finance"] }) {
+  const base = "whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px]";
+
   if (finance.status === "pass") {
     return (
-      <span className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ background: GOOD_SOFT, color: GOOD }}>
+      <span className={`${base} font-semibold`} style={{ background: GOOD_SOFT, color: GOOD }}>
         재무 통과{finance.piotroski != null && ` (F${finance.piotroski})`}
       </span>
     );
   }
-  // 워치리스트 스크리닝(트랩필터)에 없다고 "탈락"으로 단정하지 않는다 - 이번 주
-  // 갱신 예산에 안 들었거나 유니버스 밖일 수도 있어 "미확인"으로만 표시.
+
+  if (finance.status === "fail") {
+    // 사유를 다 붙이면 표가 넘치므로 앞 2개만 - 전체는 title로 볼 수 있게.
+    const rs = finance.reasons ?? [];
+    const shown = Array.from(new Set(rs.map(shortReason))).slice(0, 2);
+    return (
+      <span className={`${base} font-semibold`} style={{ background: DANGER_SOFT, color: DANGER }}
+            title={rs.join(" / ")}>
+        재무 탈락{shown.length > 0 && ` (${shown.join("·")})`}
+      </span>
+    );
+  }
+
+  if (finance.status === "insufficient") {
+    return (
+      <span className={base} style={{ background: MUTED_SOFT, color: MUTED }}>
+        데이터 부족
+      </span>
+    );
+  }
+
+  // 스크리닝 결과 자체가 없는 종목 - 유니버스 밖이거나 아직 한 번도 안 돌았음.
+  // 이때만 "미확인"이며, 탈락으로 단정하지 않는다(3분류 원칙).
   return (
-    <span className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px]" style={{ color: FAINT, border: "1px solid var(--border)" }}>
+    <span className={base} style={{ color: FAINT, border: "1px solid var(--border)" }}>
       미확인
     </span>
   );

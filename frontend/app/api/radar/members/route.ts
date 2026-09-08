@@ -60,22 +60,35 @@ export async function GET(request: Request) {
       });
     }
 
-    // 재무 통과 여부 - 기존 워치리스트 스크리닝(watchlist_candidates)은 트랩필터를
-    // "통과"한 종목만 담고 fail/insufficient는 행 자체가 없다(SPEC_fundamentals_cache.md
-    // §4의 3분류 중 pass만 구분 가능) - 없다고 "탈락"이라 단정하지 않고 "미확인"으로 둔다.
-    const financeByTicker: Record<string, { piotroski: number | null }> = {};
+    // 재무 판정 - watchlist_screening_results에 통과/탈락/데이터부족 3분류가
+    // 사유와 함께 남는다(SPEC_fundamentals_cache.md §4). 이 테이블이 생기기 전에는
+    // 통과 종목만 담는 watchlist_candidates만 있어서, 화면에 안 보이는 종목이
+    // 탈락인지 데이터부족인지 구분할 수 없어 전부 "미확인"으로 표시했었다.
+    // 이 테이블에도 없으면(아직 스크리닝 대상이 아니었던 종목) 그때만 "미확인".
+    type Fin = { status: string; piotroski: number | null; reasons: string[] };
+    const financeByTicker: Record<string, Fin> = {};
     if (tickers.length > 0) {
       const placeholders = tickers.map(() => "?").join(",");
       try {
         const financeRes = await client.execute({
-          sql: `SELECT symbol, piotroski FROM watchlist_candidates WHERE market = ? AND symbol IN (${placeholders})`,
+          sql: `SELECT symbol, status, piotroski, red_flags FROM watchlist_screening_results
+                WHERE market = ? AND symbol IN (${placeholders})`,
           args: [market, ...tickers],
         });
         financeRes.rows.forEach((r) => {
-          financeByTicker[r[0] as string] = { piotroski: r[1] as number | null };
+          let reasons: string[] = [];
+          try {
+            const parsed = JSON.parse((r[3] as string) || "[]");
+            if (Array.isArray(parsed)) reasons = parsed.filter((x) => typeof x === "string");
+          } catch {}
+          financeByTicker[r[0] as string] = {
+            status: (r[1] as string) || "unknown",
+            piotroski: r[2] as number | null,
+            reasons,
+          };
         });
       } catch {
-        // watchlist_candidates 조회 실패해도 소속 기업 목록 자체는 보여준다
+        // 이 테이블이 아직 없는 배포 시점에도 소속 기업 목록 자체는 보여준다
       }
     }
 
@@ -83,8 +96,12 @@ export async function GET(request: Request) {
       ...m,
       other_themes: crossByTicker[m.ticker] ?? [],
       finance: financeByTicker[m.ticker]
-        ? { status: "pass" as const, piotroski: financeByTicker[m.ticker].piotroski }
-        : { status: "unknown" as const, piotroski: null },
+        ? {
+            status: financeByTicker[m.ticker].status,
+            piotroski: financeByTicker[m.ticker].piotroski,
+            reasons: financeByTicker[m.ticker].reasons,
+          }
+        : { status: "unknown", piotroski: null, reasons: [] as string[] },
     }));
     return NextResponse.json({ members: enriched });
   } catch (err) {

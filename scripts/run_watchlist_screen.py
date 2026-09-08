@@ -90,13 +90,37 @@ HISTORY_TABLE_SQL = """CREATE TABLE IF NOT EXISTS watchlist_candidate_history (
 )"""
 
 
+# 스크리닝 3분류(통과/탈락/데이터부족)를 전부 남기는 테이블.
+#
+# watchlist_candidates는 "통과 종목"만 담는 목록이라, 화면에서 어떤 종목이
+# 안 보일 때 그게 탈락인지·데이터부족인지·아예 스크리닝 대상이 아닌지
+# 구분할 수 없었다(테마 레이더의 재무 배지가 전부 "미확인"으로 뜨던 이유).
+# 여기에 세 분류를 사유와 함께 남겨 그 구분을 가능하게 한다.
+#
+# candidates에 탈락 행을 섞지 않고 별도 테이블로 둔 이유: candidates를 읽는
+# 곳이 워치리스트 화면·레이더 배지·섹터 분석·주간 브리핑 4곳이라, 그중
+# 하나라도 status 필터를 빠뜨리면 탈락 종목이 후보처럼 보이게 된다.
+SCREENING_RESULTS_SQL = """CREATE TABLE IF NOT EXISTS watchlist_screening_results (
+  market      TEXT NOT NULL,
+  symbol      TEXT NOT NULL,
+  status      TEXT NOT NULL,
+  red_flags   TEXT,
+  piotroski   INTEGER,
+  roe         REAL,
+  screened_at TEXT NOT NULL,
+  PRIMARY KEY (market, symbol)
+)"""
+
+
 def ensure_schema(conn: sqlite3.Connection, markets: list[str] | None = None) -> None:
     """테이블을 만들고, 이번에 스크리닝하는 시장의 기존 행만 비운다.
     markets가 None이면 아무것도 지우지 않는다(스키마만 보장)."""
     conn.executescript(SCHEMA)
     conn.execute(HISTORY_TABLE_SQL)
+    conn.execute(SCREENING_RESULTS_SQL)
     for mkt in markets or []:
         conn.execute("DELETE FROM watchlist_candidates WHERE market = ?", (mkt,))
+        conn.execute("DELETE FROM watchlist_screening_results WHERE market = ?", (mkt,))
     conn.commit()
 
 
@@ -156,8 +180,9 @@ def save_history(conn: sqlite3.Connection, candidates: list[dict], screened_date
     conn.commit()
 
 
-def push_to_turso(candidates: list[dict]) -> None:
-    """스크리닝 결과를 Turso에 upsert."""
+def push_to_turso(candidates: list[dict], screening_rows: list[tuple[str, dict]] | None = None) -> None:
+    """스크리닝 결과를 Turso에 upsert.
+    screening_rows: (status, entry) 튜플 목록 - 통과/탈락/데이터부족 전부."""
     import urllib.error
 
     from db.turso_http import get_credentials, execute_many
@@ -197,9 +222,11 @@ def push_to_turso(candidates: list[dict]) -> None:
     init_statements = [
         (CREATE_TABLE_SQL, None),
         (HISTORY_TABLE_SQL, None),
+        (SCREENING_RESULTS_SQL, None),
     ]
     for mkt in screened_markets:
         init_statements.append(("DELETE FROM watchlist_candidates WHERE market = ?", [mkt]))
+        init_statements.append(("DELETE FROM watchlist_screening_results WHERE market = ?", [mkt]))
     logger.info("Turso 교체 대상 시장: %s (다른 시장 후보는 유지)", screened_markets)
 
     for i in range(0, len(candidates), BATCH):
@@ -246,6 +273,29 @@ def push_to_turso(candidates: list[dict]) -> None:
         logger.info("Turso 업로드: %d/%d 완료", min(i + BATCH, len(candidates)), len(candidates))
 
     logger.info("Turso 업로드 완료: 총 %d 종목", len(candidates))
+
+    # 스크리닝 3분류 결과(통과/탈락/데이터부족)를 별도 테이블에 저장.
+    # 후보 목록과 달리 여기엔 탈락·데이터부족도 사유와 함께 남는다.
+    if screening_rows:
+        sr_sql = (
+            "INSERT OR REPLACE INTO watchlist_screening_results "
+            "(market, symbol, status, red_flags, piotroski, roe, screened_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
+        for i in range(0, len(screening_rows), BATCH):
+            chunk = screening_rows[i : i + BATCH]
+            stmts = [(sr_sql, [
+                e.get("market"), e.get("symbol"), status,
+                json.dumps(e.get("red_flags") or [], ensure_ascii=False),
+                e.get("piotroski"), e.get("roe"), now,
+            ]) for status, e in chunk]
+            try:
+                execute_many(stmts, timeout=60)
+            except urllib.error.HTTPError as e:
+                logger.error("스크리닝 결과 업로드 실패 (HTTP %s): %s", e.code,
+                             e.read().decode(errors="replace"))
+                raise
+        logger.info("스크리닝 결과 업로드 완료: %d행", len(screening_rows))
 
 
 def send_telegram_warning(text: str) -> None:
@@ -300,7 +350,12 @@ def main():
         conn.close()
 
     # 4. Turso 업로드 (프론트엔드용)
-    push_to_turso(passed)
+    screening_rows = (
+        [("pass", e) for e in passed]
+        + [("fail", e) for e in failed]
+        + [("insufficient", e) for e in insufficient]
+    )
+    push_to_turso(passed, screening_rows)
 
     # 5. 캐시 적중률 확인 — 낮거나 회로차단기가 작동했으면 텔레그램 경고만
     #    보내고 job은 그대로 성공 처리한다 (SPEC §6.3, job 실패 처리 안 함)
