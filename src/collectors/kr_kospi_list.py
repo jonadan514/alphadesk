@@ -110,7 +110,12 @@ KOSPI_STOCKS = [
     ("001450", "현대해상",         "Financial Services"),
     ("090430", "아모레G",          "Consumer Defensive"),
     ("010140", "삼성중공업",       "Industrials"),
-    ("003600", "SK케미칼",         "Healthcare"),
+    # 003600 -> 285130 교체(2026-09-08). 003600은 yfinance에서 시총·섹터·가격이
+    # 전부 None이고 종목명조차 "683186" 같은 내부 ID로 오는 죽은 코드였다
+    # (스크리닝의 "데이터부족 1건"이 이것). 실제 SK케미칼은 285130이며
+    # 섹터도 Healthcare가 아니라 Basic Materials로 확인됨(SKCHEM, 시총 1.04조).
+    # 참고: 034730(SK Inc.)·006120(SK Discovery)은 각각 다른 회사다.
+    ("285130", "SK케미칼",         "Basic Materials"),
     ("058470", "리노공업",         "Technology"),
     ("263750", "펄어비스",         "Communication Services"),
     ("180640", "한진칼",           "Industrials"),
