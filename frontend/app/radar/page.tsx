@@ -300,7 +300,7 @@ function ThemeCard({ signal, market }: { signal: ThemeSignal; market: string }) 
                 <>
                   <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>
                     {signal.earn_members}개사 중 {signal.earn_improved}개
-                  </b> 매출 개선
+                  </b> 매출 성장률이 시장 중앙값 초과
                   {signal.earn_as_of && <span className="ml-1 text-[11px]" style={{ color: FAINT }}>{signal.earn_as_of} 기준</span>}
                 </>
               ) : "실적 데이터 없음"}

@@ -115,7 +115,7 @@ def main() -> None:
             lines.append(f"{LABEL_EMOJI.get(label, '•')} <b>{label}</b>")
             for theme_id, news_a, earn_a, price_a, _label, earn_members, earn_improved, _mkt in items:
                 name = names.get(theme_id, theme_id)
-                detail = f"({earn_members}개사 중 {earn_improved}개 매출개선)" if earn_members is not None else ""
+                detail = f"({earn_members}개사 중 {earn_improved}개 중앙값 초과)" if earn_members is not None else ""
                 lines.append(f"  • {name}: 뉴스{arrow(news_a)} 실적{arrow(earn_a)} 주가{arrow(price_a)} {detail}")
             lines.append("")
 

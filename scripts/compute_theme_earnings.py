@@ -31,7 +31,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from src.db.data_store import get_db
 from src.db.fundamentals_cache import ensure_schema as ensure_fundamentals_schema, get_cached_financials_bulk
 from src.db.theme_signals import ensure_schema, get_approved_theme_members, upsert_earn_signal
-from analyzers.theme_earnings import compute_earn_signal
+from analyzers.theme_earnings import compute_earn_signal, market_median_growth
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 
@@ -111,13 +111,31 @@ def main() -> None:
             continue
         revenue_by_ticker[ticker] = q_df.loc["Total Revenue"].dropna()
 
+    # 기준 성장률(시장 중앙값)은 반드시 시장별로 따로 낸다 - 미국과 한국의
+    # 성장률 분포가 다른데 한 덩어리로 중앙값을 내면 한쪽이 통째로 위/아래로
+    # 쏠린다(주가 축에서 시장별 지수를 쓰는 것과 같은 이유).
+    reference_by_market: dict[str, float | None] = {}
+    for market in {m for _, m in members_by_theme_market}:
+        market_tickers = {
+            m["ticker"] for (tid, mk), members in members_by_theme_market.items()
+            if mk == market for m in members
+        }
+        ref = market_median_growth({t: revenue_by_ticker.get(t) for t in market_tickers})
+        reference_by_market[market] = ref
+        if ref is None:
+            _log(f"{market}: 표본 부족으로 중앙값 산출 불가 - 절대 기준(0%)으로 폴백")
+        else:
+            _log(f"{market}: 기준 성장률(중앙값) {ref*100:.1f}% "
+                 f"(표본 {len(market_tickers)}개)")
+
     now = datetime.utcnow().isoformat()
     for (theme_id, market), members in members_by_theme_market.items():
-        result = compute_earn_signal(members, revenue_by_ticker, thresholds)
+        result = compute_earn_signal(members, revenue_by_ticker, thresholds,
+                                      reference_by_market.get(market))
         run_id = members[0]["run_id"]
-        _log(f"{theme_id}({market}): members={result['members']} improved={result['improved']} "
-             f"insufficient={result['insufficient']} ratio={result['ratio']} "
-             f"arrow={result['arrow']} as_of={result['as_of']}")
+        _log(f"{theme_id}({market}): members={result['members']} "
+             f"기준초과={result['improved']} insufficient={result['insufficient']} "
+             f"ratio={result['ratio']} arrow={result['arrow']} as_of={result['as_of']}")
 
         upsert_earn_signal(
             conn, theme_id, market, week_start,
