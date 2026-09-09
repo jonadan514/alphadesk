@@ -4,7 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       theme_ids:
-        description: "테마 ID 공백 구분 (비우면 전체 34개 — 첫 실행은 파일럿으로 2-3개만 권장)"
+        # 빈 값을 넘겨도 GitHub이 default를 적용하므로 "비우면 전체"는 동작하지
+        # 않는다(2026-09-09 확인 — 전체 실행 의도로 ""를 넘겼는데 파일럿 3개만
+        # 돌았다). 전체 실행은 명시적으로 ALL을 넘긴다.
+        description: "테마 ID 공백 구분. 전체 33개를 돌리려면 ALL 입력"
         required: false
         default: "nuclear_smr physical_ai shipbuilding"
 
@@ -34,4 +37,7 @@ jobs:
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DATA_GO_KR_API_KEY: ${{ secrets.DATA_GO_KR_API_KEY }}
-        run: python scripts/map_theme_companies.py --theme-id ${{ inputs.theme_ids }}
+        run: |
+          IDS="${{ inputs.theme_ids }}"
+          if [ "$IDS" = "ALL" ]; then IDS=""; fi
+          python scripts/map_theme_companies.py --theme-id $IDS
