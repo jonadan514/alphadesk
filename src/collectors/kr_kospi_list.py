@@ -33,7 +33,9 @@ def yf_suffix(code: str) -> str:
 def exchange_of(code: str) -> str:
     return "KOSDAQ" if code in KOSDAQ_CODES else "KOSPI"
 
-KOSPI_STOCKS = [
+# 손으로 관리해 온 핵심 리스트. 코스피200에 없는 종목(코스닥 대형주, K-푸드
+# 관련주 등)도 여기 들어 있어서 아래 합집합에서 계속 유지된다.
+CORE_STOCKS = [
     ("005930", "삼성전자",        "Technology"),
     ("000660", "SK하이닉스",       "Technology"),
     ("373220", "LG에너지솔루션",   "Industrials"),
@@ -143,6 +145,30 @@ KOSPI_STOCKS = [
     ("018250", "애경산업",         "Consumer Defensive"),
     ("226320", "잇츠한불",         "Consumer Defensive"),
 ]
+
+try:
+    from collectors.kr_kospi200_additions import KOSPI200_ADDITIONS
+except ImportError:
+    from src.collectors.kr_kospi200_additions import KOSPI200_ADDITIONS
+
+
+def _union_stocks(*lists) -> list[tuple[str, str, str]]:
+    """종목코드 기준 합집합. 먼저 나온 항목(=CORE_STOCKS)이 우선한다 —
+    손으로 검수한 이름·섹터를 자동 생성분이 덮어쓰지 않게 하기 위함."""
+    seen: set[str] = set()
+    out: list[tuple[str, str, str]] = []
+    for lst in lists:
+        for code, name, sector in lst:
+            if code in seen:
+                continue
+            seen.add(code)
+            out.append((code, name, sector))
+    return out
+
+
+# 실제로 쓰이는 KR 유니버스. 교체가 아니라 **합집합**인 이유: 코스피200에
+# 없지만 계속 보고 싶은 종목이 14개 있다(코스닥 8개 + K-푸드·K-뷰티 관련주).
+KOSPI_STOCKS = _union_stocks(CORE_STOCKS, KOSPI200_ADDITIONS)
 
 
 def get_kospi_list() -> pd.DataFrame:

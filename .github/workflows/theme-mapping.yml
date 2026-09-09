@@ -12,7 +12,10 @@ jobs:
   map:
     name: Map theme companies
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 전체 33테마 = 330 OpenAI 호출(테마당 경로A 4청크x2회 + 경로B + 비평).
+    # 60분으로는 전체 실행이 아슬아슬해서 여유를 뒀다 - 배치로 쪼개면 run_id가
+    # 나뉘어 승인을 여러 번 해야 하므로 한 번에 도는 쪽을 택했다.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v5
 
