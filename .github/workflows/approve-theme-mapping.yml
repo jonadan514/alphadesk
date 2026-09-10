@@ -11,6 +11,10 @@ on:
         description: "제외할 항목, 공백 구분 THEME_ID:TICKER (예: nuclear_smr:034730 shipbuilding:BA)"
         required: false
         default: ""
+      only_market:
+        description: "이 시장 행만 승인 (US/KR). 비우면 양쪽 다 승인"
+        required: false
+        default: ""
 
 jobs:
   approve:
@@ -33,4 +37,9 @@ jobs:
         env:
           TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
-        run: python scripts/approve_theme_mapping.py --run-id "${{ inputs.run_id }}" --exclude ${{ inputs.exclude }}
+        run: |
+          ARGS=(--run-id "${{ inputs.run_id }}")
+          if [ -n "${{ inputs.only_market }}" ]; then
+            ARGS+=(--only-market "${{ inputs.only_market }}")
+          fi
+          python scripts/approve_theme_mapping.py "${ARGS[@]}" --exclude ${{ inputs.exclude }}

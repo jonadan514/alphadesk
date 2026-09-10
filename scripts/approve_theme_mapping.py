@@ -8,6 +8,14 @@ Usage:
   python scripts/approve_theme_mapping.py                                    # 최신 run 전체 승인
   python scripts/approve_theme_mapping.py --run-id 20260901012050-53eebe
   python scripts/approve_theme_mapping.py --exclude nuclear_smr:034730 shipbuilding:BA
+  python scripts/approve_theme_mapping.py --only-market KR   # KR 행만 승인, 나머지는 approved=0
+
+--only-market이 필요한 이유: 매핑은 US·KR을 한 run에서 같이 만들지만, 변경
+사유가 한쪽 시장에만 있는 경우가 있다(예: KR 유니버스 확장). 이때 전체를
+승인하면 사유가 없는 쪽까지 LLM 재실행 편차로 바뀐다 — 2026-09-09 코스피200
+확장 때 US 소속이 191 -> 177로 줄고 nuclear_smr US가 0이 되는 것을 확인했다.
+소속 조회는 (theme_id, market)별로 승인된 최신 run을 고르므로, 한쪽 시장만
+승인하면 다른 시장은 기존 매핑에 그대로 남는다.
 """
 from __future__ import annotations
 
@@ -27,6 +35,9 @@ def main() -> None:
     parser.add_argument("--run-id", default=None, help="비우면 가장 최근 run")
     parser.add_argument("--exclude", nargs="*", default=[], metavar="THEME_ID:TICKER",
                          help="검토 중 제외하기로 한 항목 (예: nuclear_smr:034730)")
+    parser.add_argument("--only-market", default=None, choices=["US", "KR"],
+                         help="이 시장의 행만 승인한다. 나머지 시장 행은 approved=0으로 남아 "
+                              "해당 시장은 기존 승인 매핑을 계속 쓴다.")
     args = parser.parse_args()
 
     conn = get_db()
@@ -46,6 +57,17 @@ def main() -> None:
             continue
         theme_id, ticker = item.split(":", 1)
         exclude.add((theme_id.strip(), ticker.strip().upper()))
+
+    if args.only_market:
+        # DB 값을 그대로 넣는다 — approve_theme_members가 조회한 행과 문자열
+        # 비교를 하므로 위쪽 --exclude 파싱처럼 upper()를 씌우면 안 된다.
+        others = conn.execute(
+            "SELECT theme_id, ticker FROM theme_members WHERE run_id = ? AND market != ?",
+            (run_id, args.only_market),
+        ).fetchall()
+        for theme_id, ticker in others:
+            exclude.add((theme_id, ticker))
+        print(f"--only-market {args.only_market}: 다른 시장 {len(others)}건을 제외 목록에 추가")
 
     approved, excluded = approve_theme_members(conn, run_id, exclude)
     conn.close()
