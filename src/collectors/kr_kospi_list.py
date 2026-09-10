@@ -63,7 +63,7 @@ CORE_STOCKS = [
     ("034730", "SK",               "Industrials"),
     ("000810", "삼성화재",         "Financial Services"),
     ("010130", "고려아연",         "Basic Materials"),
-    ("047050", "포스코홀딩스",     "Basic Materials"),
+    ("047050", "포스코인터내셔널", "Industrials"),          # 2026-09-10 정정: 포스코홀딩스(005490) 아님
     ("033780", "KT&G",             "Consumer Defensive"),
     ("015760", "한국전력",         "Utilities"),
     ("009540", "한국조선해양",     "Industrials"),
@@ -72,7 +72,7 @@ CORE_STOCKS = [
     ("034020", "두산에너빌리티",   "Industrials"),
     ("097950", "CJ제일제당",       "Consumer Defensive"),
     ("028050", "삼성엔지니어링",   "Industrials"),
-    ("018880", "한화",             "Industrials"),
+    ("018880", "한온시스템",       "Consumer Cyclical"),    # 2026-09-10 정정: 한화(000880) 아님
     ("011200", "HMM",              "Industrials"),
     ("021240", "코웨이",           "Consumer Defensive"),
     ("282330", "BGF리테일",        "Consumer Defensive"),
@@ -88,7 +88,7 @@ CORE_STOCKS = [
     ("034220", "LG디스플레이",     "Technology"),
     ("005300", "롯데칠성",         "Consumer Defensive"),
     ("004990", "롯데지주",         "Consumer Cyclical"),
-    ("002790", "아모레퍼시픽",     "Consumer Defensive"),
+    ("002790", "아모레퍼시픽홀딩스", "Consumer Defensive"),  # 2026-09-10 정정: 090430과 뒤바뀌어 있었음
     ("051900", "LG생활건강",       "Consumer Defensive"),
     ("161390", "한국타이어앤테크놀로지", "Consumer Cyclical"),
     ("008770", "호텔신라",         "Consumer Cyclical"),
@@ -110,7 +110,7 @@ CORE_STOCKS = [
     ("024110", "기업은행",         "Financial Services"),
     ("000080", "하이트진로",       "Consumer Defensive"),
     ("001450", "현대해상",         "Financial Services"),
-    ("090430", "아모레G",          "Consumer Defensive"),
+    ("090430", "아모레퍼시픽",     "Consumer Defensive"),   # 2026-09-10 정정: 002790과 뒤바뀌어 있었음
     ("010140", "삼성중공업",       "Industrials"),
     # 003600 -> 285130 교체(2026-09-08). 003600은 yfinance에서 시총·섹터·가격이
     # 전부 None이고 종목명조차 "683186" 같은 내부 ID로 오는 죽은 코드였다

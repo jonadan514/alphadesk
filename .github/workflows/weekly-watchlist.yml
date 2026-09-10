@@ -40,6 +40,13 @@ jobs:
         run: |
           pip install yfinance pykrx pandas requests
 
+      # 종목코드<->회사명 짝 검사. 차단하지 않는다(continue-on-error) —
+      # 위키 접속 실패나 지수 정기변경에 따른 사명 변경으로 스크리닝 전체가
+      # 멈추면 안 된다. 불일치가 있으면 잡에 노란 경고로 표시된다.
+      - name: Audit KR universe names
+        continue-on-error: true
+        run: python scripts/audit_kr_universe.py --no-yfinance
+
       - name: Run watchlist screening
         env:
           TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
