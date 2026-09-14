@@ -96,10 +96,11 @@ def build_prompt(theme: dict, chunk: list[dict], names: dict, profiles: dict,
     lines = []
     for it in chunk:
         s = f"- {it['symbol']} ({it['market']}) {names.get(it['symbol'], '')}"
-        if with_sector:
-            sec = sectors.get(it["symbol"])
-            if sec:
-                s += f" [{sec}]"
+        prof = profiles.get(it["symbol"]) or {}
+        if detail in ("industry", "summary") and prof.get("industry"):
+            s += f" [{prof['industry']}]"
+        if detail == "summary" and prof.get("summary"):
+            s += f" {prof['summary']}"
         lines.append(s)
     listing = "\n".join(lines)
 
@@ -129,9 +130,27 @@ def main() -> int:
         _log("OPENAI_API_KEY 미설정")
         return 1
 
+    # 프로덕션과 동일한 유니버스·청크 구성을 재현한다. KR만 따로 쪼개면
+    # 목표 종목이 실제와 다른 청크에 들어가 실험이 현실과 어긋난다.
     payload = json.loads(Path(args.universe).read_text(encoding="utf-8"))
-    kr = payload["items"]
-    names = {i["symbol"]: i["name"] for i in kr}
+    kr_items = [i for i in payload["items"] if i["symbol"].endswith("0")]  # 우선주 제외
+    names = {i["symbol"]: i["name"] for i in kr_items}
+
+    import pandas as pd
+    df = pd.read_csv(ROOT / "data" / "sp500_list.csv")
+    sym_col = next((c for c in df.columns if "symbol" in c.lower() or "ticker" in c.lower()), df.columns[0])
+    name_col = next((c for c in df.columns if c.lower() in ("security", "name")), None)
+    us_items = []
+    for _, row in df.iterrows():
+        code = str(row[sym_col]).replace(".", "-")
+        us_items.append({"symbol": code, "market": "US"})
+        if name_col:
+            names[code] = str(row[name_col])
+    for i in kr_items:
+        i["market"] = "KR"
+    universe = us_items + kr_items
+    kr = universe
+    _log(f"프로덕션 재현 유니버스: {len(universe)}종목 (US {len(us_items)} + KR {len(kr_items)})")
 
     # 섹터는 스크리닝이 이미 받아둔 값을 쓴다(yfinance 재조회 없이).
     profiles: dict[str, dict] = {}
@@ -151,13 +170,20 @@ def main() -> int:
         theme = tmap[tid]
         targets = TARGETS.get(tid, {})
         # 목표 종목이 들어있는 200종목 청크만 실험한다(전체를 돌릴 필요가 없다).
-        idxs = [i for i, it in enumerate(kr) if it["symbol"] in targets]
+        idxs = [i for i, it in enumerate(universe) if it["symbol"] in targets]
         if not idxs:
             _log(f"{tid}: 목표 종목이 유니버스에 없음 - 건너뜀")
             continue
-        lo = max(0, (min(idxs) // 200) * 200)
-        chunk = kr[lo:lo + 200]
+        # 목표가 여러 청크에 흩어져 있으면 가장 많이 들어있는 청크를 고른다.
+        from collections import Counter
+        cn = Counter((i // 200) for i in idxs)
+        ci = cn.most_common(1)[0][0]
+        lo = ci * 200
+        chunk = universe[lo:lo + 200]
         present = [c for c in targets if any(it["symbol"] == c for it in chunk)]
+        elsewhere = [targets[c] for c in targets if c not in present]
+        if elsewhere:
+            _log(f"  참고: 다른 청크에 있는 목표 {elsewhere} - 이번 실험 대상 아님")
         _log("=" * 60)
         _log(f"{tid} ({theme['name_ko']}) - 청크 {lo}-{lo+len(chunk)} / 목표 {len(present)}종목 포함")
 
