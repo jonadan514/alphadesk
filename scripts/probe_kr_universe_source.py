@@ -60,6 +60,27 @@ def probe_pykrx(date: str) -> None:
         _log(f"  import 실패: {type(e).__name__}: {e}")
         return
 
+    # 로그인을 명시적으로 시도한다. 앞선 실행에서 pykrx가 찍어야 할
+    # "KRX 로그인 시도..." 메시지가 전혀 안 나왔다 - 즉 데이터 API가 인증
+    # 세션을 거치지 않는다는 뜻이라, 로그인 실패인지 API 자체 문제인지
+    # 구분하려면 직접 불러봐야 한다.
+    try:
+        from pykrx.website.comm import auth
+        _log("  build_krx_session() 직접 호출:")
+        sess = auth.build_krx_session()
+        _log(f"  -> 세션 {'생성됨' if sess else 'None(로그인 실패)'}")
+    except Exception as e:
+        _log(f"  로그인 호출 실패: {type(e).__name__}: {str(e)[:200]}")
+
+    # 원시 응답 형태도 본다 - KeyError는 예상 컬럼이 없다는 뜻이라
+    # 무엇이 돌아왔는지 알아야 한다.
+    try:
+        raw = ps.get_market_cap_by_ticker(date, market="KOSPI")
+        _log(f"  원시 반환 타입={type(raw).__name__} "
+             f"shape={getattr(raw, 'shape', None)} columns={list(getattr(raw, 'columns', []))[:8]}")
+    except Exception as e:
+        _log(f"  원시 조회 예외: {type(e).__name__}: {str(e)[:200]}")
+
     for market in ("KOSPI", "KOSDAQ"):
         try:
             df = ps.get_market_cap_by_ticker(date, market=market)
