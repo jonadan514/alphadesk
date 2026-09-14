@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime, timedelta
 
@@ -27,6 +28,21 @@ from datetime import datetime, timedelta
 # 동진쎄미켐 2.16조, 클래시스 2.02조, 씨젠 1.44조, 경동나비엔 0.88조,
 # 루닛 0.63조)는 대부분 포함된다. 2026-09-14 실측 분포에 근거한 선택.
 MIN_CAP_DEFAULT = 500_000_000_000
+
+# 우선주 제외. KRX 종목코드는 6번째 자리가 보통주면 '0', 우선주면 5/7/K/L/M 등이다.
+# 우선주는 보통주와 같은 회사라서 남겨두면 한 회사가 두 번 집계된다 - 실적 축이
+# "소속 중 몇 개가 시장 중앙값을 넘나"를 세므로 비율이 그만큼 왜곡된다.
+# (2026-09-14 실측: 삼성전자우가 삼성전자와 나란히 워치리스트에 올라와 있었다.
+#  테마 매핑에는 0건 편입 - LLM이 이름을 보고 걸러냈지만 규칙으로 막는 게 맞다.)
+# 끝자리가 0인 신규/분할 상장 코드(0126Z0 삼성에피스홀딩스, 0009K0 에임드바이오,
+# 0220W0 한화머시너리앤서비스홀딩스)는 보통주라 그대로 통과한다.
+def _is_common_share(code: str) -> bool:
+    return code.endswith("0")
+
+
+# 코드 규칙과 사명이 어긋나면 조용히 넘기지 않고 보고한다 - KRX가 코드 체계를
+# 바꾸면 규칙만 믿다가 보통주를 통째로 버리게 될 수 있다.
+_PREF_NAME = re.compile(r"우(B|\(전환\))?$")
 SUFFIX = {"KOSPI": ".KS", "KOSDAQ": ".KQ"}
 
 
@@ -88,12 +104,22 @@ def main() -> int:
                    (300_000_000_000, "3000억+"), (200_000_000_000, "2000억+")]
         dist = " / ".join(f"{lbl} {int((df['시가총액'] >= th).sum())}" for th, lbl in buckets)
         _log(f"{market}: 전체 {len(df)} / 하한 통과 {len(big)}   [분포] {dist}")
+        dropped_pref = []
+        mismatched = []
         for ticker, row in big.iterrows():
             code = str(ticker)
             try:
                 name = ps.get_market_ticker_name(code)
             except Exception:
                 name = code
+            common = _is_common_share(code)
+            looks_pref = bool(_PREF_NAME.search(name))
+            if common == looks_pref:
+                # 코드 규칙과 사명이 불일치 - 어느 쪽이든 사람이 봐야 한다.
+                mismatched.append(f"{code} {name}")
+            if not common:
+                dropped_pref.append(f"{code} {name}")
+                continue
             items.append({
                 "market": "KR",
                 "symbol": code,
@@ -102,6 +128,11 @@ def main() -> int:
                 "market_cap": int(row["시가총액"]),
                 "exchange": market,
             })
+
+        if dropped_pref:
+            _log(f"  우선주 제외 {len(dropped_pref)}: {', '.join(dropped_pref)}")
+        if mismatched:
+            _log(f"  경고 - 코드규칙과 사명 불일치 {len(mismatched)}: {', '.join(mismatched)}")
 
     if not items:
         _log("수집 결과 0건 - 파일을 쓰지 않는다(기존 폴백 유지)")
