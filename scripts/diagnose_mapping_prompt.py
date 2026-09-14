@@ -203,6 +203,12 @@ def main() -> int:
             hit = [targets[c] for c in present if c in got]
             _log(f"  {label:14s} 편입 {len(got):3d}개 / 목표적중 {len(hit)}/{len(present)} {hit} "
                  f"| finish={finish} | in={usage.get('prompt_tokens')} out={usage.get('completion_tokens')}")
+            # 정답지 적중률만 보면 내 가정을 검증할 뿐이다. 모델이 실제로 무엇을
+            # 골랐는지 봐야 모델이 보수적인 건지 엉뚱한 건지 판단할 수 있다.
+            for m in (parsed or {}).get("members", []):
+                tk = str(m.get("ticker"))
+                _log(f"      -> {tk} {names.get(tk, m.get('name'))} "
+                     f"[{m.get('linkage')}] {str(m.get('evidence'))[:70]}")
             time.sleep(1)
     return 0
 
