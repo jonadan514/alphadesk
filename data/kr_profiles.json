@@ -1,0 +1,2171 @@
+{
+ "005930": {
+  "industry": "Consumer Electronics",
+  "sector": "Technology",
+  "summary": "Samsung Electronics Co., Ltd. engages in the consumer electronics, information technology and mobile communications, and device solutions bu"
+ },
+ "000660": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "SK hynix Inc. through its subsidiaries, engages in research, develops, manufactures, distributes, and sells semiconductor devices in Korea, "
+ },
+ "005935": {
+  "industry": "Consumer Electronics",
+  "sector": "Technology",
+  "summary": "Samsung Electronics Co., Ltd. engages in the consumer electronics, information technology and mobile communications, and device solutions bu"
+ },
+ "402340": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "SK Square Co., Ltd. invests in semiconductor, and information and communication technologies in South Korea, China, Asia, the United States,"
+ },
+ "009150": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Samsung Electro-Mechanics Co., Ltd. manufactures and sells various electronic components in Korea, China, Southeast Asia, Japan, the America"
+ },
+ "373220": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "LG Energy Solution, Ltd. provides energy solutions worldwide. The company offers automotive batteries, which include pouch-type battery cell"
+ },
+ "005380": {
+  "industry": "Auto Manufacturers",
+  "sector": "Consumer Cyclical",
+  "summary": "Hyundai Motor Company, together with its subsidiaries, manufactures and distributes motor vehicles and parts. The company operates through V"
+ },
+ "207940": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Samsung Biologics Co.,Ltd., together with its subsidiaries engages in the manufacturing, commercializing, distributing, and selling of bioph"
+ },
+ "105560": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "KB Financial Group Inc. provides financial products and services in South Korea, the United States, New Zealand, China, Cambodia, the United"
+ },
+ "032830": {
+  "industry": "Insurance - Life",
+  "sector": "Financial Services",
+  "summary": "Samsung Life Insurance Co., Ltd., together with its subsidiaries, engages in the life insurance business to corporate and individual custome"
+ },
+ "028260": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "Samsung C&T Corporation engages in the engineering and construction, trading and investment, fashion, and resort businesses in South Korea, "
+ },
+ "034020": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Doosan Enerbility Co., Ltd. operates as an energy company in South Korea, the Americas, Asia, the Middle East, Europe, and internationally. "
+ },
+ "012450": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Hanwha Aerospace Co., Ltd. engages in the development, production, and maintenance of aircraft engines worldwide. The company offers Korea s"
+ },
+ "055550": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "Shinhan Financial Group Co., Ltd. provides financial products and services in South Korea, Vietnam, and Japan. The company operates in six s"
+ },
+ "329180": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "HD Hyundai Heavy Industries Co., Ltd., together with its subsidiaries, engages in the shipbuilding business in South Korea, North America, A"
+ },
+ "000270": {
+  "industry": "Auto Manufacturers",
+  "sector": "Consumer Cyclical",
+  "summary": "Kia Corporation manufactures and sells vehicles in South Korea, North America, and Europe. The company offers cars, SUVs and MPV, commercial"
+ },
+ "006400": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Samsung SDI Co., Ltd. manufactures and sells batteries in South Korea, Europe, China, North America, Southeast Asia, and internationally. Th"
+ },
+ "034730": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "SK Inc., together with its subsidiaries, engages in petroleum refining, telecommunications, wholesale and retail, chemicals, construction, a"
+ },
+ "068270": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Celltrion, Inc., a biopharmaceutical company, engages in the development, production, and sale of development, production, and sale of medic"
+ },
+ "086790": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "Hana Financial Group Inc., through its subsidiaries, provides financial services in South Korea, Hong Kong, Singapore, the United States, Ja"
+ },
+ "012330": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Hyundai Mobis Co.,Ltd engages in the auto parts business in Korea, China, the United States, Europe, and internationally. It operates in two"
+ },
+ "066570": {
+  "industry": "Consumer Electronics",
+  "sector": "Technology",
+  "summary": "LG Electronics Inc., together with its subsidiaries, manufactures and sells consumer and commercial products in South Korea and internationa"
+ },
+ "035420": {
+  "industry": "Internet Content & Information",
+  "sector": "Communication Services",
+  "summary": "NAVER Corporation, together with its subsidiaries, provides online search portal and information services in South Korea and internationally"
+ },
+ "010120": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "LS ELECTRIC Co., Ltd. provides smart energy solutions in South Korea and internationally. The company offers smart power solutions, includin"
+ },
+ "000810": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "Samsung Fire & Marine Insurance Co., Ltd., together with its subsidiaries, provides non-life insurance products and services in South Korea,"
+ },
+ "267260": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "HD Hyundai Electric Co., Ltd. manufactures and sells electrical equipment in South Korea, North America, rest of Asia, the Middle East, Euro"
+ },
+ "298040": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Hyosung Heavy Industries Corporation manufactures and sells heavy electrical equipment in South Korea. The company offers transmission and d"
+ },
+ "005490": {
+  "industry": "Steel",
+  "sector": "Basic Materials",
+  "summary": "POSCO Holdings Inc., together with its subsidiaries, operates as an integrated steel producer in Korea and internationally. It operates thro"
+ },
+ "042660": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Hanwha Ocean Co., Ltd. operates as a shipbuilding and offshore contractor in South Korea and internationally. The company offers commercial "
+ },
+ "009540": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "HD Korea Shipbuilding & Offshore Engineering Co., Ltd. engages in shipbuilding and offshore engineering business in South Korea. The company"
+ },
+ "316140": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "Woori Financial Group Inc., together with its subsidiaries, operates as a bank which provides various financial services in Korea, China, th"
+ },
+ "010130": {
+  "industry": "Other Industrial Metals & Mining",
+  "sector": "Basic Materials",
+  "summary": "Korea Zinc Company, Ltd. operates as a general non-ferrous metal smelting company primarily in South Korea. The company offers zinc slab ing"
+ },
+ "096770": {
+  "industry": "Oil & Gas Refining & Marketing",
+  "sector": "Energy",
+  "summary": "SK Innovation Co., Ltd., together with its subsidiaries, engages in the development, production, and sale of petroleum, natural gas, petroch"
+ },
+ "042700": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "HANMI Semiconductor Co., Ltd. manufactures and sells semiconductor equipment in South Korea and internationally. The company offers bonder; "
+ },
+ "000150": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "Doosan Corporation, together with its subsidiaries, engages in the power generation facilities, industrial facilities, construction machiner"
+ },
+ "138040": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Meritz Financial Group Inc., together with its subsidiaries, provides various financial services in South Korea and internationally. The com"
+ },
+ "015760": {
+  "industry": "Utilities - Regulated Electric",
+  "sector": "Utilities",
+  "summary": "Korea Electric Power Corporation, together with its subsidiaries, engages in the generation, transmission, and distribution of electricity i"
+ },
+ "011200": {
+  "industry": "Marine Shipping",
+  "sector": "Industrials",
+  "summary": "HMM Co.,Ltd, an integrated logistics company, provides shipping and logistics services in Japan and internationally. The company offers cont"
+ },
+ "267250": {
+  "industry": "Oil & Gas Refining & Marketing",
+  "sector": "Energy",
+  "summary": "HD Hyundai Co., Ltd., through its subsidiaries, engages in oil refining business in Korea and internationally. It operates through Shipbuild"
+ },
+ "017670": {
+  "industry": "Telecom Services",
+  "sector": "Communication Services",
+  "summary": "SK Telecom Co., Ltd. engages in the provision of wireless telecommunication services in South Korea. The company operates through three segm"
+ },
+ "051910": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "LG Chem, Ltd., together with its subsidiaries, operates as a chemical company in Korea, China, Asia/Oceania, the United States, Europe, and "
+ },
+ "010140": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Samsung Heavy Industries Co., Ltd. engages in shipbuilding, offshore, and energy and infra businesses worldwide. The company offers shipbuil"
+ },
+ "006800": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Mirae Asset Securities Co., Ltd. engages in the provision of various financial services in South Korea and internationally. It operates thro"
+ },
+ "033780": {
+  "industry": "Tobacco",
+  "sector": "Consumer Defensive",
+  "summary": "KT&G Corporation, together with its subsidiaries, engages in the production, distribution, and sale of tobacco products in South Korea, Euro"
+ },
+ "018260": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "Samsung SDS Co., Ltd. provides cloud and digital logistics platform-based logistics services in South Korea, the America, Europe, Asia, Afri"
+ },
+ "003550": {
+  "industry": "Consumer Electronics",
+  "sector": "Technology",
+  "summary": "LG Corp., through its subsidiaries, operates in the electronics, chemicals, and telecommunication and services sectors. The company offers T"
+ },
+ "010950": {
+  "industry": "Oil & Gas Refining & Marketing",
+  "sector": "Energy",
+  "summary": "S-Oil Corporation, together with its subsidiaries, manufactures, sells, and supplies oil refining, lube, and petrochemical products in South"
+ },
+ "024110": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "Industrial Bank of Korea operates as a small and medium-sized enterprise (SME) financing bank in Korea and internationally. It provides pers"
+ },
+ "003670": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Posco Future M Co., Ltd., together with its subsidiaries, engages in the refractory, industrial furnaces, and lime businesses in South Korea"
+ },
+ "086280": {
+  "industry": "Integrated Freight & Logistics",
+  "sector": "Industrials",
+  "summary": "Hyundai Glovis Co., Ltd. operates as logistics and distribution company in South Korea and internationally. It offers in/outbound logistics "
+ },
+ "035720": {
+  "industry": "Internet Content & Information",
+  "sector": "Communication Services",
+  "summary": "Kakao Corp. operates mobile and online platforms in South Korea. The company offers Kakao Pay, a financial service solution; Kakao Bank, a b"
+ },
+ "000720": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "Hyundai Engineering & Construction Co.,Ltd. engages in the civil engineering and construction business in Middle Asia, Asia, Africa, and int"
+ },
+ "079550": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "LIG Defense&Aerospace Co., Ltd. engages in the research and development, manufacturing, maintenance, and sale of defense materials in South "
+ },
+ "278470": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "APR Co., Ltd. manufactures and sells cosmetic products for men and women. The company also offers medical cosmetics and diet products. In ad"
+ },
+ "064350": {
+  "industry": "Railroads",
+  "sector": "Industrials",
+  "summary": "Hyundai Rotem Company manufactures and sells railway vehicles, defense systems, and plants and machinery in South Korea and internationally."
+ },
+ "272210": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Hanwha Systems Co., Ltd. manufacture and sell various military equipments in South Korea and internationally. The company offers electro-opt"
+ },
+ "030200": {
+  "industry": "Telecom Services",
+  "sector": "Communication Services",
+  "summary": "KT Corporation provides integrated telecommunications and platform services in South Korea, rest of Asia, and internationally. The company o"
+ },
+ "011070": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "LG Innotek Co., Ltd. engages in the manufacture and sale of electronic materials and components for mobile, display, semiconductor, automobi"
+ },
+ "047810": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Korea Aerospace Industries, Ltd. manufactures and sells fixed and rotary wing aircrafts, and airframe products in South Korea. The company d"
+ },
+ "005830": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "DB Insurance Co., Ltd. provides various insurance products and services in South Korea. It offers automobile, fire, maritime, driver, travel"
+ },
+ "443060": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "HD Hyundai Marine Solution CO.,LTD. provides integrated engineering-based services to Hyundai brand ships. The company also supplies genuine"
+ },
+ "078930": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "GS Holdings Corp., together its subsidiaries, engages in the energy, power generation, retail, service, construction, and infrastructure bus"
+ },
+ "071050": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Korea Investment Holdings Co., Ltd., through its subsidiaries, provides various financial products and services. The company offers securiti"
+ },
+ "307950": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "Hyundai Autoever Corporation provides information and communication technology services in South Korea and internationally. The company offe"
+ },
+ "003490": {
+  "industry": "Airlines",
+  "sector": "Industrials",
+  "summary": "Korean Airlines Co.,Ltd. provides airline services. It operates through Air Transport, Aerospace, Hotel, and Others segments. The company pr"
+ },
+ "323410": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "KakaoBank Corp., an Internet bank, provides banking services through electronic financial transaction method in South Korea. It offers vario"
+ },
+ "047050": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "Posco International Corporation operates as a trading company in South Korea and internationally. It engages in the development of oil and g"
+ },
+ "028050": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "Samsung E&A Co., Ltd. provides a range of engineering services for plant and other construction in South Korea, the United States, Asia, the"
+ },
+ "006260": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "LS Corp., together with its subsidiaries, engages in electric power, automation, machinery, materials, and energy businesses in South Korea "
+ },
+ "259960": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "KRAFTON, Inc. engages in the software development and related ancillary businesses in Asia, Korea, the United States, Europe, and internatio"
+ },
+ "005940": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "NH Investment & Securities Co., Ltd. provides investment management services in South Korea and internationally. The company offers financia"
+ },
+ "003230": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "Samyang Foods Co., Ltd., together with its subsidiaries, manufactures and sells food products in South Korea and internationally. It offers "
+ },
+ "180640": {
+  "industry": "Real Estate Services",
+  "sector": "Real Estate",
+  "summary": "Hanjin Kal, together with its subsidiaries, engages in the provision of airline services in South Korea. The company offers aviation service"
+ },
+ "0126Z0": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Samsung Epis Holdings Co., Ltd., a biotechnology company, manage the portfolio of biopharmaceutical products. The company was founded in 202"
+ },
+ "090430": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "Amorepacific Corporation researches, develops, manufactures, markets, sells, and trades cosmetics and beauty products worldwide. It offers c"
+ },
+ "047040": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "Daewoo Engineering & Construction Co., Ltd. engages in the engineering and construction business in South Korea and internationally. The com"
+ },
+ "007660": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "ISU Petasys Co., Ltd. manufactures and sells printed circuit boards (PCBs). The company offers network equipment, including router/switch an"
+ },
+ "016360": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Samsung Securities Co.,Ltd. operates as a financial investment company in South Korea. The company offers asset and wealth management servic"
+ },
+ "161390": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Hankook Tire & Technology Co., Ltd. manufactures and sells tires in South Korea and internationally. It offers tires for electric vehicles, "
+ },
+ "000500": {
+  "industry": "Communication Equipment",
+  "sector": "Technology",
+  "summary": "GAON CABLE Co., Ltd., a cable company, provides industrial power cables in South Korea. The company offers power cables, including extra-hig"
+ },
+ "352820": {
+  "industry": "Entertainment",
+  "sector": "Communication Services",
+  "summary": "HYBE Co., Ltd. engages in the music production, publishing, and artist development and management businesses. It is also involved in the vid"
+ },
+ "000880": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "Hanwha Corporation engages in the manufacture and sale of explosives and industrial machinery, trading, and general construction businesses."
+ },
+ "039490": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Kiwoom Securities Co., Ltd., together with its subsidiaries, provides online brokerage services in South Korea and internationally. The comp"
+ },
+ "064400": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "LG CNS Co., Ltd. operates as an IT service company in South Korea and internationally. It offers cloud consulting, migration and implementat"
+ },
+ "267270": {
+  "industry": "Farm & Heavy Construction Machinery",
+  "sector": "Industrials",
+  "summary": "HD Construction Equipment Co., Ltd. engages in the manufacturing and distribution of construction equipment. The company offers excavators, "
+ },
+ "021240": {
+  "industry": "Furnishings, Fixtures & Appliances",
+  "sector": "Consumer Cyclical",
+  "summary": "COWAY Co., Ltd. engages in the production and sale of environmental home appliances in South Korea and internationally. The company provides"
+ },
+ "009830": {
+  "industry": "Solar",
+  "sector": "Technology",
+  "summary": "Hanwha Solutions Corporation engages in the manufacture and sale of synthetic resins in South Korea, China, Germany, the United States, and "
+ },
+ "032640": {
+  "industry": "Telecom Services",
+  "sector": "Communication Services",
+  "summary": "LG Uplus Corp. provides various telecommunication services in South Korea. It operates through LG U+ and LG Hello Vision segments. The compa"
+ },
+ "005387": {
+  "industry": "Auto Manufacturers",
+  "sector": "Consumer Cyclical",
+  "summary": "Hyundai Motor Company, together with its subsidiaries, manufactures and distributes motor vehicles and parts. The company operates through V"
+ },
+ "377300": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "Kakao Pay Corp. operates a mobile payment system in South Korea. It operates in two segments, Non-financial Services and Financial Services."
+ },
+ "326030": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "SK Biopharmaceuticals Co., Ltd., a pharmaceutical company, engages in the research, development, and commercialization of drugs for the trea"
+ },
+ "062040": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Sanil Electric Co., Ltd. manufactures and sells transformers and reactors for power grid, renewable energy, and industrial transformer marke"
+ },
+ "128940": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Hanmi Pharm. Co., Ltd., a biopharmaceutical company, engages in the manufacture and sale of pharmaceutical products in South Korea, China, J"
+ },
+ "175330": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "JB Financial Group Co., Ltd., through its subsidiaries, engages in the provision of financial services in South Korea and internationally. I"
+ },
+ "241560": {
+  "industry": "Farm & Heavy Construction Machinery",
+  "sector": "Industrials",
+  "summary": "Doosan Bobcat Inc. designs, manufactures, markets, and distributes compact construction equipment in North America, Europe, the Middle East,"
+ },
+ "000100": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Yuhan Corporation operates as a pharmaceutical company in South Korea and internationally. It offers manufacturing services, such as custom "
+ },
+ "052690": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "KEPCO Engineering & Construction Company, Inc. engages in designing, engineering, procurement, and construction of power plants in South Kor"
+ },
+ "001440": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Taihan Cable & Solution Co., Ltd. manufactures, processes, and sells electric wires, cables, and related products worldwide. The company off"
+ },
+ "029780": {
+  "industry": "Credit Services",
+  "sector": "Financial Services",
+  "summary": "Samsung Card Co., Ltd. provides financial services in South Korea. It operates through Credit card, Installment and leasing, and Other opera"
+ },
+ "088350": {
+  "industry": "Insurance - Life",
+  "sector": "Financial Services",
+  "summary": "Hanwha Life Insurance Co., Ltd. provides insurance products to individual and corporate customers in South Korea and internationally. The co"
+ },
+ "353200": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "DAEDUCK ELECTRONICS Co., Ltd. provides various printed circuit boards (PCB) in South Korea and internationally. It offers flip chip ball gri"
+ },
+ "138930": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "BNK Financial Group Inc., together with its subsidiaries, provides various financial products and services in South Korea and internationall"
+ },
+ "066970": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "L&F Co., Ltd. engages in the development and sale of electronic materials in Korea. It offers cathode active materials used in IT devices, h"
+ },
+ "271560": {
+  "industry": "Confectioners",
+  "sector": "Consumer Defensive",
+  "summary": "ORION Corp., together with its subsidiaries, manufactures and sells various confectionery products in South Korea, China, and internationall"
+ },
+ "454910": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Doosan Robotics Inc. manufactures and sells industrial cooperative robots primarily in South Korea and internationally. The company engages "
+ },
+ "000990": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "DB HiTek CO., LTD. engages in semiconductor foundry business in South Korea. It provides semiconductors, such as power management ICs, conta"
+ },
+ "004020": {
+  "industry": "Steel",
+  "sector": "Basic Materials",
+  "summary": "Hyundai Steel Company, together with its subsidiaries, engages in the manufacture and sale of steel and other industrial metal products in K"
+ },
+ "034220": {
+  "industry": "Consumer Electronics",
+  "sector": "Technology",
+  "summary": "LG Display Co., Ltd., together with its subsidiaries, engages in the research, development, manufacture, and sale of organic light-emitting "
+ },
+ "011790": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "SKC Co., Ltd. manufactures and sells basic chemical raw materials and copper foils for batteries. The company offers copper foils for lithiu"
+ },
+ "036570": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "NC Corporation, together with its subsidiaries, develops and publishes online games in Korea, Japan, Taiwan, the United States of America, E"
+ },
+ "001450": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "Hyundai Marine & Fire Insurance Co., Ltd. provides non-life insurance and other related insurance services in South Korea and internationall"
+ },
+ "051900": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "LG H&H Co., Ltd. operates as cosmetics, household goods, and beverage company in South Korea and internationally. The company offers cosmeti"
+ },
+ "005385": {
+  "industry": "Auto Manufacturers",
+  "sector": "Consumer Cyclical",
+  "summary": "Hyundai Motor Company, together with its subsidiaries, manufactures and distributes motor vehicles and parts. The company operates through V"
+ },
+ "082740": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Hanwha Engine Co., Ltd. manufactures and sells diesel engines worldwide. The company provides low and medium speed marine diesel engines for"
+ },
+ "002380": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "KCC Corporation provides building materials in South Korea and internationally. Its building materials include celling materials, insulation"
+ },
+ "010060": {
+  "industry": "Asset Management",
+  "sector": "Financial Services",
+  "summary": "OCI Holdings Company Ltd. operates as a chemical company in South Korea. It offers renewable energy and energy solutions, such as solar-grad"
+ },
+ "001040": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "CJ Corporation engages in the food and food services, bio, logistics and retail, and entertainment and media businesses worldwide. It manufa"
+ },
+ "018880": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Hanon Systems provides automotive thermal management solutions in Korea. The company offers heating, ventilation, and air conditioning techn"
+ },
+ "004170": {
+  "industry": "Department Stores",
+  "sector": "Consumer Cyclical",
+  "summary": "SHINSEGAE Inc. operates department stores in South Korea. The company operates through Department Store, Wholesale and Retail Industry, Real"
+ },
+ "008930": {
+  "industry": "Medical Distribution",
+  "sector": "Healthcare",
+  "summary": "Hanmi Science Co., Ltd., through its subsidiaries, manufactures and sells pharmaceutical products in Korea and internationally. It develops "
+ },
+ "036460": {
+  "industry": "Utilities - Regulated Gas",
+  "sector": "Utilities",
+  "summary": "Korea Gas Corporation engages in the exploration, development, production, import, and wholesale of liquefied natural gas (LNG), compressed "
+ },
+ "103590": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Iljin Electric Co.,Ltd engages in the production of transmission and distribution of power equipment. It offers transformers, high voltage G"
+ },
+ "022100": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "Posco Dx Company Ltd. provides ICT solutions to construction and materials industry in South Korea and internationally. The company offers t"
+ },
+ "161890": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "Kolmar Korea Co., Ltd. researches, develops, produces, and sells beauty and health products in South Korea and internationally. It offers sk"
+ },
+ "375500": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "DL E&C Co.,Ltd., a construction company, provides engineering, procurement, and construction solutions in South Korea. The company undertake"
+ },
+ "006360": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "GS Engineering & Construction Corporation engages in the civil works and construction, sales of new houses, repairs and maintenance, oversea"
+ },
+ "111770": {
+  "industry": "Apparel Manufacturing",
+  "sector": "Consumer Cyclical",
+  "summary": "Youngone Corporation engages in the manufacture and sale of clothing, shoes, and supplies market worldwide. The company offers technical out"
+ },
+ "028670": {
+  "industry": "Marine Shipping",
+  "sector": "Industrials",
+  "summary": "Pan Ocean Co., Ltd., together with its subsidiaries, provides marine transportation and other related services worldwide. The company offers"
+ },
+ "336260": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Doosan Fuel Cell Co., Ltd. develops and distributes power generation fuel cells in South Korea. The company supplies fuel cell to produce st"
+ },
+ "023530": {
+  "industry": "Department Stores",
+  "sector": "Consumer Cyclical",
+  "summary": "Lotte Shopping Co., Ltd., together with its subsidiaries, owns and manages department stores in South Korea. It also operates outlets, disco"
+ },
+ "035250": {
+  "industry": "Resorts & Casinos",
+  "sector": "Consumer Cyclical",
+  "summary": "Kangwon Land, Inc. engages in the casino, tourist hotel, and ski resorts businesses in South Korea. Its business also covers condominium, go"
+ },
+ "011780": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Kumho Petro Chemical Co.,Ltd manufactures and sells synthetic rubber and resins, specialty chemicals, nanocarbon, energy, and building mater"
+ },
+ "012750": {
+  "industry": "Security & Protection Services",
+  "sector": "Industrials",
+  "summary": "S-1 Corporation provides safety and security services in South Korea and internationally. Its physical security solutions include alarm moni"
+ },
+ "192820": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "Cosmax, Inc. researches, develops, produces, and manufactures cosmetic and health function food products in Korea and internationally. The c"
+ },
+ "031210": {
+  "industry": "Insurance - Diversified",
+  "sector": "Financial Services",
+  "summary": "Seoul Guarantee Insurance Company, together with its subsidiaries, engages in non-life insurance and other related operations to individuals"
+ },
+ "251270": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "Netmarble Corporation develops and publishes PC, mobile, and console games in South Korea and internationally. The company was founded in 20"
+ },
+ "302440": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "SK bioscience Co.,Ltd. engages in the research and development, production, and distribution of vaccines and biopharmaceuticals in Korea and"
+ },
+ "139130": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "iM Financial Group Co., Ltd., through its subsidiaries, engages in the provision of various banking products and services in South Korea. Th"
+ },
+ "017800": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Hyundai Elevator Co., Ltd. designs, manufactures, installs, maintains, and modernizes elevators in South Korea and internationally. The comp"
+ },
+ "011170": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Lotte Chemical Corporation, a chemical company, manufactures and distributes petrochemical products in South Korea and internationally. The "
+ },
+ "007340": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "DN Automotive Corporation, together with its subsidiaries, engages in the manufacture and sale of automotive battery products in South Korea"
+ },
+ "097950": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "CJ Cheiljedang Corporation engages in the food business in South Korea and internationally. It operates through Food, Biotechnology, Feed an"
+ },
+ "004800": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "Hyosung Corporation, together with its subsidiaries, engages in the manufacture of chemical fibers in Korea and internationally. The company"
+ },
+ "085620": {
+  "industry": "Insurance - Life",
+  "sector": "Financial Services",
+  "summary": "MIRAE ASSET Life Insurance Co., Ltd. provides personal insurance products and undertakes related reinsurance contracts in South Korea. The c"
+ },
+ "003690": {
+  "industry": "Insurance - Reinsurance",
+  "sector": "Financial Services",
+  "summary": "Korean Reinsurance Company, a reinsurance company, provides life and non-life reinsurance products in Korea and internationally. The company"
+ },
+ "009420": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Hanall Biopharma Co., Ltd., a pharmaceutical company, manufactures and sells pharmaceutical products in South Korea and internationally. The"
+ },
+ "026960": {
+  "industry": "Food Distribution",
+  "sector": "Consumer Defensive",
+  "summary": "Dong Suh Companies Inc. engages in the food, packaging, tea, logistics, and import and export businesses. The company produces, imports, and"
+ },
+ "450080": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Ecopro Materials Co., Ltd., together with its subsidiaries, produces precursor materials for nickel-based anode materials for secondary batt"
+ },
+ "004370": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "Nongshim Co., Ltd., together with its subsidiaries, manufactures, sells, imports, and exports ramen, snacks, and beverages in Asia, the Amer"
+ },
+ "282330": {
+  "industry": "Grocery Stores",
+  "sector": "Consumer Defensive",
+  "summary": "BGF Retail Co., Ltd., together with its subsidiaries, operates convenience stores under the CU brand in South Korea. The company's stores re"
+ },
+ "004990": {
+  "industry": "Confectioners",
+  "sector": "Consumer Defensive",
+  "summary": "LOTTE Corporation engages in the food, retail, chemical, construction, manufacturing, tourism, service, and finance businesses worldwide. It"
+ },
+ "383220": {
+  "industry": "Apparel Manufacturing",
+  "sector": "Consumer Cyclical",
+  "summary": "F&F Co., Ltd. manufactures and sells apparel and accessories in South Korea. The company offers fashion products under the MLB, MLB KIDS, DI"
+ },
+ "005440": {
+  "industry": "Food Distribution",
+  "sector": "Consumer Defensive",
+  "summary": "Hyundai G.F. Holdings Co., Ltd. engages in the departmental store businesses in the South Korea. Hyundai G.F. Holdings Co., Ltd. was founded"
+ },
+ "001720": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Shinyoung Securities Co., Ltd. engages in the financial investment business in South Korea. It investments in asset-backed securities, struc"
+ },
+ "005850": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "SL Corporation manufactures and sells automotive parts in South Korea, North America, China, India, Europe, South America, and international"
+ },
+ "489790": {
+  "industry": "Security & Protection Services",
+  "sector": "Industrials",
+  "summary": "Hanwha Vision CO.,LTD engages in the production and sale of securities, chip mounters, semiconductor equipment, etc. The company was formerl"
+ },
+ "204320": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "HL Mando Corporation, an electric vehicle and autonomous driving solutions company, provides automotive parts and services in Korea, China, "
+ },
+ "000240": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Hankook & Company Co., Ltd. manufactures and sells smart energy solutions. The company offers batteries for automotives, commercial vehicles"
+ },
+ "279570": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "K Bank Co.,Ltd. provides various banking products and services in South Korea. The company offers deposits, savings and other accounts, loan"
+ },
+ "018670": {
+  "industry": "Oil & Gas Refining & Marketing",
+  "sector": "Energy",
+  "summary": "SK Gas Co., Ltd. supplies and distributes liquefied petroleum gas (LPG) in South Korea and internationally. It is involved in supplying of L"
+ },
+ "112610": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "CS Wind Corporation manufactures and sells wind towers and offshore wind substructures in Europe, North America, and Asia. It offers onshore"
+ },
+ "051600": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "KEPCO Plant Service & Engineering Co.,Ltd. provides maintenance services for electric power-generating facilities in South Korea, Asia, the "
+ },
+ "009970": {
+  "industry": "Apparel Manufacturing",
+  "sector": "Consumer Cyclical",
+  "summary": "Youngone Holdings Co., Ltd. manufactures and sells apparel, footwear, gear, sportswear, and jackets in South Korea and internationally. The "
+ },
+ "020150": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Lotte Energy Materials Corporation produces and sells elecfoils in Korea and internationally. Its elecfoils are used as core material for el"
+ },
+ "030000": {
+  "industry": "Advertising Agencies",
+  "sector": "Communication Services",
+  "summary": "Cheil Worldwide Inc. provides various marketing and advertising solutions worldwide. It offers strategic, creative, media, and experience so"
+ },
+ "103140": {
+  "industry": "Metal Fabrication",
+  "sector": "Industrials",
+  "summary": "Poongsan Corporation manufactures and sells copper and copper-related products in South Korea and internationally. It offers fabricated nonf"
+ },
+ "014680": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Hansol Chemical Co., Ltd., together with its subsidiaries, manufactures and sells various chemicals primarily in South Korea. The company of"
+ },
+ "069960": {
+  "industry": "Department Stores",
+  "sector": "Consumer Cyclical",
+  "summary": "Hyundai Department Store Co. Ltd. operates various department stores, outlets, and duty-free shops in South Korea. The company offers clothi"
+ },
+ "081660": {
+  "industry": "Leisure",
+  "sector": "Consumer Cyclical",
+  "summary": "Misto Holdings Corp., together with its subsidiaries, engages in the sale of textile products, clothing, footwear, leather products, watches"
+ },
+ "073240": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Kumho Tire Co., Inc., engages in the manufacture and sale of tires in South Korea, Europe, North America, Central and South America, Asia, a"
+ },
+ "483650": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "d'Alba Global Co., Ltd. engages in the manufacturing and sale of perfumes and cosmetic products in South Korea and internationally. The comp"
+ },
+ "007070": {
+  "industry": "Department Stores",
+  "sector": "Consumer Cyclical",
+  "summary": "GS Retail Co., Ltd. operates convenience stores and supermarkets in South Korea. It operates convenience stores under the GS25 brand; superm"
+ },
+ "139480": {
+  "industry": "Discount Stores",
+  "sector": "Consumer Defensive",
+  "summary": "E-MART Inc., together with its subsidiaries, operates as a hypermarket retail company in South Korea. The company operates Emart, a discount"
+ },
+ "002790": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "AMOREPACIFIC Holdings Corp., through its subsidiaries, engages in manufacturing, marketing, and trading of cosmetics, household goods, and h"
+ },
+ "181710": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "NHN Corporation, an IT company, provides gaming, payment, entertainment, IT, and advertisement solutions in South Korea and internationally."
+ },
+ "462870": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "Shift Up Corporation operates as a game design and development studio. It offers game production, promotional video, and music production ba"
+ },
+ "439260": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Daehan Shipbuilding Co., Ltd. provides ship construction and repair services. It develops crude oil tankers, product carriers, shuttle tanke"
+ },
+ "000155": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "Doosan Corporation, together with its subsidiaries, engages in the power generation facilities, industrial facilities, construction machiner"
+ },
+ "089860": {
+  "industry": "Rental & Leasing Services",
+  "sector": "Industrials",
+  "summary": "LOTTE rental co.,ltd. provides rental services in South Korea, Thailand, and Vietnam. It rents various household items, cars, office machine"
+ },
+ "071970": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "HD-Hyundai Marine Engine Co., Ltd. manufactures and sells marine engines, industrial facilities, and plants in South Korea and international"
+ },
+ "475150": {
+  "industry": "Utilities - Renewable",
+  "sector": "Utilities",
+  "summary": "SK eternix Co., Ltd. engages in the engineering, procurement, construction, and operation of solar power and onshore wind power generation f"
+ },
+ "023590": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Daou Technology Inc., together with its subsidiaries, provides IT and finance services. The company offers marketing communication services,"
+ },
+ "120110": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Kolon Industries, Inc. engages in industrial materials, chemicals, films/electronic materials, and fashion businesses in South Korea and int"
+ },
+ "012630": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "HDC HOLDINGS CO.,Ltd engages in real estate development and construction activities in South Korea. Its portfolio includes high-rise buildin"
+ },
+ "006040": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "Dongwon Industries Co., Ltd. engages in the marine and fisheries, distribution, and logistics businesses in South Korea and internationally."
+ },
+ "000120": {
+  "industry": "Integrated Freight & Logistics",
+  "sector": "Industrials",
+  "summary": "CJ Logistics Corporation provides transportation and logistics services in Korea and internationally. The company engages in Ecommerce logis"
+ },
+ "294870": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "IPARK Hyundai Development Company, operates as a financial real estate company, provides real estate services primarily in South Korea. The "
+ },
+ "008770": {
+  "industry": "Specialty Retail",
+  "sector": "Consumer Cyclical",
+  "summary": "Hotel Shilla Co.,Ltd operates as a hospitality company in South Korea and internationally. The company offers various luxury brands in bouti"
+ },
+ "395400": {
+  "industry": "REIT - Office",
+  "sector": "Real Estate",
+  "summary": "SK Reits Co., Ltd. operates as a real estate investment trust. The company is based in Seoul, South Korea."
+ },
+ "020560": {
+  "industry": "Airlines",
+  "sector": "Industrials",
+  "summary": "Asiana Airlines, Inc. engages in air transportation business in South Korea and internationally. It operates through Air Transport, IT, Air "
+ },
+ "001120": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "LX International Corp. engages in the trading business in Korea and internationally. It is also involved in business development and investm"
+ },
+ "011210": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Hyundai Wia Corporation manufactures and retails auto parts for vehicles, machinery, and industrial machinery worldwide. It offers machine t"
+ },
+ "001800": {
+  "industry": "Confectioners",
+  "sector": "Consumer Defensive",
+  "summary": "ORION Holdings Corp. manufactures and sells confectioneries in South Korea, China, and internationally. The company operates through Confect"
+ },
+ "006280": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "GC Biopharma Corp., a biopharmaceutical company, develops and sells pharmaceutical drugs in South Korea, India, Taiwan, Japan, China, Malays"
+ },
+ "322000": {
+  "industry": "Solar",
+  "sector": "Technology",
+  "summary": "HD Hyundai Energy Solutions Co.,Ltd. provides solar cells and modules. It offers monofacial, bifacial, and shingled PV modules; transformer-"
+ },
+ "229640": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "LS Eco Energy Ltd. manufactures and sells cables for the electricity boards and news agencies worldwide. It offers overhead wires; LV/MV and"
+ },
+ "001430": {
+  "industry": "Steel",
+  "sector": "Basic Materials",
+  "summary": "SeAH Besteel Holdings Corporation manufactures and sells special steel products in South Korea, the rest of Asia, South America, North Ameri"
+ },
+ "298020": {
+  "industry": "Textile Manufacturing",
+  "sector": "Consumer Cyclical",
+  "summary": "Hyosung TNC Corporation manufactures and sells fiber in South Korea and internationally. It offers spandex, nylon, and polyester. The compan"
+ },
+ "097230": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "HJ Shipbuilding & Construction Co., Ltd. engages in the construction and shipbuilding business in South Korea. The company offers architectu"
+ },
+ "009155": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Samsung Electro-Mechanics Co., Ltd. manufactures and sells various electronic components in Korea, China, Southeast Asia, Japan, the America"
+ },
+ "001820": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "SAMWHA CAPACITOR Co.,LTD engages in the manufacture and sale of capacitors in South Korea. It offers multi-layer ceramic capacitors for gene"
+ },
+ "093370": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Foosung Co., Ltd., together with its subsidiaries, engages in the manufacture and sale of chemical products for automotive, iron and steel, "
+ },
+ "00680K": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Mirae Asset Securities Co., Ltd. engages in the provision of various financial services in South Korea and internationally. It operates thro"
+ },
+ "361610": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "SK IE Technology Co., Ltd., together with its subsidiaries, engages in manufacturing and selling of battery materials in South Korea, Asia, "
+ },
+ "281820": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "KCTech Co., Ltd. engages in the manufacture and distribution of semiconductor systems, display systems, and electronic materials in South Ko"
+ },
+ "005070": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Cosmo Advanced Materials & Technology Co., Ltd. provides secondary battery cathode active materials in South Korea and internationally. The "
+ },
+ "007310": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "Otoki Corporation produces and sells various food products in South Korea. It offers ramens, curries/jjajang/hash/soups, ketchups/mayonnaise"
+ },
+ "280360": {
+  "industry": "Confectioners",
+  "sector": "Consumer Defensive",
+  "summary": "Lotte Wellfood Co.,Ltd engages in the manufacture and sale of various confectionery products in South Korea and internationally. Its product"
+ },
+ "415640": {
+  "industry": "Asset Management",
+  "sector": "Financial Services"
+ },
+ "069620": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Daewoong Pharmaceutical Co., Ltd. develops, manufactures and commercializes pharmaceutical products in South Korea and internationally. It o"
+ },
+ "003540": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Daishin Securities Co.,Ltd operates as a financial investment company in Korea and internationally. It engages in dealing, brokerage, underw"
+ },
+ "001740": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "SK Networks Company Limited, together with its subsidiaries, engages in the import, export, and sale of information and communication device"
+ },
+ "000815": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "Samsung Fire & Marine Insurance Co., Ltd., together with its subsidiaries, provides non-life insurance products and services in South Korea,"
+ },
+ "192080": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "DoubleUGames Co., Ltd. develops and services mobile games worldwide. It offers DoubleDown Casino; DoubleU Casino, a social casino game; Take"
+ },
+ "007810": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Korea Circuit Co., Ltd. engages in the production and sale of printed circuit boards worldwide. Its products include high density interconne"
+ },
+ "066575": {
+  "industry": "Consumer Electronics",
+  "sector": "Technology",
+  "summary": "LG Electronics Inc., together with its subsidiaries, manufactures and sells consumer and commercial products in South Korea and internationa"
+ },
+ "300720": {
+  "industry": "Building Materials",
+  "sector": "Basic Materials",
+  "summary": "Hanil Cement Co., Ltd. operates as a cement company in South Korea. The company manufactures and sells cement and ready-mix concrete. It als"
+ },
+ "004000": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "LOTTE Fine Chemical Co., Ltd. manufactures and sells chemical products in South Korea, the rest of Asia, North America, Europe, and internat"
+ },
+ "030610": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Kyobo Securities Co., Ltd., a securities company, engages in trading, brokerage, agency, and underwriting of listed securities businesses in"
+ },
+ "000210": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "DL Holdings CO., LTD., through its subsidiaries, engages in the research and development, manufacture, wholesale, retail, and distribution o"
+ },
+ "330590": {
+  "industry": "REIT - Retail",
+  "sector": "Real Estate",
+  "summary": "LOTTE REIT Co., Ltd. offers real estate development services. The company was incorporated in 2019 and is based in Seoul, South Korea."
+ },
+ "017960": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Hankuk Carbon Co., Ltd. produces and sells carbon fiber, synthetic resin, and glass paper related products in South Korea. The company offer"
+ },
+ "000080": {
+  "industry": "Beverages - Wineries & Distilleries",
+  "sector": "Consumer Defensive",
+  "summary": "HITEJINRO Co., Ltd. manufactures and sells alcoholic beverages in South Korea. It provides beer, soju, bottled water, and other products. Th"
+ },
+ "006340": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Daewon Cable. Co., Ltd., together with its subsidiaries, manufactures and sells cables and wires in South Korea and internationally. The com"
+ },
+ "003530": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Hanwha Investment & Securities Co., Ltd. provides financial and asset management services in South Korea. The company engages in the trading"
+ },
+ "003240": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Taekwang Industrial Co., Ltd. engages in the petrochemical, synthetic fiber, textile, and advanced material businesses in South Korea and in"
+ },
+ "006120": {
+  "industry": "Oil & Gas Refining & Marketing",
+  "sector": "Energy",
+  "summary": "SK Discovery Co., Ltd., through its subsidiaries, engages in environmental friendly materials, vaccines/pharmaceuticals, energy/chemicals, a"
+ },
+ "077970": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "STX Engine Co.,Ltd. manufactures and sells diesel engines and electronic communication devices in South Korea. The company operates through "
+ },
+ "192400": {
+  "industry": "Furnishings, Fixtures & Appliances",
+  "sector": "Consumer Cyclical",
+  "summary": "Cuckoo Holdings Co., Ltd., together with its subsidiaries, manufactures and sells electric heaters and daily necessities in South Korea and "
+ },
+ "000370": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "Hanwha General Insurance Co., Ltd. provides insurance services in South Korea. The company offers long-term insurance, including injury, dis"
+ },
+ "003090": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Daewoong Co., Ltd., together with its subsidiaries, engages in the manufacture and sale of pharmaceuticals in South Korea. It is also involv"
+ },
+ "451800": {
+  "industry": "REIT - Office",
+  "sector": "Real Estate",
+  "summary": "Hanwha REIT Co., Ltd. engages in acquisition, management, development, leasing, and other related services for real estate properties. The c"
+ },
+ "032350": {
+  "industry": "Resorts & Casinos",
+  "sector": "Consumer Cyclical",
+  "summary": "Lotte Tour Development Co., Ltd., together with its subsidiaries, engages in the provision of travel and tourism services in South Korea. It"
+ },
+ "003570": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Snt Dynamics Co.,Ltd. manufactures and sells precision machinery. It offers defense products, including powertrains, guns and artillery syst"
+ },
+ "051915": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "LG Chem, Ltd., together with its subsidiaries, operates as a chemical company in Korea, China, Asia/Oceania, the United States, Europe, and "
+ },
+ "030190": {
+  "industry": "Credit Services",
+  "sector": "Financial Services",
+  "summary": "NICE Information Service Co., Ltd. provides credit evaluation, credit inquiries, credit investigations, and debt collection services in Sout"
+ },
+ "285130": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "SK Chemicals Co.,Ltd provides chemicals and life sciences products and solutions in South Korea, China, Japan, Asia, the United States, Euro"
+ },
+ "009240": {
+  "industry": "Furnishings, Fixtures & Appliances",
+  "sector": "Consumer Cyclical",
+  "summary": "Hanssem Co., Ltd., together with its subsidiaries, operates as a home interior company in South Korea, Japan, and China. The company offers "
+ },
+ "185750": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Chong Kun Dang Pharmaceutical Corp. manufactures, markets, and sells medicines in South Korea and internationally. It offers prescription dr"
+ },
+ "003470": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Yuanta Securities Korea Co., Ltd. provides various financial services in South Korea and internationally. The company offers various investm"
+ },
+ "034230": {
+  "industry": "Resorts & Casinos",
+  "sector": "Consumer Cyclical",
+  "summary": "Paradise Co., Ltd. engages in casino business in South Korea, the United States, and Japan. The company operates Walkerhill, Maison Glad, an"
+ },
+ "005300": {
+  "industry": "Beverages - Non-Alcoholic",
+  "sector": "Consumer Defensive",
+  "summary": "Lotte Chilsung Beverage Co., Ltd. manufactures and sells soft drinks, liquor, fruit/vegetable drinks, grain drinks, and food and other bever"
+ },
+ "006110": {
+  "industry": "Aluminum",
+  "sector": "Basic Materials",
+  "summary": "Sam-A Aluminium Company, Limited produces and manufacture and sell aluminum foil, laminated aluminum foil, and other processed products in S"
+ },
+ "079160": {
+  "industry": "Entertainment",
+  "sector": "Communication Services",
+  "summary": "CJ CGV Co., Ltd. engages in the operation of theaters in South Korea. The company operates The Private Cinema, a private theater; Suite Cine"
+ },
+ "009450": {
+  "industry": "Building Products & Equipment",
+  "sector": "Industrials",
+  "summary": "Kyung Dong Navien Co., Ltd. manufactures and sells machinery and heat combustion equipment in South Korea. The company offers gas, oil, and "
+ },
+ "005090": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "SGC Energy Co.,Ltd. produces and sells electricity in South Korea. The company generates electricity through boilers, turbines and generator"
+ },
+ "071055": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Korea Investment Holdings Co., Ltd., through its subsidiaries, provides various financial products and services. The company offers securiti"
+ },
+ "071320": {
+  "industry": "Utilities - Renewable",
+  "sector": "Utilities",
+  "summary": "Korea District Heating Corp. engages in the district cooling and heating businesses in South Korea. It is also involved in the community ene"
+ },
+ "004490": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Sebang Global Battery Co., Ltd., together with its subsidiaries, manufactures and sells lead acid batteries in South Korea and international"
+ },
+ "195870": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "HAESUNG DS Co., Ltd. manufactures and sells semiconductor components in South Korea and internationally. The company offers lead frames for "
+ },
+ "003160": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "D.I Corporation manufactures and supplies semiconductor inspection equipment in South Korea and internationally. It offers burn-in systems a"
+ },
+ "005180": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "Binggrae Co., Ltd. engages in the production and sale of dairy products in South Korea and internationally. The company offers ice cream, mi"
+ },
+ "003850": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Boryung Corporation engages in the manufacture and sale of pharmaceutical products in South Korea and internationally. It offers prescriptio"
+ },
+ "499790": {
+  "industry": "Lodging",
+  "sector": "Consumer Cyclical",
+  "summary": "GS P&L Co., Ltd., through its subsidiaries, operates as a hospitality company in Korea. It operates Parnas Hotel Jeju, a resort-style hotel;"
+ },
+ "365550": {
+  "industry": "REIT - Industrial",
+  "sector": "Real Estate",
+  "summary": "ESR Kendall Square REIT Co., Ltd. operates as a logistics real estate investment trust (REIT) in South Korea. It owns, develops, and operate"
+ },
+ "100840": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "SNT Energy Co., Ltd. operates in the machinery industry. It provides air cooled heat exchangers/air fin coolers for petrochemical plants, oi"
+ },
+ "100090": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "SK oceanplant Co.,Ltd. engages in manufacturing of steel and stainless steel pipe, hull block, and shipbuilding equipment in South Korea. Th"
+ },
+ "036530": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "SNT Holdings Co., Ltd. engages in manufacturing and selling automobile parts and industrial facilities businesses. It offers auto parts, def"
+ },
+ "298050": {
+  "industry": "Textile Manufacturing",
+  "sector": "Consumer Cyclical",
+  "summary": "HS Hyosung Advanced Materials Corporation, together with its subsidiaries, engages in the business of industrial materials in Korea, Asia, E"
+ },
+ "137310": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "SD Biosensor, Inc., together with its subsidiaries, operates as an in-vitro diagnostic company in South Korea, India, Asia, Europe, the Amer"
+ },
+ "214320": {
+  "industry": "Advertising Agencies",
+  "sector": "Communication Services",
+  "summary": "Innocean Worldwide Inc. provides marketing and communications services in the Americas, Europe, Asia, Oceania, the Middle East, and internat"
+ },
+ "456040": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "OCI Company Ltd. engages in the manufacture and sell polysilicon, carbon black, and related products. It offers semiconductor materials, suc"
+ },
+ "064960": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "SNT Motiv Co., Ltd. engages in the production, development, and sale of products for defense and automotive industries in South Korea and in"
+ },
+ "000670": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Young Poong Corporation operates as a non-ferrous metal smelting company in Korea. The company offers high purity zinc ingots that are used "
+ },
+ "017940": {
+  "industry": "Oil & Gas Refining & Marketing",
+  "sector": "Energy",
+  "summary": "E1 Corporation imports, stores, trades, and sells liquefied petroleum gas (LPG) in South Korea. The company transports LPG from oil-producin"
+ },
+ "005690": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Pharmicell Co., Ltd., a biopharmaceutical company, develops and sells autologous drugs in South Korea and internationally. The company opera"
+ },
+ "268280": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Miwon Specialty Chemical Co., Ltd. engages in the manufacture and sales of energy-curing resins in Korea and internationally. The company is"
+ },
+ "005880": {
+  "industry": "Marine Shipping",
+  "sector": "Industrials",
+  "summary": "Korea Line Corporation engages in the provision of merchant carrier services for energy resources in marine transportation industry worldwid"
+ },
+ "069260": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "TKG Huchems Co., Ltd. manufactures and sells fine chemical products in South Korea and internationally. It offers nitric acid, ammonium nitr"
+ },
+ "006650": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Korea Petrochemical Ind. Co., Ltd. engages in the production and supply of petrochemicals in Korea and internationally. It offers olefins, s"
+ },
+ "000400": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "Lotte Non - Life Insurance Co., Ltd. is engaged in non-life insurance and reinsurance and insurance payment in South Korea. The company offe"
+ },
+ "002960": {
+  "industry": "Oil & Gas Refining & Marketing",
+  "sector": "Energy",
+  "summary": "Hankook Shell Oil Co.,Ltd. engages in the manufacture, assembly, distribution, and marketing of lubricants and grease, and other petroleum p"
+ },
+ "093050": {
+  "industry": "Apparel Manufacturing",
+  "sector": "Consumer Cyclical",
+  "summary": "LF Corp. engages in the manufacture and sale of ready-to-wear apparel products in South Korea, China, and internationally. It operates throu"
+ },
+ "293940": {
+  "industry": "REIT - Office",
+  "sector": "Real Estate",
+  "summary": "Founded in December 2017 and listed on the stock market in August 2018, Shinhan Alpha REIT Co., Ltd. is a real estate investment trust compa"
+ },
+ "001680": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "Daesang Corporation, together with its subsidiaries, manufacture seasonings and food additives products in Korea, Asia, the United States, E"
+ },
+ "317450": {
+  "industry": "Drug Manufacturers - General",
+  "sector": "Healthcare",
+  "summary": "Myung In Pharmaceutical LTD., a pharmaceutical company, manufactures ETC and OTC drugs. It offers products in the areas of thrombosis and an"
+ },
+ "090460": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "BH Co., Ltd. manufactures and sells flexible printed circuit boards (FPCB) and its application parts. Its flexible printed circuit boards ar"
+ },
+ "001570": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Kumyang Co., Ltd. manufactures and supplies a range of chemical materials. The company provides secondary cylindrical battery cell; eco-frie"
+ },
+ "014820": {
+  "industry": "Packaging & Containers",
+  "sector": "Consumer Cyclical",
+  "summary": "Dongwon Systems Corporation, a packaging company, manufactures and markets packaging materials in South Korea. The company offers flexible p"
+ },
+ "001060": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "JW Pharmaceutical Corporation manufactures and sells medicines and medical supplies in Japan and internationally. It offers products in the "
+ },
+ "383800": {
+  "industry": "Financial Conglomerates",
+  "sector": "Financial Services",
+  "summary": "LX Holdings Corp., through its subsidiaries, provides various solutions for materials, components, and services in South Korea. The company "
+ },
+ "248070": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Solum Co., Ltd. manufactures and markets power modules, digital tuners, and electronic shelf labels to customers in South Korea and internat"
+ },
+ "453340": {
+  "industry": "Specialty Business Services",
+  "sector": "Industrials",
+  "summary": "Hyundai Green Food Co., Ltd operates as a food company in South Korea and internationally. It operates through Food Ingredients Division, Fo"
+ },
+ "000640": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Dong-A Socio Holdings Co., Ltd., together with its subsidiaries, engages in the pharmaceutical business in South Korea. It operates through "
+ },
+ "002840": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Miwon Commercial Co., Ltd. manufactures and markets various chemical products in South Korea and internationally. The company offers persona"
+ },
+ "079900": {
+  "industry": "Farm & Heavy Construction Machinery",
+  "sector": "Industrials",
+  "summary": "Junjin Construction & Robot Co.,Ltd. manufactures and sells construction equipment in South Korea and internationally. It offers constructio"
+ },
+ "336370": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Solus Advanced Materials Co., Ltd. provides material solutions in South Korea and internationally. It offers battery copper foil for use in "
+ },
+ "00088K": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "Hanwha Corporation engages in the manufacture and sale of explosives and industrial machinery, trading, and general construction businesses."
+ },
+ "075580": {
+  "industry": "Marine Shipping",
+  "sector": "Industrials",
+  "summary": "Sejin Heavy Industries Co., Ltd. manufactures and sells shipbuilding equipment in South Korea. It offers deck houses, upper deck units, LPG/"
+ },
+ "033240": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Jahwa Electronics. Co., Ltd manufactures and sells precision electronic components in South Korea and internationally. The company offers BL"
+ },
+ "108320": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "LX Semicon Co., Ltd. operates as a semiconductor company in South Korea, China, Vietnam, Taiwan, Japan, and internationally. The company off"
+ },
+ "025540": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Korea Electric Terminal Co., Ltd. manufactures and sells parts for automotive and electronics in South Korea and internationally. It provide"
+ },
+ "114090": {
+  "industry": "Resorts & Casinos",
+  "sector": "Consumer Cyclical",
+  "summary": "Grand Korea Leisure Co., Ltd. operates as a casino company in South Korea. It also engages in tourism business. It serves under the Seven Lu"
+ },
+ "058650": {
+  "industry": "Steel",
+  "sector": "Basic Materials",
+  "summary": "SeAH Holdings Corporation, together with its subsidiaries, engages in the steel materials business in South Korea and internationally. The c"
+ },
+ "002350": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Nexen Tire Corporation manufactures and sells tires in South Korea and internationally. The company offers passenger car, SUV, electric vehi"
+ },
+ "016380": {
+  "industry": "Steel",
+  "sector": "Basic Materials",
+  "summary": "KG Dongbu Steel Co.,Ltd. produces and sells steel products in South Korea. The company offers cold-rolled steel, galva- annealed, galvanized"
+ },
+ "001510": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "SK Securities Co., Ltd., a financial investment company, provides various financial services. It operates through Consignment trading, IB, P"
+ },
+ "003300": {
+  "industry": "Building Materials",
+  "sector": "Basic Materials",
+  "summary": "Hanil Holdings Co., Ltd., together with its subsidiaries, manufactures and sells construction materials in South Korea. It offers pavement, "
+ },
+ "178920": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "PI Advanced Materials Co., Ltd. engages in the manufacture and sale of polyimide-based materials in South Korea. It offers PI film, and PI v"
+ },
+ "002990": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "KUMHO Engineering & Construction Co., Ltd. provides construction and engineering services in South Korea and internationally. It is involved"
+ },
+ "001530": {
+  "industry": "Textile Manufacturing",
+  "sector": "Consumer Cyclical",
+  "summary": "Di Dong Il Corporation manufactures textile products in South Korea and internationally. The company also offers aluminum foil for secondary"
+ },
+ "007700": {
+  "industry": "Apparel Manufacturing",
+  "sector": "Consumer Cyclical",
+  "summary": "F&F Holdings Co., Ltd., through its subsidiaries, operates in the fashion industry. The company engages in the manufacturing and sale of clo"
+ },
+ "003620": {
+  "industry": "Auto Manufacturers",
+  "sector": "Consumer Cyclical",
+  "summary": "KG Mobility Corp. manufactures and sells automobiles and parts in the South Korea and internationally. The company offers a range of SUVs un"
+ },
+ "005810": {
+  "industry": "Copper",
+  "sector": "Basic Materials",
+  "summary": "Poongsan Holdings Corporation manufactures and sells copper and nonferrous metal products worldwide. It offers fabricated non-ferrous materi"
+ },
+ "00104K": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "CJ Corporation engages in the food and food services, bio, logistics and retail, and entertainment and media businesses worldwide. It manufa"
+ },
+ "0220W0": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "Hanwha Machinery & Service Holdings Co., Ltd. is based in South Korea. Hanwha Machinery & Service Holdings Co., Ltd. operates as a subsidiar"
+ },
+ "019170": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Shinpoong Pharmaceutical Co.,Ltd, together with its subsidiaries, manufactures and sells pharmaceutical products in South Korea. The company"
+ },
+ "452260": {
+  "industry": "Department Stores",
+  "sector": "Consumer Cyclical",
+  "summary": "Hanwha Galleria Corporation operates luxury department stores in South Korea. It operates department stores under the Gwanggyo store, Luxury"
+ },
+ "001270": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "BOOKOOK Securities Co., Ltd. provides retail and institutional brokerage services in South Korea. It also offers financial product sales, co"
+ },
+ "284740": {
+  "industry": "Rental & Leasing Services",
+  "sector": "Industrials",
+  "summary": "CUCKOO Homesys Co., Ltd. engages in the manufacture, sale, and rental of home appliances in South Korea and internationally. The company off"
+ },
+ "039130": {
+  "industry": "Travel Services",
+  "sector": "Consumer Cyclical",
+  "summary": "Hanatour Service Inc. engages in the provision of travel and related services in South Korea, Northeast and Southeast Asia, the United State"
+ },
+ "460860": {
+  "industry": "Steel",
+  "sector": "Basic Materials",
+  "summary": "Dongkuk Steel Mill Company Limited engages in the steel products. It offers reinforcing bars, sections, and steel plates, as well as involve"
+ },
+ "161000": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Aekyungchemical Co., Ltd. operates as a general chemical company. The company provides general-purpose, and functional and eco-friendly plas"
+ },
+ "009410": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "Taeyoung Engineering & Construction Co.,Ltd. engages in the construction business. The company undertakes the construction of urban developm"
+ },
+ "003545": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "Daishin Securities Co.,Ltd operates as a financial investment company in Korea and internationally. It engages in dealing, brokerage, underw"
+ },
+ "196170": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "ALTEOGEN Inc., a bio company, focuses on developing long-acting biobetters, proprietary antibody-drug conjugates, and antibody biosimilars. "
+ },
+ "247540": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "EcoPro BM Co., Ltd. manufactures and sells cathode materials used in batteries in the United States, Korea, Japan, China, Hungary, Malaysia,"
+ },
+ "277810": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Rainbow Robotics Co.,Ltd., a professional technological mechatronics company, provides robotic system engineering technology. It manufacture"
+ },
+ "039030": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "EO Technics Co., Ltd. manufactures and supplies laser processing equipment worldwide. The company offers semiconductor products comprising s"
+ },
+ "240810": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Wonik IPS Co., Ltd. researches and develops, manufactures, sells, and installs semiconductor, display, and solar cell systems in South Korea"
+ },
+ "058470": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "LEENO Industrial Inc. manufactures and sells critical testing components for IC production, test, and analysis worldwide. It offers system l"
+ },
+ "222800": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "SIMMTECH Co., Ltd. engages in the developing and manufacturing of high-layer printed circuit boards (PCBs) for semiconductors worldwide. The"
+ },
+ "108490": {
+  "industry": "Computer Hardware",
+  "sector": "Technology",
+  "summary": "ROBOTIS Co., Ltd. provides robotic solutions in South Korea. It provides autonomous indoor robot that offers small goods delivery to residen"
+ },
+ "403870": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "HPSP Co., Ltd. manufactures and sells high pressure annealing semiconductor equipment for the semiconductor industry in South Korea. It offe"
+ },
+ "028300": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "HLB Co., Ltd. manufactures and constructs lifeboats and glass fiber pipes in South Korea and internationally. It engages in the repair and i"
+ },
+ "298380": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "ABL Bio Inc., a biotech research company, focuses on the development of therapeutic drugs for immuno-oncology and neurodegenerative diseases"
+ },
+ "319660": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "PSK Inc. develops, manufactures, and sells semiconductor processing equipment worldwide. The company offers dry strip, selective material re"
+ },
+ "214450": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "PharmaResearch Co., Ltd., together with its subsidiaries, operates as a biopharmaceutical company primarily in South Korea. The company offe"
+ },
+ "440110": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "FADU Inc., a fabless semiconductor company, develops and manufactures flash controller architecture for solid-state drives (SSD). Its produc"
+ },
+ "141080": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "LigaChem Biosciences Inc., a clinical stage biopharmaceutical company, engages in the discovery and development of medicines for unmet medic"
+ },
+ "145020": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Hugel, Inc. develops and manufactures biopharmaceuticals in South Korea and internationally. The company offers Botulinum Toxin, a white inj"
+ },
+ "257720": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "SILICON2 Co., Ltd. engages in the distribution of cosmetics products worldwide. The company offers logistics agency services for direct to c"
+ },
+ "310210": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Voronoi, Inc. researches, develops, and discovers small molecule kinase inhibitors in South Korea. Its products pipeline includes VRN01, an "
+ },
+ "357780": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Soulbrain Co., Ltd. develops, manufactures, and supplies various high tech industry core materials. It provides semiconductor materials, inc"
+ },
+ "319400": {
+  "industry": "Shell Companies",
+  "sector": "Financial Services",
+  "summary": "HYUNDAI MOVEX Co., Ltd. operates in the information technology (IT) and logistics system businesses in South Korea and internationally. It o"
+ },
+ "226950": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "OliX Pharmaceuticals, Inc., a clinical stage pharmaceutical company, focuses on developing RNA interference (RNAi) therapeutics for dermal, "
+ },
+ "178320": {
+  "industry": "Communication Equipment",
+  "sector": "Technology",
+  "summary": "Seojin System Co.,Ltd provides telecom equipment, repeaters, mechanical products, and LED and other equipment. The company offers telecommun"
+ },
+ "263750": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "Pearl Abyss Corp. engages in development and supply of games services. It is involved  in game publishing; the provision of server, line and"
+ },
+ "010170": {
+  "industry": "Communication Equipment",
+  "sector": "Technology",
+  "summary": "Taihan Fiber Optics Co., Ltd researches, develops, and produces optical materials in South Korea and internationally. The company offers opt"
+ },
+ "347850": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "D&D Pharmatech Inc. engages in the research and development and manufacturing of pharmaceuticals in South Korea. It develops oral peptides, "
+ },
+ "214150": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "CLASSYS Inc. provides medical aesthetics devices worldwide. The company offers ULTRAFORMER MPT, a solution for eyebrow lifting; ULTRAFORMER "
+ },
+ "005290": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Dongjin Semichem Co., Ltd. manufactures and supplies electronic materials and foaming agents. It offers azodicarbonamide, hydrazide, and UNI"
+ },
+ "041510": {
+  "industry": "Entertainment",
+  "sector": "Communication Services",
+  "summary": "SM Entertainment Co., Ltd. engages in music/sound production, talent management, and music/audio content publication activities in South Kor"
+ },
+ "098460": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Koh Young Technology Inc. engages in the manufacturing and sale of automated inspection and precise measurement systems and equipment in Sou"
+ },
+ "140860": {
+  "industry": "Scientific & Technical Instruments",
+  "sector": "Technology",
+  "summary": "Park Systems Corp. develops, manufactures, and sells atomic force microscopy (AFM) systems worldwide. It provides AFM for research and surfa"
+ },
+ "068760": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Celltrion Pharm, Inc., a pharmaceutical company, develops and sells biosimilars and over-the-counter drugs in South Korea. The company offer"
+ },
+ "030530": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Wonik Holdings Co.,Ltd. manufactures and sells semiconductor and electronic equipment, and other products. The company provides gas supply s"
+ },
+ "089030": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Techwing, Inc., together with its subsidiaries, develops, manufactures, sells, and services semiconductor inspection equipment in South Kore"
+ },
+ "096530": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Seegene, Inc. manufactures and sells molecular diagnostics products worldwide. It offers IVD products comprising respiratory disease detecti"
+ },
+ "0009K0": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Aimed Bio Inc. develops therapeutic solutions for patients with brain diseases, including neuro-oncological and degenerative diseases. Its m"
+ },
+ "323280": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Taesung Co.,Ltd. develops, manufactures, and sells PCB automation equipment in South Korea and internationally. The company offers 9-axis, 0"
+ },
+ "183300": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "KoMiCo Ltd. provides semiconductor equipment cleaning and coating products in South Korea, the United States, China, Taiwan, and Singapore. "
+ },
+ "035900": {
+  "industry": "Entertainment",
+  "sector": "Communication Services",
+  "summary": "JYP Entertainment Corporation operates as an entertainment company in South Korea and internationally. The company produces and sells albums"
+ },
+ "241710": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "Cosmecca Korea Co., Ltd. engages in the research and development, manufacture, and sale of skincare products in South Korea and internationa"
+ },
+ "437730": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "Samhyun Co., Ltd. engages in the manufacture and sale of parts and accessories for motor vehicles. It offers smart actuators for the electri"
+ },
+ "204270": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "JNTC Co., Ltd. manufactures and sells mobile device components, specializing in tempered glass and connectors in South Korea. The company of"
+ },
+ "003380": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "Harim Holdings Co., Ltd., together with its subsidiaries, engages in the food and daily services management business. The company produces v"
+ },
+ "089970": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "VM Inc. manufactures and sells dry etcher systems that are used for semiconductor production process in South Korea and internationally. The"
+ },
+ "290650": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "L&C BIO Co.,LTD operates as a research and development company in tissue regeneration medicine. The company offers pharmaceuticals, human ti"
+ },
+ "420770": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "GigaVis Co., Ltd. researches, develops, and supplies vision inspection systems in South Korea and internationally. It offers verify repair s"
+ },
+ "127120": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "JS Link, Inc., a genome-based biotechnology company, focuses on the research and development of genome analysis services in South Korea and "
+ },
+ "036540": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "SFA Semicon Co., Ltd. provides semiconductors in Korea. The company offers packaging products, such as fan out wafer level packages, chip on"
+ },
+ "195940": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "HK inno.N Corporation engages in the pharmaceutical business in South Korea. The company offers prescription drugs for the treatment of gram"
+ },
+ "475830": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Orum Therapeutics, Inc., a biopharmaceutical company, engages in the research and development of pharmaceuticals for cancer and immune disea"
+ },
+ "347700": {
+  "industry": "Health Information Services",
+  "sector": "Healthcare",
+  "summary": "Sphere Corp. provides digital healthcare technology, and life care products and services. It develops LifeRecord, a commercial personal heal"
+ },
+ "166090": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Hana Materials Inc. manufactures and sells silicon electrodes and rings in South Korea. The company offers silicon ceramic parts, ingots, an"
+ },
+ "293490": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "Kakao Games Corp. operates a mobile and PC online game service platform for gamers worldwide. The company develops and publishes various gen"
+ },
+ "252990": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "SEMCNS Co., Ltd. provides ceramic substrates for probe cards. It offers space transformers used in RF modules, electronic devices, semicondu"
+ },
+ "232140": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "YC Corporation engages in the development, manufacture, and sale of inspection equipment for semiconductor memories in South Korea and inter"
+ },
+ "458870": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "SEERS Co., Ltd. engages in the development, manufacturing, and sales of medical devices in South Korea. It offers wearable biosensor, electr"
+ },
+ "014620": {
+  "industry": "Metal Fabrication",
+  "sector": "Industrials",
+  "summary": "Sung Kwang Bend Co.,Ltd. engages in the manufacture and sale of pipe fittings in South Korea and internationally. The company offers elbows,"
+ },
+ "356860": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "TLB Co., Ltd. manufactures and sells printed circuit boards (PCBs) in South Korea, China, rest of Asia, and the United States. It provides S"
+ },
+ "056190": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "SFA Engineering Corporation manufactures and sells display equipment, logistics systems, secondary battery, semiconductor equipment, materia"
+ },
+ "036830": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Soulbrain Holdings Co., Ltd. develops, manufactures, and supplies technology industry core materials for semiconductor, display, and seconda"
+ },
+ "065350": {
+  "industry": "Furnishings, Fixtures & Appliances",
+  "sector": "Consumer Cyclical",
+  "summary": "Shinsung Delta Tech Co.,Ltd., together with its subsidiaries, manufactures and sells household electronic components, plastic molded product"
+ },
+ "119850": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "GnCenergy Co., Ltd engages in the manufacture and sale of power generators in Korea. The company offers power generators, including diesel p"
+ },
+ "491000": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "Livsmed Inc. engages in the research, development, manufacture, exports, and import of electro-diagnostic and electro-therapeutic apparatuse"
+ },
+ "115180": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Qurient Co., Ltd., a biotech company, engages in the research and development of drugs to address unmet medical needs in Korea and internati"
+ },
+ "031330": {
+  "industry": "Electronics & Computer Distribution",
+  "sector": "Technology",
+  "summary": "SAMT Co., Ltd. operates as an IT marketing company in South Korea and internationally. It offers electronic semiconductor solutions, includi"
+ },
+ "122870": {
+  "industry": "Entertainment",
+  "sector": "Communication Services",
+  "summary": "YG Entertainment Inc. operates as an entertainment company in South Korea, Japan, and internationally. The company engages in planning, prod"
+ },
+ "044490": {
+  "industry": "Metal Fabrication",
+  "sector": "Industrials",
+  "summary": "Taewoong Co.,Ltd manufactures and sells open-die forgings and ring rolled products in South Korea and internationally. The company offers st"
+ },
+ "327260": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "RF Materials Co., Ltd. develops, produces, and sells optical communication packages in Korea and internationally. It offers packages for RF "
+ },
+ "032190": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "Daou Data Corp. provides IT and online/offline payment infrastructure services in South Korea and internationally. It offers KIWOOM pay VAN "
+ },
+ "035760": {
+  "industry": "Entertainment",
+  "sector": "Communication Services",
+  "summary": "CJ ENM CO., Ltd., together with its subsidiaries, engages in media platform, film/drama, music, and commerce businesses in South Korea. The "
+ },
+ "225570": {
+  "industry": "Electronic Gaming & Multimedia",
+  "sector": "Communication Services",
+  "summary": "NEXON Games Co., Ltd. operates as a game developer in South Korea and internationally. The company develops games software in various platfo"
+ },
+ "213420": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Duk San Neolux Co.,Ltd develops and manufactures OLED materials for display industry in South Korea. It offers ETL, EIL, red host, CPL, HTL,"
+ },
+ "417200": {
+  "industry": "Electrical Equipment & Parts",
+  "sector": "Industrials",
+  "summary": "LS materials.,Ltd. provides energy storage devices in South Korea and internationally. The company offers cells and modules. It serves power"
+ },
+ "950260": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Ingenia Therapeutics Inc. operates as a clinical-stage antibody biopharmaceutical company that discovers and develops biopharmaceutical cand"
+ },
+ "090360": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Robostar Co., Ltd. manufactures and sells motion robots in South Korea and internationally. It provides robotic products and solutions. The "
+ },
+ "038500": {
+  "industry": "Building Materials",
+  "sector": "Basic Materials",
+  "summary": "SAMPYO Cement Co., Ltd. engages in the manufacture and distribution of cement in South Korea. The company offers Portland cement, blast furn"
+ },
+ "161580": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Philoptics Co., Ltd., together with its subsidiaries, manufactures and sells OLED display laser processing equipment in South Korea and inte"
+ },
+ "033100": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Cheryong Electric Co.,Ltd. manufactures and sells power electric equipment in South Korea. It offers transformers, such as amorphous, solid "
+ },
+ "085660": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Chabiotech Co.,Ltd., a bio company, develops cell and gene therapy related to stem and immune cells in South Korea and internationally. The "
+ },
+ "124500": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "ITCENGLOBAL CO., Ltd. engages in the provision of consulting, ICT, and outsourcing services and solutions in South Korea. It offers rental; "
+ },
+ "476830": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Rznomics Inc. develops RNA based gene therapies for cancers and intractable diseases. Its development stage product candidates include RZ-00"
+ },
+ "466100": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "CLOBOT Co., Ltd operates as a robotics integration company in Korea. It develops CHAMELEON software for general-purpose autonomous robots; f"
+ },
+ "006730": {
+  "industry": "Lodging",
+  "sector": "Consumer Cyclical",
+  "summary": "Seobu T&D Co., Ltd. engages in the tourist hotel business in South Korea. It is also involved in the new business, complex shopping mall bus"
+ },
+ "281740": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Lake Materials Co., Ltd. develops and manufactures organometallic compounds that are used as materials for semiconductors, displays, solar a"
+ },
+ "137400": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "People & Technology Inc. offers coating, calendaring, slitting, automation, and other machineries. The company's products include electrode,"
+ },
+ "388210": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "CMTX Co.,Ltd. manufactures semiconductor equipment materials and parts. The company offers silicon parts, sapphire parts, porous parts, cera"
+ },
+ "425420": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Tfe Inc. engages in the manufacture and sale of semiconductor IC testing equipment in South Korea and internationally. It offers memory and "
+ },
+ "074600": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Wonik QnC Corporation manufactures and sells quartz and ceramic wares used in the production of semiconductor wafers in Korea, Taiwan, the U"
+ },
+ "059090": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "MiCo Ltd., an engineering company, produces and sells ceramic materials and components in South Korea and internationally. The company offer"
+ },
+ "476060": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "Onconic Therapeutics Inc. engages in the research and development of anti-cancer therapy in South Korea. It develops Zastaprazan (OCN-101), "
+ },
+ "171090": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "SUNIC SYSTEM Co., Ltd. manufactures and sells OLED deposition equipment and semiconductor vacuum equipment in Korea. It offers OLED equipmen"
+ },
+ "053800": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "AhnLab, Inc. provides information security solutions and services for consumers, enterprises, and small and medium businesses worldwide. It "
+ },
+ "251970": {
+  "industry": "Packaging & Containers",
+  "sector": "Consumer Cyclical",
+  "summary": "Pum-Tech Korea Co., Ltd engages in the manufacture and sale of plastic containers in South Korea and internationally. The company offers var"
+ },
+ "032500": {
+  "industry": "Communication Equipment",
+  "sector": "Technology",
+  "summary": "Kmw Inc. develops and produces equipment, and parts and components for mobile communication base stations. Its products include filters, suc"
+ },
+ "122640": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "YEST Co., Ltd. engages in the manufacture and sale of semiconductors and display manufacturing equipment in Korea and internationally. The c"
+ },
+ "048410": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Hyundai Bioscience Co., Ltd. operates as a biotechnology company. The company provides Vitabrid C12, a vitamin C product that delivers activ"
+ },
+ "253450": {
+  "industry": "Entertainment",
+  "sector": "Communication Services",
+  "summary": "Studio Dragon Corporation, a drama studio, produces and provides drama contents worldwide. The company was founded in 2016 and is headquarte"
+ },
+ "160190": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "HIGEN Motor Co., Ltd. manufactures and sells industrial motors in South Korea. It offers low voltage and high voltage motors, servo drives a"
+ },
+ "033790": {
+  "industry": "Communication Equipment",
+  "sector": "Technology",
+  "summary": "Fino Inc. operates as an information and communication, and game development company in South Korea and internationally. The company offers "
+ },
+ "064290": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "INTEKPLUS Co., Ltd. develops and supplies semiconductor packages and visual inspection equipment. It offers surface inspection solutions in "
+ },
+ "328130": {
+  "industry": "Health Information Services",
+  "sector": "Healthcare",
+  "summary": "Lunit Inc. provides AI-powered software and solutions for cancer diagnostics and therapeutics in South Korea. It offers AI solution for ches"
+ },
+ "295310": {
+  "industry": "Other Industrial Metals & Mining",
+  "sector": "Basic Materials",
+  "summary": "Hvm, Co.,Ltd. produces and sells special metals in Korea. The company offers special nickel alloy for use in parts of aircraft, turbines for"
+ },
+ "222080": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "SFA NEXEL Co., Ltd. manufactures and sells equipment for lithium-ion batteries powering IT instruments, EV lithium-ion batteries, fuel cells"
+ },
+ "060250": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "NHN KCP Corp. develops and provides electronic payment services, and related software and solutions in South Korea. The company offers onlin"
+ },
+ "121600": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Advanced Nano Products Co., Ltd. engages in the manufacturing materials used in thin-film solar cells, display panels, and semiconductor CMP"
+ },
+ "046890": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Seoul Semiconductor Co., Ltd. manufactures and sells light emitting diodes (LEDs) products worldwide. The company offers high and mid power "
+ },
+ "094170": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Dongwoon Anatech Co., Ltd. manufactures and sells analog semiconductors in South Korea, China, Taiwan, Japan, and internationally. The compa"
+ },
+ "036810": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Fine Semitech Corp. develops and supplies products to semiconductor and FPD industries in South Korea and internationally. It operates throu"
+ },
+ "053610": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Protec Co., Ltd. manufactures and sells semiconductor packaging equipment and automated pneumatic parts in South Korea. The company provides"
+ },
+ "456160": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "G2GBIO Inc., a clinical-stage biotech company, provides pharmaceutical products. The company's pipeline products include GB-5001, GB-5001A, "
+ },
+ "376900": {
+  "industry": "Medical Care Facilities",
+  "sector": "Healthcare",
+  "summary": "ROKIT Healthcare Inc., a biotechnology company, provides hyper-personalized organ regenerative healthcare solutions in South Korea. The comp"
+ },
+ "024850": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "HLB innoVation Co.,Ltd. engages in the manufacturing and selling semiconductor components and molds in South Korea and internationally. The "
+ },
+ "187660": {
+  "industry": "Medical Care Facilities",
+  "sector": "Healthcare",
+  "summary": "Penetrium Bioscience Inc., a contract research organization, provides clinical-related professional services for customer requirements in So"
+ },
+ "490470": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "SemiFive Inc. provides silicon solutions and system-on-chip (SoC) design services. The company offers SoC platforms, including AI Inference,"
+ },
+ "211050": {
+  "industry": "Financial Conglomerates",
+  "sector": "Financial Services",
+  "summary": "INCAR FINANCIAL SERVICE Co., Ltd. operates as an independent insurance agency in South Korea. The company offers non-life, life, general, an"
+ },
+ "033640": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Nepes Corporation engages in the semiconductor, chemical, and energy businesses in South Korea. It offers turnkey solutions for flip chip bu"
+ },
+ "052400": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Kona I Co.,Ltd. provides solutions and platforms for the financial technology market in South Korea and internationally. The company offers "
+ },
+ "086900": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Medy-Tox Inc. operates as a biopharmaceutical company in South Korea. It provides botulinum toxin products, including Neuronox, a lyophilize"
+ },
+ "253590": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Neosem Inc. manufactures and sells semiconductor inspection equipment. It offers memory burn-in, SSD, DRAM module, and LED tests; surface pa"
+ },
+ "037460": {
+  "industry": "Communication Equipment",
+  "sector": "Technology",
+  "summary": "Samji Electronics Co., Ltd. manufactures, sells, imports, and exports electronic parts and communication equipment in South Korea and intern"
+ }
+}
