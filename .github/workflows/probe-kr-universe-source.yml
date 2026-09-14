@@ -65,3 +65,14 @@ jobs:
               for it in d["items"][:5]:
                   print("  ", it["symbol"], it["yf_symbol"], it["name"], it["exchange"], it["market_cap"])
           EOF
+
+      # 유니버스 JSON을 아티팩트로 올린다. 프론트 이름맵(krStockNames.ts)을
+      # 새 유니버스 기준으로 재생성하려면 로컬에 이 파일이 필요한데, KRX
+      # 자격증명이 CI에만 있어 로컬에서는 직접 받을 수 없다.
+      - name: Upload universe artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kr-universe-json
+          path: /tmp/kr_universe.json
+          if-no-files-found: warn
