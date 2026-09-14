@@ -118,8 +118,11 @@ def build_prompt(theme: dict, chunk: list[dict], names: dict, profiles: dict,
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--universe", default="data/kr_universe.json")
-    ap.add_argument("--themes", nargs="*", default=list(TARGETS))
+    ap.add_argument("--themes", nargs="*", default=None)
     args = ap.parse_args()
+    # nargs="*"에 빈 값이 오면 []가 되어 default가 적용되지 않는다.
+    # (워크플로에서 --themes 뒤에 아무것도 안 붙는 경우)
+    themes = args.themes or list(TARGETS)
 
     api_key = os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
@@ -144,7 +147,7 @@ def main() -> int:
                 ("C +산업", False, "industry"), ("D +키워드+산업", True, "industry"),
                 ("E +키워드+요약", True, "summary")]
 
-    for tid in args.themes:
+    for tid in themes:
         theme = tmap[tid]
         targets = TARGETS.get(tid, {})
         # 목표 종목이 들어있는 200종목 청크만 실험한다(전체를 돌릴 필요가 없다).
