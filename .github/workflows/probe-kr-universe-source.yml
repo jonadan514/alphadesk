@@ -37,3 +37,31 @@ jobs:
           PROBE_DATE: ${{ inputs.probe_date }}
           PYTHONUNBUFFERED: "1"
         run: python scripts/probe_kr_universe_source.py
+
+      # 격리 환경(B안) 검증: pykrx 1.2.8은 pandas<3.0을 요구하는데 본 저장소는
+      # pandas==3.0.2라, 같은 환경에 두면 pip이 pykrx를 1.0.51까지 조용히
+      # 낮춘다(auth 모듈이 없는 버전). 별도 venv에 깔아 JSON으로만 주고받는다.
+      - name: Probe isolated pykrx fetch
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python -m venv /tmp/krxenv
+          /tmp/krxenv/bin/pip install --quiet "pandas<3.0" "pykrx==1.2.8"
+          echo "--- 격리 환경 버전 ---"
+          /tmp/krxenv/bin/python -c "import pykrx,pandas;print('pykrx',getattr(pykrx,'__version__','?'),'pandas',pandas.__version__)"
+          echo "--- 수집 시도 ---"
+          /tmp/krxenv/bin/python scripts/fetch_kr_universe_pykrx.py --out /tmp/kr_universe.json || echo "EXIT=$?"
+          echo "--- 결과 요약 ---"
+          python - <<'EOF'
+          import json, os
+          p="/tmp/kr_universe.json"
+          if not os.path.exists(p):
+              print("파일 없음 - 수집 실패")
+          else:
+              d=json.load(open(p,encoding="utf-8"))
+              print("count:", d["count"], "base_date:", d["base_date"], "pykrx:", d["pykrx_version"])
+              for it in d["items"][:5]:
+                  print("  ", it["symbol"], it["yf_symbol"], it["name"], it["exchange"], it["market_cap"])
+          EOF
