@@ -26,7 +26,8 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        # pykrx는 requirements.txt에 없고 weekly-watchlist가 별도 설치한다.
+        run: pip install -r requirements.txt pykrx
 
       - name: Probe
         env:

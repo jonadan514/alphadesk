@@ -33,8 +33,9 @@ def _log(msg: str) -> None:
 
 
 def _recent_business_date() -> str:
-    """최근 영업일 추정 - 주말이면 금요일로 물러난다."""
-    d = datetime.now()
+    """직전 영업일 추정. 당일을 쓰지 않는 이유: 장 마감 전에는 그날 시세가
+    아직 없어 0행이 돌아오고, 그것이 '조회 실패'와 구분되지 않는다."""
+    d = datetime.now() - timedelta(days=1)
     while d.weekday() >= 5:
         d -= timedelta(days=1)
     return d.strftime("%Y%m%d")
