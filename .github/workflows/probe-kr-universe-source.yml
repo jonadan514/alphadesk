@@ -1,0 +1,38 @@
+name: Probe KR Universe Source
+
+# KR 유니버스를 어느 소스에서 받을 수 있는지 실측한다.
+# pykrx가 KRX 로그인을 요구하게 되면서(1.2.8) 자격증명 유무에 따라 결과가
+# 달라지므로, 주석에 적힌 추정 대신 실제 결과를 남기기 위한 진단용 워크플로.
+on:
+  workflow_dispatch:
+    inputs:
+      probe_date:
+        description: "조회 기준일 YYYYMMDD (비우면 최근 영업일 추정)"
+        required: false
+        default: ""
+
+jobs:
+  probe:
+    name: Probe KR universe sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Probe
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          DATA_GO_KR_API_KEY: ${{ secrets.DATA_GO_KR_API_KEY }}
+          PROBE_DATE: ${{ inputs.probe_date }}
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/probe_kr_universe_source.py
