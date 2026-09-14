@@ -18,10 +18,10 @@ on:
         required: false
         default: ""
       fetch_universe:
-        # 기본 꺼짐. 켜면 유니버스가 정적 212종목 -> pykrx 전종목(시총 하한
-        # 기준)으로 바뀌는데, 이는 스크리닝 예산(REFRESH_BUDGET)과 테마 매핑
-        # 청크 수에 직접 영향을 주는 큰 변경이라 의도적으로만 켠다.
-        description: "true면 pykrx로 KR 전종목 유니버스를 새로 받는다 (비우면 기존 정적 리스트 사용)"
+        # 기본 켜짐(비우면 실행). 끄려면 명시적으로 false.
+        # 예약 실행에서도 돌아야 한다 - 이 파일이 없으면 get_kr_universe()가
+        # 정적 212종목으로 폴백해 유니버스가 조용히 절반 이하로 줄어든다.
+        description: "false면 pykrx 유니버스 수집을 건너뛴다 (비우면 수집)"
         required: false
         default: ""
       only_screen:
@@ -59,8 +59,18 @@ jobs:
       # 같은 환경에 두면 pip이 에러 대신 pykrx를 1.0.51로 조용히 낮춘다
       # (KRX 로그인 기능이 없는 버전 -> 모든 조회 실패). JSON으로만 주고받는다.
       # 실패해도 스크리닝은 계속된다 - get_kr_universe()가 정적 리스트로 폴백.
+      # 직전 실행의 유니버스 파일을 복원해 둔다. KRX가 일시적으로 실패해도
+      # 정적 212종목으로 떨어지지 않고 지난주 목록(487종목)을 쓰게 하기 위함 —
+      # 안 그러면 워치리스트가 조용히 절반으로 줄어든다.
+      - name: Restore KR universe cache
+        uses: actions/cache@v4
+        with:
+          path: data/kr_universe.json
+          key: kr-universe-${{ github.run_id }}
+          restore-keys: kr-universe-
+
       - name: Fetch KR universe (isolated pykrx)
-        if: inputs.fetch_universe == 'true'
+        if: inputs.fetch_universe != 'false'
         continue-on-error: true
         env:
           KRX_ID: ${{ secrets.KRX_ID }}
