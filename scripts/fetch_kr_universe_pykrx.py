@@ -20,7 +20,13 @@ import os
 import sys
 from datetime import datetime, timedelta
 
-MIN_CAP_DEFAULT = 200_000_000_000  # 2000억 - watchlist_collector.KR_MIN_CAP 과 동일
+# 5000억. watchlist_collector.KR_MIN_CAP(2000억)보다 높게 잡은 이유:
+# 2000억이면 910종목으로 미국(S&P500, 503)의 1.8배가 돼 시장 간 비교 기준이
+# 어긋나고, 테마 매핑 청크가 4 -> 8로 두 배가 된다. 5000억이면 487종목으로
+# 미국과 규모가 비슷해지면서도 얇은 테마의 핵심 후보(솔브레인 2.62조,
+# 동진쎄미켐 2.16조, 클래시스 2.02조, 씨젠 1.44조, 경동나비엔 0.88조,
+# 루닛 0.63조)는 대부분 포함된다. 2026-09-14 실측 분포에 근거한 선택.
+MIN_CAP_DEFAULT = 500_000_000_000
 SUFFIX = {"KOSPI": ".KS", "KOSDAQ": ".KQ"}
 
 
