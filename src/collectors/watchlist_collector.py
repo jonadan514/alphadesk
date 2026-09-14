@@ -5,6 +5,7 @@ KR: KOSPI + KOSDAQ (시가총액 2000억+, 한국상장중국기업 제외)
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import time
@@ -274,11 +275,51 @@ def _kr_universe_fallback() -> list[dict]:
     return result
 
 
+KR_UNIVERSE_FILE = os.getenv("KR_UNIVERSE_FILE") or str(REPO_ROOT / "data" / "kr_universe.json")
+
+
+def _kr_universe_from_file() -> list[dict]:
+    """격리 환경에서 pykrx로 받아둔 전종목 유니버스를 읽는다.
+
+    왜 이 프로세스에서 직접 pykrx를 쓰지 않는가(2026-09-14 확인):
+    pykrx 1.2.8은 pandas<3.0을 요구하는데 이 저장소는 pandas==3.0.2다. 같은
+    환경에 두면 pip이 에러 대신 pykrx를 1.0.51까지 조용히 낮추고, 그 버전에는
+    KRX 로그인(auth) 기능이 아예 없어 모든 조회가 빈 응답으로 실패한다.
+    그래서 scripts/fetch_kr_universe_pykrx.py를 별도 venv에서 돌려 JSON으로
+    받아오고, 여기서는 그 파일만 읽는다.
+    """
+    path = Path(KR_UNIVERSE_FILE)
+    if not path.exists():
+        return []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        items = payload.get("items") or []
+    except Exception as e:
+        logger.warning("KR 유니버스 파일 읽기 실패(%s: %s) — 다음 소스로 넘어감",
+                       type(e).__name__, e)
+        return []
+    if not items:
+        return []
+    logger.info("KR 유니버스(pykrx 파일): %d 종목 (기준일 %s, 시총 하한 %s, pykrx %s)",
+                len(items), payload.get("base_date"), payload.get("min_cap"),
+                payload.get("pykrx_version"))
+    return items
+
+
 def get_kr_universe() -> list[dict]:
-    """KR 유니버스. 공공데이터포털(전체) → pykrx(전체) → 정적 대형주 리스트 순으로
-    시도하지만, 둘 다 GitHub Actions에서는 확인상 매번 막혀서(2026-08-27, 아래 경고
-    참고) 실질적으로는 항상 정적 리스트로 귀결된다. 한국 리전 IP로 실행하면 앞의
-    둘도 될 가능성이 있어 fallback 체인 자체는 유지해둔다."""
+    """KR 유니버스. pykrx 파일 → 공공데이터포털 → pykrx 직접 → 정적 리스트 순.
+
+    이력: 오랫동안 "공공데이터포털·pykrx 둘 다 GitHub Actions에서 IP 차단"으로
+    적혀 있었으나 2026-09-14 실측 결과 그 진단은 틀렸다. pykrx 실패의 실제
+    원인은 (1) pykrx 1.2.8이 KRX 로그인을 요구하는데 자격증명이 없었고,
+    (2) pandas==3.0.2 핀 때문에 pip이 pykrx를 1.0.51로 조용히 낮춰 로그인
+    기능 자체가 없는 버전이 깔린 것이었다. 격리 venv + KRX 계정으로
+    GitHub Actions에서 코스피 943 / 코스닥 1822 전종목 조회에 성공했다.
+    공공데이터포털은 여전히 0건이라 그쪽 진단은 미확인 상태로 남긴다."""
+    universe = _kr_universe_from_file()
+    if universe:
+        return universe
+
     universe = _kr_universe_public_api()
     if universe:
         return universe
@@ -292,9 +333,10 @@ def get_kr_universe() -> list[dict]:
     if universe:
         return universe
     logger.warning(
-        "pykrx 유니버스 수집도 실패 — 정적 리스트로 폴백. "
-        "(공공데이터포털·pykrx 둘 다 GitHub Actions에서 IP 차단으로 확인됨 — "
-        "한국 리전 서버/프록시 없이는 근본 해결 불가, 정적 리스트가 현재 안정적인 상태)"
+        "pykrx 직접 호출도 실패 — 정적 리스트로 폴백. "
+        "이 프로세스의 pykrx는 pandas==3.0.2 핀 때문에 구버전(1.0.51)이 깔려 "
+        "KRX 로그인 기능이 없다 — 정상 경로는 격리 venv가 만든 "
+        f"{KR_UNIVERSE_FILE} 파일이며, 그게 없을 때만 여기까지 온다."
     )
     return _kr_universe_fallback()
 

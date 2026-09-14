@@ -76,7 +76,12 @@ def main() -> int:
             return 2
 
         big = df[df["시가총액"] >= args.min_cap]
-        _log(f"{market}: 전체 {len(df)} / 하한 통과 {len(big)}")
+        # 시총 구간 분포도 남긴다 - 하한을 어디에 둘지는 유니버스 크기와
+        # 주간 스크리닝 예산(REFRESH_BUDGET)의 트레이드오프라 실측이 필요하다.
+        buckets = [(1_000_000_000_000, "1조+"), (500_000_000_000, "5000억+"),
+                   (300_000_000_000, "3000억+"), (200_000_000_000, "2000억+")]
+        dist = " / ".join(f"{lbl} {int((df['시가총액'] >= th).sum())}" for th, lbl in buckets)
+        _log(f"{market}: 전체 {len(df)} / 하한 통과 {len(big)}   [분포] {dist}")
         for ticker, row in big.iterrows():
             code = str(ticker)
             try:

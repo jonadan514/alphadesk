@@ -13,6 +13,17 @@ on:
         description: "이번 실행에서 라이브 갱신할 종목 수 (비우면 60)"
         required: false
         default: ""
+      kr_min_cap:
+        description: "KR 유니버스 시총 하한 원 단위 (비우면 2000억). 크게 잡을수록 종목이 줄어든다"
+        required: false
+        default: ""
+      fetch_universe:
+        # 기본 꺼짐. 켜면 유니버스가 정적 212종목 -> pykrx 전종목(시총 하한
+        # 기준)으로 바뀌는데, 이는 스크리닝 예산(REFRESH_BUDGET)과 테마 매핑
+        # 청크 수에 직접 영향을 주는 큰 변경이라 의도적으로만 켠다.
+        description: "true면 pykrx로 KR 전종목 유니버스를 새로 받는다 (비우면 기존 정적 리스트 사용)"
+        required: false
+        default: ""
       only_screen:
         # 스크리닝만 여러 번 돌려야 할 때가 있다(REFRESH_BUDGET이 60이라
         # 유니버스가 커지면 한 번에 다 못 갱신한다). 그때 내러티브·브리핑까지
@@ -43,6 +54,24 @@ jobs:
       # 종목코드<->회사명 짝 검사. 차단하지 않는다(continue-on-error) —
       # 위키 접속 실패나 지수 정기변경에 따른 사명 변경으로 스크리닝 전체가
       # 멈추면 안 된다. 불일치가 있으면 잡에 노란 경고로 표시된다.
+      # KR 전종목 유니버스를 격리 venv에서 수집한다.
+      # pykrx 1.2.8은 pandas<3.0을 요구하는데 이 저장소는 pandas==3.0.2라,
+      # 같은 환경에 두면 pip이 에러 대신 pykrx를 1.0.51로 조용히 낮춘다
+      # (KRX 로그인 기능이 없는 버전 -> 모든 조회 실패). JSON으로만 주고받는다.
+      # 실패해도 스크리닝은 계속된다 - get_kr_universe()가 정적 리스트로 폴백.
+      - name: Fetch KR universe (isolated pykrx)
+        if: inputs.fetch_universe == 'true'
+        continue-on-error: true
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python -m venv /tmp/krxenv
+          /tmp/krxenv/bin/pip install --quiet "pandas<3.0" "pykrx==1.2.8"
+          MINCAP="${{ inputs.kr_min_cap }}"
+          /tmp/krxenv/bin/python scripts/fetch_kr_universe_pykrx.py             --out data/kr_universe.json             ${MINCAP:+--min-cap "$MINCAP"}
+
       - name: Audit KR universe names
         continue-on-error: true
         run: python scripts/audit_kr_universe.py --no-yfinance
