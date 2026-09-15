@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import sys
 import time
@@ -264,8 +265,42 @@ def path_b_free_generation(theme: dict, api_key: str) -> list[dict]:
     return []
 
 
+_KR_CODE_RE = re.compile(r"^[0-9][0-9A-Z]{5}$")
+_NAME_NORM_RE = re.compile(r"[\s().·\-]")
+
+
+def _norm_name(x: str) -> str:
+    return _NAME_NORM_RE.sub("", x or "")
+
+
+def _evidence_subject_mismatch(ticker: str, evidence: str, names: dict[str, str]) -> str | None:
+    """근거 문장의 주어가 이 티커가 아닌 다른 회사면 그 회사명을 돌려준다.
+
+    2026-09-15 실측: 모델이 한 회사의 근거를 쓰면서 티커를 다른 회사로 적는
+    경우가 있었다 - 000660(SK하이닉스)의 battery 근거가 "SK이노베이션은 전기차용
+    2차전지를...", 005380(현대차)의 근거가 "LG화학은 양극재...". 티커 실재 검증은
+    통과하므로 SK하이닉스가 배터리 테마에 승인돼 있었다.
+
+    주어(문장 첫머리)만 본다 - 근거 중간에 고객사명이 나오는 정상 사례
+    ("삼성전자에 HBM을 공급")까지 걸면 오탐이 난다. 3글자 미만 사명(LG, SK,
+    KT)은 다른 사명의 접두어로 흔해 비교하지 않는다."""
+    own = _norm_name(names.get(ticker, ""))
+    ev = _norm_name(evidence)
+    if not own or ev.startswith(own):
+        return None
+    best = None
+    for code, nm in names.items():
+        n = _norm_name(nm)
+        if code == ticker or len(n) < 3 or n == own or own.startswith(n):
+            continue
+        if ev.startswith(n) and (best is None or len(n) > len(_norm_name(best))):
+            best = nm
+    return best
+
+
 def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[str],
-                      cap_lookup: dict[str, float]) -> tuple[list[dict], dict]:
+                      cap_lookup: dict[str, float],
+                      names: dict[str, str] | None = None) -> tuple[list[dict], dict]:
     """SPEC §4 코드 검증. (통과 목록, 통계) 반환.
 
     재무 데이터(fundamentals_cache) 존재 여부는 여기서 탈락시키지 않는다 — 그건
@@ -283,8 +318,9 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
         if t and t not in merged_by_ticker:
             merged_by_ticker[t] = m
 
+    names = names or {}
     stats = {"입력": len(merged_by_ticker), "티커실재실패": 0, "시가총액미달": 0,
-              "evidence품질실패": 0, "통과": 0}
+              "evidence품질실패": 0, "근거주어불일치": 0, "통과": 0}
     out = []
 
     for ticker, m in merged_by_ticker.items():
@@ -292,7 +328,8 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
             stats["티커실재실패"] += 1
             continue
 
-        market = m.get("market") or ("KR" if ticker.isdigit() else "US")
+        # isdigit()만 쓰면 0126Z0(삼성에피스홀딩스) 같은 영문 포함 KR 코드가 US로 분류된다.
+        market = m.get("market") or ("KR" if _KR_CODE_RE.match(ticker) else "US")
         min_cap = US_MIN_CAP if market == "US" else KR_MIN_CAP
         cap = cap_lookup.get(ticker)
         if cap is not None and cap < min_cap:
@@ -302,6 +339,11 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
         evidence = str(m.get("evidence", "")).strip()
         if len(evidence) < MIN_EVIDENCE_LEN:
             stats["evidence품질실패"] += 1
+            continue
+        other = _evidence_subject_mismatch(ticker, evidence, names)
+        if other:
+            _log(f"  근거 주어 불일치 제외: {ticker} {names.get(ticker, '')} <- 근거는 '{other}' 이야기")
+            stats["근거주어불일치"] += 1
             continue
         flagged = any(p in evidence for p in BANNED_EVIDENCE_PHRASES)
 
@@ -435,7 +477,7 @@ def main() -> None:
         raw_b = path_b_free_generation(theme, api_key)
         _log(f"  경로 B 후보: {len(raw_b)}개")
 
-        validated, stats = validate_members(raw_a, raw_b, valid_tickers, cap_lookup)
+        validated, stats = validate_members(raw_a, raw_b, valid_tickers, cap_lookup, names)
         _log(f"  검증 결과: {stats}")
         if stats["경로B_폐기율"] > HALLUCINATION_WARN_RATE * 100:
             _log(f"  ⚠ 경로 B 환각 폐기율 {stats['경로B_폐기율']}% — 30% 초과, 프롬프트 재검토 필요")
