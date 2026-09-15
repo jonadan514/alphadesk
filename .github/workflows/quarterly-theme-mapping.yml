@@ -79,12 +79,25 @@ jobs:
           python scripts/audit_mapping_evidence.py --run-id "${{ steps.map.outputs.run_id }}" --market KR
           python scripts/audit_mapping_evidence.py --run-id "${{ steps.map.outputs.run_id }}" --market US
 
+      # 이전 분기까지 사람이 내린 판정(data/eval/mapping_decisions.json)을 적용해 검토 초안을 만든다.
+      # 이미 판정한 (테마, 종목)은 자동으로 제외·유지·복원 초안에 들어가고 새 경우만 사람이 본다.
+      - name: Apply decision ledger
+        if: steps.map.outputs.run_id != ''
+        continue-on-error: true
+        run: |
+          RID="${{ steps.map.outputs.run_id }}"
+          for M in KR US; do
+            python scripts/apply_decision_ledger.py --run-id "$RID" --market $M --audit "out/evidence_audit_${RID}_${M}.json"
+          done
+
       - name: Upload audit results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: quarterly-mapping-audit
-          path: out/evidence_audit_*
+          path: |
+            out/evidence_audit_*
+            out/review_draft_*
           if-no-files-found: warn
 
       - name: Notify review needed

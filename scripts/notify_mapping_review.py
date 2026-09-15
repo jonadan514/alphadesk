@@ -5,7 +5,8 @@
 (2026-09-15 확인 - 감사 정밀도·재현율 약 94%, 감사 자체도 판정 편차가 있음).
 
 필요 env: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, RUN_ID, RUN_URL
-입력: out/evidence_audit_<RUN_ID>_KR.txt, out/evidence_audit_<RUN_ID>_US.txt 의 머리 5줄
+입력: out/evidence_audit_<RUN_ID>_{KR,US}.txt 의 머리 5줄
+      out/review_draft_<RUN_ID>_{KR,US}.txt 의 머리 4줄 (판정 원장 적용 결과 - 사람 검토 필요 건수)
 """
 from __future__ import annotations
 
@@ -28,6 +29,14 @@ def _head(path: Path) -> str:
     return "\n".join(keep) or "(요약 없음)"
 
 
+def _draft(path: Path) -> str:
+    """판정 원장 적용 요약. 없으면 빈 문자열(원장 단계 실패 시 감사 요약만 보낸다)."""
+    if not path.exists():
+        return ""
+    lines = path.read_text(encoding="utf-8").splitlines()
+    return "\n".join(lines[:4])
+
+
 def main() -> int:
     run_id = os.environ.get("RUN_ID", "").strip()
     run_url = os.environ.get("RUN_URL", "")
@@ -38,6 +47,12 @@ def main() -> int:
         return 1
     kr = _head(out / f"evidence_audit_{run_id}_KR.txt")
     us = _head(out / f"evidence_audit_{run_id}_US.txt")
+    kr_d = _draft(out / f"review_draft_{run_id}_KR.txt")
+    us_d = _draft(out / f"review_draft_{run_id}_US.txt")
+    if kr_d:
+        kr += "\n" + kr_d
+    if us_d:
+        us += "\n" + us_d
     text = (
         "🗂️ <b>분기 테마 매핑 완료 - 검토 필요</b>\n"
         f"run_id: <code>{html.escape(run_id)}</code>\n\n"
