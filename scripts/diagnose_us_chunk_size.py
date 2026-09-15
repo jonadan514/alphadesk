@@ -62,6 +62,7 @@ def main() -> int:
     results = []
     for size in sorted({s for s, _ in VARIANTS}, reverse=True):
         mtc.UNIVERSE_CHUNK_SIZE = size
+        mtc.CHUNK_CHAR_BUDGET = 10 ** 9  # 이 진단은 줄 수만 바꿔 비교한다(글자 예산 도입 전 조건)
         jobs = [(tid, s, p) for tid in TARGETS for s, p in VARIANTS if s == size]
         with ThreadPoolExecutor(max_workers=1) as ex:
             results += list(ex.map(lambda j: run(*j), jobs))

@@ -38,8 +38,13 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-09-15-v7"  # v7: v6 + 미국 후보에도 산업분류·사업요약(400자) 첨부, 업종-테마 불일치 코드 제외
-UNIVERSE_CHUNK_SIZE = 200
+PROMPT_VERSION = "2026-09-15-v7"  # v7: v6 + 미국 후보에도 산업분류·사업요약(400자) 첨부, 업종-테마 불일치 코드 제외, 에너지 테마 유틸리티 경계
+UNIVERSE_CHUNK_SIZE = 200  # 청크당 줄 수 상한
+# 청크당 글자 수 예산. 줄 길이가 시장마다 달라(US 약 440자, KR 약 170자) 종목 수로 자르면
+# 미국 청크만 2만 토큰을 넘는다. 2026-09-15 진단(scripts/diagnose_us_chunk_size.py, 확인된
+# 정답 21건, 호출 실패 0): 200종목 16건 / 100종목 17건 / 50종목 19건 적중, 알려진 오답
+# 6 / 5 / 4건 - 긴 목록일수록 모델이 중간을 놓쳤다. 24000자 = US 약 55종목, KR 약 140종목.
+CHUNK_CHAR_BUDGET = 24000
 # 미국 사업요약은 140자로는 부족하다(2026-09-15 확인). 사업부가 여럿인 대기업은
 # 첫 문장이 "worldwide manufacturer" 같은 일반론이라 테마와 닿는 사업부가 뒤에
 # 나온다 - Deere의 건설장비는 202자, Teradyne의 반도체 테스트는 223자,
@@ -278,16 +283,31 @@ MEMBER_FIELDS_INSTRUCTION = """각 기업에 대해 다음 필드를 답하시�
 {"members": [{"ticker": "...", "name": "...", "market": "US|KR", "value_chain_stage": "...", "evidence": "...", "linkage": "direct|partial|peripheral"}]}"""
 
 
+def _chunk_lines(lines: list[str]) -> list[list[str]]:
+    """후보 줄을 글자 수 예산(CHUNK_CHAR_BUDGET)과 줄 수 상한(UNIVERSE_CHUNK_SIZE) 안에서 순서대로 묶는다."""
+    chunks: list[list[str]] = []
+    cur: list[str] = []
+    size = 0
+    for line in lines:
+        if cur and (size + len(line) > CHUNK_CHAR_BUDGET or len(cur) >= UNIVERSE_CHUNK_SIZE):
+            chunks.append(cur)
+            cur, size = [], 0
+        cur.append(line)
+        size += len(line) + 1
+    if cur:
+        chunks.append(cur)
+    return chunks
+
+
 def path_a_universe_constrained(theme: dict, universe: list[dict], names: dict[str, str],
                                 api_key: str, profiles: dict[str, dict] | None = None) -> list[dict]:
     """유니버스를 청크로 나눠 그 안에서만 고르게 한다 — 환각 티커 원천 차단."""
     profiles = profiles or {}
     results: list[dict] = []
     desc = _theme_description(theme)
-    n_chunks = (len(universe) + UNIVERSE_CHUNK_SIZE - 1) // UNIVERSE_CHUNK_SIZE
-    for i in range(0, len(universe), UNIVERSE_CHUNK_SIZE):
-        chunk = universe[i:i + UNIVERSE_CHUNK_SIZE]
-        listing = "\n".join(_candidate_line(it["symbol"], it["market"], names, profiles) for it in chunk)
+    chunks = _chunk_lines([_candidate_line(it["symbol"], it["market"], names, profiles) for it in universe])
+    for ci, lines in enumerate(chunks):
+        listing = "\n".join(lines)
         prompt = f"""{desc}
 
 아래 상장기업 목록에서 위 테마에 실제로 속하는 기업만 고르시오. 목록에 없는
@@ -305,7 +325,7 @@ def path_a_universe_constrained(theme: dict, universe: list[dict], names: dict[s
         parsed = _openai_json(prompt, "당신은 신중한 산업 분석가입니다. 주어진 목록에 없는 기업은 답하지 않습니다.", api_key)
         if parsed and isinstance(parsed.get("members"), list):
             results.extend(parsed["members"])
-        _log(f"  경로 A 청크 {i // UNIVERSE_CHUNK_SIZE + 1}/{n_chunks} 완료")
+        _log(f"  경로 A 청크 {ci + 1}/{len(chunks)} 완료 ({len(lines)}종목)")
         time.sleep(0.5)
     return results
 
