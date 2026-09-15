@@ -37,7 +37,7 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-09-15-v7"  # v7: v6 + 미국 후보에도 산업분류·사업요약(400자) 첨부
+PROMPT_VERSION = "2026-09-15-v7"  # v7: v6 + 미국 후보에도 산업분류·사업요약(400자) 첨부, 업종-테마 불일치 코드 제외
 UNIVERSE_CHUNK_SIZE = 200
 # 미국 사업요약은 140자로는 부족하다(2026-09-15 확인). 사업부가 여럿인 대기업은
 # 첫 문장이 "worldwide manufacturer" 같은 일반론이라 테마와 닿는 사업부가 뒤에
@@ -169,6 +169,41 @@ def _profile_text(prof: dict | None) -> tuple[str, str]:
     if prof.get("market") == "US" and prof.get("summary_long"):
         summary = prof["summary_long"][:US_SUMMARY_CHARS]
     return prof.get("industry") or "", summary
+
+
+# 산업분류상 들어갈 수 있는 테마가 정해진 업종. 여기 걸리는 업종의 기업이 목록 밖
+# 테마로 편입되면 코드로 제외한다(LLM 판단과 무관한 사실 기준).
+#
+# 근거(2026-09-15 사람 판정 원장 대조): KR에서 사람이 틀린 편입으로 확정한 116건 중
+# 21건이 이런 업종 불일치였다 - 현대해상이 배터리·구리·석유화학에, 코리안리(재보험)가
+# AI반도체에, 빙그레가 구리에, 코스맥스(화장품 ODM)가 게임에. 같은 규칙으로 사람이 정상
+# 판정한 행은 한 건도 걸리지 않았다. US 오류는 이런 유형이 없었다(경계 판단 오류뿐).
+#
+# 넣지 않은 업종과 이유: 항공사(대한항공은 항공우주 사업부가 실재), 리츠(데이터센터
+# 리츠), 가구·가전(코웨이 등 경계 모호), 통신(데이터센터·AI 사업), 보안(한화비전).
+# 산업분류가 없거나 틀린 종목은 규칙이 적용되지 않는다(조선사 보정은 kr_profile_overrides).
+INDUSTRY_THEME_ALLOW: list[tuple[tuple[str, ...], frozenset[str]]] = [
+    (("Insurance", "Banks", "Capital Markets", "Asset Management", "Credit Services",
+      "Financial Data", "Shell Companies"), frozenset()),
+    (("Packaged Foods", "Beverages", "Confectioners", "Food Distribution", "Farm Products",
+      "Grocery Stores", "Tobacco", "Restaurants"), frozenset({"k_food"})),
+    (("Household & Personal Products",), frozenset({"k_beauty"})),
+    (("Apparel", "Footwear", "Luxury Goods"), frozenset()),
+    (("Lodging", "Resorts & Casinos", "Travel Services"), frozenset({"travel_airline"})),
+    (("Electronic Gaming & Multimedia",), frozenset({"game"})),
+    (("Entertainment",), frozenset({"k_content"})),
+]
+
+
+def industry_theme_conflict(theme_id: str, ticker: str, profiles: dict[str, dict]) -> str | None:
+    """산업분류상 이 테마에 들어갈 수 없는 기업이면 그 산업분류를, 아니면 None."""
+    industry = (profiles.get(ticker) or {}).get("industry") or ""
+    if not industry:
+        return None
+    for prefixes, allowed in INDUSTRY_THEME_ALLOW:
+        if industry.startswith(prefixes):
+            return None if theme_id in allowed else industry
+    return None
 
 
 def _candidate_line(symbol: str, market: str, names: dict[str, str],
@@ -524,6 +559,17 @@ def main() -> None:
         _log(f"  경로 B 후보: {len(raw_b)}개")
 
         validated, stats = validate_members(raw_a, raw_b, valid_tickers, cap_lookup, names)
+        blocked = []
+        for m in validated:
+            ind = industry_theme_conflict(theme_id, m["ticker"], profiles)
+            if ind:
+                blocked.append(m["ticker"])
+                _log(f"  업종 불일치 제외: {m['ticker']} {names.get(m['ticker'], '')} [{ind}]")
+        if blocked:
+            validated = [m for m in validated if m["ticker"] not in blocked]
+        stats["업종불일치"] = len(blocked)
+        stats["통과"] = len(validated)
+
         # 저장 시장은 LLM이 답한 market이 아니라 유니버스 기준으로 정한다. LLM이
         # 미국 티커에 "KR"을 붙이면 다른 시장 행으로 저장돼 승인·표시가 어긋난다.
         for m in validated:
