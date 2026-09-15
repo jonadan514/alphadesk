@@ -153,10 +153,12 @@ def main() -> int:
     _log(f"프로덕션 재현 유니버스: {len(universe)}종목 (US {len(us_items)} + KR {len(kr_items)})")
 
     # 섹터는 스크리닝이 이미 받아둔 값을 쓴다(yfinance 재조회 없이).
-    profiles: dict[str, dict] = {}
-    pf = ROOT / "data" / "kr_profiles.json"
-    if pf.exists():
-        profiles = json.loads(pf.read_text(encoding="utf-8"))
+    # map_theme_companies.py / audit_mapping_evidence.py 와 같은 로더를 쓴다.
+    # (2026-09-15 확인: 원본 json을 직접 읽으면 조선사 산업분류 보정이 빠져
+    #  이 진단 스크립트로 조선사를 다시 테스트할 때 'Aerospace & Defense'로
+    #  잘못 표시돼 혼란을 준다)
+    from src.collectors.kr_profiles import load_kr_profiles
+    profiles = load_kr_profiles()
     _log(f"KR 유니버스 {len(kr)}종목 / 프로필 보유 {len(profiles)}종목")
 
     themes_yaml = yaml.safe_load((ROOT / "config" / "themes.yaml").read_text(encoding="utf-8"))

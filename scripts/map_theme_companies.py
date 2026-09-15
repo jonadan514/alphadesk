@@ -339,6 +339,10 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
 
         # isdigit()만 쓰면 0126Z0(삼성에피스홀딩스) 같은 영문 포함 KR 코드가 US로 분류된다.
         market = m.get("market") or ("KR" if _KR_CODE_RE.match(ticker) else "US")
+        # KR은 사실상 이 하한이 발동하지 않는다 - valid_tickers 자체가 이미
+        # get_kr_universe()(5000억 이상만) 로 구성되므로, 여기까지 온 candidate는
+        # 이미 5000억을 넘는다. KR_MIN_CAP(2000억)은 watchlist 스크리닝용 하한이지
+        # 매핑 유니버스 하한이 아니다 - 값이 다르다고 버그는 아니다(2026-09-15 확인).
         min_cap = US_MIN_CAP if market == "US" else KR_MIN_CAP
         cap = cap_lookup.get(ticker)
         if cap is not None and cap < min_cap:
