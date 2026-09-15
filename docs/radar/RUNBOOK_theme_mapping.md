@@ -18,9 +18,14 @@ LLM 매핑에는 도구로 다 걸러지지 않는 오류가 남는다(2026-09-1
 
 ## 절차
 
-1. **감사 결과 받기** - 워크플로 아티팩트 `quarterly-mapping-audit`
-   (`evidence_audit_<run>_KR.txt/.json`, `_US`)
-2. **검토 파일 작성** - `data/eval/<버전>_manual_review_<날짜>.json`
+1. **감사 결과·검토 초안 받기** - 워크플로 아티팩트 `quarterly-mapping-audit`
+   (`evidence_audit_<run>_KR.txt/.json`, `_US`, `review_draft_<run>_KR.txt/.json`, `_US`)
+   - 초안은 판정 원장(`data/eval/mapping_decisions.json`)을 적용한 결과다. 이미 판정한
+     (테마, 종목)은 `exclude`·`restore`에 자동으로 들어가 있고, **사람이 볼 것은 `needs_review`뿐**이다
+   - `info_hold_*`는 판단보류로 유지했던 행 - 이번에 다시 볼지 선택
+2. **검토 파일 작성** - 초안 json을 `data/eval/<버전>_manual_review_<날짜>.json`으로 저장하고
+   `needs_review` 각 행을 아래 기준으로 `exclude`/`keep`에 옮긴다. 자동 기입분도 훑어본다
+   (회사 사업이 바뀌었으면 고친다 - 원장 판정은 400일 지나면 자동 만료)
    - `exclude`: 감사가 틀렸다고 한 행 중 **확신 있는 오류만**
    - `keep`: 감사 오탐(대개 한글 인용·엉뚱한 원문 인용으로 인용 검증 실패) 또는 판단보류
    - `restore`: 현재 승인분에 있는데 새 run이 놓친 행 중 정의에 맞는 것. **제외보다 높은 확신**
@@ -35,8 +40,10 @@ LLM 매핑에는 도구로 다 걸러지지 않는 오류가 남는다(2026-09-1
    - 정답지(`data/eval/evidence_audit_labels_*.json`)의 오류가 화면에 남았는지도 확인
 7. **테마 비우기** - 검토 결과 해당 기업이 없는 테마는 `Unapprove Theme Members`
    empty_themes. 최신 run에 행이 없으면 더 오래된 승인분이 드러나기 때문이다
-8. **후속** - `backfill-quarterly-financials` → 실적 → 주가 → 라벨 재계산(이번 주 week_start)
-9. **확인** - 레이더 API에서 소속 수·na 테마·이름 표시 확인. 이름맵 누락 시
+8. **판정 원장 갱신** - 이번 검토 파일을 `scripts/build_decision_ledger.py`의 `REVIEW_FILES` 끝에
+   추가하고 실행, `mapping_decisions.json` 커밋. 다음 분기부터 이번 판정이 재사용된다
+9. **후속** - `backfill-quarterly-financials` → 실적 → 주가 → 라벨 재계산(이번 주 week_start)
+10. **확인** - 레이더 API에서 소속 수·na 테마·이름 표시 확인. 이름맵 누락 시
    최신 유니버스로 `krStockNames.ts` 재생성
 
 ## 테마 정의를 바꿀 때
@@ -45,6 +52,14 @@ LLM 매핑에는 도구로 다 걸러지지 않는 오류가 남는다(2026-09-1
 - 키워드를 바꾸면 `keywords_changed_at` 기록 - 뉴스 기준선이 그 주 이전을 안 쓴다(4주간 na)
 - 테마 추가·개명 후 `python scripts/gen_theme_names.py` (화면 이름)
 - 신규 테마는 `Collect Theme News` weeks_back=8 로 뉴스 백필
+
+## 코드가 자동으로 거르는 것 (사람 검토 전에)
+
+- 유니버스 밖 티커, 시가총액 미달, 근거 15자 미만
+- 근거 주어 불일치(근거 문장이 다른 회사 이야기)
+- **업종-테마 불일치**(`INDUSTRY_THEME_ALLOW`, map_theme_companies.py): 금융·보험은 어떤 테마에도,
+  식품은 K푸드에만, 화장품은 K뷰티에만, 게임사는 게임에만 등. 산업분류가 없거나 틀린 종목은
+  적용 안 됨 - 산업분류 오류는 `data/kr_profile_overrides.json`으로 고친다
 
 ## 원칙
 
