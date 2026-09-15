@@ -22,7 +22,12 @@ unverifiable·unclear는 오류로 치지 않는다(CLAUDE.md 원칙 4).
   v1 근거만, 140자 요약                       정밀도 83%
   v2 +테마적합, 700자, "자회사 사업도 인정"     정밀도 100% / 재현율 78% - 너무 관대해
      현대로템(건설기계)·한화오션(원전해체)·전진건설로봇(K-콘텐츠)을 통과시킴
-  v3 "사업정보에 명시된 부사업만 인정"          (아래 --eval 결과 참고)
+  v3 "사업정보에 명시된 부사업만 인정"          정밀도 100% / 재현율 88%
+     놓친 4건 중 3건은 판정 이유가 근거를 그대로 복창("원전 해체 참여") - 사업정보와
+     대조하지 않고 통과. 1건은 응답에서 종목이 누락됐는데 도구가 오류 아님으로 처리.
+  v4 부합 판정 시 사업정보 원문 인용을 요구하고 코드로 원문 포함 여부를 검사.
+     인용이 원문에 없으면 contradicts로 뒤집는다(LLM 판단이 아니라 문자열 검증).
+     응답에서 누락된 종목은 한 번 더 따로 묻는다.
 긴 요약 원문을 보면 정상 사례는 해당 사업이 적혀 있고(SK이노베이션 batteries,
 풍산 ammunition, 한화솔루션 resin) 오류 사례는 없다(현대로템 construction 없음).
 
@@ -124,8 +129,12 @@ def judge(theme: dict, members: list[dict], names: dict, profiles: dict, api_key
   (예: 해운사는 선박을 운영할 뿐 조선 테마가 아니다)
 - unclear: 판단할 정보가 부족하다
 
-반드시 아래 JSON으로만 답하시오:
-{{"verdicts": [{{"ticker": "...", "evidence": "consistent|contradicts|unverifiable", "fit": "fits|not_fits|unclear", "reason": "짧은 한국어 이유"}}]}}"""
+[support] evidence를 consistent로 판정했다면, 그 근거를 뒷받침하는 문구를 실제 사업정보에서
+**한 글자도 바꾸지 말고 그대로 복사**하시오(영문이면 영문 그대로, 3-12단어). 뒷받침하는
+문구가 사업정보에 없으면 consistent가 아니다. 다른 판정이면 빈 문자열.
+
+반드시 아래 JSON으로만 답하시오. 목록의 모든 기업을 빠짐없이 포함하시오:
+{{"verdicts": [{{"ticker": "...", "evidence": "consistent|contradicts|unverifiable", "fit": "fits|not_fits|unclear", "support": "사업정보 원문 그대로", "reason": "짧은 한국어 이유"}}]}}"""
     r = requests.post(
         "https://api.openai.com/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -139,6 +148,22 @@ def judge(theme: dict, members: list[dict], names: dict, profiles: dict, api_key
     r.raise_for_status()
     parsed = json.loads(r.json()["choices"][0]["message"]["content"])
     return {str(v.get("ticker")): v for v in parsed.get("verdicts", [])}
+
+
+def _verify_support(v: dict, info: str) -> dict:
+    """consistent 판정의 인용이 실제 사업정보 원문에 있는지 문자열로 검사한다.
+
+    감사 v3는 근거 문장을 복창하며 통과시키는 경우가 있었다("원전 해체 참여" -> 한화오션
+    consistent). 인용을 강제하고 코드로 확인하면 사업정보에 없는 주장은 통과할 수 없다.
+    사업정보 자체가 없는 종목(unverifiable 대상)은 검사하지 않는다."""
+    if v.get("evidence") != "consistent" or info == "(사업정보 없음)":
+        return v
+    norm = lambda x: " ".join(str(x).lower().split())
+    quote = norm(v.get("support", ""))
+    if len(quote) >= 8 and quote in norm(info):
+        return {**v, "quote_verified": True}
+    return {**v, "evidence": "contradicts", "quote_verified": False,
+            "reason": f"[인용 검증 실패] {v.get('reason', '')} / 인용='{str(v.get('support', ''))[:60]}'"}
 
 
 def is_error(v: dict) -> bool:
@@ -220,22 +245,34 @@ def main() -> int:
             continue
         try:
             v = judge(themes[tid], members, names, profiles, api_key)
+            # 응답에서 빠진 종목은 조용히 넘기지 않고 따로 한 번 더 묻는다.
+            lost = [m for m in members if m["ticker"] not in v]
+            if lost:
+                _log(f"{tid}: 응답 누락 {len(lost)}종목 재질의")
+                time.sleep(0.5)
+                v.update(judge(themes[tid], lost, names, profiles, api_key))
         except Exception as e:
             _log(f"{tid}: 판정 실패 {type(e).__name__}: {str(e)[:120]}")
             for m in members:
                 results.append((m, {"evidence": "error", "fit": "error", "reason": "판정 호출 실패"}))
             continue
         for m in members:
-            results.append((m, v.get(m["ticker"], {"evidence": "missing", "fit": "missing", "reason": "응답에 없음"})))
+            verdict = v.get(m["ticker"], {"evidence": "missing", "fit": "missing", "reason": "재질의 후에도 응답에 없음"})
+            info = _business_info(profiles.get(m["ticker"]) or {})
+            results.append((m, _verify_support(verdict, info)))
         time.sleep(0.5)
 
     ev = Counter(v.get("evidence") for _, v in results)
     fit = Counter(v.get("fit") for _, v in results)
     errors = [(m, v) for m, v in results if is_error(v)]
+    overturned = sum(1 for _, v in results if v.get("quote_verified") is False)
+    still_missing = sum(1 for _, v in results if v.get("evidence") == "missing")
     lines = [f"대상: {scope} / {args.market} {len(results)}건",
              "근거: " + " / ".join(f"{k} {ev[k]}" for k in ("consistent", "contradicts", "unverifiable", "missing", "error") if ev[k]),
              "테마적합: " + " / ".join(f"{k} {fit[k]}" for k in ("fits", "not_fits", "unclear", "missing", "error") if fit[k]),
              f"틀린 편입(근거 모순 또는 테마 부적합): {len(errors)}건 ({len(errors) / max(len(results), 1):.0%})",
+             f"  그중 인용 검증 실패로 뒤집힌 것: {overturned}건 / 재질의 후에도 판정 누락: {still_missing}건"
+             + (" <- 누락분은 오류로 치지 않았으니 수동 확인 필요" if still_missing else ""),
              ""]
     lines.append("== 틀린 편입 ==")
     for m, v in errors:
