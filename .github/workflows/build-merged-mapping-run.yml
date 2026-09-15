@@ -12,6 +12,10 @@ on:
         description: "true면 쓰지 않고 결과만 출력"
         required: false
         default: "true"
+      market:
+        description: "KR 또는 US (비우면 KR)"
+        required: false
+        default: "KR"
 
 jobs:
   merge:
@@ -31,6 +35,6 @@ jobs:
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
           PYTHONUNBUFFERED: "1"
         run: |
-          ARGS=(--review "${{ inputs.review_file }}")
+          ARGS=(--review "${{ inputs.review_file }}" --market "${{ inputs.market || 'KR' }}")
           [ "${{ inputs.dry_run }}" = "true" ] && ARGS+=(--dry-run)
           python scripts/build_merged_mapping_run.py "${ARGS[@]}"
