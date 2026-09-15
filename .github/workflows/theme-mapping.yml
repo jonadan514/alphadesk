@@ -10,6 +10,10 @@ on:
         description: "테마 ID 공백 구분. 전체 33개를 돌리려면 ALL 입력"
         required: false
         default: "nuclear_smr physical_ai shipbuilding"
+      market:
+        description: "한 시장만 돌리려면 US 또는 KR (BOTH면 양쪽)"
+        required: false
+        default: "BOTH"
 
 jobs:
   map:
@@ -72,4 +76,8 @@ jobs:
         run: |
           IDS="${{ inputs.theme_ids }}"
           if [ "$IDS" = "ALL" ]; then IDS=""; fi
-          python scripts/map_theme_companies.py --theme-id $IDS
+          MARKET_ARGS=()
+          case "${{ inputs.market }}" in
+            US|KR) MARKET_ARGS=(--market "${{ inputs.market }}") ;;
+          esac
+          python scripts/map_theme_companies.py --theme-id $IDS "${MARKET_ARGS[@]}"

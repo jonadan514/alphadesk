@@ -9,6 +9,7 @@ SPEC: docs/radar/SPEC_theme_company_mapping.md
 Usage:
   python scripts/map_theme_companies.py                                    # 전체 테마
   python scripts/map_theme_companies.py --theme-id nuclear_smr physical_ai  # 특정 테마만(파일럿용)
+  python scripts/map_theme_companies.py --market US                         # 한 시장만(실험·재매핑용)
 """
 from __future__ import annotations
 
@@ -36,8 +37,13 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-09-15-v6"  # v6: v5.1 + 테마별 가치사슬 정의(value_chain)와 경계, 지주사 기준, note 미전송
+PROMPT_VERSION = "2026-09-15-v7"  # v7: v6 + 미국 후보에도 산업분류·사업요약(400자) 첨부
 UNIVERSE_CHUNK_SIZE = 200
+# 미국 사업요약은 140자로는 부족하다(2026-09-15 확인). 사업부가 여럿인 대기업은
+# 첫 문장이 "worldwide manufacturer" 같은 일반론이라 테마와 닿는 사업부가 뒤에
+# 나온다 - Deere의 건설장비는 202자, Teradyne의 반도체 테스트는 223자,
+# Constellation의 원전은 384자 위치. 한국 요약은 대부분 단일 사업이라 140자 유지.
+US_SUMMARY_CHARS = 400
 PATH_A_RUNS = 2  # 파일럿에서 경로 A 결과가 회차마다 크게 흔들리는 현상을 발견 —
                  # 반복 실행 후 티커 기준 합집합으로 완화
 MIN_EVIDENCE_LEN = 15
@@ -137,37 +143,55 @@ def _theme_description(theme: dict) -> str:
     return "\n".join(lines)
 
 
-def load_kr_profiles() -> dict[str, dict]:
-    """KR 기업의 산업분류·영문 사업요약. 근거 감사와 같은 값을 보도록 공용 로더를
-    쓴다(industry 보정 포함 - data/kr_profile_overrides.json)."""
+def load_all_profiles() -> dict[str, dict]:
+    """KR+US 기업의 산업분류·영문 사업요약. 근거 감사와 같은 값을 보도록 공용 로더를
+    쓴다(KR은 industry 보정 포함 - data/kr_profile_overrides.json). KR 코드(숫자 6자리)와
+    US 티커(영문)는 겹치지 않아 한 dict로 합친다. 각 레코드에 market을 표시해 둔다."""
     try:
-        from collectors.kr_profiles import load_kr_profiles as _load
+        from collectors.kr_profiles import load_profiles as _load
     except ImportError:
-        from src.collectors.kr_profiles import load_kr_profiles as _load
-    try:
-        return _load()
-    except Exception as e:
-        _log(f"kr_profiles 읽기 실패 {type(e).__name__}: {e} - 이름만으로 매핑한다")
-        return {}
+        from src.collectors.kr_profiles import load_profiles as _load
+    merged: dict[str, dict] = {}
+    for market in ("KR", "US"):
+        try:
+            for sym, prof in _load(market).items():
+                merged[sym] = {**prof, "market": market}
+        except Exception as e:
+            _log(f"{market} 사업정보 읽기 실패 {type(e).__name__}: {e} - 이름만으로 매핑한다")
+    return merged
+
+
+def _profile_text(prof: dict | None) -> tuple[str, str]:
+    """(산업분류, 사업요약). 미국은 긴 요약에서 US_SUMMARY_CHARS만큼 쓴다."""
+    if not prof:
+        return "", ""
+    summary = prof.get("summary") or ""
+    if prof.get("market") == "US" and prof.get("summary_long"):
+        summary = prof["summary_long"][:US_SUMMARY_CHARS]
+    return prof.get("industry") or "", summary
 
 
 def _candidate_line(symbol: str, market: str, names: dict[str, str],
                     profiles: dict[str, dict]) -> str:
-    """후보 한 줄. 한국 기업엔 산업분류와 사업요약을 붙인다.
+    """후보 한 줄. 산업분류와 사업요약을 붙인다.
 
     왜 필요한가(2026-09-14 A/B 실측): 이름만 주면 모델이 사명의 형태로 사업을
     추측하고 근거를 지어냈다 - '레인보우로보틱스'(협동로봇)·'휴림로봇'(산업용
     로봇)을 "수술 로봇을 개발"한다며 의료기기 direct로 편입. 산업·요약을 붙이자
     이 둘이 빠지고 클래시스(미용 레이저)·엘앤씨바이오 등 실제 의료기기 기업이
-    들어왔다. 미국 기업은 모델이 사명으로 이미 알아 같은 문제가 없었다
-    (같은 프롬프트로 medical_device US 17 / KR 2)."""
+    들어왔다.
+
+    미국은 v6까지 "모델이 사명으로 이미 안다"며 붙이지 않았다. 그러나 2026-09-15
+    검토에서 사람이 되살린 누락(General Dynamics 조선, Quanta·EMCOR 인프라 건설,
+    Teradyne 반도체장비, Deere 건설기계, First Solar 재생에너지 등)이 전부 사업정보에
+    적혀 있었다 - 모델이 회사를 알아도 200종목을 한 번에 훑을 땐 사업부 단위로
+    떠올리지 못한다. v7부터 미국에도 붙인다."""
     line = f"- {symbol} ({market}) {names.get(symbol, '')}"
-    prof = profiles.get(symbol) if market == "KR" else None
-    if prof:
-        if prof.get("industry"):
-            line += f" [{prof['industry']}]"
-        if prof.get("summary"):
-            line += f" {prof['summary']}"
+    industry, summary = _profile_text(profiles.get(symbol))
+    if industry:
+        line += f" [{industry}]"
+    if summary:
+        line += f" {summary}"
     return line
 
 
@@ -199,7 +223,7 @@ def path_a_universe_constrained(theme: dict, universe: list[dict], names: dict[s
 아래 상장기업 목록에서 위 테마에 실제로 속하는 기업만 고르시오. 목록에 없는
 기업은 절대 답하지 마시오.
 
-한국 기업 뒤의 대괄호는 산업분류, 그 뒤 문장은 영문 사업요약이다. 근거(evidence)는
+기업 뒤의 대괄호는 산업분류, 그 뒤 문장은 영문 사업요약이다. 근거(evidence)는
 이 정보와 모순되지 않게 쓰시오. 사명에 들어간 단어(예: '로봇', '바이오')만 보고
 사업 내용을 추측하지 마시오 - 산업분류·요약이 없는 기업은 사업 내용을 확실히 알
 때만 포함하시오.
@@ -396,8 +420,7 @@ def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_k
     profiles = profiles or {}
 
     def _fact(tk: str) -> str:
-        prof = profiles.get(tk) or {}
-        parts = [x for x in (prof.get("industry"), prof.get("summary")) if x]
+        parts = [x for x in _profile_text(profiles.get(tk)) if x]
         return f"\n    (실제 사업정보: {' / '.join(parts)})" if parts else ""
 
     listing = "\n".join(
@@ -438,6 +461,8 @@ def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_k
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--theme-id", nargs="*", default=None, help="특정 테마만 (비우면 전체)")
+    parser.add_argument("--market", choices=["US", "KR"], default=None,
+                        help="한 시장만 매핑 (비우면 양쪽). 승인은 approve --only-market과 짝을 맞출 것")
     args = parser.parse_args()
 
     api_key = os.environ.get("OPENAI_API_KEY", "")
@@ -446,19 +471,27 @@ def main() -> None:
         sys.exit(1)
 
     themes = load_themes(args.theme_id)
+    if args.market:
+        themes = [t for t in themes if args.market in (t.get("markets") or ["US", "KR"])]
     if not themes:
         _log("대상 테마 없음")
         sys.exit(1)
     _log(f"대상 테마 {len(themes)}개: {', '.join(t['id'] for t in themes)}")
 
     universe, names = build_universe_and_names()
+    if args.market:
+        universe = [it for it in universe if it["market"] == args.market]
     valid_tickers = {it["symbol"].upper() for it in universe}
+    universe_market = {it["symbol"].upper(): it["market"] for it in universe}
 
-    profiles = load_kr_profiles()
-    kr_syms = [it["symbol"] for it in universe if it["market"] == "KR"]
-    covered = sum(1 for c in kr_syms if (profiles.get(c) or {}).get("industry"))
-    _log(f"KR 사업정보 커버리지 {covered}/{len(kr_syms)} "
-         f"- 나머지는 이름만으로 판단(사명 기반 추측 위험 남음)")
+    profiles = load_all_profiles()
+    for mk in ("US", "KR"):
+        syms = [it["symbol"] for it in universe if it["market"] == mk]
+        if not syms:
+            continue
+        covered = sum(1 for c in syms if (profiles.get(c) or {}).get("industry"))
+        _log(f"{mk} 사업정보 커버리지 {covered}/{len(syms)} "
+             f"- 나머지는 이름만으로 판단(사명 기반 추측 위험 남음)")
     _log(f"유니버스 {len(universe)}종목 (경로 A 제약용)")
 
     conn = get_db()
@@ -491,6 +524,10 @@ def main() -> None:
         _log(f"  경로 B 후보: {len(raw_b)}개")
 
         validated, stats = validate_members(raw_a, raw_b, valid_tickers, cap_lookup, names)
+        # 저장 시장은 LLM이 답한 market이 아니라 유니버스 기준으로 정한다. LLM이
+        # 미국 티커에 "KR"을 붙이면 다른 시장 행으로 저장돼 승인·표시가 어긋난다.
+        for m in validated:
+            m["market"] = universe_market.get(m["ticker"], m["market"])
         _log(f"  검증 결과: {stats}")
         if stats["경로B_폐기율"] > HALLUCINATION_WARN_RATE * 100:
             _log(f"  ⚠ 경로 B 환각 폐기율 {stats['경로B_폐기율']}% — 30% 초과, 프롬프트 재검토 필요")
