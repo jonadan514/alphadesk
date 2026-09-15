@@ -32,6 +32,7 @@ REVIEW_FILES = [
     ("data/eval/v5_1_manual_review_20260915.json", "2026-09-15"),
     ("data/eval/v6_manual_review_20260915.json", "2026-09-15"),
     ("data/eval/us_v6_manual_review_20260915.json", "2026-09-15"),
+    ("data/eval/us_v7_manual_review_20260915.json", "2026-09-15"),
 ]
 
 EXCLUDE_KEYS = {"exclude", "unapprove"}

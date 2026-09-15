@@ -490,5 +490,42 @@
    "PPL - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정) (이전 keep 판정 변경)"
   ]
  ],
- "not_restored_note": "GD 조선(Marine Systems)은 이번 run에도 조선 테마에 없고 이전 승인분에도 없어 병합으로 복원할 원본이 없다 - 다음 분기 확인."
+ "not_restored_note": "GD 조선(Marine Systems)은 이번 run에도 조선 테마에 없고 이전 승인분에도 없어 병합으로 복원할 원본이 없다 - 다음 분기 확인.",
+ "merge_run_id": "20260915093736-merge",
+ "round2_gate": {
+  "_about": "병합 run 승인 후 표시분 게이트 감사(156행, 적발 34). 29건은 검토 파일에서 이미 판정한 행, 새로 걸린 5건은 전부 인용 검증 실패 - 사업정보상 오류 아님. k_content US는 KR 전용 테마인데 9월 1일 run의 LYV가 남아 있어 비움.",
+  "keep": [
+   [
+    "datacenter_power",
+    "ETN",
+    "Eaton 데이터센터 전력관리·UPS - 인용 오탐"
+   ],
+   [
+    "power_grid",
+    "PWR",
+    "Quanta 송배전 인프라 시공 - 인용 오탐"
+   ],
+   [
+    "specialty_gas",
+    "Q",
+    "Qnity CMP 슬러리 등 반도체 전자재료 - 인용 오탐"
+   ],
+   [
+    "ai_software",
+    "CDNS",
+    "EDA에 AI 기능(Cerebrus 등) - 판단보류(SNPS와 같은 약한 연결)"
+   ],
+   [
+    "neuro_alzheimer",
+    "MRK",
+    "알츠하이머 타우 항체 임상 파이프라인 - 판단보류"
+   ]
+  ],
+  "empty_themes": [
+   [
+    "k_content",
+    "US - KR 전용 테마(markets: [KR])인데 예전 run 행 LYV가 표시 중"
+   ]
+  ]
+ }
 }

@@ -1932,27 +1932,90 @@
    "theme_id": "aerospace_space",
    "ticker": "HII",
    "decision": "exclude",
-   "reason": "Huntington Ingalls는 조선업체(항공모함·잠수함 건조) - 항공우주 아니라 조선 테마",
+   "reason": "이전 판정(2026-09-15): Huntington Ingalls는 조선업체(항공모함·잠수함 건조) - 항공우주 아니라 조선 테마",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.exclude"
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "aerospace_space",
+   "ticker": "HWM",
+   "decision": "keep",
+   "reason": "항공기 엔진 부품 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "aerospace_space",
+   "ticker": "LMT",
+   "decision": "keep",
+   "reason": "Aeronautics·Space 사업부 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "aerospace_space",
+   "ticker": "PH",
+   "decision": "keep",
+   "reason": "Aerospace Systems 사업부 확인 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
   },
   {
    "market": "US",
    "theme_id": "ai_semiconductor",
    "ticker": "AVGO",
    "decision": "keep",
-   "reason": "Broadcom - AI 가속기(ASIC) 주요 공급사, 프로필 확인",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: Broadcom - AI 가속기(ASIC) 주요 공급사, 프로필 확인",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.restore"
+   "source": "us_v7_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_semiconductor",
+   "ticker": "NXPI",
+   "decision": "exclude",
+   "reason": "범용 MCU·아날로그 - AI 전용 공급망 아님",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_semiconductor",
+   "ticker": "ON",
+   "decision": "exclude",
+   "reason": "전력·센서 반도체 - AI 전용 공급망 아님",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
    "theme_id": "ai_software",
    "ticker": "AMZN",
    "decision": "keep",
-   "reason": "AWS AI 서비스 - 엔터프라이즈 AI 애플리케이션",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: AWS AI 서비스 - 엔터프라이즈 AI 애플리케이션",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.restore"
+   "source": "us_v7_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_software",
+   "ticker": "APP",
+   "decision": "exclude",
+   "reason": "AI 기반 광고 플랫폼 - AI 소프트웨어를 제품으로 파는 기업 아님",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_software",
+   "ticker": "CDNS",
+   "decision": "hold",
+   "reason": "EDA에 AI 기능(Cerebrus 등) - 판단보류(SNPS와 같은 약한 연결)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.round2_gate.keep"
   },
   {
    "market": "US",
@@ -1975,6 +2038,15 @@
   {
    "market": "US",
    "theme_id": "ai_software",
+   "ticker": "CTSH",
+   "decision": "exclude",
+   "reason": "IT 컨설팅·아웃소싱 서비스",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_software",
    "ticker": "DDOG",
    "decision": "keep",
    "reason": "게이트 감사 편차 - 인용이 사실을 뒷받침해 유지",
@@ -1993,20 +2065,47 @@
   {
    "market": "US",
    "theme_id": "ai_software",
+   "ticker": "LDOS",
+   "decision": "exclude",
+   "reason": "정부 대상 IT 서비스",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_software",
    "ticker": "MSFT",
    "decision": "keep",
-   "reason": "이미 새 run에 있음 - 확인용",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 이미 새 run에 있음 - 확인용",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.restore"
+   "source": "us_v7_manual_review_20260915.json.restore"
   },
   {
    "market": "US",
    "theme_id": "ai_software",
    "ticker": "NOW",
    "decision": "keep",
-   "reason": "ServiceNow AI 기반 업무 자동화",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: ServiceNow AI 기반 업무 자동화",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.restore"
+   "source": "us_v7_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_software",
+   "ticker": "NVDA",
+   "decision": "exclude",
+   "reason": "AI 하드웨어 - 정의상 AI 반도체 테마로",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_software",
+   "ticker": "ORCL",
+   "decision": "keep",
+   "reason": "OCI AI 인프라·AI 기반 엔터프라이즈 앱 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
   },
   {
    "market": "US",
@@ -2016,6 +2115,15 @@
    "reason": "게이트 감사 편차 - 인용이 사실을 뒷받침해 유지",
    "decided_at": "2026-09-15",
    "source": "us_v6_manual_review_20260915.json.round2_gate.reconfirmed_keep.items"
+  },
+  {
+   "market": "US",
+   "theme_id": "ai_software",
+   "ticker": "TYL",
+   "decision": "exclude",
+   "reason": "공공부문 업무 소프트웨어",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2031,27 +2139,45 @@
    "theme_id": "autonomous_driving",
    "ticker": "AAPL",
    "decision": "exclude",
-   "reason": "Apple 자율주행차 프로젝트(Project Titan) 이미 중단됨",
+   "reason": "이전 판정(2026-09-15): Apple 자율주행차 프로젝트(Project Titan) 이미 중단됨",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.exclude"
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "autonomous_driving",
+   "ticker": "GM",
+   "decision": "exclude",
+   "reason": "Cruise 로보택시 사업 2024년 중단 - 이전 검토와 동일 기준",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
    "theme_id": "autonomous_driving",
    "ticker": "GOOGL",
    "decision": "keep",
-   "reason": "Waymo 로보택시 보유(자회사) - 인용 오탐",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: Waymo 로보택시 보유(자회사) - 인용 오탐",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.keep"
+   "source": "us_v7_manual_review_20260915.json.restore"
   },
   {
    "market": "US",
    "theme_id": "autonomous_driving",
    "ticker": "INTC",
    "decision": "keep",
-   "reason": "Mobileye 대주주 - ADAS·자율주행 칩 주요 공급사, 프로필 확인",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: Mobileye 대주주 - ADAS·자율주행 칩 주요 공급사, 프로필 확인",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.restore"
+   "source": "us_v7_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "autonomous_driving",
+   "ticker": "NVDA",
+   "decision": "keep",
+   "reason": "DRIVE 자율주행 플랫폼·차량용 소프트웨어 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
   },
   {
    "market": "US",
@@ -2067,9 +2193,9 @@
    "theme_id": "battery",
    "ticker": "AAPL",
    "decision": "exclude",
-   "reason": "배터리 셀 제조 사업 없음, 인용도 실패",
+   "reason": "이전 판정(2026-09-15): 배터리 셀 제조 사업 없음, 인용도 실패",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.exclude"
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2085,27 +2211,54 @@
    "theme_id": "battery",
    "ticker": "TSLA",
    "decision": "keep",
-   "reason": "배터리 셀·팩 자체 생산(4680, 기가팩토리), 프로필 확인",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 배터리 셀·팩 자체 생산(4680, 기가팩토리), 프로필 확인",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.restore"
+   "source": "us_v7_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "biosimilar",
+   "ticker": "BAX",
+   "decision": "exclude",
+   "reason": "바이오시밀러 제품 없음(감사 통과분 점검)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
    "theme_id": "biosimilar",
    "ticker": "BIIB",
    "decision": "keep",
-   "reason": "게이트 감사 편차 - 인용이 사실을 뒷받침해 유지",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 게이트 감사 편차 - 인용이 사실을 뒷받침해 유지",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.round2_gate.reconfirmed_keep.items"
+   "source": "us_v7_manual_review_20260915.json.restore"
   },
   {
    "market": "US",
    "theme_id": "biosimilar",
    "ticker": "BMY",
    "decision": "exclude",
+   "reason": "이전 판정(2026-09-15): 바이오시밀러 제품 없음",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "biosimilar",
+   "ticker": "GILD",
+   "decision": "exclude",
    "reason": "바이오시밀러 제품 없음",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.exclude"
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "biosimilar",
+   "ticker": "MCK",
+   "decision": "exclude",
+   "reason": "의약품 유통업체",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2118,12 +2271,39 @@
   },
   {
    "market": "US",
+   "theme_id": "biosimilar",
+   "ticker": "VTRS",
+   "decision": "exclude",
+   "reason": "바이오시밀러 사업을 2022년 Biocon에 매각(감사 통과분 점검)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
    "theme_id": "cable_wire",
    "ticker": "APH",
    "decision": "exclude",
    "reason": "Amphenol은 커넥터 제조사, 전선·케이블 아님",
    "decided_at": "2026-09-15",
    "source": "us_v6_manual_review_20260915.json.round2_gate.unapprove"
+  },
+  {
+   "market": "US",
+   "theme_id": "cable_wire",
+   "ticker": "GLW",
+   "decision": "keep",
+   "reason": "광섬유·광케이블 제조 - 정의 (2) 통신 케이블",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "cable_wire",
+   "ticker": "TEL",
+   "decision": "exclude",
+   "reason": "커넥터·케이블 조립품 - 전선 제조 아님(APH와 동일 기준)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2148,9 +2328,36 @@
    "theme_id": "cdmo",
    "ticker": "GILD",
    "decision": "keep",
-   "reason": "게이트 감사 편차 - 인용이 사실을 뒷받침해 유지",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 게이트 감사 편차 - 인용이 사실을 뒷받침해 유지",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.round2_gate.reconfirmed_keep.items"
+   "source": "us_v7_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "cdmo",
+   "ticker": "WST",
+   "decision": "exclude",
+   "reason": "주사제 포장·전달 시스템 위탁생산 - 바이오의약품 CDMO 아님",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "construction_machinery",
+   "ticker": "PCAR",
+   "decision": "exclude",
+   "reason": "상용 트럭 제조",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "datacenter_cooling",
+   "ticker": "ANET",
+   "decision": "exclude",
+   "reason": "네트워크 장비 - 냉각 사업 없음",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2173,11 +2380,65 @@
   {
    "market": "US",
    "theme_id": "datacenter_power",
+   "ticker": "ANET",
+   "decision": "exclude",
+   "reason": "네트워크 장비 - 전력 사업 없음",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "datacenter_power",
+   "ticker": "DLR",
+   "decision": "hold",
+   "reason": "데이터센터 운영 리츠 - 판단보류(EQIX와 함께 경계 미정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "datacenter_power",
+   "ticker": "ETN",
+   "decision": "keep",
+   "reason": "Eaton 데이터센터 전력관리·UPS - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.round2_gate.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "datacenter_power",
    "ticker": "VRT",
    "decision": "keep",
    "reason": "Vertiv - 데이터센터 전력 인프라도 겸함, 프로필 확인",
    "decided_at": "2026-09-15",
    "source": "us_v6_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "defense",
+   "ticker": "AXON",
+   "decision": "exclude",
+   "reason": "치안용 전자충격기·바디캠 - 무기체계 아님",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "defense",
+   "ticker": "GD",
+   "decision": "keep",
+   "reason": "Combat Systems·Marine Systems(잠수함) - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "defense",
+   "ticker": "HWM",
+   "decision": "hold",
+   "reason": "군용기 엔진 부품 매출 있음 - 판단보류",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
   },
   {
    "market": "US",
@@ -2208,6 +2469,33 @@
   },
   {
    "market": "US",
+   "theme_id": "defense",
+   "ticker": "TXT",
+   "decision": "keep",
+   "reason": "Bell 군용 헬기·Textron Systems - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "energy_storage",
+   "ticker": "ALB",
+   "decision": "exclude",
+   "reason": "리튬 소재 - ESS 공급 확인 안 됨(정의상 2차전지 테마로)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "ev_value_chain",
+   "ticker": "ALB",
+   "decision": "keep",
+   "reason": "EV 배터리용 리튬 - 정의 (5) 2차전지 동시 소속 허용",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
    "theme_id": "ev_value_chain",
    "ticker": "GM",
    "decision": "keep",
@@ -2217,12 +2505,39 @@
   },
   {
    "market": "US",
+   "theme_id": "ev_value_chain",
+   "ticker": "GPC",
+   "decision": "exclude",
+   "reason": "자동차 부품 유통 - 전기차 매출 확인 안 됨(감사 통과분 점검)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "factory_automation",
+   "ticker": "AME",
+   "decision": "hold",
+   "reason": "전자계측·전기기계 부품 - 자동화 연결 약함, 판단보류",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
    "theme_id": "factory_automation",
    "ticker": "EMR",
    "decision": "keep",
    "reason": "Emerson Discrete Automation 사업부 명시, 프로필 확인",
    "decided_at": "2026-09-15",
    "source": "us_v6_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "factory_automation",
+   "ticker": "OTIS",
+   "decision": "exclude",
+   "reason": "승강기·에스컬레이터",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2244,12 +2559,30 @@
   },
   {
    "market": "US",
+   "theme_id": "glp1_obesity",
+   "ticker": "AMGN",
+   "decision": "keep",
+   "reason": "MariTide 비만 치료제 임상 파이프라인 - 감사 오판",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
    "theme_id": "infra_construction",
    "ticker": "J",
    "decision": "keep",
    "reason": "",
    "decided_at": "2026-09-15",
    "source": "v6_manual_review_20260915.json.us_approve_new_themes.approve"
+  },
+  {
+   "market": "US",
+   "theme_id": "lng_gas",
+   "ticker": "AEE",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2263,11 +2596,47 @@
   {
    "market": "US",
    "theme_id": "lng_gas",
-   "ticker": "D",
+   "ticker": "ATO",
    "decision": "keep",
-   "reason": "Dominion Energy는 Cove Point LNG 수출터미널 실소유 - 인용 오탐",
+   "reason": "가스 배관·저장이 주력인 가스 전문 유틸리티 - 정의 (1)",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.keep"
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "lng_gas",
+   "ticker": "D",
+   "decision": "exclude",
+   "reason": "Dominion - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정) (이전 keep 판정 변경)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.unapprove"
+  },
+  {
+   "market": "US",
+   "theme_id": "lng_gas",
+   "ticker": "LNT",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "lng_gas",
+   "ticker": "NI",
+   "decision": "exclude",
+   "reason": "전기·가스 겸업 규제 유틸리티 - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "lng_gas",
+   "ticker": "SRE",
+   "decision": "exclude",
+   "reason": "LNG 인프라 사업부가 있으나 주력은 규제 유틸리티 - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2283,9 +2652,18 @@
    "theme_id": "medical_device",
    "ticker": "COO",
    "decision": "exclude",
-   "reason": "콘택트렌즈 - 의료기기 정의에 안 맞음",
+   "reason": "이전 판정(2026-09-15): 콘택트렌즈 - 의료기기 정의에 안 맞음",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.exclude"
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "medical_device",
+   "ticker": "DVA",
+   "decision": "exclude",
+   "reason": "투석 서비스 운영",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2301,9 +2679,45 @@
    "theme_id": "medical_device",
    "ticker": "JNJ",
    "decision": "keep",
-   "reason": "Innovative Medicine 외 MedTech 사업부 확인, 프로필 확인",
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: Innovative Medicine 외 MedTech 사업부 확인, 프로필 확인",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.restore"
+   "source": "us_v7_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "medical_device",
+   "ticker": "TMO",
+   "decision": "hold",
+   "reason": "Specialty Diagnostics 사업부 있음 - 판단보류(WAT는 제외 기준)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "medical_device",
+   "ticker": "UHS",
+   "decision": "exclude",
+   "reason": "병원 운영",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "medical_device",
+   "ticker": "UNH",
+   "decision": "exclude",
+   "reason": "건강보험·헬스케어 서비스",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "medical_device",
+   "ticker": "VEEV",
+   "decision": "exclude",
+   "reason": "생명과학 산업용 클라우드 소프트웨어",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2313,6 +2727,60 @@
    "reason": "생명과학 연구기기 - 환자용 의료기기 아님",
    "decided_at": "2026-09-15",
    "source": "us_v6_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "neuro_alzheimer",
+   "ticker": "AMGN",
+   "decision": "exclude",
+   "reason": "신경퇴행성 치료제 파이프라인 확인 안 됨",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "neuro_alzheimer",
+   "ticker": "MDT",
+   "decision": "exclude",
+   "reason": "의료기기 - 치료제 개발사 아님",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "neuro_alzheimer",
+   "ticker": "MRK",
+   "decision": "hold",
+   "reason": "알츠하이머 타우 항체 임상 파이프라인 - 판단보류",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.round2_gate.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "neuro_alzheimer",
+   "ticker": "SYK",
+   "decision": "exclude",
+   "reason": "의료기기 - 치료제 개발사 아님(감사 통과분 점검)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "nuclear_smr",
+   "ticker": "GEV",
+   "decision": "keep",
+   "reason": "GE Hitachi BWRX-300 SMR·원전 기술 - 판정 누락분 확인",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "nuclear_smr",
+   "ticker": "PEG",
+   "decision": "exclude",
+   "reason": "원전을 보유하나 주력은 규제 유틸리티 - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2335,6 +2803,42 @@
   {
    "market": "US",
    "theme_id": "petrochemical",
+   "ticker": "MPC",
+   "decision": "exclude",
+   "reason": "정유 중심, 석유화학 계열 사업 확인 안 됨",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "petrochemical",
+   "ticker": "OXY",
+   "decision": "exclude",
+   "reason": "OxyChem 매각 후 석유·가스 개발·미드스트림만 남음",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "petrochemical",
+   "ticker": "SLB",
+   "decision": "exclude",
+   "reason": "유전 서비스",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "petrochemical",
+   "ticker": "VLO",
+   "decision": "hold",
+   "reason": "사업정보에 석유화학 제품 명시 - 판단보류",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "petrochemical",
    "ticker": "XOM",
    "decision": "keep",
    "reason": "ExxonMobil Chemical 부문 명시, 프로필 확인",
@@ -2344,29 +2848,182 @@
   {
    "market": "US",
    "theme_id": "power_grid",
-   "ticker": "ES",
-   "decision": "keep",
-   "reason": "Eversource Energy 송배전 사업 확인 - 인용 오탐",
+   "ticker": "AEE",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.keep"
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "AEP",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "CMS",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "CNP",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "D",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "ED",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "EMR",
+   "decision": "exclude",
+   "reason": "전기사업 매각 후 공정 자동화 중심 - 송배전 설비 아님(감사 통과분 점검)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "ES",
+   "decision": "exclude",
+   "reason": "Eversource - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정) (이전 keep 판정 변경)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.unapprove"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "ETN",
+   "decision": "keep",
+   "reason": "배전 설비·유틸리티 배전 제품 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "LNT",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
    "theme_id": "power_grid",
    "ticker": "PPL",
-   "decision": "keep",
-   "reason": "PPL Corporation 송배전 사업 확인 - 인용 오탐",
+   "decision": "exclude",
+   "reason": "PPL - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정) (이전 keep 판정 변경)",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.keep"
+   "source": "us_v7_manual_review_20260915.json.unapprove"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "PWR",
+   "decision": "keep",
+   "reason": "Quanta 송배전 인프라 시공 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.round2_gate.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "VRT",
+   "decision": "exclude",
+   "reason": "데이터센터 전용 전력·냉각 인프라 - 데이터센터 전력 테마로",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "WEC",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "power_grid",
+   "ticker": "XEL",
+   "decision": "exclude",
+   "reason": "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "renewable_energy",
+   "ticker": "CEG",
+   "decision": "exclude",
+   "reason": "원전 중심 독립 발전사 - 재생에너지 주력 아님(감사 통과분 점검)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "renewable_energy",
+   "ticker": "FSLR",
+   "decision": "keep",
+   "reason": "태양광 모듈 제조 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "renewable_energy",
+   "ticker": "TSLA",
+   "decision": "exclude",
+   "reason": "태양광 발전 사업은 미미 - ESS는 에너지저장 테마로",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "semi_equipment",
+   "ticker": "AVGO",
+   "decision": "exclude",
+   "reason": "칩 설계사 - 장비·소재 공급사 아님(동일 기준)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
    "theme_id": "semi_equipment",
    "ticker": "INTC",
    "decision": "exclude",
-   "reason": "칩 설계·제조사 - 장비·소재 공급사 아님(KR과 동일 기준, 1차 검토 누락)",
+   "reason": "이전 판정(2026-09-15): 칩 설계·제조사 - 장비·소재 공급사 아님(KR과 동일 기준, 1차 검토 누락)",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.round2_gate.unapprove"
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2382,27 +3039,36 @@
    "theme_id": "semi_equipment",
    "ticker": "MU",
    "decision": "exclude",
-   "reason": "동일 사유",
+   "reason": "이전 판정(2026-09-15): 동일 사유",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.round2_gate.unapprove"
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "semi_equipment",
+   "ticker": "NVDA",
+   "decision": "exclude",
+   "reason": "칩 설계사 - 장비·소재 공급사 아님(동일 기준)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
    "theme_id": "semi_equipment",
    "ticker": "NXPI",
    "decision": "exclude",
-   "reason": "동일 사유",
+   "reason": "이전 판정(2026-09-15): 동일 사유",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.round2_gate.unapprove"
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
    "theme_id": "semi_equipment",
    "ticker": "ON",
    "decision": "exclude",
-   "reason": "동일 사유",
+   "reason": "이전 판정(2026-09-15): 동일 사유",
    "decided_at": "2026-09-15",
-   "source": "us_v6_manual_review_20260915.json.round2_gate.unapprove"
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2412,6 +3078,15 @@
    "reason": "동일 사유",
    "decided_at": "2026-09-15",
    "source": "us_v6_manual_review_20260915.json.round2_gate.unapprove"
+  },
+  {
+   "market": "US",
+   "theme_id": "semi_equipment",
+   "ticker": "TXN",
+   "decision": "exclude",
+   "reason": "칩 제조사 - 장비·소재 공급사 아님(동일 기준)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
   },
   {
    "market": "US",
@@ -2425,11 +3100,47 @@
   {
    "market": "US",
    "theme_id": "specialty_gas",
+   "ticker": "AMAT",
+   "decision": "exclude",
+   "reason": "반도체 장비 - 특수가스·전자재료 아님(정의상 반도체 장비 테마로)",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "specialty_gas",
+   "ticker": "KLAC",
+   "decision": "exclude",
+   "reason": "검사장비 - 정의상 제외",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "specialty_gas",
    "ticker": "LIN",
    "decision": "keep",
    "reason": "Linde - 산업용 가스 대표기업, 프로필 확인",
    "decided_at": "2026-09-15",
    "source": "us_v6_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "US",
+   "theme_id": "specialty_gas",
+   "ticker": "LRCX",
+   "decision": "exclude",
+   "reason": "반도체 장비 - 특수가스·전자재료 아님",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "US",
+   "theme_id": "specialty_gas",
+   "ticker": "Q",
+   "decision": "keep",
+   "reason": "Qnity CMP 슬러리 등 반도체 전자재료 - 인용 오탐",
+   "decided_at": "2026-09-15",
+   "source": "us_v7_manual_review_20260915.json.round2_gate.keep"
   }
  ]
 }
