@@ -1,0 +1,36 @@
+name: Build Merged Mapping Run
+
+# 검토를 거친 매핑 결과(기준 run - 제외 + 현재 승인분에서 되살리기)를 새 run으로 만든다.
+# 기존 행은 수정하지 않는다. 새 run은 approved=0 - 승인은 Approve Theme Mapping으로 따로.
+on:
+  workflow_dispatch:
+    inputs:
+      review_file:
+        description: "검토 결과 JSON 경로"
+        required: true
+      dry_run:
+        description: "true면 쓰지 않고 결과만 출력"
+        required: false
+        default: "true"
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Merge
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          ARGS=(--review "${{ inputs.review_file }}")
+          [ "${{ inputs.dry_run }}" = "true" ] && ARGS+=(--dry-run)
+          python scripts/build_merged_mapping_run.py "${ARGS[@]}"
