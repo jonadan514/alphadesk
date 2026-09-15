@@ -36,7 +36,7 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-09-15-v5"  # v5: KR 후보에 산업·사업요약 부착, 키워드 항상 전달, 비판 패스 사실대조
+PROMPT_VERSION = "2026-09-15-v5.1"  # v5.1: v5 + 근거주어 불일치 제외 + 조선사 산업분류 보정
 UNIVERSE_CHUNK_SIZE = 200
 PATH_A_RUNS = 2  # 파일럿에서 경로 A 결과가 회차마다 크게 흔들리는 현상을 발견 —
                  # 반복 실행 후 티커 기준 합집합으로 완화
@@ -131,14 +131,16 @@ def _theme_description(theme: dict) -> str:
 
 
 def load_kr_profiles() -> dict[str, dict]:
-    """KR 기업의 산업분류·영문 사업요약 (scripts/fetch_kr_profiles.py 생성)."""
-    path = ROOT / "data" / "kr_profiles.json"
-    if not path.exists():
-        return {}
+    """KR 기업의 산업분류·영문 사업요약. 근거 감사와 같은 값을 보도록 공용 로더를
+    쓴다(industry 보정 포함 - data/kr_profile_overrides.json)."""
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        from collectors.kr_profiles import load_kr_profiles as _load
+    except ImportError:
+        from src.collectors.kr_profiles import load_kr_profiles as _load
+    try:
+        return _load()
     except Exception as e:
-        _log(f"kr_profiles.json 읽기 실패 {type(e).__name__}: {e} - 이름만으로 매핑한다")
+        _log(f"kr_profiles 읽기 실패 {type(e).__name__}: {e} - 이름만으로 매핑한다")
         return {}
 
 

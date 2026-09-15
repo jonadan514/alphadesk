@@ -1,0 +1,13 @@
+{
+  "_about": "yfinance 산업분류(industry)가 실제 사업과 어긋나는 KR 종목의 보정값. src/collectors/kr_profiles.py가 로드 시 덮어쓴다. 사업요약(summary)은 건드리지 않는다 - 요약은 원문이고 틀린 건 분류 라벨뿐이다. 항목을 추가할 때는 반드시 summary_long 원문에서 실제 사업을 확인하고 근거를 note에 남길 것(손으로 쓴 데이터는 검증 없이 틀릴 수 있다 - 2026-09-10 종목코드 오류 4건 참고).",
+  "_why": "2026-09-15 실측: yfinance가 한국 조선·해양 7개사를 'Aerospace & Defense'로 분류한다. 매핑 프롬프트 v5가 이 라벨을 후보 옆에 붙이자 모델이 SK오션플랜트·HD한국조선해양·대한조선을 항공우주 테마에 편입했고, 근거 감사도 같은 라벨에 속아 SK오션플랜트를 '부합'으로 통과시켰다.",
+  "industry": {
+    "329180": {"industry": "Shipbuilding & Marine", "note": "HD현대중공업 - 요약: engages in the shipbuilding business"},
+    "042660": {"industry": "Shipbuilding & Marine", "note": "한화오션 - 요약: operates as a shipbuilding and offshore contractor (함정 건조로 방산 연관은 요약에서 판단)"},
+    "009540": {"industry": "Shipbuilding & Marine", "note": "HD한국조선해양 - 요약: engages in shipbuilding and offshore engineering business"},
+    "010140": {"industry": "Shipbuilding & Marine", "note": "삼성중공업 - 요약: engages in shipbuilding, offshore, and energy and infra businesses"},
+    "443060": {"industry": "Shipbuilding & Marine", "note": "HD현대마린솔루션 - 요약: engineering-based services to Hyundai brand ships"},
+    "439260": {"industry": "Shipbuilding & Marine", "note": "대한조선 - 요약: provides ship construction and repair services"},
+    "100090": {"industry": "Shipbuilding & Marine", "note": "SK오션플랜트 - 요약: steel pipe, hull block, and shipbuilding equipment"}
+  }
+}

@@ -30,6 +30,22 @@ jobs:
           cache: "pip"
       - name: Install dependencies
         run: pip install -r requirements.txt
+      # 매핑 run과 같은 유니버스·프로필을 봐야 한다. CI에서 매핑 중 새로 받은 프로필은
+      # 저장소에 커밋되지 않으므로, 여기서 복원·보충하지 않으면 신규 상장 종목이
+      # "사업정보 없음"으로 오판된다(2026-09-15 엠앤씨솔루션 484870 사례).
+      - name: Restore KR universe cache
+        uses: actions/cache@v4
+        with:
+          path: data/kr_universe.json
+          key: kr-universe-audit-${{ github.run_id }}
+          restore-keys: |
+            kr-universe-theme-
+            kr-universe-
+
+      - name: Fill missing KR profiles
+        continue-on-error: true
+        run: python scripts/fetch_kr_profiles.py --only-missing
+
       - name: Audit
         env:
           TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}

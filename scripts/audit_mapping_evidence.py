@@ -217,7 +217,10 @@ def main() -> int:
         _log("OPENAI_API_KEY 미설정")
         return 1
 
-    profiles = json.loads((ROOT / "data" / "kr_profiles.json").read_text(encoding="utf-8"))
+    # 매핑과 같은 로더(산업분류 보정 포함). 둘이 다른 값을 보면 매핑이 틀린 라벨에
+    # 속아 만든 편입을 감사도 같은 라벨에 속아 통과시킨다.
+    from src.collectors.kr_profiles import load_kr_profiles
+    profiles = load_kr_profiles()
     long_cov = sum(1 for p in profiles.values() if p.get("summary_long"))
     names: dict[str, str] = {}
     uni = ROOT / "data" / "kr_universe.json"
