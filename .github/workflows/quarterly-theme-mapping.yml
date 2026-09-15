@@ -1,0 +1,97 @@
+name: Quarterly Theme Mapping
+
+# 분기마다 전체 테마 매핑 + 근거 감사(KR·US)를 돌리고 텔레그램으로 검토를 요청한다.
+# 승인은 하지 않는다 - 화면은 검토·승인 전까지 기존 매핑 그대로다.
+# 이후 절차는 docs/radar/RUNBOOK_theme_mapping.md.
+#
+# 주기 근거(2026-09-15): 매핑 1회 = 약 400 호출(~$0.35)에 감사·수동 검토가 따라붙어
+# 매주·매월은 검토 부담이 과하다. 테마 소속은 분기 실적 주기보다 빨리 바뀌지 않는다.
+# 시각: 1·4·7·10월 1일 01:00 UTC - 일요일 22-23시 UTC 주간 작업들과 겹치지 않게.
+on:
+  schedule:
+    - cron: "0 1 1 1,4,7,10 *"
+  workflow_dispatch:
+
+jobs:
+  map-and-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    outputs:
+      run_id: ${{ steps.map.outputs.run_id }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore KR universe cache
+        uses: actions/cache@v4
+        with:
+          path: data/kr_universe.json
+          key: kr-universe-quarterly-${{ github.run_id }}
+          restore-keys: |
+            kr-universe-theme-
+            kr-universe-
+
+      - name: Fetch KR universe (isolated pykrx)
+        continue-on-error: true
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python -m venv /tmp/krxenv
+          /tmp/krxenv/bin/pip install --quiet "pandas<3.0" "pykrx==1.2.8"
+          /tmp/krxenv/bin/python scripts/fetch_kr_universe_pykrx.py --out data/kr_universe.json
+
+      - name: Fill missing profiles
+        continue-on-error: true
+        run: |
+          python scripts/fetch_kr_profiles.py --only-missing
+          python scripts/fetch_us_profiles.py --only-missing
+
+      - name: Map all themes
+        id: map
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DATA_GO_KR_API_KEY: ${{ secrets.DATA_GO_KR_API_KEY }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          set -o pipefail  # tee 때문에 매핑 실패가 성공으로 가려지지 않게
+          python scripts/map_theme_companies.py --theme-id 2>&1 | tee /tmp/map.log
+          RID=$(grep -oE "run_id=[0-9]{14}-[0-9a-f]+" /tmp/map.log | tail -1 | cut -d= -f2)
+          echo "run_id=$RID" >> "$GITHUB_OUTPUT"
+          echo "매핑 run_id: $RID"
+
+      - name: Audit KR and US
+        if: steps.map.outputs.run_id != ''
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python scripts/audit_mapping_evidence.py --run-id "${{ steps.map.outputs.run_id }}" --market KR
+          python scripts/audit_mapping_evidence.py --run-id "${{ steps.map.outputs.run_id }}" --market US
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarterly-mapping-audit
+          path: out/evidence_audit_*
+          if-no-files-found: warn
+
+      - name: Notify review needed
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_ID: ${{ steps.map.outputs.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python scripts/notify_mapping_review.py

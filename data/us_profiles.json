@@ -1,0 +1,896 @@
+{
+ "MMM": {
+  "industry": "Conglomerates",
+  "sector": "Industrials",
+  "summary": "3M Company provides diversified technology services in the America, the Asia Pacific, Europe, the Middle East, Africa, and internationally. ",
+  "summary_long": "3M Company provides diversified technology services in the America, the Asia Pacific, Europe, the Middle East, Africa, and internationally. It operates through three segments: Safety and Industrial, Transportation and Electronics, and Consumer. The Safety and Industrial segment provides industrial abrasives and finishing for metalworking applications; autobody repair solutions; industrial specialty products, such as personal hygiene products, masking, and packaging materials; electrical products and materials for construction and maintenance, power distribution, and electrical original equipment manufacturers; structural adhesives and tapes; respiratory, hearing, eye, and fall protection sol"
+ },
+ "AOS": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "A. O. Smith Corporation manufactures and markets residential and commercial gas and electric water heaters, boilers, heat pumps, tanks, and ",
+  "summary_long": "A. O. Smith Corporation manufactures and markets residential and commercial gas and electric water heaters, boilers, heat pumps, tanks, and water treatment products in North America, China, Europe, and India. The company offers water heaters for residences, restaurants, hotels, office buildings, laundries, car washes, and small businesses; boilers for hospitals, schools, hotels, homes, apartments, and condominiums, and other large commercial buildings; and water treatment products comprising point-of-entry water softeners, well water solutions, and whole-home water filtration products, and point-of-use carbon and reverse osmosis products for residences, restaurants, hotels, and offices. It a"
+ },
+ "ABT": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "Abbott Laboratories, together with its subsidiaries, discovers, develops, manufactures, and sells health care products worldwide. It operate",
+  "summary_long": "Abbott Laboratories, together with its subsidiaries, discovers, develops, manufactures, and sells health care products worldwide. It operates in four segments: Established Pharmaceutical Products, Diagnostic Products, Nutritional Products, and Medical Devices. The company offers generic pharmaceuticals for the treatment of pancreatic exocrine insufficiency, irritable bowel syndrome or biliary spasm, intrahepatic cholestasis or depressive symptoms, gynecological disorder, hormone replacement therapy, dyslipidemia, hypertension, hypothyroidism, hypertriglyceridemia, Ménière's disease and vestibular vertigo, pain, fever, inflammation, and migraine, as well as provides anti-infective clarithromy"
+ },
+ "ABBV": {
+  "industry": "Drug Manufacturers - General",
+  "sector": "Healthcare",
+  "summary": "AbbVie Inc., a research-based biopharmaceutical company, engages in the research and development, manufacturing, commercializing, and sale o",
+  "summary_long": "AbbVie Inc., a research-based biopharmaceutical company, engages in the research and development, manufacturing, commercializing, and sale of medicines and therapies worldwide. The company offers Skyrizi to treat autoimmune diseases; Rinvoq to treat inflammatory diseases; Imbruvica for the treatment of adult patients with blood cancers; Venclexta to treat blood cancers; Elahere to treat various cancer; and Epkinly to treat lymphoma; and Emrelis for the treatment of lung cancer. It also provides facial injectables, plastics and regenerative medicine, body contouring, and skincare products; botox Cosmetic for the treatment of glabellar lines, crow's feet, forehead lines, and platysma bands; Ju"
+ },
+ "ACN": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "Accenture plc provides strategy and consulting, industry X, song, and technology and operation services in the Americas, Europe, the Middle ",
+  "summary_long": "Accenture plc provides strategy and consulting, industry X, song, and technology and operation services in the Americas, Europe, the Middle East, Africa, and the Asia Pacific. It offers systems integration and application management; security; intelligent platform; infrastructure; software engineering; data, AI, cloud; and automation and global delivery services. The company also operates business processes for specific enterprise functions, including finance and accounting, sourcing and procurement, supply chain, marketing and sales, and human resources, as well as industry-specific services, such as platform trust and safety, banking, insurance, network and health services; and designs, ma"
+ },
+ "ADBE": {
+  "industry": "Software - Application",
+  "sector": "Technology",
+  "summary": "Adobe Inc. operates as a technology company worldwide. The Digital Media segment offers products and services that enable individuals, teams",
+  "summary_long": "Adobe Inc. operates as a technology company worldwide. The Digital Media segment offers products and services that enable individuals, teams, and enterprises to create, publish, and promote content. This segment serves photographers, video editors, graphic and experience designers, game developers, content creators, students, marketers, business owners, knowledge workers, and consumers. The Digital Experience segment provides an integrated platform; and products, services, and solutions that enable brands and businesses to create, manage, execute, measure, monetize, and optimize customer experiences from analytics to commerce. This segment serves marketers, advertisers, agencies, publishers,"
+ },
+ "AMD": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Advanced Micro Devices, Inc. operates as a semiconductor company internationally. It operates in three segments: Data Center, Client and Gam",
+  "summary_long": "Advanced Micro Devices, Inc. operates as a semiconductor company internationally. It operates in three segments: Data Center, Client and Gaming, and Embedded. The company offers artificial intelligence (AI) accelerators, microprocessors, and graphics processing units (GPUs) as standalone devices or as incorporated into accelerated processing units, chipsets, and data center and professional GPUs; and embedded processors and semi-custom system-on-chip (SoC) products, microprocessor and SoC development services and technology, data processing units, field programmable gate arrays (FPGA), system on modules, AI network interface cards, and adaptive SoC products. It provides processors under the "
+ },
+ "AES": {
+  "industry": "Utilities - Diversified",
+  "sector": "Utilities",
+  "summary": "The AES Corporation, together with its subsidiaries, operates as a power generation and utility company. It operates through four segments: ",
+  "summary_long": "The AES Corporation, together with its subsidiaries, operates as a power generation and utility company. It operates through four segments: Renewables, Utilities, Energy Infrastructure, and New Energy Technologies. The company owns and/or operates power plants to generate and sell power to customers, such as utilities, industrial users, and other intermediaries; owns and/or operates utilities to generate or purchase, distribute, transmit, and sell electricity to end-user customers in the residential, commercial, industrial, and governmental sectors; and generates and sells electricity on the wholesale market, as well as investments in technologies to support leading-edge greener energy solut"
+ },
+ "AFL": {
+  "industry": "Insurance - Life",
+  "sector": "Financial Services",
+  "summary": "Aflac Incorporated, through its subsidiaries, provides supplemental health and life insurance products. It operates in two segments, Aflac J",
+  "summary_long": "Aflac Incorporated, through its subsidiaries, provides supplemental health and life insurance products. It operates in two segments, Aflac Japan and Aflac U.S. The Aflac Japan segment offers cancer, medical, nursing care, whole life, and GIFT insurance products, as well as WAYS and child endowment, and Tsumitasu insurance products in Japan. Its Aflac U.S. segment provides accident, disability, cancer, critical illness, hospital indemnity, dental, vision, and life insurance products in the United States. The company also provides hearing, final expense, pet, Medicare supplement, supplemental dental and vision, short-term disability, and absence management insurance products, as well as cafete"
+ },
+ "A": {
+  "industry": "Diagnostics & Research",
+  "sector": "Healthcare",
+  "summary": "Agilent Technologies, Inc. provides application focused solutions to the life sciences, diagnostics, and applied chemical markets worldwide.",
+  "summary_long": "Agilent Technologies, Inc. provides application focused solutions to the life sciences, diagnostics, and applied chemical markets worldwide. The company operates through three segments: Life Sciences and Diagnostics Markets, Agilent CrossLab, and Applied Markets. The Life Sciences and Diagnostics Markets segment offers liquid chromatography systems and components; and liquid chromatography mass spectrometry systems. This segment is also involved in the genomics, contract development and manufacturing organization, pathology, companion diagnostics, and biomolecular analysis businesses. The Agilent CrossLab segment provides various services, including repairs, parts, maintenance, installations"
+ },
+ "APD": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Air Products and Chemicals, Inc. provides atmospheric gases, process and specialty gases, equipment, and related services in the Americas, A",
+  "summary_long": "Air Products and Chemicals, Inc. provides atmospheric gases, process and specialty gases, equipment, and related services in the Americas, Asia, Europe, the Middle East, India, and internationally. The company produces atmospheric gases, including oxygen, nitrogen, and argon; process gases, such as hydrogen, helium, carbon dioxide, carbon monoxide, and syngas; and specialty gases for customers in various industries, including refining, chemical, metals, manufacturing, electronics, energy production, medical, food, chemical and petrochemical manufacturing, oil and gas recovery and processing, and steel and primary metals processing. It also designs and manufactures equipment for air separatio"
+ },
+ "ABNB": {
+  "industry": "Travel Services",
+  "sector": "Consumer Cyclical",
+  "summary": "Airbnb, Inc., together with its subsidiaries, operates a platform for stays, experiences, and services worldwide. The company's marketplace ",
+  "summary_long": "Airbnb, Inc., together with its subsidiaries, operates a platform for stays, experiences, and services worldwide. The company's marketplace connects hosts and guests online or through mobile devices to book spaces, experiences, and services. It also offers gift cards. The company was formerly known as AirBed & Breakfast, Inc. and changed its name to Airbnb, Inc. in November 2010. Airbnb, Inc. was founded in 2007 and is headquartered in San Francisco, California."
+ },
+ "AKAM": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "Akamai Technologies, Inc. engages in the provision of security, delivery, and cloud computing solutions in the United States and internation",
+  "summary_long": "Akamai Technologies, Inc. engages in the provision of security, delivery, and cloud computing solutions in the United States and internationally. It offers security solutions that include web application and application programming interfaces (API) protection solutions, which protect web, API, and mobile app traffic from attacks; Bot & Abuse portfolio, which provides solutions to help customers protect against threats; full account lifecycle protections including the ability to defend against account takeover and opening abuse, adversarial bot protection, protection against credential stuffing, inventory scalping, and hoarding; and solutions designed to stop persistent scrapers from stealing"
+ },
+ "ALB": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Albemarle Corporation provides energy storage solutions worldwide. It operates through three segments: Energy Storage, Specialties, and Ketj",
+  "summary_long": "Albemarle Corporation provides energy storage solutions worldwide. It operates through three segments: Energy Storage, Specialties, and Ketjen. The Energy Storage segment offers lithium compounds, including lithium carbonate, lithium hydroxide, and lithium chloride for use in lithium batteries used in consumer electronics and electric vehicles; power grids and solar panels; high-performance greases; and specialty glass used in consumer appliances and electronics. The Specialties segment provides bromine and highly specialized lithium solutions for various industries, such as energy, mobility, connectivity, and health comprising fire safety compounds; bromine-based specialty chemical products"
+ },
+ "ARE": {
+  "industry": "REIT - Office",
+  "sector": "Real Estate",
+  "summary": "Alexandria Real Estate Equities, Inc., an S&P 500 company, is a best-in-class, mission-driven life science REIT making a positive and lastin",
+  "summary_long": "Alexandria Real Estate Equities, Inc., an S&P 500 company, is a best-in-class, mission-driven life science REIT making a positive and lasting impact on the world. With our founding in 1994, Alexandria pioneered the life science real estate niche. Alexandria is the preeminent and longest-tenured owner, operator, and developer of collaborative Megacampus ecosystems in AAA life science and advanced technology innovation cluster locations, including Greater Boston, San Diego, the San Francisco Bay Area, Seattle, Maryland, Research Triangle, and New York City. Alexandria Real Estate Equities, Inc. was established in 1994 and was incorporated in Maryland."
+ },
+ "ALGN": {
+  "industry": "Medical Instruments & Supplies",
+  "sector": "Healthcare",
+  "summary": "Align Technology, Inc. provides Invisalign clear aligners, Vivera retainers, and iTero intraoral scanners and services in the United States,",
+  "summary_long": "Align Technology, Inc. provides Invisalign clear aligners, Vivera retainers, and iTero intraoral scanners and services in the United States, Switzerland, and internationally. The company's Clear Aligner segment offers Invisalign comprehensive package to treat adults and teens malocclusion and features, and orthodontic needs of teenage or younger patients; and Invisalign First Phase I and Invisalign First Comprehensive Phase 2 package for younger patients between the ages of six and ten years with a mixture of primary/baby and permanent teeth. This segment also provides Invisalign express, Invisalign lite, and Invisalign moderate; Invisalign Go, Invisalign Go express, and Invisalign Go Plus; "
+ },
+ "ALLE": {
+  "industry": "Security & Protection Services",
+  "sector": "Industrials",
+  "summary": "Allegion plc engages in the provision of security products and solutions worldwide. It is operating through two segments: Allegion Americas ",
+  "summary_long": "Allegion plc engages in the provision of security products and solutions worldwide. It is operating through two segments: Allegion Americas and Allegion International. The company offers door controls, door control system, and exit devices; doors, glass and door systems, and accessories; electronic security products and access control systems, including time, attendance, and workforce productivity; and locks, locksets, portable locks, and key systems. It also provides services and software, such as inspection, maintenance, and repair services for its automatic entrance solutions; software as a service, including access control, platform integration, and workforce management solutions; and on"
+ },
+ "LNT": {
+  "industry": "Utilities - Regulated Electric",
+  "sector": "Utilities",
+  "summary": "Alliant Energy Corporation operates as a utility holding company that provides regulated electric and natural gas services in the United Sta",
+  "summary_long": "Alliant Energy Corporation operates as a utility holding company that provides regulated electric and natural gas services in the United States. It operates through IPL and WPL segments. The company's IPL segment engages primarily in the generation and distribution of electricity and the distribution and transportation of natural gas to retail customers in select markets in Iowa. This segment also sells electricity to wholesale customers in Minnesota, Illinois and Iowa; and generates and distributes steam for two customers in Cedar Rapids, Iowa. Its WPL segment generates and distributes electricity, and distributes and transports natural gas to retail customers in select markets in Wisconsin"
+ },
+ "ALL": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "The Allstate Corporation, together with its subsidiaries, provides property and casualty, and other insurance products in the United States ",
+  "summary_long": "The Allstate Corporation, together with its subsidiaries, provides property and casualty, and other insurance products in the United States and Canada. It operates in four segments: Allstate Protection; Run-off Property-Liability; Protection Services; and Corporate and Other. The company offers private passenger auto, homeowners, other personal lines and commercial insurance through exclusive agents, independent agents, contact centers and online under the Allstate, National General, Direct Auto and Answer Financial brands. It also provides consumer product protection plans, device and mobile data collection services, and analytic solutions using automotive telematics information, roadside a"
+ },
+ "GOOGL": {
+  "industry": "Internet Content & Information",
+  "sector": "Communication Services",
+  "summary": "Alphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Lat",
+  "summary_long": "Alphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America. It operates through Google Services, Google Cloud, and Other Bets segments. The Google Services segment provides products and services, including ads, Android, Chrome, devices, Gmail, Google Drive, Google Maps, Google Photos, Google Play, Search, and YouTube. It is also involved in the sale of apps and in-app purchases and digital content in Google Play and YouTube; and devices, as well as the provision of YouTube consumer subscription services, such as YouTube TV, YouTube Music and Premium, NFL Sunday Ticket, and Google One. The Google Cloud"
+ },
+ "GOOG": {
+  "industry": "Internet Content & Information",
+  "sector": "Communication Services",
+  "summary": "Alphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Lat",
+  "summary_long": "Alphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America. It operates through Google Services, Google Cloud, and Other Bets segments. The Google Services segment provides products and services, including ads, Android, Chrome, devices, Gmail, Google Drive, Google Maps, Google Photos, Google Play, Search, and YouTube. It is also involved in the sale of apps and in-app purchases and digital content in Google Play and YouTube; and devices, as well as the provision of YouTube consumer subscription services, such as YouTube TV, YouTube Music and Premium, NFL Sunday Ticket, and Google One. The Google Cloud"
+ },
+ "MO": {
+  "industry": "Tobacco",
+  "sector": "Consumer Defensive",
+  "summary": "Altria Group, Inc., through its subsidiaries, manufactures and sells smokeable and oral tobacco products in the United States. It offers cig",
+  "summary_long": "Altria Group, Inc., through its subsidiaries, manufactures and sells smokeable and oral tobacco products in the United States. It offers cigarettes primarily under the Marlboro brand; large cigars and pipe tobacco under the Black & Mild brand; moist smokeless tobacco and oral tobacco products under the Copenhagen, Skoal, Red Seal, and Husky brands; oral nicotine pouches under the on! brand; and e-vapor products under the NJOY ACE brand. The company sells its products to distributors, as well as large retail organizations, such as chain stores. Altria Group, Inc. was founded in 1822 and is headquartered in Richmond, Virginia."
+ },
+ "AMZN": {
+  "industry": "Internet Retail",
+  "sector": "Consumer Cyclical",
+  "summary": "Amazon.com, Inc. engages in the retail sale of consumer products, advertising, and subscriptions service through online and physical stores ",
+  "summary_long": "Amazon.com, Inc. engages in the retail sale of consumer products, advertising, and subscriptions service through online and physical stores in North America and internationally. The company operates through three segments: North America, International, and Amazon Web Services (AWS). It also manufactures and sells electronic devices, including Kindle, fire tablets, fire TVs, echo, ring, blink, and eero; and develops and produces media content. In addition, the company offers programs that enable sellers to sell their products in its stores; and programs that allow authors, independent publishers, musicians, filmmakers, Twitch streamers, skill and app developers, and others to publish and sell"
+ },
+ "AMCR": {
+  "industry": "Packaging & Containers",
+  "sector": "Consumer Cyclical",
+  "summary": "Amcor plc, together with its subsidiaries, develops and produces packaging solutions for nutrition, health, beauty, and wellness categories ",
+  "summary_long": "Amcor plc, together with its subsidiaries, develops and produces packaging solutions for nutrition, health, beauty, and wellness categories in Europe, North America, Latin America, and the Asia Pacific. Its products include apparel, applicators, bags and bulk bags, bottles and vials, building materials, canisters and jerrycans, drinking cups, films and laminates, jars, lids, tapes and adhesives, trays, tubes, wipes packaging solutions, and miscellaneous and accessories, as well as tubs and pots. The company's Global Flexible Packaging Solutions segment develops and supplies flexible packaging; and supplies polymer resin, aluminum, and fiber based flexible packaging solutions. Its Global Rigi"
+ },
+ "AEE": {
+  "industry": "Utilities - Regulated Electric",
+  "sector": "Utilities",
+  "summary": "Ameren Corporation, together with its subsidiaries, operates as a public utility holding company in the United States. The company operates ",
+  "summary_long": "Ameren Corporation, together with its subsidiaries, operates as a public utility holding company in the United States. The company operates through four segments: Ameren Missouri, Ameren Illinois Electric Distribution, Ameren Illinois Natural Gas, and Ameren Transmission. It engages in the rate-regulated electric generation, transmission, and distribution business and natural gas transmission and distribution business. The company also generates electricity through coal, nuclear, and natural gas, as well as renewable energy, including hydroelectric, wind, methane gas, and solar energy centers. It serves residential, commercial, and industrial customers. Ameren Corporation was founded in 1881"
+ },
+ "AEP": {
+  "industry": "Utilities - Regulated Electric",
+  "sector": "Utilities",
+  "summary": "American Electric Power Company, Inc., an electric public utility holding company, engages in the generation, transmission, and distribution",
+  "summary_long": "American Electric Power Company, Inc., an electric public utility holding company, engages in the generation, transmission, and distribution of electricity for sale to retail and wholesale customers in the United States. It operates through Vertically Integrated Utilities, Transmission and Distribution Utilities, AEP Transmission Holdco, and Generation & Marketing segments. The company generates electricity using coal and lignite, nuclear, natural gas, renewable, hydro, solar, wind, and other energy sources; owns, operates, maintains, and invests in transmission infrastructure; and engages in the retail supply, and wholesale energy trading and marketing businesses. It operates approximately "
+ },
+ "AXP": {
+  "industry": "Credit Services",
+  "sector": "Financial Services",
+  "summary": "American Express Company, together with its subsidiaries, operates as an integrated payments company in the United States, Europe, the Middl",
+  "summary_long": "American Express Company, together with its subsidiaries, operates as an integrated payments company in the United States, Europe, the Middle East and Africa, the Asia Pacific, Australia, New Zealand, Latin America, Canada, the Caribbean, and internationally. It operates through four segments: U.S. Consumer Services, Commercial Services, International Card Services, and Global Merchant and Network Services. The company offers credit and charge cards and complementary products and services, including travel, dining, and lifestyle and expense management products and services; and banking and other payment and financing products and services, including deposits and non-card lending. It also pro"
+ },
+ "AIG": {
+  "industry": "Insurance - Diversified",
+  "sector": "Financial Services",
+  "summary": "American International Group, Inc. provides insurance products for commercial, institutional, and individual customers in North America and ",
+  "summary_long": "American International Group, Inc. provides insurance products for commercial, institutional, and individual customers in North America and internationally. It operates through three segments: North America Commercial, International Commercial, and Global Personal. The company offers commercial and industrial property insurance, including business interruption and package insurance that cover exposure to made and natural disasters; general liability, environmental, commercial automobile liability, workers' compensation, excess casualty, and crisis management insurance products; risk-sharing and other customized structured programs for large corporate and multinational customers; professional"
+ },
+ "AMT": {
+  "industry": "REIT - Specialty",
+  "sector": "Real Estate",
+  "summary": "American Tower Corporation one of the largest global REITs, is a leading independent owner, operator and developer of multitenant communicat",
+  "summary_long": "American Tower Corporation one of the largest global REITs, is a leading independent owner, operator and developer of multitenant communications real estate with a portfolio of over 148,000 communications sites and a highly interconnected footprint of U.S. data center facilities. American Tower Corporation was incorporated in 1995 in Delaware and is based in Massachusetts, Boston."
+ },
+ "AWK": {
+  "industry": "Utilities - Regulated Water",
+  "sector": "Utilities",
+  "summary": "American Water Works Company, Inc., through its subsidiaries, provides water and wastewater services in the United States. It offers water a",
+  "summary_long": "American Water Works Company, Inc., through its subsidiaries, provides water and wastewater services in the United States. It offers water and wastewater services on military installations; and undertakes contracts with municipal customers, primarily to operate and manage water and wastewater facilities, as well as offers other related services. The company also operates approximately 80 surface water treatment plants; 520 groundwater treatment plants; 170 wastewater treatment plants; 55,000 miles of transmission, distribution, and collection mains and pipes; 1,200 groundwater wells; 1,800 water and wastewater pumping stations; 1,100 treated water storage facilities; and 75 dams. In addition"
+ },
+ "AMP": {
+  "industry": "Asset Management",
+  "sector": "Financial Services",
+  "summary": "Ameriprise Financial, Inc., together with its subsidiaries, operates as a diversified financial services company in the United States and in",
+  "summary_long": "Ameriprise Financial, Inc., together with its subsidiaries, operates as a diversified financial services company in the United States and internationally. The company offers financial planning and advice services to individual and institutional clients. It operates through Advice & Wealth Management, Asset Management, Retirement & Protection Solutions, Corporate & Other segments. The Advice & Wealth Management segment provides financial planning and advice; brokerage products and services for retail and institutional clients; discretionary and non-discretionary investment advisory accounts; mutual funds; insurance and annuities products; cash management and banking products; and face-amount "
+ },
+ "AME": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "AMETEK, Inc. manufactures and sells electronic instruments (EIG) and electromechanical (EMG) devices in the United States and internationall",
+  "summary_long": "AMETEK, Inc. manufactures and sells electronic instruments (EIG) and electromechanical (EMG) devices in the United States and internationally. It operates through EIG and EMG segments. The company offers advanced instruments for the process, aerospace, power, and industrial markets; process and analytical instruments for the oil and gas, petrochemical, pharmaceutical, semiconductor, automation, and food and beverage industries; instruments to the laboratory equipment, ultra-precision manufacturing, medical, and test and measurement markets; power quality monitoring and metering devices, uninterruptible power supplies, programmable power and electromagnetic compatibility test equipment, and g"
+ },
+ "AMGN": {
+  "industry": "Drug Manufacturers - General",
+  "sector": "Healthcare",
+  "summary": "Amgen Inc. discovers, develops, manufactures, and delivers human therapeutics worldwide. The company's principal products include Enbrel for",
+  "summary_long": "Amgen Inc. discovers, develops, manufactures, and delivers human therapeutics worldwide. The company's principal products include Enbrel for the treatment of rheumatoid arthritis, plaque psoriasis, and psoriatic arthritis; Otezla for the treatment of adult patients with plaque psoriasis, psoriatic arthritis, and oral ulcers associated with Behçet's disease; Prolia to treat postmenopausal women with osteoporosis; XGEVA for skeletal-related events prevention; Repatha, which reduces the risks of myocardial infarction, stroke, and coronary revascularization; Nplate for the treatment of patients with immune thrombocytopenia; KYPROLIS to treat patients with relapsed or refractory multiple myeloma;"
+ },
+ "APH": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Amphenol Corporation, together with its subsidiaries, designs, manufactures, and markets electrical, electronic, and fiber optic connectors ",
+  "summary_long": "Amphenol Corporation, together with its subsidiaries, designs, manufactures, and markets electrical, electronic, and fiber optic connectors in the United States, China, and internationally. It operates through three segments: Communications Solutions, Harsh Environment Solutions, and Interconnect and Sensor Systems. The company offers connectors and connector systems, including high speed, radio frequency, power, fiber optic and other interconnect products; busbars and power distribution systems; power interconnect products; and other products. It also provides value-add products, such as backplane interconnect systems, cable assemblies and harnesses, and cable management products; and other"
+ },
+ "ADI": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Analog Devices, Inc. engages in the design, manufacture, testing, and marketing of integrated circuits (ICs), software, and subsystems produ",
+  "summary_long": "Analog Devices, Inc. engages in the design, manufacture, testing, and marketing of integrated circuits (ICs), software, and subsystems products in the United States, rest of North and South America, Europe, Japan, China, and rest of Asia. It provides data converter products, which translate real-world analog signals into digital data, as well as translates digital data into analog signals; power management and reference products for power conversion, driver monitoring, sequencing, and energy management applications in the automotive, communications, industrial, and consumer markets; and power ICs that include performance, integration, and software design simulation tools for accurate power s"
+ },
+ "AON": {
+  "industry": "Insurance Brokers",
+  "sector": "Financial Services",
+  "summary": "Aon plc operates as a professional services firm in the United States, rest of the Americas, the United Kingdom, Ireland, rest of Europe, th",
+  "summary_long": "Aon plc operates as a professional services firm in the United States, rest of the Americas, the United Kingdom, Ireland, rest of Europe, the Middle East, Africa, and the Asia Pacific. It operates through Risk Capital and Human Capital segments. The company offers commercial risk solutions comprising retail and insurance brokerage, specialty solutions, global risk consulting, captives management, and affinity programs; health solutions, such as consulting and brokerage, consumer benefits, and talent advisory services; and wealth solutions, including retirement consulting and investments. It also provides treaty and facultative reinsurance; strategy and technology group solutions; insurance-l"
+ },
+ "APA": {
+  "industry": "Oil & Gas E&P",
+  "sector": "Energy",
+  "summary": "APA Corporation, an independent energy company, explores for, develops, and produces natural gas, crude oil, and natural gas liquids. The co",
+  "summary_long": "APA Corporation, an independent energy company, explores for, develops, and produces natural gas, crude oil, and natural gas liquids. The company has oil and gas operations in the United States, Egypt, and North Sea. It also has exploration and appraisal activities in Suriname, as well as holds interests in projects located in Uruguay and internationally. APA Corporation was incorporated in 1954 and is headquartered in Houston, Texas."
+ },
+ "APO": {
+  "industry": "Asset Management",
+  "sector": "Financial Services",
+  "summary": "Apollo Global Management, Inc. is a private equity firm specializing in investments in credit, private equity, infrastructure, secondaries a",
+  "summary_long": "Apollo Global Management, Inc. is a private equity firm specializing in investments in credit, private equity, infrastructure, secondaries and real estate markets. The firm prefers to invest in private and public markets. The firm's private equity investments include traditional buyouts, recapitalization, distressed buyouts and debt investments in real estate, corporate partner buyouts, distressed asset, corporate carve-outs, middle market, growth, venture capital, turnaround, bridge, corporate restructuring, special situation, acquisition, and industry consolidation transactions. For credit strategies, the firm focuses to invest in multi-sector credit, semi-liquid credit, direct lending, fi"
+ },
+ "AAPL": {
+  "industry": "Consumer Electronics",
+  "sector": "Technology",
+  "summary": "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company of",
+  "summary_long": "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal computers; iPad, a line of multi-purpose tablets; and wearables, home, and accessories comprising AirPods, Apple Vision Pro, Apple TV, Apple Watch, Beats products, and HomePod, as well as Apple branded and third-party accessories. It also provides AppleCare support and cloud services; and operates various platforms, including the App Store that allows customers to discover and download applications and digital content, such as books, music, video, games, and podcasts, as well as advertising serv"
+ },
+ "AMAT": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Applied Materials, Inc. provides materials engineering solutions, equipment, services, and software to the semiconductor and related industr",
+  "summary_long": "Applied Materials, Inc. provides materials engineering solutions, equipment, services, and software to the semiconductor and related industries in the United States, China, Korea, Taiwan, Japan, Southeast Asia, Europe, and internationally. The company operates through Semiconductor Systems and Applied Global Services (AGS) segments. The Semiconductor Systems segment includes semiconductor capital equipment to enable materials engineering steps, including etch, rapid thermal processing, deposition, chemical mechanical planarization, metrology and inspection, wafer packaging, and ion implantation. The AGS segment offers integrated solutions to optimize equipment and fab performance and product"
+ },
+ "APP": {
+  "industry": "Advertising Agencies",
+  "sector": "Communication Services",
+  "summary": "AppLovin Corporation provides end-to-end artificial intelligence-powered advertising solutions for businesses in the United States and inter",
+  "summary_long": "AppLovin Corporation provides end-to-end artificial intelligence-powered advertising solutions for businesses in the United States and internationally. It operates through two segments, Advertising and Apps. The company offers Axon Ads Manager, a suite of marketing solutions that enables developers to automate, optimize, and manage marketing efforts; MAX, an in-app bidding technology that optimizes the value of a publisher's advertising inventory by running a real-time competitive auction; Adjust, a measurement and analytics marketing platform; and Wurl, a connected TV platform, which distributes streaming video for content companies, provides advertising and publishing solutions. It serves "
+ },
+ "APTV": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Aptiv PLC, an industrial technology company, provides hardware and software solutions to support automotive and other industries in North Am",
+  "summary_long": "Aptiv PLC, an industrial technology company, provides hardware and software solutions to support automotive and other industries in North America, Europe, the Middle East, Africa, the Asia Pacific, and South America. It operates through three segments: Advanced Safety and User Experience, Engineered Components, and Electrical Distribution Systems. The company offers active safety, user experience and smart vehicle compute, and software products for vehicle safety and security, including intelligent sensors, compute platforms, and software tools and services. It also provides connection systems, interconnects, and cable management and protection solutions for the distribution of power, signal"
+ },
+ "ACGL": {
+  "industry": "Insurance - Diversified",
+  "sector": "Financial Services",
+  "summary": "Arch Capital Group Ltd., together with its subsidiaries, provides insurance, reinsurance, and mortgage insurance products in the United Stat",
+  "summary_long": "Arch Capital Group Ltd., together with its subsidiaries, provides insurance, reinsurance, and mortgage insurance products in the United States, Canada, Bermuda, the United Kingdom, Europe, and Australia. The company operates through three segments: Insurance, Reinsurance, and Mortgage. The Insurance segment offers commercial automobile; commercial multiperil; financial and professional line liability; admitted, excess, and surplus casualty lines; property and short-tail specialty; workers compensation; and casualty insurance. Its Reinsurance segment provides reinsurance products for casualty; marine and aviation; property catastrophe; property excluding property catastrophe; and other specia"
+ },
+ "ADM": {
+  "industry": "Farm Products",
+  "sector": "Consumer Defensive",
+  "summary": "Archer-Daniels-Midland Company provides human and animal nutrition ingredients and solutions in the United States, Switzerland, the Cayman I",
+  "summary_long": "Archer-Daniels-Midland Company provides human and animal nutrition ingredients and solutions in the United States, Switzerland, the Cayman Islands, Brazil, Mexico, Canada, the United Kingdom, and internationally. It operates in three segments: Ag Services and Oilseeds; Carbohydrate Solutions; and Nutrition. The company engages in the origination, merchandising, transportation, and storage of agricultural raw materials, as well as the crushing and processing of oilseeds, including soybeans and soft seeds, such as cottonseed, sunflower seed, canola, rapeseed, and flaxseed; produces and markets vegetable oils and oilseed protein meals used by food, feed, energy, and industrial customers; sale o"
+ },
+ "ARES": {
+  "industry": "Asset Management",
+  "sector": "Financial Services",
+  "summary": "Ares Management Corporation operates as an alternative asset manager. Its Direct Lending Group segment provides financing solutions to small",
+  "summary_long": "Ares Management Corporation operates as an alternative asset manager. Its Direct Lending Group segment provides financing solutions to small-to-medium sized companies. The company's Private Equity Group segment specializes in early venture, turnaround, mid venture, late venture, recapitalization, growth capital, middle market, mezzanine, distressed and growth buyouts. The firm seeks to invest in healthcare, services, energy, industrials and consumer. The firm seeks to takes majority, minority and shared-control investments primarily in under-capitalized companies in North America, Europe, Asia Pacific, Southeast Asia and Australia. Its Real Estate Group segment invests in new developments an"
+ },
+ "ANET": {
+  "industry": "Computer Hardware",
+  "sector": "Technology",
+  "summary": "Arista Networks, Inc. engages in the development, marketing, and sale of data-driven, client to cloud networking solutions for AI, data cent",
+  "summary_long": "Arista Networks, Inc. engages in the development, marketing, and sale of data-driven, client to cloud networking solutions for AI, data center, campus, and routing environments in the Americas, Europe, the Middle East, Africa, and the Asia-Pacific. Its cloud networking solutions consist of Extensible Operating System (EOS), a publish-subscribe state-sharing networking operating system offered in combination with a set of network applications. The company offers data center, cloud and AI networking, cognitive adjacencies, and cognitive network software and services. It also provides post contract customer support services, such as technical support, hardware repair and replacement parts beyon"
+ },
+ "AJG": {
+  "industry": "Insurance Brokers",
+  "sector": "Financial Services",
+  "summary": "Arthur J. Gallagher & Co., together with its subsidiaries, provides insurance and reinsurance brokerage, consulting, and third-party propert",
+  "summary_long": "Arthur J. Gallagher & Co., together with its subsidiaries, provides insurance and reinsurance brokerage, consulting, and third-party property/casualty claims settlement and administration services to entities and individuals worldwide. The company operates in Brokerage and Risk Management segments. Its Brokerage segment offers retail and wholesale insurance and reinsurance brokerage services; assists retail brokers and other non-affiliated brokers in the placement of specialized and hard-to-place insurance; and acts as a brokerage wholesaler, managing general agent, and managing general underwriter for distributing specialized insurance coverages to underwriting enterprises. This segment per"
+ },
+ "AIZ": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "Assurant, Inc. provides protection services to connected devices, homes, and automobiles in North America, Latin America, Europe, and the As",
+  "summary_long": "Assurant, Inc. provides protection services to connected devices, homes, and automobiles in North America, Latin America, Europe, and the Asia Pacific. It operates through Global Lifestyle and Global Housing segments. The Global Lifestyle segment offers mobile device solutions, and extended service contracts and related services for consumer electronics and appliances, and credit and other insurance products; and vehicle protection, commercial equipment protection, and other related services. The Global Housing segment provides lender-placed homeowners, manufactured housing, and flood insurance; renters insurance and other products; and voluntary manufactured housing, and condominium and hom"
+ },
+ "T": {
+  "industry": "Telecom Services",
+  "sector": "Communication Services",
+  "summary": "AT&T Inc. provides telecommunications and technology services worldwide. It operates through two segments, Communications and Latin America.",
+  "summary_long": "AT&T Inc. provides telecommunications and technology services worldwide. It operates through two segments, Communications and Latin America. The Communications segment offers wireless voice and data communications services; and sells handsets, wireless data cards, wireless computing devices, carrying cases/protective covers, and wireless chargers through its own company-owned stores, agents, and third-party retail stores. It also provides AT&T Dedicated Internet, fiber ethernet and broadband, fixed wireless, and hosted and managed professional services; and copper-based voice and data, Virtual Private Networks (VPN), wholesale, outsourcing, and IP, as well as customer premises equipment for "
+ },
+ "ATO": {
+  "industry": "Utilities - Regulated Gas",
+  "sector": "Utilities",
+  "summary": "Atmos Energy Corporation, together with its subsidiaries, engages in the regulated natural gas distribution, and pipeline and storage busine",
+  "summary_long": "Atmos Energy Corporation, together with its subsidiaries, engages in the regulated natural gas distribution, and pipeline and storage businesses in the United States. It operates through two segments, Distribution, and Pipeline and Storage. The Distribution segment is involved in the regulated natural gas distribution and related sales operations in eight states. This segment distributes natural gas to approximately 3.4 million residential, commercial, public authority, and industrial customers; and owned 76,000 miles of underground distribution and transmission mains. The Pipeline and Storage segment engages in the pipeline and storage operations. This segment transports natural gas for thi"
+ },
+ "ADSK": {
+  "industry": "Software - Application",
+  "sector": "Technology",
+  "summary": "Autodesk, Inc. engages in the provision of 3D design, engineering, and entertainment technology solutions worldwide. The company offers Auto",
+  "summary_long": "Autodesk, Inc. engages in the provision of 3D design, engineering, and entertainment technology solutions worldwide. The company offers AutoCAD Civil 3D, a surveying, design, analysis, and documentation solution; Autodesk Build, a toolset for managing, sharing, and accessing project documents for streamlined workflows between the office, trailer, and jobsite; Revit, a software built for building information modeling to help professionals design, build, and maintain energy-efficient buildings; Autodesk BIM Collaborate Pro, cloud-based design collaboration and design management software; BuildingConnected, a SaaS preconstruction solution; and Tandem, a cloud-based platform that transforms the "
+ },
+ "ADP": {
+  "industry": "Software - Application",
+  "sector": "Technology",
+  "summary": "Automatic Data Processing, Inc. provides cloud-based human capital management (HCM) solutions worldwide. It operates in two segments, Employ",
+  "summary_long": "Automatic Data Processing, Inc. provides cloud-based human capital management (HCM) solutions worldwide. It operates in two segments, Employer Services and Professional Employer Organization (PEO). The Employer Services segment offers strategic, cloud-based platforms, and human resources (HR) outsourcing solutions. This segment's offerings include RUN Powered by ADP, a software platform for small business payroll, HR, and compliance; ADP Workforce Now, a HCM solution used across mid-sized and large businesses to manage employees; and ADP Lyric HCM, a solution for HR management, payroll, workforce management, talent, and data analytics. Its PEO Services segment provides HR outsourcing solutio"
+ },
+ "AZO": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "AutoZone, Inc. operates as a retailer and distributor of automotive replacement parts and accessories in the United States, Mexico, and Braz",
+  "summary_long": "AutoZone, Inc. operates as a retailer and distributor of automotive replacement parts and accessories in the United States, Mexico, and Brazil. The company offers a product line for cars, sport utility vehicles, vans, and light duty trucks, including new and remanufactured automotive hard parts, maintenance items, accessories, and non-automotive products. It also provides A/C compressors, batteries and accessories, bearings, belts and hoses, calipers, chassis, clutches, CV axles, engines, fuel pumps, fuses, ignition and lighting products, mufflers, radiators, starters and alternators, thermostats, and water pumps, as well as tire repairs. In addition, the company provides maintenance product"
+ },
+ "AVB": {
+  "industry": "REIT - Residential",
+  "sector": "Real Estate",
+  "summary": "AvalonBay Communities, Inc., a member of S&P 500, is an equity REIT. The firm develops, redevelops, acquires and manages apartment communiti",
+  "summary_long": "AvalonBay Communities, Inc., a member of S&P 500, is an equity REIT. The firm develops, redevelops, acquires and manages apartment communities in leading metropolitan areas in Boston, Massachusetts, the New York/New Jersey Metro area, the Mid-Atlantic, Seattle, Washington, and Northern and Southern California, as well as in the Company's expansion regions of Raleigh-Durham and Charlotte, North Carolina, Southeast Florida, Dallas and Austin, Texas, and Denver, Colorado. As of June 30, 2026, the Company owned or held a direct or indirect ownership interest in 322 apartment communities containing 99,072 apartment homes in 11 states and the District of Columbia, of which 27 communities were unde"
+ },
+ "AVY": {
+  "industry": "Packaging & Containers",
+  "sector": "Consumer Cyclical",
+  "summary": "Avery Dennison Corporation operates as a materials science and digital identification solutions company in the North America, Europe, the Mi",
+  "summary_long": "Avery Dennison Corporation operates as a materials science and digital identification solutions company in the North America, Europe, the Middle East, North Africa, Asia, and Latin America. It offers pressure-sensitive label materials, which consist of papers, plastic films, and metal foils; performance tapes products, including mechanical fasteners, which are precision-extruded and injection-molded plastic devices; and other pressure-sensitive adhesive-based materials and converted products under the Fasson, JAC, and Avery Dennison brands. The company provides graphics and reflective products that include films and other products for the architectural, commercial sign, digital printing, and"
+ },
+ "AXON": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Axon Enterprise, Inc. provides public safety technology solutions in the United States and internationally. The company operates in two segm",
+  "summary_long": "Axon Enterprise, Inc. provides public safety technology solutions in the United States and internationally. The company operates in two segments, Software and Services, and Connected Devices. The Software and Services segment develops, manufactures, and sells cloud-based software-as-a-service solutions to capture, store, manage, share, and analyze video and other digital evidence. This segment also offers Axon Evidence, Draft One, Axon Records, Axon Standards, Axon Fusus, Axon Assistant, and others. The Connected Devices segment engages in the development, manufacture, and sale of integrated hardware solutions, such as conducted energy devices under the TASER brand, body cameras, fixed and i"
+ },
+ "BKR": {
+  "industry": "Oil & Gas Equipment & Services",
+  "sector": "Energy",
+  "summary": "Baker Hughes Company provides a portfolio of technologies and services to energy and industrial value chain. Its Oilfield Services & Equipme",
+  "summary_long": "Baker Hughes Company provides a portfolio of technologies and services to energy and industrial value chain. Its Oilfield Services & Equipment segment designs and manufactures exploration, appraisal, development, production, rejuvenation, and decommissioning products and related services for onshore and offshore oilfield operations. This segment also provides drilling services, drill bits, and drilling and completions fluids; completions, intervention, measurements, pressure pumping, and wireline services; artificial lift systems, and oilfield and industrial chemicals; subsea projects and services, flexible pipe systems, and surface pressure control systems; and integrated well services and "
+ },
+ "BALL": {
+  "industry": "Packaging & Containers",
+  "sector": "Consumer Cyclical",
+  "summary": "Ball Corporation supplies aluminum packaging products for the beverage, personal care, and household products industries in the United State",
+  "summary_long": "Ball Corporation supplies aluminum packaging products for the beverage, personal care, and household products industries in the United States, Brazil, and internationally. The company manufactures and sells aluminum beverage containers to fillers of carbonated soft drinks, beer, energy drinks, and other beverages. It manufactures and sells extruded aluminum aerosol containers, recloseable aluminum bottles, aluminum cups, and aluminum slugs. The company was founded in 1880 and is headquartered in Westminster, Colorado."
+ },
+ "BAC": {
+  "industry": "Banks - Diversified",
+  "sector": "Financial Services",
+  "summary": "Bank of America Corporation, through its subsidiaries, provides various financial products and services for individual consumers, small and ",
+  "summary_long": "Bank of America Corporation, through its subsidiaries, provides various financial products and services for individual consumers, small and middle-market businesses, institutional investors, large corporations, and governments worldwide. It operates through four segments: Consumer Banking, Global Wealth & Investment Management (GWIM), Global Banking, and Global Markets. The Consumer Banking segment offers traditional and money market savings accounts, certificates of deposit and IRAs, checking accounts, and investment accounts and products; credit and debit cards; residential mortgages and home equity loans; and direct and indirect loans. The GWIM segment provides investment management, brok"
+ },
+ "BAX": {
+  "industry": "Medical Instruments & Supplies",
+  "sector": "Healthcare",
+  "summary": "Baxter International Inc., through its subsidiaries, provides a portfolio of healthcare products in the United States. The company operates ",
+  "summary_long": "Baxter International Inc., through its subsidiaries, provides a portfolio of healthcare products in the United States. The company operates through three segments: Medical Products & Therapies, Healthcare Systems & Technologies, and Pharmaceuticals. It offers sterile intravenous (IV) solutions; infusion systems and devices; parenteral nutrition therapies; inhaled anesthetics; generic injectable pharmaceuticals; surgical hemostat and sealant products; advanced surgical equipment; smart bed systems; patient monitoring and diagnostic technologies; and respiratory health devices, as well as advanced equipment for the surgical space comprising operating room integration technologies, precision po"
+ },
+ "BDX": {
+  "industry": "Medical Instruments & Supplies",
+  "sector": "Healthcare",
+  "summary": "Becton, Dickinson and Company develops, manufactures, and sells medical supplies, devices, laboratory equipment, and diagnostic products for",
+  "summary_long": "Becton, Dickinson and Company develops, manufactures, and sells medical supplies, devices, laboratory equipment, and diagnostic products for healthcare institutions, physicians, life science researchers, clinical laboratories, pharmaceutical industry, and the general public worldwide. It operates through Medical Essentials, Connected Care, BioPharma Systems, Interventional and Life Sciences segments. It provides peripheral intravenous (IV) and advanced peripheral catheters, central lines, acute dialysis catheters, vascular access technology, vascular care and preparation products, needle-free IV connectors and extensions sets, closed-system drug transfer devices, hazardous drug detections, h"
+ },
+ "BRK-B": {
+  "industry": "Insurance - Diversified",
+  "sector": "Financial Services",
+  "summary": "Berkshire Hathaway Inc., together with its subsidiaries, engages in the insurance, freight rail transportation, and utility businesses. The ",
+  "summary_long": "Berkshire Hathaway Inc., together with its subsidiaries, engages in the insurance, freight rail transportation, and utility businesses. The company provides property, casualty, life, accident, and health insurance and reinsurance; operates railroad systems in North America; generates, transmits, stores, and distributes electricity from natural gas, coal, wind, solar, hydroelectric, nuclear, and geothermal sources; operates natural gas distribution and storage facilities, interstate pipelines, liquefied natural gas facilities, and compressor and meter stations; and holds interest in coal mining assets. It manufactures boxed chocolates and other confectionery products; specialty chemicals, met"
+ },
+ "BBY": {
+  "industry": "Specialty Retail",
+  "sector": "Consumer Cyclical",
+  "summary": "Best Buy Co., Inc. offers technology products and solutions in the United States, Canada, and internationally. The company provides computin",
+  "summary_long": "Best Buy Co., Inc. offers technology products and solutions in the United States, Canada, and internationally. The company provides computing and mobile phone products, such as desktops, notebooks, and peripherals; mobile phones comprising related mobile network carrier commissions; networking products; tablets covering e-readers; smartwatches; and consumer electronics consisting of digital imaging, health and fitness products, portable audio comprising headphones and portable speakers, and smart home products, as well as home theaters that includes home theater accessories, soundbars, and televisions. It also offers appliances, such as dishwashers, laundry, ovens, refrigerators, blenders, c"
+ },
+ "TECH": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Bio-Techne Corporation, together with its subsidiaries, develops, manufactures, and sells life science reagents, instruments, and services f",
+  "summary_long": "Bio-Techne Corporation, together with its subsidiaries, develops, manufactures, and sells life science reagents, instruments, and services for the research, diagnostics, and bioprocessing markets worldwide. It operates through two segments, Protein Sciences, and Diagnostics and Spatial Biology. The Protein Sciences segment develops and manufactures biological reagents used in various aspects of life science research, diagnostics, and cell and gene therapy, such as cytokines and growth factors, antibodies, small molecules, tissue culture sera, and cell selection technologies. This segment also offers proteomic analytical tools for automated western blot and multiplexed ELISA workflow consists"
+ },
+ "BIIB": {
+  "industry": "Drug Manufacturers - General",
+  "sector": "Healthcare",
+  "summary": "Biogen Inc. discovers, develops, manufactures, and delivers therapies in the United States, Europe, Germany, Asia, and internationally. The ",
+  "summary_long": "Biogen Inc. discovers, develops, manufactures, and delivers therapies in the United States, Europe, Germany, Asia, and internationally. The company provides TECFIDERA, VUMERITY, AVONEX, PLEGRIDY, and TYSABRI for multiple sclerosis (MS); SPINRAZA for spinal muscular atrophy; SKYCLARYS to treat Friedreich's Ataxia; QALSODY for treating amyotrophic lateral sclerosis; FUMADERM to treat plaque psoriasis; BENEPALI, an etanercept biosimilar referencing ENBREL; IMRALDI, an adalimumab biosimilar referencing HUMIRA; FLIXABI, an infliximab biosimilar referencing REMICADE. It offers LEQEMBI for the treatment of Alzheimer's disease; ZURZUVAE for the treatment of postpartum depression; RITUXAN to treat no"
+ },
+ "BLK": {
+  "industry": "Asset Management",
+  "sector": "Financial Services",
+  "summary": "BlackRock, Inc. is a publicly owned investment manager. The firm primarily provides its services to institutional, intermediary, and individ",
+  "summary_long": "BlackRock, Inc. is a publicly owned investment manager. The firm primarily provides its services to institutional, intermediary, and individual investors including corporate, public, union, and industry pension plans, insurance companies, third-party mutual funds, endowments, public institutions, governments, foundations, charities, sovereign wealth funds, corporations, official institutions, and banks. It also provides global risk management and advisory services. The firm manages separate client-focused equity, fixed income, and balanced portfolios. It also launches and manages open-end and closed-end mutual funds, offshore funds, unit trusts, and alternative investment vehicles including "
+ },
+ "BX": {
+  "industry": "Asset Management",
+  "sector": "Financial Services",
+  "summary": "Blackstone Inc. is an alternative asset management firm specializing in private equity, venture capital, real estate, hedge fund solutions, ",
+  "summary_long": "Blackstone Inc. is an alternative asset management firm specializing in private equity, venture capital, real estate, hedge fund solutions, credit, secondary funds of funds, public debt and equity and multi-asset class strategies. The firm typically invests in early-stage, seed, middle market, mature, late venture, growth capital, emerging growth, turnaround, and later stage companies. It also provide capital markets services. The real estate segment specializes in opportunistic, core+ investments as well as debt investment opportunities collateralized by commercial real estate, and stabilized income-oriented commercial real estate across North America, Europe and Asia. Within fund of fund i"
+ },
+ "XYZ": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "Block, Inc., together with its subsidiaries, builds ecosystems focused on commerce and financial products and services in the United States ",
+  "summary_long": "Block, Inc., together with its subsidiaries, builds ecosystems focused on commerce and financial products and services in the United States and internationally. It operates through two segments: Square and Cash App. The Square segment offers managed payment services; software solutions; hardware products, such as registers, terminals, stands, and readers for contactless and chips; banking services consisting of lending, instant transfer, and checking and savings accounts; and full-service setup and support services. This segment also provides loyalty, marketing, team management, and payroll services; and gift cards. It also offers Square Handheld, a portable point-of sale device for transact"
+ },
+ "BA": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "The Boeing Company, together with its subsidiaries, designs, develops, manufactures, sells, services, and supports commercial jetliners, mil",
+  "summary_long": "The Boeing Company, together with its subsidiaries, designs, develops, manufactures, sells, services, and supports commercial jetliners, military aircraft, satellites, missile defense, human space flight and launch systems, and services worldwide. The company operates through three segments: Commercial Airplanes; Defense, Space & Security; and Global Services. The Commercial Airplanes segment develops, produces, and markets commercial jet aircraft for passenger and cargo requirements. The Defense, Space & Security segment engages in the research, development, production, and modification of manned and unmanned military aircraft and weapons systems; strategic defense and intelligence systems,"
+ },
+ "BKNG": {
+  "industry": "Travel Services",
+  "sector": "Consumer Cyclical",
+  "summary": "Booking Holdings Inc., together with its subsidiaries, provides online and traditional travel and restaurant reservations and related servic",
+  "summary_long": "Booking Holdings Inc., together with its subsidiaries, provides online and traditional travel and restaurant reservations and related services in the United States, the Netherlands, the United Kingdom, and internationally. The company operates Booking.com, which offers online accommodation reservations; and Priceline, which provides discount travel reservations services, as well as online accommodation, flight, rental car reservation services, vacation packages, cruises, activity, and affiliate programs. It also operates Agoda that offers online accommodation reservation, flight, ground transportation, and attractions. In addition, the company operates KAYAK, an online meta-search service th"
+ },
+ "BSX": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "Boston Scientific Corporation develops, manufactures, and markets medical devices for use in various interventional medical specialties worl",
+  "summary_long": "Boston Scientific Corporation develops, manufactures, and markets medical devices for use in various interventional medical specialties worldwide. The company operates in two segments, MedSurg and Cardiovascular. It offers devices to diagnose and treat a range of gastrointestinal conditions, such as resolution clips, biliary stent systems, stents and electrocautery enhanced delivery systems, SpyGlass, single-use scopes used for diagnostic and therapeutic procedures in the pancreaticobiliary system, in endoscopic retrograde cholangiopancreatography procedures, and single-use duodenoscopes, as well as endoluminal surgery and infection prevention products; devices to treat urological conditions"
+ },
+ "BMY": {
+  "industry": "Drug Manufacturers - General",
+  "sector": "Healthcare",
+  "summary": "Bristol-Myers Squibb Company discovers, develops, licenses, manufactures, markets, distributes, and sells biopharmaceutical products worldwi",
+  "summary_long": "Bristol-Myers Squibb Company discovers, develops, licenses, manufactures, markets, distributes, and sells biopharmaceutical products worldwide. The company offers products for oncology, hematology, immunology, cardiovascular, and neuroscience indications. Its products include Opdivo for anti-cancer indications; Opdivo Qvantig, a subcutaneous PD-1 inhibitor for solid tumors; Orencia for active rheumatoid arthritis and psoriatic arthritis; Yervoy for the treatment of unresectable or metastatic melanoma; Reblozyl to treat anemia; Breyanzi for the treatment of relapsed or refractory large B-cell lymphoma; Opdualag to treat unresectable or metastatic melanoma; and Camzyos for the treatment of sym"
+ },
+ "AVGO": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Broadcom Inc. designs, develops, and supplies various semiconductor devices and infrastructure software solutions internationally. The compa",
+  "summary_long": "Broadcom Inc. designs, develops, and supplies various semiconductor devices and infrastructure software solutions internationally. The company operates in two segments: Semiconductor Solutions and Infrastructure Software. The company offers networking connectivity, such as custom silicon solutions, ethernet switching & routing, ethernet NIC controllers, physical layer devices, and fiber optic components; wireless device connectivity, including RF semiconductor devices, connectivity solutions, custom touch controllers, and inductive charging ASICS; servers and storage system solutions, such as PCIE switches, SAS & raid products, fibre channel products, and HDD & SSD solutions; broadband solut"
+ },
+ "BR": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "Broadridge Financial Solutions, Inc. provides investor communications and technology-driven solutions for the financial services industry in",
+  "summary_long": "Broadridge Financial Solutions, Inc. provides investor communications and technology-driven solutions for the financial services industry in the United States and internationally. The company's Investor Communication Solutions segment handles the proxy materials distribution and voting processes for bank, broker-dealer, corporate issuer, and fund clients; provides fund manager; and various other regulatory communication solutions. The segment also offers ProxyEdge, an institutional voting platform that allows institutional investors to view, manage, and vote multi-custodial holdings, as well as third party vote recommendations; data-driven analytics solutions; international corporate governa"
+ },
+ "BRO": {
+  "industry": "Insurance Brokers",
+  "sector": "Financial Services",
+  "summary": "Brown & Brown, Inc. markets and sells insurance products and services in the United States, the United Kingdom, and internationally. It oper",
+  "summary_long": "Brown & Brown, Inc. markets and sells insurance products and services in the United States, the United Kingdom, and internationally. It operates through Retail and Specialty Distribution segments. The Retail segment provides property and casualty insurance products, employee benefits insurance products, personal insurance products, specialties insurance products, risk management strategies, loss control surveys and analysis, consulting, and claims processing services. This segment also offers non-insurance services and products through automobile and recreational vehicle dealer services businesses. It serves commercial, public and quasi-public entities, professionals, and individual customer"
+ },
+ "BF-B": {
+  "industry": "Beverages - Wineries & Distilleries",
+  "sector": "Consumer Defensive",
+  "summary": "Brown-Forman Corporation, together with its subsidiaries, manufactures, distills, bottles, imports, exports, markets, and sells a variety of",
+  "summary_long": "Brown-Forman Corporation, together with its subsidiaries, manufactures, distills, bottles, imports, exports, markets, and sells a variety of alcohol beverages. The company provides spirits, wines, whiskey spirits, whiskey-based flavored liqueurs, ready-to-drink cocktails, ready-to-pour products, vodkas, tequilas, gin, brandy, rum, bourbons, and liqueurs. The company offers its products primarily under the Jack Daniel's, Woodford Reserve, Old Forester, Gentleman Jack, Herradura, el Jimador, Fords Gin, The Glendronach, Chambord, Coopers' Craft, Diplomático, Benriach, Glenglassaugh, and Slane brands. It is also involved in the sale of used barrels, and bulk whiskey and wine; and provision of co"
+ },
+ "BLDR": {
+  "industry": "Building Products & Equipment",
+  "sector": "Industrials",
+  "summary": "Builders FirstSource, Inc., together with its subsidiaries, provides building materials for professional builders in new residential constru",
+  "summary_long": "Builders FirstSource, Inc., together with its subsidiaries, provides building materials for professional builders in new residential construction and repair, and remodeling in the United States. It offers manufactured products, such as factory-built substitutes for job-site framing, wood floor and roof trusses, wall panels, and engineered wood; Ready-Frame, a whole house framing solution; manufactured and semi-custom modular homes, and built in a temperature-controlled facility under its Pine Grove Homes and Pleasant Valley Homes brand names; manufactured housing plans including ranch, community, and single-section homes; manufacturing, assembly, and distribution of windows; and the assembly"
+ },
+ "BG": {
+  "industry": "Farm Products",
+  "sector": "Consumer Defensive",
+  "summary": "Bunge Global SA operates as an agribusiness and food company worldwide. It operates through four segments: Soybean Processing and Refining, ",
+  "summary_long": "Bunge Global SA operates as an agribusiness and food company worldwide. It operates through four segments: Soybean Processing and Refining, Softseed Processing and Refining, Other Oilseeds Processing and Refining, and Grain Merchandising and Milling. The Soybean Processing and Refining segment is involved in the purchase, storage, transportation, processing, distribution, refining, marketing, and sale of soybeans and soybean related products, as well as biodiesel and fertilizer production and distribution for the food, animal feed and biofuel industries. The Softseed Processing and Refining segment is involved in the purchase, storage, transportation, processing, distribution, refining, mark"
+ },
+ "BXP": {
+  "industry": "REIT - Office",
+  "sector": "Real Estate",
+  "summary": "BXP, Inc. is the largest publicly traded developer, owner, and manager of premier workplaces in the United States. It is concentrated in six",
+  "summary_long": "BXP, Inc. is the largest publicly traded developer, owner, and manager of premier workplaces in the United States. It is concentrated in six dynamic gateway markets - Boston, Los Angeles, New York, San Francisco, Seattle, and Washington, DC. BXP has delivered places that power progress for our clients and communities for more than 55 years. BXP is a fully integrated real estate company, organized as a real estate investment trust (REIT). As of June 30, 2026, including properties owned by joint ventures, BXP's portfolio totals 51.1 million square feet and 164 properties, including six properties under construction/redevelopment. BXP's portfolio consists of 143 office properties, 13 retail pro"
+ },
+ "CHRW": {
+  "industry": "Integrated Freight & Logistics",
+  "sector": "Industrials",
+  "summary": "C.H. Robinson Worldwide, Inc., together with its subsidiaries, provides freight transportation and related logistics and supply chain servic",
+  "summary_long": "C.H. Robinson Worldwide, Inc., together with its subsidiaries, provides freight transportation and related logistics and supply chain services in the United States and internationally. It operates in two segments, North American Surface Transportation and Global Forwarding. The company offers transportation and logistics services, such as truckload; less than truckload transportation brokerage services, which include the shipment of single or multiple pallets of freight; intermodal transportation that comprises the shipment service of freight in containers or trailers by a combination of truck and rail; and non-vessel operating common carrier and freight forwarding services, as well as organ"
+ },
+ "CDNS": {
+  "industry": "Software - Application",
+  "sector": "Technology",
+  "summary": "Cadence Design Systems, Inc. develops computational, AI-driven software, hardware, and silicon intellectual property products and solutions.",
+  "summary_long": "Cadence Design Systems, Inc. develops computational, AI-driven software, hardware, and silicon intellectual property products and solutions. The company offers functional verification services, such as Jasper, a formal verification platform; Xcelium, a parallel logic simulation platform; Verisium, a generative AI solution; Palladium, an enterprise emulation platform; and Protium, a prototyping platform for chip verification, as well as digital IC design and sign off products, including In novus platform; and custom IC design and simulation product include Virtuoso, a platform to design and verify analog. It also provides Xcelium logic simulator and other front-end verification and virtual pr"
+ },
+ "CPT": {
+  "industry": "REIT - Residential",
+  "sector": "Real Estate",
+  "summary": "Camden Property Trust, an S&P 500 Company, is a real estate company primarily engaged in the ownership, management, development, redevelopme",
+  "summary_long": "Camden Property Trust, an S&P 500 Company, is a real estate company primarily engaged in the ownership, management, development, redevelopment, acquisition, and construction of multifamily apartment communities. Camden owns and operates 173 properties containing 58,811 apartment homes across the United States. Upon completion of 3 properties currently under development, the Company's portfolio will increase to 59,973 apartment homes in 176 properties. Camden Property Trust was established on May 25, 1993, and incorporated in Texas. Camden Property Trust is based in Houston, United States."
+ },
+ "CPB": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "The Campbell's Company, together with its subsidiaries, manufactures and markets food and beverage products in the United States and interna",
+  "summary_long": "The Campbell's Company, together with its subsidiaries, manufactures and markets food and beverage products in the United States and internationally. It operates through Meals & Beverages, and Snacks segments. The Meals & Beverages segment engages in the retail and foodservice businesses in the United States and Canada. This segment provides Campbell's condensed and ready-to-serve soups; Swanson broth and stocks; Pacific Foods broth, soups, and non-dairy beverages; Prego pasta sauces; Pace Mexican sauces; Campbell's gravies, pasta, beans, and dinner sauces; Swanson canned poultry; V8 juices and beverages; Campbell's tomato juice; Rao's pasta sauces, dry pasta, frozen entrées, frozen pizza, a"
+ },
+ "COF": {
+  "industry": "Credit Services",
+  "sector": "Financial Services",
+  "summary": "Capital One Financial Corporation operates as the financial services holding company for the Capital One, National Association, which engage",
+  "summary_long": "Capital One Financial Corporation operates as the financial services holding company for the Capital One, National Association, which engages in the provision of various financial products and services in the United States, Canada, and the United Kingdom. It operates through three segments: Credit Card, Consumer Banking, and Commercial Banking. The company accepts checking accounts, money market deposits, negotiable order of withdrawals, savings deposits, time deposits, and sweep accounts. Its loan products include credit card and personal loans; auto and retail banking loans; and commercial and multifamily real estate, and commercial and industrial loans. The company offers credit and debit"
+ },
+ "CAH": {
+  "industry": "Medical Distribution",
+  "sector": "Healthcare",
+  "summary": "Cardinal Health, Inc. operates as a healthcare services and products company in the United States and internationally. It operates in two se",
+  "summary_long": "Cardinal Health, Inc. operates as a healthcare services and products company in the United States and internationally. It operates in two segments: Pharmaceutical and Specialty Solutions, and Global Medical Products and Distribution. The company offers customized solutions for hospitals, healthcare systems, pharmacies, ambulatory surgery centers, clinical laboratories, physician offices, and patients in the home. It distributes branded and generic pharmaceutical, specialty pharmaceutical, and over-the-counter healthcare and consumer products. The company also provides services to pharmaceutical manufacturers and healthcare providers for specialty pharmaceutical products; pharmacy management "
+ },
+ "CCL": {
+  "industry": "Travel Services",
+  "sector": "Consumer Cyclical",
+  "summary": "Carnival Corporation Ltd., a cruise company, provides leisure travel services. The company operates through four segments: North America Cru",
+  "summary_long": "Carnival Corporation Ltd., a cruise company, provides leisure travel services. The company operates through four segments: North America Cruise Operations, Europe Cruise Operations, Cruise Support, and Tour and Other. It operates port destinations and islands, as well as owns and operates hotels, lodges, glass-domed railcars, and motorcoaches. The company offers its services under the AIDA Cruises, Carnival Cruise Line, Costa Cruises, Cunard, Holland America Line, P&O Cruises (Australia), P&O Cruises (UK), Princess Cruises, and Seabourn brands. It sells its cruises through travel agents, tour operators, vacation planners, websites, and onboard future cruise consultants. Carnival Corporation "
+ },
+ "CARR": {
+  "industry": "Building Products & Equipment",
+  "sector": "Industrials",
+  "summary": "Carrier Global Corporation provides intelligent climate and energy solutions in the United States, Europe, the Asia Pacific, and internation",
+  "summary_long": "Carrier Global Corporation provides intelligent climate and energy solutions in the United States, Europe, the Asia Pacific, and internationally. It operates through four segments: Climate Solutions Americas; Climate Solutions Europe; Climate Solutions Asia Pacific, Middle East & Africa; and Climate Solutions Transportation. The company provides air conditioners, heating systems, heat pumps, home and building energy management systems, automation systems, aftermarket components, and repair and maintenance and rental services, as well as modernization and upgrades to meet the heating, cooling, and ventilation needs of residential and commercial customers. It also offers transport refrigeratio"
+ },
+ "CVNA": {
+  "industry": "Auto & Truck Dealerships",
+  "sector": "Consumer Cyclical",
+  "summary": "Carvana Co., together with its subsidiaries, operates an e-commerce platform for buying and selling used cars. It provides vehicle acquisiti",
+  "summary_long": "Carvana Co., together with its subsidiaries, operates an e-commerce platform for buying and selling used cars. It provides vehicle acquisition, inspection and reconditioning, online search and shopping experience, financing, complementary products, logistics network and distinctive fulfillment experience, and post-sale customer support services. The company also operates auction sites. Carvana Co. was founded in 2012 and is based in Tempe, Arizona."
+ },
+ "CASY": {
+  "industry": "Specialty Retail",
+  "sector": "Consumer Cyclical",
+  "summary": "Casey's General Stores, Inc., together with its subsidiaries, operates convenience stores under the Casey's and Casey's General Store names ",
+  "summary_long": "Casey's General Stores, Inc., together with its subsidiaries, operates convenience stores under the Casey's and Casey's General Store names in the United States. Its stores offer pizza, donuts, hot breakfast items, and sandwiches; and beverages, tobacco and nicotine products. The company's stores also provide soft drinks, energy, water, sports drinks, juices, coffee, and tea and dairy products; beer, wine, and spirits; snacks, candy, packaged bakery, and other food items; ice, ice cream, meals, and appetizers; health and beauty aids, automotive products, electronic accessories, and housewares. In addition, its stores offer motor fuel for sale on a self-service basis; gasoline and diesel fuel"
+ },
+ "CAT": {
+  "industry": "Farm & Heavy Construction Machinery",
+  "sector": "Industrials",
+  "summary": "Caterpillar Inc. provides construction and mining equipment, off-highway diesel and natural gas engines, industrial gas turbines, and diesel",
+  "summary_long": "Caterpillar Inc. provides construction and mining equipment, off-highway diesel and natural gas engines, industrial gas turbines, and diesel-electric locomotives in the United States and internationally. The Construction Industries segment offers asphalt pavers, cold planers, compactors, forestry machines, material handlers, motor graders, pipelayers, road reclaimers, telehandlers, track-type tractors, and track and wheel excavators; backhoe, compact track, skid steer, track-type, and wheel loaders; and related parts and work tools. Its Resource Industries segment provides electric rope and hydraulic shovels, draglines, rotary drills, hard rock vehicles, mining trucks, wheel loaders, off-hig"
+ },
+ "CBOE": {
+  "industry": "Financial Data & Stock Exchanges",
+  "sector": "Financial Services",
+  "summary": "Cboe Global Markets, Inc., through its subsidiaries, operates as a derivatives and securities exchange network that delivers trading, cleari",
+  "summary_long": "Cboe Global Markets, Inc., through its subsidiaries, operates as a derivatives and securities exchange network that delivers trading, clearing, and investment solutions in the United States and internationally. It operates through five segments: Options, North American Equities, Europe and Asia Pacific, Futures, and Global FX. The Options segment includes options on market indices, stocks of individual corporations, and exchange-traded products (ETPs), such as exchange-traded funds (ETFs) and exchange-traded notes (ETNs). This segment also offers trading in listed options through a single system. The North American Equities segment comprises U.S. equities and ETP transaction services. This s"
+ },
+ "CBRE": {
+  "industry": "Real Estate Services",
+  "sector": "Real Estate",
+  "summary": "CBRE Group, Inc. operates as a commercial real estate services and investment company in the United States, the United Kingdom, and internat",
+  "summary_long": "CBRE Group, Inc. operates as a commercial real estate services and investment company in the United States, the United Kingdom, and internationally. The company operates through Advisory Services, Building Operations and Experience, Project Management, and Real Estate Investments segments. The Advisory Services segment offers strategic advice and execution to owners, investors, and occupiers of real estate in connection with leasing of offices, and industrial and retail space; clients fully integrated property sales services under the CBRE Capital Markets brand; clients commercial mortgage and structured financing services; originates and sells commercial mortgage loans; property management "
+ },
+ "CDW": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "CDW Corporation provides information technology (IT) solutions in the United States, the United Kingdom, and Canada. It operates through thr",
+  "summary_long": "CDW Corporation provides information technology (IT) solutions in the United States, the United Kingdom, and Canada. It operates through three segments: Commercial, Government, and Education. The company offers discrete hardware and software products and services, as well as integrated IT solutions, including on-premise and cloud capabilities across hybrid infrastructure, digital experience, and security. It also provides hardware products comprising notebooks/mobile devices, tablets, network communications, collaboration hardware, data storage and servers, desktop computers, and other hardware; and software products, such as cloud solutions, software assurance, application suites, security,"
+ },
+ "COR": {
+  "industry": "Medical Distribution",
+  "sector": "Healthcare",
+  "summary": "Cencora, Inc. sources and distributes pharmaceutical products in the United States and internationally. The company's U.S. Healthcare Soluti",
+  "summary_long": "Cencora, Inc. sources and distributes pharmaceutical products in the United States and internationally. The company's U.S. Healthcare Solutions segment distributes generic and injectable pharmaceuticals, over-the-counter healthcare products, home healthcare supplies and equipment, and related services to acute care hospitals and health systems, independent and chain retail pharmacies, mail order pharmacies, medical clinics, long-term care and alternate site pharmacies, and other customers; distributes plasma and other blood products, vaccines, and other specialty pharmaceutical products; provides pharmacy management, staffing, and other consulting services; supply management software to reta"
+ },
+ "CNC": {
+  "industry": "Healthcare Plans",
+  "sector": "Healthcare",
+  "summary": "Centene Corporation operates as a managed care company that provides programs and services to under-insured families, and commercial organiz",
+  "summary_long": "Centene Corporation operates as a managed care company that provides programs and services to under-insured families, and commercial organizations in the United States. It operates through four segments: Medicaid, Medicare, Commercial, and Other. The Medicaid segment offers the temporary assistance for needy families; medicaid expansion; aged, blind, or disabled; and children's health insurance programs, as well as long-term services and supports; foster care; and medicare-medicaid plans. This segment also provides healthcare products and services. The Medicare segment offers special needs and medicare supplement, and prescription drug plans. The Commercial segment provides health insurance "
+ },
+ "CNP": {
+  "industry": "Utilities - Regulated Electric",
+  "sector": "Utilities",
+  "summary": "CenterPoint Energy, Inc. operates as a public utility holding company in the United States. The company operates through Electric; Natural G",
+  "summary_long": "CenterPoint Energy, Inc. operates as a public utility holding company in the United States. The company operates through Electric; Natural Gas; and Corporate and Other segments. The Electric segment provides electric transmission and distribution services to electric customers and electric generation assets, as well as optimizes assets in the wholesale power market in Indiana Electric's service territory. The Natural Gas segment engages in the intrastate natural gas sales, and natural gas transportation and distribution for residential, commercial, and industrial customers in Indiana, Minnesota, Ohio, and Texas; permanent pipeline connections through interconnects with various interstate and"
+ },
+ "CF": {
+  "industry": "Agricultural Inputs",
+  "sector": "Basic Materials",
+  "summary": "CF Industries Holdings, Inc., together with its subsidiaries, engages in the production of ammonia in North America, Europe, and internation",
+  "summary_long": "CF Industries Holdings, Inc., together with its subsidiaries, engages in the production of ammonia in North America, Europe, and internationally. It operates through Ammonia, Granular Urea, UAN, AN, and Other segments. The company offers ammonia products; nitrogen products, such as granular urea, urea ammonium nitrate solution, and ammonium nitrate; diesel exhaust fluid, urea liquor, and nitric acid products. It serves cooperatives, retailers, independent fertilizer distributors, traders, wholesalers, and industrial users. The company was founded in 1946 and is headquartered in Northbrook, Illinois."
+ },
+ "CRL": {
+  "industry": "Diagnostics & Research",
+  "sector": "Healthcare",
+  "summary": "Charles River Laboratories International, Inc. provides drug discovery, non-clinical development, and safety testing services in the United ",
+  "summary_long": "Charles River Laboratories International, Inc. provides drug discovery, non-clinical development, and safety testing services in the United States, Europe, Canada, the Asia Pacific, and internationally. The Research Models and Services segment produces and sells rodents, and purpose-bred rats and mice for use by researchers. This segment also provides a range of services to assist its clients in supporting the use of research models in research and screening pre-clinical drug candidates, including genetically engineered models and services, insourcing solutions, and research animal diagnostic services; and engages in development and production of cell therapies. The Discovery and Safety Asse"
+ },
+ "SCHW": {
+  "industry": "Capital Markets",
+  "sector": "Financial Services",
+  "summary": "The Charles Schwab Corporation, together with its subsidiaries, operates as a savings and loan holding company that provides wealth manageme",
+  "summary_long": "The Charles Schwab Corporation, together with its subsidiaries, operates as a savings and loan holding company that provides wealth management, securities brokerage, banking, asset management, custody, and financial advisory services in the United States and internationally. The company operates in two segments, Investor Services and Advisor Services. It offers brokerage accounts with equity and fixed income trading, margin lending, options trading, futures and forex trading, and cash management capabilities, including money market funds, and certificates of deposit; third-party mutual funds through the Mutual Fund Marketplace and Mutual Fund OneSource service, as well as mutual fund trading"
+ },
+ "CHTR": {
+  "industry": "Telecom Services",
+  "sector": "Communication Services",
+  "summary": "Charter Communications, Inc. operates as a broadband connectivity company in the United States. The company offers subscription-based intern",
+  "summary_long": "Charter Communications, Inc. operates as a broadband connectivity company in the United States. The company offers subscription-based internet, mobile, video, and voice services; broadband connectivity services, including fixed internet, WiFi, and mobile; Spectrum internet products; advanced WiFi services; and in-home WiFi, which provides customers with high performance wireless routers and managed WiFi services to enhance their wireless internet experience. It also offers wireline voice communications services using voice over internet protocol technology; Call Guard, an advanced caller ID and robocall blocking solution; video programming and video services, including access to an interacti"
+ },
+ "CVX": {
+  "industry": "Oil & Gas Integrated",
+  "sector": "Energy",
+  "summary": "Chevron Corporation, through its subsidiaries, engages in the integrated energy and chemicals operations. It operates through Upstream and D",
+  "summary_long": "Chevron Corporation, through its subsidiaries, engages in the integrated energy and chemicals operations. It operates through Upstream and Downstream segments. The Upstream segment engages in the exploration for, development, production, and transportation of crude oil and natural gas; processing, liquefaction, transportation, and regasification of liquefied natural gas; transportation of crude oil through pipelines; transportation, storage, and marketing of natural gas; carbon capture and storage; and operation of a gas-to-liquids plant. The Downstream segment refines crude oil into petroleum products; markets crude oil, refined products, and lubricants; manufactures and markets renewable f"
+ },
+ "CMG": {
+  "industry": "Restaurants",
+  "sector": "Consumer Cyclical",
+  "summary": "Chipotle Mexican Grill, Inc., together with its subsidiaries, owns and operates Chipotle Mexican Grill restaurants. The company sells food a",
+  "summary_long": "Chipotle Mexican Grill, Inc., together with its subsidiaries, owns and operates Chipotle Mexican Grill restaurants. The company sells food and beverages, such as burritos, burrito bowls, quesadillas, tacos, and salads, as well as kids' meals, chips, and sides. It also offers Mexican-inspired meals using responsibly sourced meats, such as chicken, beef, and pork under the Responsibly Raised brand. In addition, the company provides digital ordering through its website, mobile app, and third-party delivery platforms. It operates in the United States, Canada, France, Germany, South Korea, and the United Kingdom. Chipotle Mexican Grill, Inc. was founded in 1993 and is headquartered in Newport Bea"
+ },
+ "CB": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "Chubb Limited provides insurance and reinsurance products worldwide. It operates in six segments: North America Commercial Property and Casu",
+  "summary_long": "Chubb Limited provides insurance and reinsurance products worldwide. It operates in six segments: North America Commercial Property and Casualty (P&C) Insurance, North America Personal P&C Insurance, North America Agricultural Insurance, Overseas General Insurance, Global Reinsurance, and Life Insurance. The company offers property and general liability, workers' compensation, and umbrella; professional and management liability; environmental, health, and international coverages; and claims and risk management products and services, loss control, and engineering and complex claims management. It also provides homeowners, automobile and collector cars, valuable articles, and personal and exce"
+ },
+ "CHD": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "Church & Dwight Co., Inc. develops, manufactures, and markets household, personal care, and specialty products. It operates in three segment",
+  "summary_long": "Church & Dwight Co., Inc. develops, manufactures, and markets household, personal care, and specialty products. It operates in three segments: Consumer Domestic, Consumer International, and Specialty Products Division. The company offers baking soda, cat litters, laundry detergents, carpet deodorizers, and other baking soda-based products under the ARM & HAMMER brand; stain removers, cleaning solutions, laundry detergents, and bleach alternatives under the OXICLEAN brand; dry shampoos under the BATISTE brand; water flossers under the WATERPIK brand; oral care products under the THERABREATH brand; acne treatment products under the HERO brand; hand sanitizers under the TOUCHLAND brand; and con"
+ },
+ "CIEN": {
+  "industry": "Communication Equipment",
+  "sector": "Technology",
+  "summary": "Ciena Corporation, a network technology company, provides hardware, software, and services for various network operators in the Americas, Eu",
+  "summary_long": "Ciena Corporation, a network technology company, provides hardware, software, and services for various network operators in the Americas, Europe, the Middle East, Africa, the Asia Pacific, Japan, and India. It operates through Networking Platforms, Platform Software and Services, Blue Planet Automation Software and Services, and Global Services segments. The Networking Platforms segment consists optical networking, routing, and switching products and services. This segment products include the 6500 Packet-Optical Platform, Waveserver modular interconnect system, the 6500 Reconfigurable Line System, and coherent pluggable transceivers; and the 3000 family of service delivery platforms and the"
+ },
+ "CI": {
+  "industry": "Healthcare Plans",
+  "sector": "Healthcare",
+  "summary": "The Cigna Group, together with its subsidiaries, provides insurance and related products and services in the United States. It operates thro",
+  "summary_long": "The Cigna Group, together with its subsidiaries, provides insurance and related products and services in the United States. It operates through two segments: Evernorth Health Services and Cigna Healthcare. The Evernorth Health Services segment includes Pharmacy Benefit Services and Specialty and Care Services, offering pharmacy benefit management, drug claim adjudication, retail pharmacy network administration, benefit design consultation, drug utilization review, drug formulary management, pharmacy benefits, home delivery pharmacy, specialty pharmacy, specialty pharmaceutical distribution, and clinical programs for whole-person health outcomes. The Cigna Healthcare segment comprises U.S. He"
+ },
+ "CINF": {
+  "industry": "Insurance - Property & Casualty",
+  "sector": "Financial Services",
+  "summary": "Cincinnati Financial Corporation provides property casualty insurance products in the United States. The company operates through five segme",
+  "summary_long": "Cincinnati Financial Corporation provides property casualty insurance products in the United States. The company operates through five segments: Commercial Lines Insurance, Personal Lines Insurance, Excess and Surplus Lines Insurance, Life Insurance, and Investments. The Commercial Lines Insurance segment offers coverage for commercial casualty and property, commercial auto, and workers' compensation. This segment also provides contract and commercial surety bonds, and fidelity bonds; management liability; and machinery and equipment insurance products. The Personal Lines Insurance segment offers personal auto; homeowner; and other personal lines insurance, such as dwelling fire, inland mari"
+ },
+ "CTAS": {
+  "industry": "Specialty Business Services",
+  "sector": "Industrials",
+  "summary": "Cintas Corporation provides corporate identity uniforms and other garments in the United States, Canada, and Latin America. It operates thro",
+  "summary_long": "Cintas Corporation provides corporate identity uniforms and other garments in the United States, Canada, and Latin America. It operates through Uniform Rental and Facility Services, First Aid and Safety Services, and All Other segments. The company offers rental and servicing of uniforms and other garments, including flame resistant clothing, mats, mops and shop towels, and other ancillary items. It also provides restroom cleaning services and supplies; and sells uniforms from catalogs. In addition, the company offers first aid and safety products and services; workplace water services; and fire protection products and services. Further, it provides automated external defibrillators; eye-was"
+ },
+ "CSCO": {
+  "industry": "Communication Equipment",
+  "sector": "Technology",
+  "summary": "Cisco Systems, Inc. designs, develops, and sells technologies to power, help, secure, and draw insights from the internet in the Americas, E",
+  "summary_long": "Cisco Systems, Inc. designs, develops, and sells technologies to power, help, secure, and draw insights from the internet in the Americas, Europe, the Middle East, Africa, the Asia Pacific, Japan, and China. The company provides data center switching; network security, identity and access management, and secure access service edge; identity and agentic security solutions; interconnects public and private wireline and mobile networks, delivering connectivity to campus, data center, and branch networks; WEBEX suite, collaboration devices, and contact center; communication platform as a service software, including perpetual licenses, subscription arrangements, and hardware solutions; network as"
+ },
+ "C": {
+  "industry": "Banks - Diversified",
+  "sector": "Financial Services",
+  "summary": "Citigroup Inc., a diversified financial service holding company, provides various financial products and services to consumers, corporations",
+  "summary_long": "Citigroup Inc., a diversified financial service holding company, provides various financial products and services to consumers, corporations, governments, and institutions. It operates through five segments: Services, Markets, Banking, U.S. Personal Banking, and Wealth. The Services segment includes treasury and trade solutions, which provides cash management, trade, and working capital solutions to multinational corporations, financial institutions, and public sector organizations; and securities services, such as cross-border support for clients, local market expertise, post-trade technologies, data solutions, and various securities services solutions. The Markets segment offers sales and "
+ },
+ "CFG": {
+  "industry": "Banks - Regional",
+  "sector": "Financial Services",
+  "summary": "Citizens Financial Group, Inc. operates as the bank holding company that provides retail and commercial banking products and services to ind",
+  "summary_long": "Citizens Financial Group, Inc. operates as the bank holding company that provides retail and commercial banking products and services to individuals, small businesses, middle-market companies, large corporations, and institutions in the United States. The company operates through two segments, Consumer Banking and Commercial Banking. The Consumer Banking segment offers deposit products, mortgage and home equity lending products, credit cards, business loans, and wealth management services; and education and point-of-sale finance loans, as well as digital deposit products. This segment serves its customers through telephone service centers, as well as through its online and mobile platforms. "
+ },
+ "CLX": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "The Clorox Company manufactures and markets consumer and professional products worldwide. It operates through four segments: Health and Well",
+  "summary_long": "The Clorox Company manufactures and markets consumer and professional products worldwide. It operates through four segments: Health and Wellness, Household, Lifestyle, and International. The company home care cleaning and disinfecting products and laundry additives, skin sanitization and cleaning products, professional cleaning and disinfecting products, and professional food service products under the Clorox, Clorox2, Pine-Sol, Scentiva, Tilex, Liquid-Plumr, Formula 409, Purell, GOJO, CloroxPro, Clorox Healthcare, Hidden Valley, Poett, Clorinda, and Chux brands. It also provides bags and wraps, cat litter, and grilling products under the Glad, Fresh Step, Scoop Away, Kingsford, and Ever Cle"
+ },
+ "CME": {
+  "industry": "Financial Data & Stock Exchanges",
+  "sector": "Financial Services",
+  "summary": "CME Group Inc., together with its subsidiaries, operates contract markets for the trading of futures and options on futures contracts worldw",
+  "summary_long": "CME Group Inc., together with its subsidiaries, operates contract markets for the trading of futures and options on futures contracts worldwide. It offers futures and options products based on interest rates, equity indexes, and foreign exchange; and agricultural, energy, and metals commodities, as well as fixed income and foreign currency trading services. The company provides clearing house services, including clearing, settling, and guaranteeing futures and options contracts, and cleared swaps products traded through its exchanges. In addition, the company offers a range of market data services, including real-time and historical data services. It serves professional traders, financial in"
+ },
+ "CMS": {
+  "industry": "Utilities - Regulated Electric",
+  "sector": "Utilities",
+  "summary": "CMS Energy Corporation operates as an energy company primarily in Michigan. The company operates through three segments: Electric Utility; G",
+  "summary_long": "CMS Energy Corporation operates as an energy company primarily in Michigan. The company operates through three segments: Electric Utility; Gas Utility; and NorthStar Clean Energy. The Electric Utility segment is involved in the generation, purchase, distribution, and sale of electricity. This segment generates electricity through coal, wind, gas, renewable energy, oil, and nuclear sources. Its distribution system comprises 263 miles of high-voltage distribution overhead lines; 4 miles of high-voltage distribution underground lines; 4,619 miles of high-voltage distribution overhead lines; 18 miles of high-voltage distribution underground lines; 82,854 miles of electric distribution overhead l"
+ },
+ "KO": {
+  "industry": "Beverages - Non-Alcoholic",
+  "sector": "Consumer Defensive",
+  "summary": "The Coca-Cola Company, a beverage company, manufactures and sells various nonalcoholic beverages in the United States and internationally. T",
+  "summary_long": "The Coca-Cola Company, a beverage company, manufactures and sells various nonalcoholic beverages in the United States and internationally. The company provides Trademark Coca-Cola, sparkling soft drinks and flavors; water, sports, coffee, and tea; juice, value-added dairy, and plant-based beverages; and emerging beverages. It also offers beverage concentrates and syrups, as well as fountain syrups to fountain retailers comprising restaurants and convenience stores. The company sells its products under the Coca-Cola, Diet Coke/Coca-Cola Light, Coca-Cola Zero Sugar, caffeine free Diet Coke, Cherry Coke, Fanta, Sprite, Simply, Fanta Orange, Fanta Zero Orange, Fanta Zero Sugar, Fanta Apple, Spri"
+ },
+ "CTSH": {
+  "industry": "Information Technology Services",
+  "sector": "Technology",
+  "summary": "Cognizant Technology Solutions Corporation, a professional services company, provides consulting and technology, and outsourcing services in",
+  "summary_long": "Cognizant Technology Solutions Corporation, a professional services company, provides consulting and technology, and outsourcing services in North America, Europe, and internationally. It operates through four segments: Financial Services; Health Sciences; Products and Resources; and Communications, Media and Technology. The company provides services including artificial intelligence (AI) and other technology services and solutions, consulting, application development, systems integration, quality engineering and assurance, engineering research and development, application maintenance, infrastructure, security, and business process services and automation. It also offers AI-led automation, w"
+ },
+ "COHR": {
+  "industry": "Scientific & Technical Instruments",
+  "sector": "Technology",
+  "summary": "Coherent Corp. develops, manufactures, and markets lasers, transceivers, other optical and optoelectronic devices, modules, and systems worl",
+  "summary_long": "Coherent Corp. develops, manufactures, and markets lasers, transceivers, other optical and optoelectronic devices, modules, and systems worldwide. Its products include critical components consisting of detectors, passive optics, thermal solutions, and PICS; silicon photonics and other advanced optical technologies; and coherent transmission components, transport products, optical amplifiers, passive optical components, optical line systems, and multi-rail platform. The company's Datacenter and Communications segment offers transceivers, co-packaged optics, and optical circuit switches, as well as other systems, such as subsystems, modules, and semiconductor devices for datacenter and communi"
+ },
+ "COIN": {
+  "industry": "Financial Data & Stock Exchanges",
+  "sector": "Financial Services",
+  "summary": "Coinbase Global, Inc. operates platform for crypto assets in the United States and internationally. It provides the primary financial accoun",
+  "summary_long": "Coinbase Global, Inc. operates platform for crypto assets in the United States and internationally. It provides the primary financial account in the crypto economy for consumers; a brokerage platform with a pool of liquidity across the crypto marketplace for institutions; and a suite of products granting access to build onchain for developers. The company was founded in 2012 and is based in New York, New York."
+ },
+ "CL": {
+  "industry": "Household & Personal Products",
+  "sector": "Consumer Defensive",
+  "summary": "Colgate-Palmolive Company, together with its subsidiaries, manufactures and sells consumer products in the United States and internationally",
+  "summary_long": "Colgate-Palmolive Company, together with its subsidiaries, manufactures and sells consumer products in the United States and internationally. It operates through two segments: Oral, Personal and Home Care; and Pet Nutrition. The Oral, Personal and Home Care segment offers toothpaste, toothbrushes, mouthwash, bar and liquid hand soaps, shower gels, shampoos, conditioners, deodorants and antiperspirants, skin health products, dishwashing detergents, fabric conditioners, household cleaners, and other related items. This segment markets and sells its products under the Colgate, Palmolive, Darlie, elmex, hello, meridol, Sorriso, Tom's of Maine, EltaMD, Filorga, Irish Spring, Lady Speed Stick, PCA"
+ },
+ "CMCSA": {
+  "industry": "Telecom Services",
+  "sector": "Communication Services",
+  "summary": "Comcast Corporation operates as a media and technology company worldwide. The company operates through Residential Connectivity & Platforms,",
+  "summary_long": "Comcast Corporation operates as a media and technology company worldwide. The company operates through Residential Connectivity & Platforms, Business Services Connectivity, Media, Studios, and Theme Parks segments. Its Residential Connectivity & Platforms segment provides residential broadband and wireless connectivity services, residential and business video services, sky-branded entertainment television networks, and advertising. The Business Services Connectivity segment offers connectivity services for small business locations, which include broadband, wireline voice, and wireless services; and ethernet network services for medium-sized customers and larger enterprises. Its Media segment"
+ },
+ "FIX": {
+  "industry": "Engineering & Construction",
+  "sector": "Industrials",
+  "summary": "Comfort Systems USA, Inc., together with its subsidiaries, provides mechanical and electrical installation, renovation, maintenance, repair,",
+  "summary_long": "Comfort Systems USA, Inc., together with its subsidiaries, provides mechanical and electrical installation, renovation, maintenance, repair, and replacement services for the mechanical and electrical services industry in the United States. The company operates through two segments: Mechanical and Electrical. It offers heating, ventilation, and air conditioning systems, as well as plumbing, electrical, piping and controls, off-site construction, monitoring, and fire protection. The company is also involved in the design, engineering, integration, installation, and start-up of mechanical, electrical, and plumbing (MEP) and related systems in new buildings; and renovation, expansion, maintenanc"
+ },
+ "CAG": {
+  "industry": "Packaged Foods",
+  "sector": "Consumer Defensive",
+  "summary": "Conagra Brands, Inc., together with its subsidiaries, operates as a branded consumer packaged goods food company primarily in the United Sta",
+  "summary_long": "Conagra Brands, Inc., together with its subsidiaries, operates as a branded consumer packaged goods food company primarily in the United States. The company operates in four segments: Grocery & Snacks, Refrigerated & Frozen, International, and Foodservice. The Grocery & Snacks segment primarily offers shelf stable food products through various retail channels. The Refrigerated & Frozen segment provides temperature-controlled food products through various retail channels. The International segment offers food products in various temperature states through retail and foodservice channels outside of the United States. The Foodservice segment offers branded and customized food products, includin"
+ },
+ "COP": {
+  "industry": "Oil & Gas E&P",
+  "sector": "Energy",
+  "summary": "ConocoPhillips explores for, produces, transports, and markets crude oil, bitumen, natural gas, liquefied natural gas (LNG), and natural gas",
+  "summary_long": "ConocoPhillips explores for, produces, transports, and markets crude oil, bitumen, natural gas, liquefied natural gas (LNG), and natural gas liquids. It operates in five segments: Alaska; Lower 48; Canada; Europe, Middle East and North Africa; and Asia Pacific. The company's portfolio includes unconventional plays in North America; conventional assets in North America, Europe, Asia, and Australia; global LNG developments; oil sands assets in Canada; and an inventory of global exploration prospects. It serves in the United States, Canada, China, Equatorial Guinea, Libya, Malaysia, Norway, Singapore, the United Kingdom, and internationally. ConocoPhillips was founded in 1917 and is headquarter"
+ },
+ "ED": {
+  "industry": "Utilities - Regulated Electric",
+  "sector": "Utilities",
+  "summary": "Consolidated Edison, Inc., through its subsidiaries, engages in the regulated electric, gas, and steam delivery businesses in the United Sta",
+  "summary_long": "Consolidated Edison, Inc., through its subsidiaries, engages in the regulated electric, gas, and steam delivery businesses in the United States. The company offers electric services to approximately 3.7 million customers in New York City and Westchester County; gas to approximately 1.1 million customers in Manhattan, the Bronx, parts of Queens, and Westchester County; and steam to approximately 1,490 customers in parts of Manhattan. It also supplies electricity to approximately 0.3 million customers in southeastern New York and northern New Jersey; and gas to approximately 0.1 million customers in southeastern New York. In addition, the company operates 552 circuit miles of transmission line"
+ },
+ "STZ": {
+  "industry": "Beverages - Brewers",
+  "sector": "Consumer Defensive",
+  "summary": "Constellation Brands, Inc., together with its subsidiaries, produces, imports, markets, and sells beer, wine, and spirits in the United Stat",
+  "summary_long": "Constellation Brands, Inc., together with its subsidiaries, produces, imports, markets, and sells beer, wine, and spirits in the United States, Canada, Mexico, New Zealand, and Italy. It offers beer under the Corona Extra, Corona Familiar, Corona Sunbrew, Corona Light, Corona Non-Alcoholic, Corona Premier, Modelo Especial, Modelo Chelada, Modelo Negra, Modelo Spiked Aguas Frescas, Modelo Oro, Modelo Noche Especial, Victoria, Vicky Chamoy, and Pacifico brand names. The company also offers wine under the Sea Smoke, Schrader Cellars, Kim Crawford, Mount Veeder, Ruffino, My Favorite Neighbor, Robert Mondavi Winery, and The Prisoner Wine Company brand names; and spirits under the Casa Noble, High"
+ },
+ "CEG": {
+  "industry": "Utilities - Independent Power Producers",
+  "sector": "Utilities",
+  "summary": "Constellation Energy Corporation produces and sells energy products and services in the United States. The company operates through five seg",
+  "summary_long": "Constellation Energy Corporation produces and sells energy products and services in the United States. The company operates through five segments: Mid-Atlantic, Midwest, New York, ERCOT, and Other Power Regions. It offers electricity, natural gas, energy-related products, and sustainable solutions. The company has approximately 31,676 megawatts of generating capacity consisting of nuclear, wind, solar, natural gas, and hydroelectric assets. It serves distribution utilities, municipalities, cooperatives, and commercial, industrial, public sector, and residential customers. The company was incorporated in 2021 and is headquartered in Baltimore, Maryland."
+ },
+ "COO": {
+  "industry": "Medical Instruments & Supplies",
+  "sector": "Healthcare",
+  "summary": "The Cooper Companies, Inc., together with its subsidiaries, develops, manufactures, and markets contact lens wearers. The company operates i",
+  "summary_long": "The Cooper Companies, Inc., together with its subsidiaries, develops, manufactures, and markets contact lens wearers. The company operates in two segments, CooperVision and CooperSurgical. The CooperVision segment offers spherical, toric, and multifocal contact lenses that address vision challenges, such as astigmatism, presbyopia, and myopia. Its CooperSurgical segment focuses on family and women's health care, which provides fertility products and services, medical devices, and contraception, as well as cryostorage, such as cord blood and cord tissue storage. This segment offers Paragard, a hormone-free intrauterine device; and fertility consumables and equipment, donor gamete services, an"
+ },
+ "CPRT": {
+  "industry": "Specialty Business Services",
+  "sector": "Industrials",
+  "summary": "Copart, Inc. provides online auctions and vehicle remarketing services in the United States, the United Kingdom, Germany, Brazil, Canada, th",
+  "summary_long": "Copart, Inc. provides online auctions and vehicle remarketing services in the United States, the United Kingdom, Germany, Brazil, Canada, the United Arab Emirates, Spain, Finland, Oman, the Republic of Ireland, and Bahrain. It offers a range of services to process and sell vehicles over the internet through its virtual bidding third generation internet auction-style sales technology. The company's services include online seller access, salvage estimation, estimating, end-of-life vehicle processing, transportation, vehicle inspection stations, on-demand reporting, title processing and express, loan payoff, flexible vehicle processing programs, buy it now, sales process, and dealer services. I"
+ },
+ "GLW": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "Corning Incorporated operates in optical communications, display, specialty materials, automotive, and life sciences businesses in the Unite",
+  "summary_long": "Corning Incorporated operates in optical communications, display, specialty materials, automotive, and life sciences businesses in the United States, Canada, Mexico, Japan, Taiwan, China, South Korea, Germany, and internationally. The company provides optical fibers and cables; and hardware and equipment products, such as cable assemblies, fiber optic hardware and connectors, optical components and couplers, closures, network interface devices, and other accessories for the telecommunications industry, businesses, governments, and individuals. It also offers glass substrates for flat panel displays, including liquid crystal displays and organic light-emitting diodes that are used in televisi"
+ },
+ "CPAY": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "Corpay, Inc. operates as a payments company that helps businesses and consumers to manage and pay their expenses.\nIt operates through Corpor",
+  "summary_long": "Corpay, Inc. operates as a payments company that helps businesses and consumers to manage and pay their expenses.\nIt operates through Corporate Payments, Vehicle Payments, Lodging Payments, and Other segments. The company offers vehicle payment solutions for fuel, tolls and parking, vehicle compliance, auto insurance and road assistance, fleet maintenance, and long-haul transportation services, as well as prepaid food and transportation vouchers and cards. It also provides corporate payment solutions, such as cross-border payments, spend management solutions, AP modernization, virtual cards, and purchasing and T&E cards. Additionally, it offers lodging payments solutions for employees who tr"
+ },
+ "CTVA": {
+  "industry": "Agricultural Inputs",
+  "sector": "Basic Materials",
+  "summary": "Corteva, Inc. operates in the agriculture business. The company operates through two segments, Seed and Crop Protection. The Seed segment de",
+  "summary_long": "Corteva, Inc. operates in the agriculture business. The company operates through two segments, Seed and Crop Protection. The Seed segment develops and supplies advanced germplasm and traits that produce optimum yield for farms. It offers trait technologies that enhance resistance to weather, disease, insects, and herbicides used to control weeds, as well as food and nutritional characteristics. This segment also provides digital solutions that assist farmer decision-making with a view to optimize product selection, and maximize yield and profitability. The Crop Protection segment offers products that protect against weeds, insects and other pests, and diseases, as well as enhances crop healt"
+ },
+ "CSGP": {
+  "industry": "Real Estate Services",
+  "sector": "Real Estate",
+  "summary": "CoStar Group, Inc. provides information, analytics, and online marketplace services to real estate and related business communities in the U",
+  "summary_long": "CoStar Group, Inc. provides information, analytics, and online marketplace services to real estate and related business communities in the United States, Australia, Canada, Europe, the Asia Pacific, and Latin America. It offers CoStar Property that provides inventory of office, industrial, retail, multifamily, hospitality, and student housing, and land properties; CoStar Leasing, a data on lease transactions and tools to manage user-entered lease data; CoStar Sales, a database of commercial real estate sales transactions; CoStar Owners provides detailed portfolio information; CoStar Markets to view and report on market and submarket trends; and CoStar Tenant that provides tenant information."
+ },
+ "COST": {
+  "industry": "Discount Stores",
+  "sector": "Consumer Defensive",
+  "summary": "Costco Wholesale Corporation, together with its subsidiaries, engages in the operation of membership warehouses in the United States, Puerto",
+  "summary_long": "Costco Wholesale Corporation, together with its subsidiaries, engages in the operation of membership warehouses in the United States, Puerto Rico, Canada, Mexico, Japan, the United Kingdom, Korea, Australia, Taiwan, China, Spain, France, Iceland, New Zealand, and Sweden. It offers merchandise, including sundries, dry groceries, candies, coolers, freezers, deli, liquor, and tobacco; non-food merchandise comprising appliances, small electronics, health and beauty aids, hardware, lawn and garden, sporting goods, tires, toys and seasonal, automotive, stamps, tickets, apparel, furniture, domestics, housewares, special order kiosks, and jewelry; and fresh food, such as meat, produce, service deli,"
+ },
+ "CRH": {
+  "industry": "Building Materials",
+  "sector": "Basic Materials",
+  "summary": "CRH plc, together with its subsidiaries, provides building materials solutions in Ireland, the United States, the United Kingdom, rest of Eu",
+  "summary_long": "CRH plc, together with its subsidiaries, provides building materials solutions in Ireland, the United States, the United Kingdom, rest of Europe, and internationally. It operates through three segments: Americas Materials Solutions, Americas Building Solutions, and International Solutions. The company offers building materials for the construction and maintenance of public infrastructure, and commercial and residential buildings, as well as construction and renovation of transportation infrastructure, critical utility networks, commercial and residential buildings, and outdoor living spaces; paving and construction services; and produces and sells aggregates, cementitious materials, ready mi"
+ },
+ "CRWD": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "CrowdStrike Holdings, Inc. provides cybersecurity solutions in the United States and internationally. Its unified platform provides cloud-de",
+  "summary_long": "CrowdStrike Holdings, Inc. provides cybersecurity solutions in the United States and internationally. Its unified platform provides cloud-delivered protection of endpoints, cloud workloads, identity, and data through a software as a service (SaaS) subscription-based model. The company offers corporate endpoint and cloud workload security, managed security, security and vulnerability management, IT operations management, identity protection, threat intelligence, data protection, SaaS security posture management, and AI powered workflow automation, and securing generative AI workload services, as well as security orchestration, automation, and response; and security information and event manag"
+ },
+ "CCI": {
+  "industry": "REIT - Specialty",
+  "sector": "Real Estate",
+  "summary": "Crown Castle owns, operates and leases approximately 40,000 cell towers across the U.S. This nationwide portfolio serves as the foundation o",
+  "summary_long": "Crown Castle owns, operates and leases approximately 40,000 cell towers across the U.S. This nationwide portfolio serves as the foundation of wireless connectivity that provides cities and communities access to essential data, technology and wireless service  bringing information, ideas, innovations and the connectivity of modern life to help people and businesses thrive. Crown Castle Inc. was established in 1994 and was incorporated in Delaware."
+ },
+ "CSX": {
+  "industry": "Railroads",
+  "sector": "Industrials",
+  "summary": "CSX Corporation, together with its subsidiaries, provides rail-based freight transportation services in the United States and Canada. It ope",
+  "summary_long": "CSX Corporation, together with its subsidiaries, provides rail-based freight transportation services in the United States and Canada. It operates through two segments: rail and trucking. The company offers rail services; and transportation of intermodal containers and trailers, as well as other transportation services, such as rail-to-truck transfers and bulk commodity operations. It also transports chemicals, agricultural and food products, minerals, automotive, forest products, fertilizers, and metals and equipment; and coal, coke, and iron ore to electricity-generating power plants, steel manufacturers, and industrial plants, as well as exports coal to deep-water port facilities. In addit"
+ },
+ "CMI": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "Cummins Inc. offers various power solutions worldwide. The company operates through five segments: Engine, Distribution, Components, Power S",
+  "summary_long": "Cummins Inc. offers various power solutions worldwide. The company operates through five segments: Engine, Distribution, Components, Power Systems, and Accelera. It offers diesel and natural gas-powered engines; and drivetrain systems, including axles, drivelines, brakes, and suspension systems; and on- and off-highway, and other products. The company also provides aftertreatment technology and solutions comprising custom engineering systems and integrated controls, oxidation catalysts, particulate filters, and selective catalytic reduction systems, as well as engineered components, including dosers; turbochargers, fuel systems, and valvetrain technologies; electronic control modules, sensor"
+ },
+ "CVS": {
+  "industry": "Healthcare Plans",
+  "sector": "Healthcare",
+  "summary": "CVS Health Corporation provides health solutions in the United States. The Health Care Benefits segment offers traditional, voluntary, and c",
+  "summary_long": "CVS Health Corporation provides health solutions in the United States. The Health Care Benefits segment offers traditional, voluntary, and consumer-directed health insurance products and related services, including medical, pharmacy, dental, and behavioral health plans; medical management capabilities; Medicare Advantage and Medicare Supplement plans; prescription drug plans (PDPs); and Medicaid health care management services. It serves employer groups, individuals, college students, part-time and hourly workers, health plans, health care providers, governmental units, government-sponsored plans, labor groups, and expatriates. The Health Services segment offers pharmacy benefit management s"
+ },
+ "DHR": {
+  "industry": "Diagnostics & Research",
+  "sector": "Healthcare",
+  "summary": "Danaher Corporation designs, manufactures, and markets professional, medical, research, and industrial products and services in the United S",
+  "summary_long": "Danaher Corporation designs, manufactures, and markets professional, medical, research, and industrial products and services in the United States, China, and internationally. The company operates through Biotechnology, Life Sciences, and Diagnostics segments. The Biotechnology segment provides technologies, consumables, services, and solutions that advance, accelerate, and integrate the development and manufacture of therapeutics; cell line and cell culture media development services; cell culture media, process liquids and buffers for manufacturing, chromatography resins, filtration technologies, and aseptic fill finish; single-use hardware, consumables, and services, such as the design and"
+ },
+ "DRI": {
+  "industry": "Restaurants",
+  "sector": "Consumer Cyclical",
+  "summary": "Darden Restaurants, Inc., together with its subsidiaries, owns and operates full-service restaurants in the United States and Canada. The co",
+  "summary_long": "Darden Restaurants, Inc., together with its subsidiaries, owns and operates full-service restaurants in the United States and Canada. The company operates under Olive Garden, LongHorn Steakhouse, Cheddar's Scratch Kitchen, Chuy's, Yard House, Ruth's Chris Steak House, The Capital Grille, Seasons 52, Eddie V's Prime Seafood, Bahama Breeze, The Capital Burger, Darden and Darden Restaurants brand names. Darden Restaurants, Inc. was founded in 1938 and is based in Orlando, Florida."
+ },
+ "DDOG": {
+  "industry": "Software - Application",
+  "sector": "Technology",
+  "summary": "Datadog, Inc. operates an observability and security platform for cloud applications in the United States and internationally. The company's",
+  "summary_long": "Datadog, Inc. operates an observability and security platform for cloud applications in the United States and internationally. The company's products comprise infrastructure and application performance monitoring, log management, observability pipelines, synthetics, real user monitoring, product analytics, continuous profiler, database monitoring, data observability, LLM observability, error tracking, network monitoring, incident response, workflow automation and App builder, event management, bits AI SRE, cloud cost management, cloud security, code security, cloud SIEM, threat management, sensitive data scanner, and CI visibility. Datadog, Inc. was incorporated in 2010 and is headquartered "
+ },
+ "DVA": {
+  "industry": "Medical Care Facilities",
+  "sector": "Healthcare",
+  "summary": "DaVita Inc. provides kidney dialysis services for patients suffering from chronic kidney failure in the United States. The company operates ",
+  "summary_long": "DaVita Inc. provides kidney dialysis services for patients suffering from chronic kidney failure in the United States. The company operates kidney dialysis centers and provides related lab services in outpatient dialysis centers. It also offers outpatient, hospital inpatient, and home-based hemodialysis dialysis services; operates clinical laboratories that provide routine laboratory tests for dialysis and other physician-prescribed laboratory tests for ESRD patients; and management and administrative services to outpatient dialysis centers. In addition, the company offers integrated care and disease management services to patients in risk-based and other integrated care arrangements; clinic"
+ },
+ "DECK": {
+  "industry": "Footwear & Accessories",
+  "sector": "Consumer Cyclical",
+  "summary": "Deckers Outdoor Corporation, together with its subsidiaries, designs, markets, and distributes footwear, apparel, and accessories for casual",
+  "summary_long": "Deckers Outdoor Corporation, together with its subsidiaries, designs, markets, and distributes footwear, apparel, and accessories for casual lifestyle use and high-performance activities in the United States and internationally. The company offers footwear, apparel, and accessories under the UGG brand; footwear, such as running, trail, hiking, fitness, and lifestyle shoes, as well as apparel and accessories under the HOKA brand; and sandals, shoes, and boots under the Teva brand name. It also provides a casual footwear fashion line under the Koolaburra brand name; and footwear products under the AHNU brand name. The company sells its products through domestic and international retailers, int"
+ },
+ "DE": {
+  "industry": "Farm & Heavy Construction Machinery",
+  "sector": "Industrials",
+  "summary": "Deere & Company engages in the manufacture and distribution of various equipment worldwide. The company operates through four segments: Prod",
+  "summary_long": "Deere & Company engages in the manufacture and distribution of various equipment worldwide. The company operates through four segments: Production and Precision Agriculture, Small Agriculture and Turf, Construction and Forestry, and Financial Services. The Production and Precision Agriculture segment provides four-wheel-drive track and row crop tractors, harvesters, cotton pickers and strippers, sugarcane harvesters and loaders, soil preparation, tillage, seeding, and crop care equipment, as well as application equipment, including sprayers and nutrient management, soil preparation machinery, and related attachments and service parts. The Small Agriculture and Turf segment offers specialty, "
+ },
+ "DELL": {
+  "industry": "Computer Hardware",
+  "sector": "Technology",
+  "summary": "Dell Technologies Inc. designs, develops, manufactures, markets, sells, and supports various comprehensive and integrated solutions, product",
+  "summary_long": "Dell Technologies Inc. designs, develops, manufactures, markets, sells, and supports various comprehensive and integrated solutions, products, and services in the Americas, Europe, the Middle East, Asia, and internationally. The company operates through Infrastructure Solutions Group (ISG) and Client Solutions Group (CSG) segments. The ISG segment provides modern and traditional storage solutions, including all-flash, purpose-built, hyper-converged infrastructure, software-defined storage, and general-purpose and AI-optimized servers. This segment also offers networking products and services comprising wide area network infrastructure, data center and edge networking switches, and cables and"
+ },
+ "DAL": {
+  "industry": "Airlines",
+  "sector": "Industrials",
+  "summary": "Delta Air Lines, Inc. provides scheduled air transportation for passengers and cargo in the United States and internationally. The company o",
+  "summary_long": "Delta Air Lines, Inc. provides scheduled air transportation for passengers and cargo in the United States and internationally. The company operates through two segments, Airline and Refinery. Its domestic network centered on core hubs in Atlanta, Detroit, Minneapolis-St. Paul, and Salt Lake City, as well as coastal hub positions in Boston, Los Angeles, New York-LaGuardia, New York-JFK, and Seattle; and international network centered on hubs and market presence in Amsterdam, Bogota, Lima, Mexico City, London-Heathrow, Paris-Charles de Gaulle, Santiago (Chile), Sao Paulo, Seoul-Incheon, and Tokyo. It also provides aircraft maintenance and engineering support, repair, and overhaul services; and"
+ },
+ "DVN": {
+  "industry": "Oil & Gas E&P",
+  "sector": "Energy",
+  "summary": "Devon Energy Corporation, an independent energy company, engages in the exploration, development, and production of oil, natural gas, and na",
+  "summary_long": "Devon Energy Corporation, an independent energy company, engages in the exploration, development, and production of oil, natural gas, and natural gas liquids in the United States. The company operates in Delaware Basin located in southeast New Mexico and west Texas, Eagle Ford located in North America, Anadarko Basin located in western Oklahoma, Williston Basin located in North Dakota, and Powder River Basin located in Wyoming. Devon Energy Corporation was founded in 1971 and is headquartered in Houston, Texas."
+ },
+ "DXCM": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "DexCom, Inc., a medical device company, focuses on the design, development, and commercialization of continuous glucose monitoring (CGM) sys",
+  "summary_long": "DexCom, Inc., a medical device company, focuses on the design, development, and commercialization of continuous glucose monitoring (CGM) systems for the management of diabetes and metabolic health in the United States and internationally. The company offers Dexcom G7 and G7 15 Day, an integrated continuous glucose monitoring system; Dexcom G6, a CGM system; Dexcom ONE+ to replace fingerstick blood glucose testing for diabetes treatment decisions; Stelo, a biosensor designed for adults with prediabetes and Type 2 diabetes who do not use insulin; Dexcom Share, a remote monitoring system; and Dexcom Follow application. It markets its products directly to endocrinologists, physicians, and diabet"
+ }
+}

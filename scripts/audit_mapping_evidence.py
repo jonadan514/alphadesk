@@ -224,8 +224,8 @@ def main() -> int:
 
     # 매핑과 같은 로더(산업분류 보정 포함). 둘이 다른 값을 보면 매핑이 틀린 라벨에
     # 속아 만든 편입을 감사도 같은 라벨에 속아 통과시킨다.
-    from src.collectors.kr_profiles import load_kr_profiles
-    profiles = load_kr_profiles()
+    from src.collectors.kr_profiles import load_profiles
+    profiles = load_profiles(args.market)
     long_cov = sum(1 for p in profiles.values() if p.get("summary_long"))
     names: dict[str, str] = {}
     uni = ROOT / "data" / "kr_universe.json"
@@ -234,6 +234,13 @@ def main() -> int:
     from src.collectors.kr_kospi_list import KOSPI_STOCKS
     for c, n, _ in KOSPI_STOCKS:
         names.setdefault(c, n)
+    # 미국 종목명 - 판정 프롬프트에 티커만 나가지 않게
+    sp = ROOT / "data" / "sp500_list.csv"
+    if sp.exists():
+        import csv as _csv
+        with open(sp, encoding="utf-8") as f:
+            for row in _csv.DictReader(f):
+                names.setdefault(str(row.get("Symbol", "")).replace(".", "-"), row.get("Security", ""))
 
     themes = {t["id"]: t for t in yaml.safe_load((ROOT / "config" / "themes.yaml").read_text(encoding="utf-8"))["themes"]}
 
@@ -297,7 +304,8 @@ def main() -> int:
     report = "\n".join(lines)
     out_dir = ROOT / "out"
     out_dir.mkdir(exist_ok=True)
-    tag = "current" if args.current_approved else args.run_id
+    # 시장을 파일명에 넣는다 - 한 잡에서 KR·US를 연달아 돌리면 덮어써지기 때문.
+    tag = ("current" if args.current_approved else args.run_id) + f"_{args.market}"
     (out_dir / f"evidence_audit_{tag}.txt").write_text(report, encoding="utf-8")
     # 다음 단계(승인 제외 목록 생성)가 쓸 수 있게 기계 판독용으로도 남긴다.
     (out_dir / f"evidence_audit_{tag}.json").write_text(json.dumps(

@@ -29,3 +29,20 @@ def load_kr_profiles() -> dict[str, dict]:
                 profiles[code] = {**profiles[code], "industry": fix["industry"],
                                   "industry_source": "override"}
     return profiles
+
+
+US_PROFILES = ROOT / "data" / "us_profiles.json"
+
+
+def load_profiles(market: str) -> dict[str, dict]:
+    """시장별 사업정보. KR은 산업분류 보정 포함, US는 yfinance 원본(scripts/fetch_us_profiles.py).
+
+    매핑 프롬프트는 KR에만 사업정보를 붙이지만(미국 기업은 모델이 사명으로 안다),
+    근거 감사는 양쪽 다 실제 사업정보와 대조해야 한다 - US에 정보가 없으면 거의 전부
+    '확인 불가'가 돼 감사가 무의미하다(2026-09-15 신규 테마 US 26건 중 21건).
+    """
+    if market == "US":
+        if not US_PROFILES.exists():
+            return {}
+        return json.loads(US_PROFILES.read_text(encoding="utf-8"))
+    return load_kr_profiles()
