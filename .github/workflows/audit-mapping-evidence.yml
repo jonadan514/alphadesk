@@ -1,0 +1,42 @@
+name: Audit Mapping Evidence
+
+# 테마 매핑 근거를 실제 사업정보와 대조한다(consistent/contradicts/unverifiable).
+# 진단용 - DB에 쓰지 않는다.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "특정 run_id (비우면 현재 화면에 표시 중인 승인분)"
+        required: false
+        default: ""
+      market:
+        description: "KR 또는 US"
+        required: false
+        default: "KR"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Audit
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          RID="${{ inputs.run_id }}"
+          MK="${{ inputs.market || 'KR' }}"
+          if [ -n "$RID" ]; then
+            python scripts/audit_mapping_evidence.py --run-id "$RID" --market "$MK"
+          else
+            python scripts/audit_mapping_evidence.py --current-approved --market "$MK"
+          fi
