@@ -1,0 +1,494 @@
+{
+ "_about": "US 매핑 v7 검토 (run 20260915090940-973344). 프롬프트 v7 = 미국 후보 사업정보 400자 첨부 + 청크 24000자 예산 + 업종-테마 규칙 + 에너지 테마 유틸리티 경계. 판정 원장 적용 초안(apply_decision_ledger.py)에서 자동 제외 9건·복원 13건이 들어왔고, 사람 검토 필요 68건을 사업정보와 대조해 판정했다. 감사를 통과했지만 판정이 없던 행도 훑어 확신 있는 오류 6건을 추가 제외했다. 유틸리티 경계 결정으로 이전 keep(D·ES·PPL)을 뒤집어 복원하지 않고 승인 해제한다.",
+ "run_id": "20260915090940-973344",
+ "market": "US",
+ "exclude": [
+  [
+   "aerospace_space",
+   "HII",
+   "이전 판정(2026-09-15): Huntington Ingalls는 조선업체(항공모함·잠수함 건조) - 항공우주 아니라 조선 테마"
+  ],
+  [
+   "autonomous_driving",
+   "AAPL",
+   "이전 판정(2026-09-15): Apple 자율주행차 프로젝트(Project Titan) 이미 중단됨"
+  ],
+  [
+   "battery",
+   "AAPL",
+   "이전 판정(2026-09-15): 배터리 셀 제조 사업 없음, 인용도 실패"
+  ],
+  [
+   "biosimilar",
+   "BMY",
+   "이전 판정(2026-09-15): 바이오시밀러 제품 없음"
+  ],
+  [
+   "medical_device",
+   "COO",
+   "이전 판정(2026-09-15): 콘택트렌즈 - 의료기기 정의에 안 맞음"
+  ],
+  [
+   "semi_equipment",
+   "INTC",
+   "이전 판정(2026-09-15): 칩 설계·제조사 - 장비·소재 공급사 아님(KR과 동일 기준, 1차 검토 누락)"
+  ],
+  [
+   "semi_equipment",
+   "MU",
+   "이전 판정(2026-09-15): 동일 사유"
+  ],
+  [
+   "semi_equipment",
+   "NXPI",
+   "이전 판정(2026-09-15): 동일 사유"
+  ],
+  [
+   "semi_equipment",
+   "ON",
+   "이전 판정(2026-09-15): 동일 사유"
+  ],
+  [
+   "ai_semiconductor",
+   "NXPI",
+   "범용 MCU·아날로그 - AI 전용 공급망 아님"
+  ],
+  [
+   "ai_semiconductor",
+   "ON",
+   "전력·센서 반도체 - AI 전용 공급망 아님"
+  ],
+  [
+   "ai_software",
+   "APP",
+   "AI 기반 광고 플랫폼 - AI 소프트웨어를 제품으로 파는 기업 아님"
+  ],
+  [
+   "ai_software",
+   "CTSH",
+   "IT 컨설팅·아웃소싱 서비스"
+  ],
+  [
+   "ai_software",
+   "LDOS",
+   "정부 대상 IT 서비스"
+  ],
+  [
+   "ai_software",
+   "NVDA",
+   "AI 하드웨어 - 정의상 AI 반도체 테마로"
+  ],
+  [
+   "ai_software",
+   "TYL",
+   "공공부문 업무 소프트웨어"
+  ],
+  [
+   "autonomous_driving",
+   "GM",
+   "Cruise 로보택시 사업 2024년 중단 - 이전 검토와 동일 기준"
+  ],
+  [
+   "biosimilar",
+   "GILD",
+   "바이오시밀러 제품 없음"
+  ],
+  [
+   "biosimilar",
+   "MCK",
+   "의약품 유통업체"
+  ],
+  [
+   "cable_wire",
+   "TEL",
+   "커넥터·케이블 조립품 - 전선 제조 아님(APH와 동일 기준)"
+  ],
+  [
+   "cdmo",
+   "WST",
+   "주사제 포장·전달 시스템 위탁생산 - 바이오의약품 CDMO 아님"
+  ],
+  [
+   "construction_machinery",
+   "PCAR",
+   "상용 트럭 제조"
+  ],
+  [
+   "datacenter_cooling",
+   "ANET",
+   "네트워크 장비 - 냉각 사업 없음"
+  ],
+  [
+   "datacenter_power",
+   "ANET",
+   "네트워크 장비 - 전력 사업 없음"
+  ],
+  [
+   "defense",
+   "AXON",
+   "치안용 전자충격기·바디캠 - 무기체계 아님"
+  ],
+  [
+   "energy_storage",
+   "ALB",
+   "리튬 소재 - ESS 공급 확인 안 됨(정의상 2차전지 테마로)"
+  ],
+  [
+   "factory_automation",
+   "OTIS",
+   "승강기·에스컬레이터"
+  ],
+  [
+   "lng_gas",
+   "AEE",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "lng_gas",
+   "LNT",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "lng_gas",
+   "NI",
+   "전기·가스 겸업 규제 유틸리티 - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "lng_gas",
+   "SRE",
+   "LNG 인프라 사업부가 있으나 주력은 규제 유틸리티 - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "medical_device",
+   "DVA",
+   "투석 서비스 운영"
+  ],
+  [
+   "medical_device",
+   "UHS",
+   "병원 운영"
+  ],
+  [
+   "medical_device",
+   "UNH",
+   "건강보험·헬스케어 서비스"
+  ],
+  [
+   "medical_device",
+   "VEEV",
+   "생명과학 산업용 클라우드 소프트웨어"
+  ],
+  [
+   "neuro_alzheimer",
+   "AMGN",
+   "신경퇴행성 치료제 파이프라인 확인 안 됨"
+  ],
+  [
+   "neuro_alzheimer",
+   "MDT",
+   "의료기기 - 치료제 개발사 아님"
+  ],
+  [
+   "nuclear_smr",
+   "PEG",
+   "원전을 보유하나 주력은 규제 유틸리티 - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "petrochemical",
+   "MPC",
+   "정유 중심, 석유화학 계열 사업 확인 안 됨"
+  ],
+  [
+   "petrochemical",
+   "OXY",
+   "OxyChem 매각 후 석유·가스 개발·미드스트림만 남음"
+  ],
+  [
+   "petrochemical",
+   "SLB",
+   "유전 서비스"
+  ],
+  [
+   "power_grid",
+   "AEE",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "AEP",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "CMS",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "CNP",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "D",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "ED",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "LNT",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "WEC",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "XEL",
+   "일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정)"
+  ],
+  [
+   "power_grid",
+   "VRT",
+   "데이터센터 전용 전력·냉각 인프라 - 데이터센터 전력 테마로"
+  ],
+  [
+   "renewable_energy",
+   "TSLA",
+   "태양광 발전 사업은 미미 - ESS는 에너지저장 테마로"
+  ],
+  [
+   "semi_equipment",
+   "AVGO",
+   "칩 설계사 - 장비·소재 공급사 아님(동일 기준)"
+  ],
+  [
+   "semi_equipment",
+   "NVDA",
+   "칩 설계사 - 장비·소재 공급사 아님(동일 기준)"
+  ],
+  [
+   "semi_equipment",
+   "TXN",
+   "칩 제조사 - 장비·소재 공급사 아님(동일 기준)"
+  ],
+  [
+   "specialty_gas",
+   "AMAT",
+   "반도체 장비 - 특수가스·전자재료 아님(정의상 반도체 장비 테마로)"
+  ],
+  [
+   "specialty_gas",
+   "KLAC",
+   "검사장비 - 정의상 제외"
+  ],
+  [
+   "specialty_gas",
+   "LRCX",
+   "반도체 장비 - 특수가스·전자재료 아님"
+  ],
+  [
+   "biosimilar",
+   "BAX",
+   "바이오시밀러 제품 없음(감사 통과분 점검)"
+  ],
+  [
+   "biosimilar",
+   "VTRS",
+   "바이오시밀러 사업을 2022년 Biocon에 매각(감사 통과분 점검)"
+  ],
+  [
+   "ev_value_chain",
+   "GPC",
+   "자동차 부품 유통 - 전기차 매출 확인 안 됨(감사 통과분 점검)"
+  ],
+  [
+   "neuro_alzheimer",
+   "SYK",
+   "의료기기 - 치료제 개발사 아님(감사 통과분 점검)"
+  ],
+  [
+   "power_grid",
+   "EMR",
+   "전기사업 매각 후 공정 자동화 중심 - 송배전 설비 아님(감사 통과분 점검)"
+  ],
+  [
+   "renewable_energy",
+   "CEG",
+   "원전 중심 독립 발전사 - 재생에너지 주력 아님(감사 통과분 점검)"
+  ]
+ ],
+ "keep": [
+  [
+   "aerospace_space",
+   "HWM",
+   "항공기 엔진 부품 - 인용 오탐"
+  ],
+  [
+   "aerospace_space",
+   "LMT",
+   "Aeronautics·Space 사업부 - 인용 오탐"
+  ],
+  [
+   "aerospace_space",
+   "PH",
+   "Aerospace Systems 사업부 확인 - 인용 오탐"
+  ],
+  [
+   "ai_software",
+   "ORCL",
+   "OCI AI 인프라·AI 기반 엔터프라이즈 앱 - 인용 오탐"
+  ],
+  [
+   "autonomous_driving",
+   "NVDA",
+   "DRIVE 자율주행 플랫폼·차량용 소프트웨어 - 인용 오탐"
+  ],
+  [
+   "cable_wire",
+   "GLW",
+   "광섬유·광케이블 제조 - 정의 (2) 통신 케이블"
+  ],
+  [
+   "defense",
+   "GD",
+   "Combat Systems·Marine Systems(잠수함) - 인용 오탐"
+  ],
+  [
+   "defense",
+   "TXT",
+   "Bell 군용 헬기·Textron Systems - 인용 오탐"
+  ],
+  [
+   "ev_value_chain",
+   "ALB",
+   "EV 배터리용 리튬 - 정의 (5) 2차전지 동시 소속 허용"
+  ],
+  [
+   "glp1_obesity",
+   "AMGN",
+   "MariTide 비만 치료제 임상 파이프라인 - 감사 오판"
+  ],
+  [
+   "lng_gas",
+   "ATO",
+   "가스 배관·저장이 주력인 가스 전문 유틸리티 - 정의 (1)"
+  ],
+  [
+   "nuclear_smr",
+   "GEV",
+   "GE Hitachi BWRX-300 SMR·원전 기술 - 판정 누락분 확인"
+  ],
+  [
+   "power_grid",
+   "ETN",
+   "배전 설비·유틸리티 배전 제품 - 인용 오탐"
+  ],
+  [
+   "renewable_energy",
+   "FSLR",
+   "태양광 모듈 제조 - 인용 오탐"
+  ],
+  [
+   "datacenter_power",
+   "DLR",
+   "데이터센터 운영 리츠 - 판단보류(EQIX와 함께 경계 미정)"
+  ],
+  [
+   "defense",
+   "HWM",
+   "군용기 엔진 부품 매출 있음 - 판단보류"
+  ],
+  [
+   "factory_automation",
+   "AME",
+   "전자계측·전기기계 부품 - 자동화 연결 약함, 판단보류"
+  ],
+  [
+   "medical_device",
+   "TMO",
+   "Specialty Diagnostics 사업부 있음 - 판단보류(WAT는 제외 기준)"
+  ],
+  [
+   "petrochemical",
+   "VLO",
+   "사업정보에 석유화학 제품 명시 - 판단보류"
+  ]
+ ],
+ "restore": [
+  [
+   "ai_semiconductor",
+   "AVGO",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: Broadcom - AI 가속기(ASIC) 주요 공급사, 프로필 확인"
+  ],
+  [
+   "ai_software",
+   "AMZN",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: AWS AI 서비스 - 엔터프라이즈 AI 애플리케이션"
+  ],
+  [
+   "ai_software",
+   "MSFT",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 이미 새 run에 있음 - 확인용"
+  ],
+  [
+   "ai_software",
+   "NOW",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: ServiceNow AI 기반 업무 자동화"
+  ],
+  [
+   "autonomous_driving",
+   "GOOGL",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: Waymo 로보택시 보유(자회사) - 인용 오탐"
+  ],
+  [
+   "autonomous_driving",
+   "INTC",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: Mobileye 대주주 - ADAS·자율주행 칩 주요 공급사, 프로필 확인"
+  ],
+  [
+   "battery",
+   "TSLA",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 배터리 셀·팩 자체 생산(4680, 기가팩토리), 프로필 확인"
+  ],
+  [
+   "biosimilar",
+   "BIIB",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 게이트 감사 편차 - 인용이 사실을 뒷받침해 유지"
+  ],
+  [
+   "cdmo",
+   "GILD",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 게이트 감사 편차 - 인용이 사실을 뒷받침해 유지"
+  ],
+  [
+   "medical_device",
+   "JNJ",
+   "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: Innovative Medicine 외 MedTech 사업부 확인, 프로필 확인"
+  ]
+ ],
+ "unapprove": [
+  [
+   "lng_gas",
+   "D",
+   "Dominion - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정) (이전 keep 판정 변경)"
+  ],
+  [
+   "power_grid",
+   "ES",
+   "Eversource - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정) (이전 keep 판정 변경)"
+  ],
+  [
+   "power_grid",
+   "PPL",
+   "PPL - 일반 규제 전력회사 - 에너지 테마 경계(2026-09-15 사용자 결정) (이전 keep 판정 변경)"
+  ]
+ ],
+ "not_restored_note": "GD 조선(Marine Systems)은 이번 run에도 조선 테마에 없고 이전 승인분에도 없어 병합으로 복원할 원본이 없다 - 다음 분기 확인."
+}
