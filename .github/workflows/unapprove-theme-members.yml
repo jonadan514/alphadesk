@@ -1,0 +1,43 @@
+name: Unapprove Theme Members
+
+# 승인된 테마 소속을 승인 해제한다(행은 남기고 approved=0). 사유는 검토 파일에 남길 것.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "items 대상 run_id"
+        required: false
+        default: ""
+      items:
+        description: "공백 구분 THEME:TICKER"
+        required: false
+        default: ""
+      empty_themes:
+        description: "모든 run에서 승인 해제할 테마 ID (공백 구분) - 검토 결과 해당 기업 없음"
+        required: false
+        default: ""
+      market:
+        description: "KR 또는 US"
+        required: false
+        default: "KR"
+
+jobs:
+  unapprove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Unapprove
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: |
+          ARGS=(--market "${{ inputs.market || 'KR' }}")
+          [ -n "${{ inputs.run_id }}" ] && ARGS+=(--run-id "${{ inputs.run_id }}")
+          python scripts/unapprove_theme_members.py "${ARGS[@]}" --items ${{ inputs.items }} --empty-theme ${{ inputs.empty_themes }}
