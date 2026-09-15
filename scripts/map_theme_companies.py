@@ -36,7 +36,7 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-09-15-v5.1"  # v5.1: v5 + 근거주어 불일치 제외 + 조선사 산업분류 보정
+PROMPT_VERSION = "2026-09-15-v6"  # v6: v5.1 + 테마별 가치사슬 정의(value_chain)와 경계, 지주사 기준, note 미전송
 UNIVERSE_CHUNK_SIZE = 200
 PATH_A_RUNS = 2  # 파일럿에서 경로 A 결과가 회차마다 크게 흔들리는 현상을 발견 —
                  # 반복 실행 후 티커 기준 합집합으로 완화
@@ -114,19 +114,26 @@ def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.
 
 
 def _theme_description(theme: dict) -> str:
-    """키워드는 항상 보낸다.
+    """테마명 + 키워드 + 가치사슬 정의(value_chain). 운영 메모(note)는 보내지 않는다.
 
-    2026-09-15 이전에는 note가 있으면 키워드를 버렸다. 그런데 note 대부분은
-    테마 정의가 아니라 운영 메모다(예: datacenter_cooling의 "min_articles 하향
-    조정. 기업 3개 이하면 datacenter_power 로 흡수") - 33개 중 18개 테마가
-    실제 키워드 대신 이런 메모를 정의로 받고 있었다. physical_ai처럼 정의에
-    가까운 메모도 있어 note는 참고로 함께 보낸다."""
+    SPEC_theme_company_mapping §3.1은 "이 테마 회사"가 아니라 가치사슬 위치를 묻고
+    그 정의를 프롬프트에 넣으라고 정했지만, 실제로 정의가 있던 테마는 physical_ai
+    하나뿐이었다. 나머지는 note에 "한국 전용." 같은 운영 메모가 있었고, 2026-09-15
+    이전에는 그 메모가 키워드 대신 정의로 들어갔다. 경계 사례를 모델도 검토자도
+    일관되게 판단하지 못한 근본 원인이다.
+
+    value_chain에는 편입 단계와 "편입하지 않음" 경계를 함께 적는다. 경계 항목은
+    검토에서 반복된 오편입(해운사->조선, 철강->구리 등)과 사용자가 정한 경계
+    결정(게임 분리, HBM 후공정 동시 소속, 건설 분리, 자율주행은 차량만)이다."""
     lines = [f"테마명: {theme['name_ko']} ({theme['name_en']})"]
     kws = ", ".join(theme.get("keywords_ko", []))
     if kws:
         lines.append(f"관련 키워드: {kws}")
-    if theme.get("note"):
-        lines.append(f"참고 메모: {theme['note']}")
+    if theme.get("value_chain"):
+        lines.append("가치사슬 정의(이 단계에 명확히 속하는 기업만 편입):")
+        lines.append(str(theme["value_chain"]).strip())
+    lines.append("공통 기준: 해당 사업을 하는 상장 자회사가 목록에 따로 있으면 지주사 대신 "
+                 "자회사를 고르시오(같은 회사가 이중으로 집계되지 않게).")
     return "\n".join(lines)
 
 

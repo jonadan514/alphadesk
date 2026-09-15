@@ -101,9 +101,14 @@ def insert_theme_news_bulk(conn, theme_id: str, market: str, week_start: str,
         )
 
 
-def get_prior_news_counts(conn, theme_id: str, market: str, week_start: str, weeks: int = 4) -> list[int]:
+def get_prior_news_counts(conn, theme_id: str, market: str, week_start: str, weeks: int = 4,
+                          since: str | None = None) -> list[int]:
     """week_start 이전 주들의 news_count를 최대 weeks개 가져온다 (baseline 계산용).
     news_count가 NULL인 행(계산 실패)은 제외한다.
+
+    since(주 월요일 ISO 날짜)를 주면 그 주 이전 행은 쓰지 않는다 - 키워드가 바뀐 테마는
+    바뀌기 전 건수와 추이를 잇지 않는다(themes.yaml 유지보수 규칙 2). 이 규칙은 문서에만
+    있고 코드가 지키지 않았다(2026-09-15 건설기계 키워드 변경 때 확인).
 
     Turso HTTP 클라이언트(_TursoConn)는 정수 컬럼 값을 문자열로 반환한다
     (Hrana 프로토콜이 64비트 정밀도 손실 방지를 위해 정수를 문자열로 실어
@@ -113,10 +118,11 @@ def get_prior_news_counts(conn, theme_id: str, market: str, week_start: str, wee
     rows = conn.execute(
         """
         SELECT news_count FROM theme_signals
-        WHERE theme_id = ? AND market = ? AND week_start < ? AND news_count IS NOT NULL
+        WHERE theme_id = ? AND market = ? AND week_start < ? AND week_start >= ?
+          AND news_count IS NOT NULL
         ORDER BY week_start DESC LIMIT ?
         """,
-        (theme_id, market, week_start, weeks),
+        (theme_id, market, week_start, since or "0000-00-00", weeks),
     ).fetchall()
     return [int(r[0]) for r in rows]
 

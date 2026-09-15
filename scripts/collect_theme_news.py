@@ -108,6 +108,13 @@ def main() -> None:
                 _log(f"{theme_id}({market}): {keyword_field} 없음 - 건너뜀")
                 continue
             min_articles = theme.get("min_articles", default_min_articles)
+            # 키워드가 바뀐 테마는 바뀐 주 이전 건수를 기준선에 쓰지 않는다(유지보수 규칙 2).
+            # 기준선 4주가 쌓일 때까지 뉴스 축은 na(데이터부족)로 남는다 - 탈락이 아니다.
+            kw_changed = theme.get("keywords_changed_at")
+            since = None
+            if kw_changed:
+                kc = kw_changed if isinstance(kw_changed, date) else date.fromisoformat(str(kw_changed))
+                since = _current_week_monday(kc).isoformat()
 
             for week_start in weeks:
                 week_end = week_start + timedelta(days=7)  # before: 는 배타적이라 +7로 일요일까지 포함
@@ -120,12 +127,14 @@ def main() -> None:
                      f"URL중복제거후 {stats['after_url_dedup']}건 -> 제목중복제거후 {news_count}건 "
                      f"(키워드별 {stats['per_keyword']})")
 
-                prior_counts = get_prior_news_counts(conn, theme_id, market, week_start.isoformat(), weeks=4)
+                prior_counts = get_prior_news_counts(conn, theme_id, market, week_start.isoformat(),
+                                                     weeks=4, since=since)
                 baseline, ratio, arrow = compute_news_arrow(news_count, min_articles, prior_counts, thresholds)
                 ratio_str = f"{ratio:.2f}" if ratio is not None else "-"
                 baseline_str = f"{baseline:.1f}" if baseline is not None else "-"
                 _log(f"  -> baseline={baseline_str} ratio={ratio_str} arrow={arrow} "
-                     f"(backfilled={backfilled}, 직전주 {len(prior_counts)}개 확보)")
+                     f"(backfilled={backfilled}, 직전주 {len(prior_counts)}개 확보"
+                     f"{', 키워드 변경 ' + since + ' 이후만' if since else ''})")
 
                 upsert_news_signal(
                     conn, theme_id, market, week_start.isoformat(), news_count, baseline,

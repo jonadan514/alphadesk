@@ -13,6 +13,9 @@
 # 4. 첫 실행 후 테마별 소속 기업 수를 반드시 확인한다.
 #    3개 이하 → 상위 테마에 합침 / 50개 이상 → 쪼갬
 #    목표 범위는 10~30개.
+# 5. value_chain 은 테마→기업 매핑 프롬프트에 들어가는 정의다(SPEC_theme_company_mapping §3.1).
+#    편입 단계와 "편입하지 않음" 경계를 함께 적는다. note 는 운영 메모라 프롬프트에 넣지 않는다.
+#    (2026-09-15 이전에는 note가 정의 대신 프롬프트에 들어갔고, 대부분 "한국 전용." 같은 메모였다)
 # ──────────────────────────────────────────────────────────
 
 config:
@@ -54,6 +57,15 @@ themes:
     keywords_en: [AI chip, AI accelerator, HBM memory, GPU demand, inference chip]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      AI 연산에 쓰이는 반도체와 그 전용 공급망.
+      (1) AI 가속기·GPU·AI용 로직 칩 설계·제조
+      (2) HBM 등 AI 서버용 고대역폭 메모리
+      (3) HBM·첨단 패키징 후공정: 패키징, 번인·테스트 장비, 테스트 핸들러
+          (반도체 장비·소재 테마와 동시 소속을 허용한다 - 2026-09-15 결정)
+      (4) AI 칩용 기판(FC-BGA)
+      편입하지 않음: OLED·디스플레이 장비, 장비 세정·코팅, 범용 장비 부품(석영·세라믹 파츠),
+      범용 테스트 소켓처럼 AI 수요와 직접 연결되지 않는 일반 반도체 공급망(반도체 장비·소재 테마로).
     note: 테마가 큰 편. 소속 기업 50개 넘으면 메모리/로직/네트워킹으로 분리 검토.
 
   - id: datacenter_power
@@ -65,6 +77,12 @@ themes:
     keywords_en: [datacenter power, data center electricity, grid interconnection, power capacity]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      데이터센터에 전력을 공급·조달·백업하는 사업.
+      (1) 데이터센터용 수전·배전 설비, UPS·전력관리 장비
+      (2) 데이터센터 전용 발전(연료전지·가스터빈·비상발전) 공급
+      (3) 데이터센터 전력 조달 계약을 맺는 발전·유틸리티
+      편입하지 않음: 데이터센터 매출 비중이 확인되지 않는 일반 전력기기(전력망·송배전 테마로).
     note: power_grid 와 기업이 크게 겹침. 둘이 동시에 뜨면 하나의 신호로 해석할 것.
 
   - id: datacenter_cooling
@@ -77,6 +95,12 @@ themes:
     min_articles: 6
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      데이터센터 서버·랙의 열을 관리하는 사업.
+      (1) 액체냉각·액침냉각 시스템
+      (2) 데이터센터용 정밀공조(CRAH·칠러) 설비
+      (3) 서버 열관리 부품(냉각판·열교환기)
+      편입하지 않음: 가정용·건물용 보일러·냉난방기, 일반 산업용 열교환기.
     note: 좁은 테마라 기사 수가 적음. min_articles 하향 조정. 기업 3개 이하면 datacenter_power 로 흡수.
 
   - id: ai_software
@@ -88,6 +112,12 @@ themes:
     keywords_en: [AI software, AI agent, enterprise AI, AI monetization, LLM application]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      AI 모델·에이전트를 제품으로 판매해 매출을 내는 소프트웨어 기업.
+      (1) 기반 모델·AI 플랫폼
+      (2) 엔터프라이즈 AI 애플리케이션·에이전트
+      (3) AI 데이터·MLOps 인프라 소프트웨어
+      편입하지 않음: 사내 업무에 AI를 도입했을 뿐인 기업, AI 하드웨어(AI 반도체 테마로).
     note: 한국 상장사 중 순수 해당 기업이 적어 US 전용. 실적 축 판정이 어려운 테마(적자 기업 다수).
 
   - id: semi_equipment
@@ -99,6 +129,14 @@ themes:
     keywords_en: [semiconductor equipment, wafer fab equipment, semicap, chip capex]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      반도체 제조 공정에 들어가는 장비와 소재.
+      (1) 전공정 장비(증착·식각·노광·세정·계측)
+      (2) 후공정 장비(패키징·본딩·테스트·번인·핸들러)
+          HBM 후공정 장비는 AI 반도체 테마와 동시 소속을 허용한다(2026-09-15 결정)
+      (3) 반도체 소재(포토레지스트·CMP 슬러리·전구체·웨이퍼·특수화학)
+      (4) 장비 부품·소모품(석영·세라믹 파츠, 테스트 소켓, 프로브카드)
+      편입하지 않음: 팹리스 칩 설계사, 배터리 소재(양극재·분리막), 제약·바이오.
 
   # ═══════════════════════════════════════════════════
   # B. 에너지·전력
@@ -113,6 +151,13 @@ themes:
     keywords_en: [power grid, transmission, transformer, grid investment, switchgear]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      전력을 송전·배전하는 설비와 망 투자.
+      (1) 변압기·차단기·개폐기·배전반
+      (2) 송배전망 건설·운영·유지보수
+      (3) 계통 연계 설비(HVDC 변환 설비 등)
+      편입하지 않음: 발전 설비만 하는 기업(연료전지·원전 설계 - 각 테마로), 자동차용 커넥터·전자부품,
+      전선·케이블 제조사(전선·케이블 테마로, 동시 소속은 허용).
     note: 키워드에 "전력" 단독을 넣지 말 것. 전기요금 기사가 전부 걸림.
 
   - id: nuclear_smr
@@ -124,6 +169,13 @@ themes:
     keywords_en: [nuclear power, SMR, small modular reactor, nuclear reactor order]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      원자력 발전의 설계·기자재·건설·운영·정비·해체.
+      (1) 원자로·SMR 설계
+      (2) 원전 주기기·보조기기 제작
+      (3) 원전 건설
+      (4) 원전 운영·정비·해체, 핵연료
+      편입하지 않음: 원전 관련 매출이 확인되지 않는 항공·방산·조선사.
 
   - id: renewable_energy
     name_ko: 재생에너지
@@ -134,6 +186,12 @@ themes:
     keywords_en: [solar power, wind power, offshore wind, renewable energy]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      태양광·풍력 발전의 설비 제조와 발전 사업.
+      (1) 태양광 폴리실리콘·셀·모듈
+      (2) 풍력 터빈·타워·하부구조물
+      (3) 재생에너지 발전·개발 사업자
+      편입하지 않음: 보안·설비관리 서비스, 정유사(재생에너지 매출이 확인되지 않으면).
     note: 정책 의존도가 높은 테마. 보조금 변화 뉴스가 건수를 크게 흔들 수 있음.
 
   - id: energy_storage
@@ -146,6 +204,12 @@ themes:
     min_articles: 6
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      전력을 저장해 계통에 공급하는 ESS 사업.
+      (1) ESS용 배터리 셀·팩
+      (2) ESS 시스템 통합·PCS(전력변환장치)
+      (3) ESS용 배터리 핵심소재(LFP 양극재 등 ESS 공급이 확인되는 경우)
+      편입하지 않음: 배터리 제조 장비, ESS 공급이 확인되지 않는 소재사(2차전지 테마로), 금융사.
     note: battery 테마와 기업이 겹침.
 
   - id: lng_gas
@@ -157,6 +221,13 @@ themes:
     keywords_en: [natural gas, LNG, gas turbine, LNG export terminal]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      천연가스·LNG의 개발·수송·저장·발전.
+      (1) 가스전 개발·LNG 수입·도시가스 공급
+      (2) LNG 운반선 운항, LNG 터미널·저장
+      (3) 가스 발전
+      (4) LNG선 건조는 조선 테마와 동시 소속 허용
+      편입하지 않음: LPG만 취급하는 기업, 정유사, 반도체 장비사.
     note: shipbuilding 과 LNG 운반선에서 겹침.
 
   - id: cable_wire
@@ -169,6 +240,11 @@ themes:
     min_articles: 6
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      전선·케이블 제조.
+      (1) 초고압·전력 케이블, 해저케이블, HVDC 케이블
+      (2) 통신·산업용 케이블
+      편입하지 않음: 변압기·전력기기 제조사(전력망 테마로), 자동차 커넥터, 완성차.
     note: power_grid 와 상당 부분 겹침. 첫 실행 후 기업 수 보고 통합 검토.
 
   # ═══════════════════════════════════════════════════
@@ -186,6 +262,12 @@ themes:
     added_at: 2026-08-27
     # 2026-09-02: 원래 KR 전용이었으나 Phase A-2 매핑에서 실제 미국 기업(Boeing,
     # HII)이 승인돼 US도 추가함 - Phase A 뉴스/실적/주가 축 대상에 포함시키기 위함.
+    value_chain: |
+      선박을 건조하고 그 핵심 기자재를 공급하는 조선업.
+      (1) 조선소(상선·해양플랜트·함정 건조)
+      (2) 선박 엔진·핵심 기자재·선체블록·화물창
+      (3) 조선소 대상 엔지니어링·AM 서비스
+      편입하지 않음: 해운사(선박을 운항할 뿐 건조하지 않는다), 일반 산업용 열교환기, 자동차 부품.
     note: 한국 전용. Phase A(미국만)에서는 결과가 나오지 않음.
 
   - id: defense
@@ -197,6 +279,13 @@ themes:
     keywords_en: [defense contractor, defense budget, weapons order, military spending]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      무기체계와 국방 조달품의 개발·생산·수출.
+      (1) 지상·항공·해양 무기체계 완제품
+      (2) 탄약·화약
+      (3) 방산 전자·유도무기·레이더·통신
+      (4) 함정 건조(조선 테마와 동시 소속 허용)
+      편입하지 않음: 방산 매출이 확인되지 않는 반도체·화학·태양광 기업.
 
   - id: aerospace_space
     name_ko: 항공우주·위성
@@ -207,16 +296,49 @@ themes:
     keywords_en: [aerospace parts, space launch, satellite constellation, low earth orbit]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      항공기와 우주 산업.
+      (1) 항공기·항공엔진·항공기 부품 제조
+      (2) 발사체·위성 제조
+      (3) 위성 서비스
+      (4) 항공사의 항공우주(MRO·부품 제조) 사업부
+      편입하지 않음: 항공 운송만 하는 항공사(여행·항공 테마로), 조선사, 지상 무기체계만 하는 방산사.
 
   - id: construction_machinery
-    name_ko: 건설기계·인프라
-    name_en: Construction Machinery & Infrastructure
+    name_ko: 건설기계
+    name_en: Construction Machinery
     category: industrial
     markets: [US, KR]
-    keywords_ko: [건설기계, 굴착기, 인프라 투자, 건설 수주]
-    keywords_en: [construction equipment, excavator, infrastructure spending, heavy machinery]
+    keywords_ko: [건설기계, 굴착기, 건설장비 수출, 중장비]
+    keywords_en: [construction equipment, excavator, heavy machinery, compact equipment]
     status: active
     added_at: 2026-08-27
+    # 2026-09-15: '건설기계·인프라'에서 인프라 건설(infra_construction)을 분리.
+    # 인프라 투자·건설 수주 키워드는 새 테마로 옮김 - 이전 뉴스 추이와 잇지 않는다(유지보수 규칙 2).
+    keywords_changed_at: 2026-09-15
+    value_chain: |
+      건설장비를 제조·판매하는 사업. (2026-09-15 인프라 건설 테마와 분리)
+      (1) 굴착기·휠로더 등 중대형 건설장비
+      (2) 소형 건설장비
+      (3) 건설장비 핵심 부품(유압·엔진)
+      편입하지 않음: 건설사·시공사(인프라 건설 테마로), 시멘트·건자재, 철도차량.
+
+  - id: infra_construction
+    name_ko: 인프라 건설
+    name_en: Infrastructure & Construction
+    category: industrial
+    markets: [KR, US]
+    keywords_ko: [인프라 투자, 건설 수주, 해외 건설, SOC 예산]
+    keywords_en: [infrastructure spending, construction contract, engineering and construction, public works]
+    status: active
+    added_at: 2026-09-15
+    value_chain: |
+      토목·플랜트·인프라를 수주해 시공하는 건설업. (2026-09-15 건설기계 테마에서 분리)
+      (1) 토목·SOC 시공
+      (2) 플랜트·해외 인프라 EPC
+      (3) 전력·통신 인프라 시공
+      편입하지 않음: 주택 분양 매출이 대부분이고 인프라 수주가 확인되지 않는 기업, 건설장비 제조사
+      (건설기계 테마로), 시멘트·건자재.
 
   - id: factory_automation
     name_ko: 산업자동화
@@ -227,6 +349,13 @@ themes:
     keywords_en: [factory automation, industrial robot, smart factory, machine tools]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      공장·물류 현장의 자동화 설비.
+      (1) 산업용 로봇·협동로봇
+      (2) 공작기계·자동화 설비
+      (3) 머신비전·자동검사 장비
+      (4) 물류 자동화 시스템
+      편입하지 않음: 건설장비, 자동차 부품, 반도체 계측 전용 장비(반도체 장비·소재 테마로).
     note: humanoid_robot 과 구분할 것. 이쪽은 이미 매출이 나는 기존 산업.
 
   # ═══════════════════════════════════════════════════
@@ -242,6 +371,11 @@ themes:
     keywords_en: [GLP-1, obesity drug, weight loss drug, semaglutide, tirzepatide]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      GLP-1 계열 등 비만 치료제의 개발·생산.
+      (1) 비만 치료제 신약 개발(임상 파이프라인 보유)
+      (2) 비만 치료제 원료·위탁생산
+      편입하지 않음: 비만 치료제 파이프라인이 확인되지 않는 제약사, 소비재 기업.
 
   - id: biosimilar
     name_ko: 바이오시밀러
@@ -253,6 +387,11 @@ themes:
     min_articles: 6
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      바이오시밀러의 개발·허가·판매.
+      (1) 바이오시밀러 개발·판매사
+      (2) 바이오시밀러 전문 개발 자회사를 가진 기업
+      편입하지 않음: 신약 개발사, 보툴리눔 톡신, 합성의약품 제네릭, 조직재생·의료기기.
 
   - id: cdmo
     name_ko: CDMO·위탁생산
@@ -263,6 +402,11 @@ themes:
     keywords_en: [CDMO, contract manufacturing, biologics manufacturing, fill finish]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      바이오의약품 위탁개발·생산을 사업으로 하는 기업.
+      (1) 항체·세포유전자치료제 CDMO
+      (2) 원료의약품(API)·올리고 위탁생산
+      편입하지 않음: 자사 제품만 생산하는 제약사, 바이오시밀러 개발사, 기술수출(라이선스)이 주력인 바이오.
 
   - id: medical_device
     name_ko: 의료기기
@@ -273,6 +417,13 @@ themes:
     keywords_en: [medical device, surgical robot, diagnostic device, implant]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      의료기기의 제조·판매.
+      (1) 치료·수술 기기, 미용 의료기기
+      (2) 진단기기·체외진단
+      (3) 영상·계측 기기, 임플란트
+      (4) 의료 AI 소프트웨어(인허가 받은 기기)
+      편입하지 않음: 산업용·협동로봇 제조사, 제약사.
 
   - id: neuro_alzheimer
     name_ko: 치매·신경질환
@@ -284,6 +435,11 @@ themes:
     min_articles: 6
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      치매·신경퇴행성 질환 치료제의 개발.
+      (1) 알츠하이머·파킨슨 치료제 파이프라인
+      (2) 뇌전증 등 중추신경계 질환 치료제
+      편입하지 않음: 신경계 파이프라인이 확인되지 않는 제약사, 항암·ADC 개발사, 보툴리눔 톡신.
 
   # ═══════════════════════════════════════════════════
   # E. 소비·유통
@@ -298,6 +454,12 @@ themes:
     keywords_en: [K-beauty, Korean cosmetics, beauty export]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      한국 화장품의 브랜드·제조·유통.
+      (1) 화장품 브랜드사
+      (2) 화장품 ODM·OEM
+      (3) 화장품 수출 유통 플랫폼
+      편입하지 않음: 화장품 매출이 확인되지 않는 생활용품·식품 기업.
     note: 한국 전용. Phase A에서 결과 없음.
 
   - id: k_food
@@ -309,6 +471,12 @@ themes:
     keywords_en: [K-food, Korean food export, instant noodle export]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      한국 식품·음료의 제조와 수출.
+      (1) 라면·가공식품·장류·조미료
+      (2) 음료·주류·제과
+      (3) 수산·육가공 식품
+      편입하지 않음: 화장품·생활용품 기업, 식품 유통 지주사(상장 식품 자회사가 따로 있으면).
     note: 한국 전용.
 
   - id: k_content
@@ -320,7 +488,28 @@ themes:
     keywords_en: [K-content, K-pop, Korean drama production]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      한국 음악·드라마·영상·공연 콘텐츠의 제작과 유통. (2026-09-15 게임 테마와 분리)
+      (1) 엔터테인먼트 기획사(음반·공연·팬덤 플랫폼)
+      (2) 드라마·영화 제작사
+      (3) 콘텐츠 방송·유통 사업자
+      편입하지 않음: 게임사(게임 테마로), 통신사, 극장 운영만 하는 기업, 화장품·식품 기업.
     note: 한국 전용.
+
+  - id: game
+    name_ko: 게임
+    name_en: Games
+    category: consumer
+    markets: [KR, US]
+    keywords_ko: [게임 신작, 게임 매출, 모바일 게임, 게임 퍼블리싱]
+    keywords_en: [video game, game publisher, mobile game, game release]
+    status: active
+    added_at: 2026-09-15
+    value_chain: |
+      게임의 개발·퍼블리싱. (2026-09-15 K-콘텐츠 테마에서 분리해 신설)
+      (1) PC·모바일·콘솔 게임 개발사
+      (2) 게임 퍼블리셔·플랫폼
+      편입하지 않음: 게임 매출이 확인되지 않는 IT·엔터 기업.
 
   - id: travel_airline
     name_ko: 여행·항공
@@ -331,6 +520,12 @@ themes:
     keywords_en: [travel demand, airline traffic, duty free, hotel RevPAR]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      여행 수요에 매출이 연동되는 사업.
+      (1) 항공 여객 운송
+      (2) 여행사·면세점
+      (3) 호텔·리조트·카지노
+      편입하지 않음: 항공기 제조(항공우주 테마로), 여행 매출이 확인되지 않는 지주사.
 
   # ═══════════════════════════════════════════════════
   # F. 모빌리티
@@ -345,6 +540,13 @@ themes:
     keywords_en: [EV battery, cathode material, solid state battery, battery cell]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      2차전지 셀과 그 소재·장비 공급망.
+      (1) 배터리 셀 제조
+      (2) 양극재·음극재·전해질·분리막·동박 등 핵심소재
+      (3) 배터리 제조 장비
+      (4) 전고체 등 차세대 배터리 개발
+      편입하지 않음: 반도체 기업, 완성차(전기차 밸류체인 테마로), 보험·금융사.
 
   - id: ev_value_chain
     name_ko: 전기차 밸류체인
@@ -355,6 +557,14 @@ themes:
     keywords_en: [electric vehicle sales, EV parts, charging infrastructure, EV subsidy]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      전기차의 완성차·부품·충전 인프라.
+      (1) 전기차 완성차
+      (2) 전기차 구동·전장 부품(모터·인버터·전력변환)
+      (3) 전기차 전용 부품(EV 타이어 등 전기차 매출이 확인되는 경우)
+      (4) 충전 인프라
+      (5) EV 배터리·소재는 2차전지 테마와 동시 소속 허용
+      편입하지 않음: 항공·방산 기업, LPG 사업자, 금융사, 전기차 매출이 확인되지 않는 일반 차량 부품.
     note: battery 와 겹침. 이쪽은 완성차·부품·충전 쪽.
 
   - id: autonomous_driving
@@ -366,6 +576,13 @@ themes:
     keywords_en: [autonomous driving, robotaxi, lidar, ADAS]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      차량의 자율주행 기술. (2026-09-15 결정: 차량만)
+      (1) 자율주행차·로보택시 개발 완성차
+      (2) ADAS·자율주행 부품(센서·제어기)
+      (3) 차량용 라이다·레이더·카메라
+      (4) 차량용 자율주행 소프트웨어
+      편입하지 않음: 배송로봇·자율이동로봇·로봇 소프트웨어(피지컬 AI 테마로), 무인기·드론, 타이어.
 
   - id: physical_ai
     name_ko: 피지컬 AI
@@ -376,6 +593,14 @@ themes:
     keywords_en: [physical AI, embodied AI, robot foundation model, machine vision, edge AI, robotics platform]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      AI가 소프트웨어 밖으로 나와 기계를 움직이는 단계의 가치사슬.
+      (1) 센서: 머신비전 카메라·라이다·힘/토크 센서
+      (2) 엣지 AI 연산: 로봇·기계에 탑재되는 추론 반도체·모듈
+      (3) 구동부: 액추에이터·감속기·서보모터
+      (4) 로봇 제어 소프트웨어·로봇 파운데이션 모델
+      (5) 이를 채택하는 로봇·장비 업체(배송로봇·자율이동로봇 포함)
+      편입하지 않음: 변압기 등 전력기기, 가전 매출 중심 기업(로봇 사업이 확인되지 않으면), 금융사.
     note: |
       AI가 소프트웨어 밖으로 나와 기계를 움직이는 단계 전반.
       매핑 기준은 "피지컬 AI 회사"가 아니라 가치사슬 위치로 잡는다:
@@ -420,6 +645,12 @@ themes:
     keywords_en: [rare earth, critical minerals, permanent magnet, mineral export control]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      희토류·핵심광물의 채굴·제련·가공과 영구자석.
+      (1) 희토류·리튬·니켈·코발트·안티모니 등 핵심광물 채굴·제련
+      (2) 영구자석 제조
+      (3) 핵심광물 재활용
+      편입하지 않음: 핵심광물 사업이 확인되지 않는 배터리 양극재사, 아연·연 제련만 하는 기업.
 
   - id: copper_metals
     name_ko: 구리·산업금속
@@ -430,6 +661,11 @@ themes:
     keywords_en: [copper price, copper demand, aluminum price, industrial metals]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      구리·알루미늄·니켈 등 비철 산업금속의 제련·가공.
+      (1) 구리·알루미늄 제련·압연·가공
+      (2) 니켈·특수합금 제조
+      편입하지 않음: 철강사, 조선사, 식품·음료·보험 기업(원재료로 금속을 쓰는 것만으로는 편입하지 않음).
 
   - id: specialty_gas
     name_ko: 특수가스·소재
@@ -441,6 +677,11 @@ themes:
     min_articles: 6
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      반도체·디스플레이용 특수가스와 전자재료.
+      (1) 특수가스(NF3·WF6 등)·산업용 가스
+      (2) 반도체·디스플레이 전자재료(전구체·식각액·고순도 화학)
+      편입하지 않음: 배터리 양극재, 반도체 검사장비.
     note: semi_equipment 과 겹침.
 
   - id: petrochemical
@@ -452,6 +693,12 @@ themes:
     keywords_en: [petrochemical, ethylene spread, refining margin, chemical downturn]
     status: active
     added_at: 2026-08-27
+    value_chain: |
+      나프타 분해를 중심으로 한 석유화학 업황에 실적이 연동되는 기업.
+      (1) NCC(나프타 분해)·기초유분
+      (2) 합성수지·합성고무 등 석유화학 제품
+      (3) 정유(석유화학 계열 사업을 함께 하는 경우)
+      편입하지 않음: 윤활유만 하는 기업, LPG 사업자, 식품·전자부품·보험 기업, 해상풍력 구조물.
     note: 경기민감 사이클 테마. "바닥 통과" 판정을 보기 좋은 대상.
 
 # ══════════════════════════════════════════════════════════

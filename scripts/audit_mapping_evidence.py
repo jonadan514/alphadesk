@@ -105,9 +105,13 @@ def judge(theme: dict, members: list[dict], names: dict, profiles: dict, api_key
         lines.append(f"- {m['ticker']} {names.get(m['ticker'], '')}\n"
                      f"    근거: {m['evidence']}\n"
                      f"    실제 사업정보: {_business_info(profiles.get(m['ticker']) or {})}")
+    # 매핑과 같은 테마 정의로 적합성을 판정한다. 정의가 다르면 매핑이 정의대로
+    # 편입한 기업을 감사가 다른 기준으로 부적합 처리한다.
+    vc = str(theme.get("value_chain") or "").strip()
+    vc_block = f"\n가치사슬 정의(편입 단계와 경계):\n{vc}\n" if vc else ""
     prompt = f"""테마: {theme['name_ko']} ({theme['name_en']})
 관련 키워드: {', '.join(theme.get('keywords_ko', []))}
-
+{vc_block}
 아래 각 기업을 두 가지 기준으로 따로 판정하시오.
 
 {chr(10).join(lines)}
@@ -124,6 +128,7 @@ def judge(theme: dict, members: list[dict], names: dict, profiles: dict, api_key
   contradicts다.
 
 [fit] 이 기업이 테마에 속하는가 (근거가 사실이어도 테마와 무관할 수 있다)
+가치사슬 정의가 있으면 그 단계와 "편입하지 않음" 경계를 기준으로 판정하시오.
 - fits: 이 테마에서 매출이나 사업이 의미 있게 발생한다
 - not_fits: 인접 산업일 뿐 이 테마에 속하지 않는다
   (예: 해운사는 선박을 운영할 뿐 조선 테마가 아니다)
