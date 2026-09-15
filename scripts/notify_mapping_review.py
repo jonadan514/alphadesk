@@ -40,6 +40,7 @@ def _draft(path: Path) -> str:
 def main() -> int:
     run_id = os.environ.get("RUN_ID", "").strip()
     run_url = os.environ.get("RUN_URL", "")
+    warning = os.environ.get("MAP_WARNING", "").strip()
     out = ROOT / "out"
     if not run_id:
         text = f"⚠️ <b>분기 테마 매핑</b>\nrun_id를 얻지 못했다 - 매핑 단계 로그 확인 필요\n{html.escape(run_url)}"
@@ -55,7 +56,9 @@ def main() -> int:
         us += "\n" + us_d
     text = (
         "🗂️ <b>분기 테마 매핑 완료 - 검토 필요</b>\n"
-        f"run_id: <code>{html.escape(run_id)}</code>\n\n"
+        f"run_id: <code>{html.escape(run_id)}</code>\n"
+        + (f"⚠️ 매핑 {html.escape(warning)} - 일부 테마 결과 불완전, 재실행 권장\n" if warning else "")
+        + "\n"
         f"<b>KR 감사</b>\n{html.escape(kr)}\n\n"
         f"<b>US 감사</b>\n{html.escape(us)}\n\n"
         "아직 승인 안 됨 - 화면은 기존 매핑 그대로다.\n"

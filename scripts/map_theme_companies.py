@@ -17,6 +17,7 @@ import argparse
 import json
 import re
 import os
+import random
 import sys
 import time
 import uuid
@@ -94,29 +95,63 @@ def build_universe_and_names() -> tuple[list[dict], dict[str, str]]:
     return us_items + kr_items, names
 
 
+# 호출 실패 누적 수. 실패한 청크는 결과가 비어 그 청크의 기업이 조용히 빠진다 - run 단위로
+# 집계해 요약·통계에 남긴다(2026-09-15 v7 US 실행에서 429 63회로 편입이 무작위로 빠졌는데
+# 로그 중간에만 찍혀 결과를 측정에 쓸 뻔했다).
+CALL_FAILURES = 0
+MAX_ATTEMPTS = 6
+
+
+def _retry_wait(resp: requests.Response | None, attempt: int) -> float:
+    """429·5xx 대기 시간. 서버가 알려주면 그 값, 아니면 지수 백오프(2,4,8,16,32초)."""
+    if resp is not None:
+        ra = resp.headers.get("retry-after")
+        try:
+            if ra:
+                return min(float(ra) + 1, 60)
+        except ValueError:
+            pass
+    return min(2 ** (attempt + 1), 32) + random.random()
+
+
 def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.2) -> dict | None:
-    try:
-        resp = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={
-                "model": OPENAI_MODEL,
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": prompt},
-                ],
-                "temperature": temperature,
-                "max_tokens": 2000,
-                "response_format": {"type": "json_object"},
-            },
-            timeout=90,
-        )
-        resp.raise_for_status()
-        text = resp.json()["choices"][0]["message"]["content"]
-        return json.loads(text)
-    except Exception as e:
-        _log(f"  OpenAI 호출 실패: {type(e).__name__}: {e}")
-        return None
+    global CALL_FAILURES
+    last_err = ""
+    for attempt in range(MAX_ATTEMPTS):
+        resp = None
+        try:
+            resp = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": OPENAI_MODEL,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": temperature,
+                    "max_tokens": 2000,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=90,
+            )
+            # v7부터 미국 청크가 2만 토큰을 넘어 분당 토큰 한도(429)에 걸린다 - 기다렸다 다시 부른다.
+            if resp.status_code == 429 or resp.status_code >= 500:
+                last_err = f"HTTP {resp.status_code}"
+                time.sleep(_retry_wait(resp, attempt))
+                continue
+            resp.raise_for_status()
+            text = resp.json()["choices"][0]["message"]["content"]
+            return json.loads(text)
+        except (requests.Timeout, requests.ConnectionError) as e:
+            last_err = type(e).__name__
+            time.sleep(_retry_wait(None, attempt))
+        except Exception as e:
+            last_err = f"{type(e).__name__}: {e}"
+            break
+    CALL_FAILURES += 1
+    _log(f"  OpenAI 호출 실패(최종): {last_err}")
+    return None
 
 
 def _theme_description(theme: dict) -> str:
@@ -552,6 +587,7 @@ def main() -> None:
     for theme in themes:
         theme_id = theme["id"]
         _log(f"=== {theme_id} ({theme['name_ko']}) ===")
+        failures_before = CALL_FAILURES
 
         raw_a = path_a_stable(theme, universe, names, api_key, profiles)
         _log(f"  경로 A 후보({PATH_A_RUNS}회 합집합): {len(raw_a)}개")
@@ -587,6 +623,9 @@ def main() -> None:
                 m["flagged"] = True
                 _log(f"  비판 패스 flagged: {m['ticker']} — {critique[m['ticker']]}")
         stats["비판패스_flagged"] = len(critique)
+        stats["호출실패"] = CALL_FAILURES - failures_before
+        if stats["호출실패"]:
+            _log(f"  ⚠ 호출 실패 {stats['호출실패']}회 - 이 테마 결과는 불완전(빠진 청크의 기업 누락)")
         overall_stats[theme_id] = stats
 
         created_at = datetime.utcnow().isoformat()
@@ -600,6 +639,9 @@ def main() -> None:
 
     print("\n" + "=" * 60)
     print(f"  테마 매핑 완료 — run_id={run_id}")
+    if CALL_FAILURES:
+        bad = [t for t, st in overall_stats.items() if st.get("호출실패")]
+        print(f"  ⚠ 재시도 후에도 실패한 호출 {CALL_FAILURES}회 - 불완전한 테마 {bad}. 승인·측정에 쓰지 말 것")
     print("=" * 60)
     for theme_id, stats in overall_stats.items():
         print(f"  {theme_id:25s} 통과 {stats['통과']:>3d}  "

@@ -73,6 +73,7 @@ jobs:
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DATA_GO_KR_API_KEY: ${{ secrets.DATA_GO_KR_API_KEY }}
+          PYTHONUNBUFFERED: "1"
         run: |
           IDS="${{ inputs.theme_ids }}"
           if [ "$IDS" = "ALL" ]; then IDS=""; fi

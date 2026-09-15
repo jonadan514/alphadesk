@@ -140,16 +140,22 @@ def judge(theme: dict, members: list[dict], names: dict, profiles: dict, api_key
 
 반드시 아래 JSON으로만 답하시오. 목록의 모든 기업을 빠짐없이 포함하시오:
 {{"verdicts": [{{"ticker": "...", "evidence": "consistent|contradicts|unverifiable", "fit": "fits|not_fits|unclear", "support": "사업정보 원문 그대로", "reason": "짧은 한국어 이유"}}]}}"""
-    r = requests.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        json={"model": MODEL,
-              "messages": [{"role": "system", "content": "당신은 사실관계와 산업 분류를 엄격히 대조하는 검증자입니다."},
-                           {"role": "user", "content": prompt}],
-              "temperature": 0.0, "max_tokens": 4000,
-              "response_format": {"type": "json_object"}},
-        timeout=180,
-    )
+    # 분당 토큰 한도(429)·일시 오류는 기다렸다 다시 부른다. 실패하면 이 테마 전체가
+    # "판정 호출 실패"로 남아 사람 검토 목록을 불필요하게 불린다.
+    for attempt in range(6):
+        r = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={"model": MODEL,
+                  "messages": [{"role": "system", "content": "당신은 사실관계와 산업 분류를 엄격히 대조하는 검증자입니다."},
+                               {"role": "user", "content": prompt}],
+                  "temperature": 0.0, "max_tokens": 4000,
+                  "response_format": {"type": "json_object"}},
+            timeout=180,
+        )
+        if r.status_code != 429 and r.status_code < 500:
+            break
+        time.sleep(min(2 ** (attempt + 1), 32))
     r.raise_for_status()
     parsed = json.loads(r.json()["choices"][0]["message"]["content"])
     return {str(v.get("ticker")): v for v in parsed.get("verdicts", [])}

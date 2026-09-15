@@ -63,7 +63,7 @@ def main() -> int:
     for size in sorted({s for s, _ in VARIANTS}, reverse=True):
         mtc.UNIVERSE_CHUNK_SIZE = size
         jobs = [(tid, s, p) for tid in TARGETS for s, p in VARIANTS if s == size]
-        with ThreadPoolExecutor(max_workers=4) as ex:
+        with ThreadPoolExecutor(max_workers=1) as ex:
             results += list(ex.map(lambda j: run(*j), jobs))
 
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
