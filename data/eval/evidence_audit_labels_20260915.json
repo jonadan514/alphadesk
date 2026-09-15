@@ -1,54 +1,300 @@
 {
   "_about": "근거 감사 도구(audit_mapping_evidence.py)의 정확도를 재기 위한 정답지. 2026-09-15 현재 승인분(KR) 감사에서 contradicts로 판정된 48건을 사람이 재판정한 것 + 감사가 놓친 테마 부적합 사례. error=true는 매핑이 틀린 것(지어낸 근거이거나 테마에 속하지 않음), false는 매핑이 맞는데 감사가 오판한 것. debatable 항목은 재판정자도 확신이 없어 정밀도·재현율 계산에서 제외한다. 재판정자 판단 자체도 틀릴 수 있으므로 절대 기준이 아니라 도구 개선 전후 비교용이다.",
   "labels": [
-    {"theme_id": "aerospace_space", "ticker": "082740", "error": true, "note": "한화엔진은 선박 디젤엔진. 항공기 엔진 아님"},
-    {"theme_id": "ai_semiconductor", "ticker": "006400", "error": true, "note": "삼성SDI 전력반도체 사업 없음"},
-    {"theme_id": "ai_semiconductor", "ticker": "361610", "error": true, "note": "SK아이이테크놀로지는 분리막. 메모리 아님"},
-    {"theme_id": "battery", "ticker": "000660", "error": true, "note": "근거 주어가 SK이노베이션"},
-    {"theme_id": "battery", "ticker": "005380", "error": true, "note": "근거 주어가 LG화학"},
-    {"theme_id": "battery", "ticker": "096770", "error": false, "note": "자회사 SK온이 배터리 대기업"},
-    {"theme_id": "biosimilar", "ticker": "290650", "error": true, "note": "엘앤씨바이오는 조직재생. 바이오시밀러 아님"},
-    {"theme_id": "cable_wire", "ticker": "000100", "error": true, "note": "유한양행은 제약사"},
-    {"theme_id": "cable_wire", "ticker": "033100", "error": true, "note": "제룡전기는 변압기. 전선 아님"},
-    {"theme_id": "cdmo", "ticker": "069260", "error": true, "note": "근거 주어가 대웅제약"},
-    {"theme_id": "cdmo", "ticker": "290650", "error": true, "note": "세포·유전자치료제 CDMO 아님"},
-    {"theme_id": "construction_machinery", "ticker": "064350", "error": true, "note": "현대로템은 철도·방산"},
-    {"theme_id": "copper_metals", "ticker": "016380", "error": true, "note": "KG스틸은 철강"},
-    {"theme_id": "copper_metals", "ticker": "460860", "error": true, "note": "동국제강은 철강"},
-    {"theme_id": "defense", "ticker": "005810", "debatable": true, "note": "풍산홀딩스는 풍산의 지주사"},
-    {"theme_id": "defense", "ticker": "103140", "error": false, "note": "풍산은 탄약이 주력 사업 중 하나"},
-    {"theme_id": "defense", "ticker": "319400", "error": true, "note": "현대무벡스는 IT·물류자동화"},
-    {"theme_id": "energy_storage", "ticker": "009830", "error": false, "note": "한화솔루션 Qcells가 ESS 사업"},
-    {"theme_id": "energy_storage", "ticker": "096770", "error": false, "note": "SK온 ESS용 배터리"},
-    {"theme_id": "ev_value_chain", "ticker": "064350", "error": true, "note": "현대로템 전기차 전장 사업 없음"},
-    {"theme_id": "ev_value_chain", "ticker": "096770", "error": false, "note": "SK온이 EV 배터리 공급사"},
-    {"theme_id": "glp1_obesity", "ticker": "068760", "error": true, "note": "위고비 개발 참여는 사실무근"},
-    {"theme_id": "k_content", "ticker": "017670", "error": true, "note": "근거 주어가 CJ ENM"},
-    {"theme_id": "k_content", "ticker": "068270", "error": true, "note": "셀트리온은 제약"},
-    {"theme_id": "k_content", "ticker": "079900", "error": true, "note": "전진건설로봇은 건설장비"},
-    {"theme_id": "k_content", "ticker": "122640", "error": true, "note": "예스티는 반도체 장비"},
-    {"theme_id": "k_food", "ticker": "090430", "error": true, "note": "아모레퍼시픽은 화장품"},
-    {"theme_id": "k_food", "ticker": "280360", "error": false, "note": "롯데웰푸드 제과도 식품"},
-    {"theme_id": "lng_gas", "ticker": "018670", "debatable": true, "note": "SK가스 주력은 LPG지만 LNG 터미널 사업 확장 중"},
-    {"theme_id": "medical_device", "ticker": "277810", "error": true, "note": "레인보우로보틱스는 협동로봇. 수술로봇 아님"},
-    {"theme_id": "neuro_alzheimer", "ticker": "068760", "error": true, "note": "CT-P13은 램시마(인플릭시맙)"},
-    {"theme_id": "nuclear_smr", "ticker": "012450", "error": true, "note": "한화에어로스페이스 원전 설비 사업 없음"},
-    {"theme_id": "nuclear_smr", "ticker": "042660", "error": true, "note": "한화오션 원전 해체 사업 없음"},
-    {"theme_id": "petrochemical", "ticker": "009830", "error": false, "note": "한화솔루션 케미칼 부문이 합성수지(PVC·PE)"},
-    {"theme_id": "petrochemical", "ticker": "100090", "error": true, "note": "SK오션플랜트는 해상풍력 구조물·강관"},
-    {"theme_id": "petrochemical", "ticker": "298050", "error": true, "note": "HS효성첨단소재는 타이어코드·탄소섬유"},
-    {"theme_id": "petrochemical", "ticker": "456040", "debatable": true, "note": "OCI 카본블랙은 석유계 원료지만 석유화학사로 보긴 애매"},
-    {"theme_id": "physical_ai", "ticker": "005940", "error": true, "note": "NH투자증권은 증권사"},
-    {"theme_id": "physical_ai", "ticker": "267250", "debatable": true, "note": "HD현대 자회사 HD현대로보틱스"},
-    {"theme_id": "power_grid", "ticker": "006730", "error": true, "note": "서부T&D는 호텔·부동산"},
-    {"theme_id": "rare_earth", "ticker": "066970", "error": true, "note": "양극재에 희토류 사용 안 함"},
-    {"theme_id": "renewable_energy", "ticker": "009540", "debatable": true, "note": "HD한국조선해양 해상풍력 관련 사업 일부"},
-    {"theme_id": "renewable_energy", "ticker": "096770", "debatable": true, "note": "SK이노베이션 재생에너지는 약한 연결"},
-    {"theme_id": "semi_equipment", "ticker": "005070", "error": true, "note": "코스모신소재는 양극재"},
-    {"theme_id": "semi_equipment", "ticker": "006400", "error": true, "note": "삼성SDI 반도체 소재 사업 없음"},
-    {"theme_id": "semi_equipment", "ticker": "248070", "error": true, "note": "솔루엠은 전원모듈·전자가격표시기"},
-    {"theme_id": "semi_equipment", "ticker": "361610", "error": true, "note": "SK아이이테크놀로지는 분리막. CMP 슬러리 아님"},
-    {"theme_id": "specialty_gas", "ticker": "456040", "error": true, "note": "OCI 특수가스 사업은 매각됨"},
-    {"theme_id": "shipbuilding", "ticker": "011200", "error": true, "note": "HMM은 해운사. 근거는 사실이나 조선 테마 부적합 - v1 감사가 놓친 유형"}
-  ]
+    {
+      "theme_id": "aerospace_space",
+      "ticker": "082740",
+      "error": true,
+      "note": "한화엔진은 선박 디젤엔진. 항공기 엔진 아님"
+    },
+    {
+      "theme_id": "ai_semiconductor",
+      "ticker": "006400",
+      "error": true,
+      "note": "삼성SDI 전력반도체 사업 없음"
+    },
+    {
+      "theme_id": "ai_semiconductor",
+      "ticker": "361610",
+      "error": true,
+      "note": "SK아이이테크놀로지는 분리막. 메모리 아님"
+    },
+    {
+      "theme_id": "battery",
+      "ticker": "000660",
+      "error": true,
+      "note": "근거 주어가 SK이노베이션"
+    },
+    {
+      "theme_id": "battery",
+      "ticker": "005380",
+      "error": true,
+      "note": "근거 주어가 LG화학"
+    },
+    {
+      "theme_id": "battery",
+      "ticker": "096770",
+      "error": false,
+      "note": "자회사 SK온이 배터리 대기업"
+    },
+    {
+      "theme_id": "biosimilar",
+      "ticker": "290650",
+      "error": true,
+      "note": "엘앤씨바이오는 조직재생. 바이오시밀러 아님"
+    },
+    {
+      "theme_id": "cable_wire",
+      "ticker": "000100",
+      "error": true,
+      "note": "유한양행은 제약사"
+    },
+    {
+      "theme_id": "cable_wire",
+      "ticker": "033100",
+      "error": true,
+      "note": "제룡전기는 변압기. 전선 아님"
+    },
+    {
+      "theme_id": "cdmo",
+      "ticker": "069260",
+      "error": true,
+      "note": "근거 주어가 대웅제약"
+    },
+    {
+      "theme_id": "cdmo",
+      "ticker": "290650",
+      "error": true,
+      "note": "세포·유전자치료제 CDMO 아님"
+    },
+    {
+      "theme_id": "construction_machinery",
+      "ticker": "064350",
+      "error": true,
+      "note": "현대로템은 철도·방산"
+    },
+    {
+      "theme_id": "copper_metals",
+      "ticker": "016380",
+      "error": true,
+      "note": "KG스틸은 철강"
+    },
+    {
+      "theme_id": "copper_metals",
+      "ticker": "460860",
+      "error": true,
+      "note": "동국제강은 철강"
+    },
+    {
+      "theme_id": "defense",
+      "ticker": "005810",
+      "debatable": true,
+      "note": "풍산홀딩스는 풍산의 지주사"
+    },
+    {
+      "theme_id": "defense",
+      "ticker": "103140",
+      "error": false,
+      "note": "풍산은 탄약이 주력 사업 중 하나"
+    },
+    {
+      "theme_id": "defense",
+      "ticker": "319400",
+      "error": true,
+      "note": "현대무벡스는 IT·물류자동화"
+    },
+    {
+      "theme_id": "energy_storage",
+      "ticker": "009830",
+      "error": false,
+      "note": "한화솔루션 Qcells가 ESS 사업"
+    },
+    {
+      "theme_id": "energy_storage",
+      "ticker": "096770",
+      "error": false,
+      "note": "SK온 ESS용 배터리"
+    },
+    {
+      "theme_id": "ev_value_chain",
+      "ticker": "064350",
+      "error": true,
+      "note": "현대로템 전기차 전장 사업 없음"
+    },
+    {
+      "theme_id": "ev_value_chain",
+      "ticker": "096770",
+      "error": false,
+      "note": "SK온이 EV 배터리 공급사"
+    },
+    {
+      "theme_id": "glp1_obesity",
+      "ticker": "068760",
+      "error": true,
+      "note": "위고비 개발 참여는 사실무근"
+    },
+    {
+      "theme_id": "k_content",
+      "ticker": "017670",
+      "error": true,
+      "note": "근거 주어가 CJ ENM"
+    },
+    {
+      "theme_id": "k_content",
+      "ticker": "068270",
+      "error": true,
+      "note": "셀트리온은 제약"
+    },
+    {
+      "theme_id": "k_content",
+      "ticker": "079900",
+      "error": true,
+      "note": "전진건설로봇은 건설장비"
+    },
+    {
+      "theme_id": "k_content",
+      "ticker": "122640",
+      "error": true,
+      "note": "예스티는 반도체 장비"
+    },
+    {
+      "theme_id": "k_food",
+      "ticker": "090430",
+      "error": true,
+      "note": "아모레퍼시픽은 화장품"
+    },
+    {
+      "theme_id": "k_food",
+      "ticker": "280360",
+      "error": false,
+      "note": "롯데웰푸드 제과도 식품"
+    },
+    {
+      "theme_id": "lng_gas",
+      "ticker": "018670",
+      "debatable": true,
+      "note": "SK가스 주력은 LPG지만 LNG 터미널 사업 확장 중"
+    },
+    {
+      "theme_id": "medical_device",
+      "ticker": "277810",
+      "error": true,
+      "note": "레인보우로보틱스는 협동로봇. 수술로봇 아님"
+    },
+    {
+      "theme_id": "neuro_alzheimer",
+      "ticker": "068760",
+      "error": true,
+      "note": "CT-P13은 램시마(인플릭시맙)"
+    },
+    {
+      "theme_id": "nuclear_smr",
+      "ticker": "012450",
+      "error": true,
+      "note": "한화에어로스페이스 원전 설비 사업 없음"
+    },
+    {
+      "theme_id": "nuclear_smr",
+      "ticker": "042660",
+      "error": true,
+      "note": "한화오션 원전 해체 사업 없음"
+    },
+    {
+      "theme_id": "petrochemical",
+      "ticker": "009830",
+      "error": false,
+      "note": "한화솔루션 케미칼 부문이 합성수지(PVC·PE)"
+    },
+    {
+      "theme_id": "petrochemical",
+      "ticker": "100090",
+      "error": true,
+      "note": "SK오션플랜트는 해상풍력 구조물·강관"
+    },
+    {
+      "theme_id": "petrochemical",
+      "ticker": "298050",
+      "error": true,
+      "note": "HS효성첨단소재는 타이어코드·탄소섬유"
+    },
+    {
+      "theme_id": "petrochemical",
+      "ticker": "456040",
+      "debatable": true,
+      "note": "OCI 카본블랙은 석유계 원료지만 석유화학사로 보긴 애매"
+    },
+    {
+      "theme_id": "physical_ai",
+      "ticker": "005940",
+      "error": true,
+      "note": "NH투자증권은 증권사"
+    },
+    {
+      "theme_id": "physical_ai",
+      "ticker": "267250",
+      "debatable": true,
+      "note": "HD현대 자회사 HD현대로보틱스"
+    },
+    {
+      "theme_id": "power_grid",
+      "ticker": "006730",
+      "error": true,
+      "note": "서부T&D는 호텔·부동산"
+    },
+    {
+      "theme_id": "rare_earth",
+      "ticker": "066970",
+      "error": true,
+      "note": "양극재에 희토류 사용 안 함"
+    },
+    {
+      "theme_id": "renewable_energy",
+      "ticker": "009540",
+      "debatable": true,
+      "note": "HD한국조선해양 해상풍력 관련 사업 일부"
+    },
+    {
+      "theme_id": "renewable_energy",
+      "ticker": "096770",
+      "debatable": true,
+      "note": "SK이노베이션 재생에너지는 약한 연결"
+    },
+    {
+      "theme_id": "semi_equipment",
+      "ticker": "005070",
+      "error": true,
+      "note": "코스모신소재는 양극재"
+    },
+    {
+      "theme_id": "semi_equipment",
+      "ticker": "006400",
+      "error": false,
+      "note": "정정(2026-09-15): 삼성SDI에 Electronic Materials 부문(반도체 소재)이 실제로 있음. 최초 라벨 '반도체 소재 사업 없음'은 재판정자 오류 - 긴 사업요약 원문으로 확인"
+    },
+    {
+      "theme_id": "semi_equipment",
+      "ticker": "248070",
+      "error": true,
+      "note": "솔루엠은 전원모듈·전자가격표시기"
+    },
+    {
+      "theme_id": "semi_equipment",
+      "ticker": "361610",
+      "error": true,
+      "note": "SK아이이테크놀로지는 분리막. CMP 슬러리 아님"
+    },
+    {
+      "theme_id": "specialty_gas",
+      "ticker": "456040",
+      "note": "정정(2026-09-15): 테마가 '특수가스·소재'이고 키워드에 전자재료 포함. OCI는 반도체 precursor 등 전자재료를 생산 - 최초 라벨 '특수가스 매각'은 테마를 너무 좁게 본 것",
+      "debatable": true
+    },
+    {
+      "theme_id": "shipbuilding",
+      "ticker": "011200",
+      "error": true,
+      "note": "HMM은 해운사. 근거는 사실이나 조선 테마 부적합 - v1 감사가 놓친 유형"
+    }
+  ],
+  "_corrections": "2026-09-15: 감사 v2가 '놓쳤다'던 8건을 긴 사업요약 원문과 대조하다 재판정자 라벨 오류 2건 발견해 정정(semi_equipment/006400, specialty_gas/456040). 정답지 작성자도 틀릴 수 있다는 실례."
 }
