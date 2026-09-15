@@ -13,6 +13,10 @@ on:
         description: "KR 또는 US"
         required: false
         default: "KR"
+      eval_labels:
+        description: "정답지 JSON 경로 (비우면 평가 생략)"
+        required: false
+        default: ""
 
 jobs:
   audit:
@@ -35,8 +39,19 @@ jobs:
         run: |
           RID="${{ inputs.run_id }}"
           MK="${{ inputs.market || 'KR' }}"
+          EV="${{ inputs.eval_labels }}"
+          EXTRA=()
+          [ -n "$EV" ] && EXTRA+=(--eval "$EV")
           if [ -n "$RID" ]; then
-            python scripts/audit_mapping_evidence.py --run-id "$RID" --market "$MK"
+            python scripts/audit_mapping_evidence.py --run-id "$RID" --market "$MK" "${EXTRA[@]}"
           else
-            python scripts/audit_mapping_evidence.py --current-approved --market "$MK"
+            python scripts/audit_mapping_evidence.py --current-approved --market "$MK" "${EXTRA[@]}"
           fi
+
+      - name: Upload audit result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-audit
+          path: out/evidence_audit_*
+          if-no-files-found: warn
