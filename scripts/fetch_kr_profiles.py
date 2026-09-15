@@ -24,12 +24,20 @@ def main() -> int:
     ap.add_argument("--universe", default=str(ROOT / "data" / "kr_universe.json"))
     ap.add_argument("--out", default=str(ROOT / "data" / "kr_profiles.json"))
     ap.add_argument("--summary-chars", type=int, default=140)
+    ap.add_argument("--only-missing", action="store_true",
+                    help="기존 파일에 없는 종목만 조회해 합친다(CI에서 매 실행 전체 재조회 방지)")
     args = ap.parse_args()
 
     import yfinance as yf
 
     items = json.loads(Path(args.universe).read_text(encoding="utf-8"))["items"]
     out: dict[str, dict] = {}
+    out_path = Path(args.out)
+    if args.only_missing and out_path.exists():
+        out = json.loads(out_path.read_text(encoding="utf-8"))
+        before = len(items)
+        items = [it for it in items if it["symbol"] not in out]
+        print(f"기존 프로필 {len(out)}종목 보유 - 유니버스 {before}종목 중 {len(items)}종목만 조회", flush=True)
     missing = 0
     for n, it in enumerate(items, 1):
         code, yfs = it["symbol"], it["yf_symbol"]

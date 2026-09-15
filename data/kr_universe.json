@@ -3,7 +3,7 @@
  "base_date": "20260911",
  "min_cap": 500000000000,
  "pykrx_version": "1.2.8",
- "count": 487,
+ "count": 474,
  "items": [
   {
    "market": "KR",
@@ -19,14 +19,6 @@
    "yf_symbol": "000660.KS",
    "name": "SK하이닉스",
    "market_cap": 1323652165380000,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
-   "symbol": "005935",
-   "yf_symbol": "005935.KS",
-   "name": "삼성전자우",
-   "market_cap": 155098353539900,
    "exchange": "KOSPI"
   },
   {
@@ -711,14 +703,6 @@
   },
   {
    "market": "KR",
-   "symbol": "005387",
-   "yf_symbol": "005387.KS",
-   "name": "현대차2우B",
-   "market_cap": 6310989365000,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
    "symbol": "377300",
    "yf_symbol": "377300.KS",
    "name": "카카오페이",
@@ -907,14 +891,6 @@
    "yf_symbol": "051900.KS",
    "name": "LG생활건강",
    "market_cap": 4357877193000,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
-   "symbol": "005385",
-   "yf_symbol": "005385.KS",
-   "name": "현대차우",
-   "market_cap": 4248054720000,
    "exchange": "KOSPI"
   },
   {
@@ -1439,14 +1415,6 @@
   },
   {
    "market": "KR",
-   "symbol": "000155",
-   "yf_symbol": "000155.KS",
-   "name": "두산우",
-   "market_cap": 1790414976000,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
    "symbol": "089860",
    "yf_symbol": "089860.KS",
    "name": "롯데렌탈",
@@ -1615,14 +1583,6 @@
   },
   {
    "market": "KR",
-   "symbol": "009155",
-   "yf_symbol": "009155.KS",
-   "name": "삼성전기우",
-   "market_cap": 1436050096000,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
    "symbol": "001820",
    "yf_symbol": "001820.KS",
    "name": "삼화콘덴서",
@@ -1635,14 +1595,6 @@
    "yf_symbol": "093370.KS",
    "name": "후성",
    "market_cap": 1427568442300,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
-   "symbol": "00680K",
-   "yf_symbol": "00680K.KS",
-   "name": "미래에셋증권2우B",
-   "market_cap": 1374528420000,
    "exchange": "KOSPI"
   },
   {
@@ -1719,14 +1671,6 @@
   },
   {
    "market": "KR",
-   "symbol": "000815",
-   "yf_symbol": "000815.KS",
-   "name": "삼성화재우",
-   "market_cap": 1270465950000,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
    "symbol": "192080",
    "yf_symbol": "192080.KS",
    "name": "더블유게임즈",
@@ -1739,14 +1683,6 @@
    "yf_symbol": "007810.KS",
    "name": "코리아써키트",
    "market_cap": 1225511882000,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
-   "symbol": "066575",
-   "yf_symbol": "066575.KS",
-   "name": "LG전자우",
-   "market_cap": 1221590358900,
    "exchange": "KOSPI"
   },
   {
@@ -1895,14 +1831,6 @@
   },
   {
    "market": "KR",
-   "symbol": "051915",
-   "yf_symbol": "051915.KS",
-   "name": "LG화학우",
-   "market_cap": 939571360000,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
    "symbol": "030190",
    "yf_symbol": "030190.KS",
    "name": "NICE평가정보",
@@ -1987,14 +1915,6 @@
    "yf_symbol": "005090.KS",
    "name": "SGC에너지",
    "market_cap": 881851179600,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
-   "symbol": "071055",
-   "yf_symbol": "071055.KS",
-   "name": "한국금융지주우",
-   "market_cap": 878737650000,
    "exchange": "KOSPI"
   },
   {
@@ -2327,14 +2247,6 @@
   },
   {
    "market": "KR",
-   "symbol": "00088K",
-   "yf_symbol": "00088K.KS",
-   "name": "한화3우B",
-   "market_cap": 596604318450,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
    "symbol": "075580",
    "yf_symbol": "075580.KS",
    "name": "세진중공업",
@@ -2463,14 +2375,6 @@
   },
   {
    "market": "KR",
-   "symbol": "00104K",
-   "yf_symbol": "00104K.KS",
-   "name": "CJ4우(전환)",
-   "market_cap": 535076419200,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
    "symbol": "0220W0",
    "yf_symbol": "0220W0.KS",
    "name": "한화머시너리앤서비스홀딩스",
@@ -2539,14 +2443,6 @@
    "yf_symbol": "009410.KS",
    "name": "태영건설",
    "market_cap": 505605542522,
-   "exchange": "KOSPI"
-  },
-  {
-   "market": "KR",
-   "symbol": "003545",
-   "yf_symbol": "003545.KS",
-   "name": "대신증권우",
-   "market_cap": 501077513700,
    "exchange": "KOSPI"
   },
   {

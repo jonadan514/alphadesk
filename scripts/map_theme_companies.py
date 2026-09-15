@@ -35,7 +35,7 @@ from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 OPENAI_MODEL = "gpt-4o-mini"
-PROMPT_VERSION = "2026-09-01-v4"
+PROMPT_VERSION = "2026-09-15-v5"  # v5: KR 후보에 산업·사업요약 부착, 키워드 항상 전달, 비판 패스 사실대조
 UNIVERSE_CHUNK_SIZE = 200
 PATH_A_RUNS = 2  # 파일럿에서 경로 A 결과가 회차마다 크게 흔들리는 현상을 발견 —
                  # 반복 실행 후 티커 기준 합집합으로 완화
@@ -113,13 +113,52 @@ def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.
 
 
 def _theme_description(theme: dict) -> str:
+    """키워드는 항상 보낸다.
+
+    2026-09-15 이전에는 note가 있으면 키워드를 버렸다. 그런데 note 대부분은
+    테마 정의가 아니라 운영 메모다(예: datacenter_cooling의 "min_articles 하향
+    조정. 기업 3개 이하면 datacenter_power 로 흡수") - 33개 중 18개 테마가
+    실제 키워드 대신 이런 메모를 정의로 받고 있었다. physical_ai처럼 정의에
+    가까운 메모도 있어 note는 참고로 함께 보낸다."""
     lines = [f"테마명: {theme['name_ko']} ({theme['name_en']})"]
-    if theme.get("note"):
-        lines.append(f"설명: {theme['note']}")
-    else:
-        kws = ", ".join(theme.get("keywords_ko", []))
+    kws = ", ".join(theme.get("keywords_ko", []))
+    if kws:
         lines.append(f"관련 키워드: {kws}")
+    if theme.get("note"):
+        lines.append(f"참고 메모: {theme['note']}")
     return "\n".join(lines)
+
+
+def load_kr_profiles() -> dict[str, dict]:
+    """KR 기업의 산업분류·영문 사업요약 (scripts/fetch_kr_profiles.py 생성)."""
+    path = ROOT / "data" / "kr_profiles.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as e:
+        _log(f"kr_profiles.json 읽기 실패 {type(e).__name__}: {e} - 이름만으로 매핑한다")
+        return {}
+
+
+def _candidate_line(symbol: str, market: str, names: dict[str, str],
+                    profiles: dict[str, dict]) -> str:
+    """후보 한 줄. 한국 기업엔 산업분류와 사업요약을 붙인다.
+
+    왜 필요한가(2026-09-14 A/B 실측): 이름만 주면 모델이 사명의 형태로 사업을
+    추측하고 근거를 지어냈다 - '레인보우로보틱스'(협동로봇)·'휴림로봇'(산업용
+    로봇)을 "수술 로봇을 개발"한다며 의료기기 direct로 편입. 산업·요약을 붙이자
+    이 둘이 빠지고 클래시스(미용 레이저)·엘앤씨바이오 등 실제 의료기기 기업이
+    들어왔다. 미국 기업은 모델이 사명으로 이미 알아 같은 문제가 없었다
+    (같은 프롬프트로 medical_device US 17 / KR 2)."""
+    line = f"- {symbol} ({market}) {names.get(symbol, '')}"
+    prof = profiles.get(symbol) if market == "KR" else None
+    if prof:
+        if prof.get("industry"):
+            line += f" [{prof['industry']}]"
+        if prof.get("summary"):
+            line += f" {prof['summary']}"
+    return line
 
 
 MEMBER_FIELDS_INSTRUCTION = """각 기업에 대해 다음 필드를 답하시오:
@@ -135,18 +174,25 @@ MEMBER_FIELDS_INSTRUCTION = """각 기업에 대해 다음 필드를 답하시�
 {"members": [{"ticker": "...", "name": "...", "market": "US|KR", "value_chain_stage": "...", "evidence": "...", "linkage": "direct|partial|peripheral"}]}"""
 
 
-def path_a_universe_constrained(theme: dict, universe: list[dict], names: dict[str, str], api_key: str) -> list[dict]:
+def path_a_universe_constrained(theme: dict, universe: list[dict], names: dict[str, str],
+                                api_key: str, profiles: dict[str, dict] | None = None) -> list[dict]:
     """유니버스를 청크로 나눠 그 안에서만 고르게 한다 — 환각 티커 원천 차단."""
+    profiles = profiles or {}
     results: list[dict] = []
     desc = _theme_description(theme)
     n_chunks = (len(universe) + UNIVERSE_CHUNK_SIZE - 1) // UNIVERSE_CHUNK_SIZE
     for i in range(0, len(universe), UNIVERSE_CHUNK_SIZE):
         chunk = universe[i:i + UNIVERSE_CHUNK_SIZE]
-        listing = "\n".join(f"- {it['symbol']} ({it['market']}) {names.get(it['symbol'], '')}" for it in chunk)
+        listing = "\n".join(_candidate_line(it["symbol"], it["market"], names, profiles) for it in chunk)
         prompt = f"""{desc}
 
 아래 상장기업 목록에서 위 테마에 실제로 속하는 기업만 고르시오. 목록에 없는
 기업은 절대 답하지 마시오.
+
+한국 기업 뒤의 대괄호는 산업분류, 그 뒤 문장은 영문 사업요약이다. 근거(evidence)는
+이 정보와 모순되지 않게 쓰시오. 사명에 들어간 단어(예: '로봇', '바이오')만 보고
+사업 내용을 추측하지 마시오 - 산업분류·요약이 없는 기업은 사업 내용을 확실히 알
+때만 포함하시오.
 
 목록:
 {listing}
@@ -160,7 +206,8 @@ def path_a_universe_constrained(theme: dict, universe: list[dict], names: dict[s
     return results
 
 
-def path_a_stable(theme: dict, universe: list[dict], names: dict[str, str], api_key: str) -> list[dict]:
+def path_a_stable(theme: dict, universe: list[dict], names: dict[str, str], api_key: str,
+                  profiles: dict[str, dict] | None = None) -> list[dict]:
     """경로 A를 PATH_A_RUNS회 반복해 티커 기준 합집합으로 합친다.
 
     파일럿에서 동일 프롬프트·낮은 temperature(0.2)에도 청크 호출 결과가
@@ -170,7 +217,7 @@ def path_a_stable(theme: dict, universe: list[dict], names: dict[str, str], api_
     """
     merged: dict[str, dict] = {}
     for run in range(PATH_A_RUNS):
-        raw = path_a_universe_constrained(theme, universe, names, api_key)
+        raw = path_a_universe_constrained(theme, universe, names, api_key, profiles)
         _log(f"  경로 A 실행 {run + 1}/{PATH_A_RUNS}: {len(raw)}개")
         for m in raw:
             ticker = _norm_ticker(m)
@@ -280,15 +327,27 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
     return out, stats
 
 
-def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_key: str) -> dict[str, str]:
+def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_key: str,
+                  profiles: dict[str, dict] | None = None) -> dict[str, str]:
     """SPEC §3.4 2차 비판 패스. 1차 통과 목록을 같은 LLM에게 다시 보여주고 근거가
     약한 후보를 지적하게 한다. 삭제하지 않고 flagged=1만 세팅해 사람 검토 우선순위를
     올린다 (§7). 반환값은 {ticker: reason}."""
     if not members:
         return {}
     desc = _theme_description(theme)
+    # 실제 사업 정보를 함께 준다. 이전에는 모델이 자기가 쓴 근거를 사실 확인
+    # 수단 없이 다시 읽기만 해서, 지어낸 근거("레인보우로보틱스가 수술 로봇을
+    # 개발")를 걸러낼 방법이 없었다.
+    profiles = profiles or {}
+
+    def _fact(tk: str) -> str:
+        prof = profiles.get(tk) or {}
+        parts = [x for x in (prof.get("industry"), prof.get("summary")) if x]
+        return f"\n    (실제 사업정보: {' / '.join(parts)})" if parts else ""
+
     listing = "\n".join(
-        f"- {m['ticker']} ({names.get(m['ticker'], '')}): {m['evidence']}" for m in members
+        f"- {m['ticker']} ({names.get(m['ticker'], '')}): {m['evidence']}{_fact(str(m['ticker']))}"
+        for m in members
     )
     prompt = f"""{desc}
 
@@ -299,6 +358,10 @@ def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_k
 이 중 해당 테마 관련 매출이 전체의 10% 미만일 것으로 보이는 기업, 또는 근거가
 막연하거나 사실관계가 의심스러워 제외를 검토해야 할 기업을 지적하시오. 확실히
 문제없는 기업은 포함하지 마시오.
+
+"실제 사업정보"가 붙은 기업은 근거가 그 정보와 모순되는지 반드시 대조하시오.
+근거에 적힌 제품·사업이 실제 사업정보에 없거나 어긋나면 지어낸 근거일 가능성이
+높으니 반드시 지적하시오.
 
 반드시 아래 JSON 형식으로만 답하시오:
 {{"flag": [{{"ticker": "...", "reason": "..."}}]}}"""
@@ -335,6 +398,12 @@ def main() -> None:
 
     universe, names = build_universe_and_names()
     valid_tickers = {it["symbol"].upper() for it in universe}
+
+    profiles = load_kr_profiles()
+    kr_syms = [it["symbol"] for it in universe if it["market"] == "KR"]
+    covered = sum(1 for c in kr_syms if (profiles.get(c) or {}).get("industry"))
+    _log(f"KR 사업정보 커버리지 {covered}/{len(kr_syms)} "
+         f"- 나머지는 이름만으로 판단(사명 기반 추측 위험 남음)")
     _log(f"유니버스 {len(universe)}종목 (경로 A 제약용)")
 
     conn = get_db()
@@ -361,7 +430,7 @@ def main() -> None:
         theme_id = theme["id"]
         _log(f"=== {theme_id} ({theme['name_ko']}) ===")
 
-        raw_a = path_a_stable(theme, universe, names, api_key)
+        raw_a = path_a_stable(theme, universe, names, api_key, profiles)
         _log(f"  경로 A 후보({PATH_A_RUNS}회 합집합): {len(raw_a)}개")
         raw_b = path_b_free_generation(theme, api_key)
         _log(f"  경로 B 후보: {len(raw_b)}개")
@@ -371,7 +440,7 @@ def main() -> None:
         if stats["경로B_폐기율"] > HALLUCINATION_WARN_RATE * 100:
             _log(f"  ⚠ 경로 B 환각 폐기율 {stats['경로B_폐기율']}% — 30% 초과, 프롬프트 재검토 필요")
 
-        critique = critique_pass(theme, validated, names, api_key)
+        critique = critique_pass(theme, validated, names, api_key, profiles)
         newly_flagged = 0
         for m in validated:
             if m["ticker"] in critique:
