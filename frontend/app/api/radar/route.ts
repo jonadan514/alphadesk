@@ -23,6 +23,7 @@ export async function GET(request: Request) {
       sql: `
         SELECT theme_id, news_count, news_baseline, news_ratio, news_arrow,
                earn_members, earn_improved, earn_insufficient, earn_ratio, earn_arrow, earn_as_of,
+               earn_surprise_n, earn_surprise_beat, earn_surprise_ratio, earn_surprise_median,
                price_median_ret, price_index_ret, price_excess, price_arrow, price_volume_ratio,
                label, member_count, mapping_run_id
         FROM theme_signals

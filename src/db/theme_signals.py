@@ -40,6 +40,11 @@ CREATE TABLE IF NOT EXISTS theme_signals (
   earn_arrow        TEXT,
   earn_as_of        TEXT,
 
+  earn_surprise_n     INTEGER,
+  earn_surprise_beat  INTEGER,
+  earn_surprise_ratio REAL,
+  earn_surprise_median REAL,
+
   price_median_ret  REAL,
   price_index_ret   REAL,
   price_excess      REAL,
@@ -58,12 +63,30 @@ CREATE TABLE IF NOT EXISTS theme_signals (
 
 # 이미 만들어진 theme_signals에 뒤늦게 붙인 컬럼들. DDL만 고치면 기존 DB에는
 # 반영되지 않아(CREATE TABLE IF NOT EXISTS라서) 쓰기 때 "no such column"이 난다.
-LATE_COLUMNS = [("price_volume_ratio", "REAL")]
+LATE_COLUMNS = [("price_volume_ratio", "REAL"),
+                ("earn_surprise_n", "INTEGER"),
+                ("earn_surprise_beat", "INTEGER"),
+                ("earn_surprise_ratio", "REAL"),
+                ("earn_surprise_median", "REAL")]
+
+
+EARNINGS_SURPRISE_DDL = """
+CREATE TABLE IF NOT EXISTS earnings_surprise (
+  ticker       TEXT PRIMARY KEY,
+  market       TEXT,
+  report_date  TEXT,
+  surprise_pct REAL,
+  eps_estimate REAL,
+  eps_reported REAL,
+  fetched_at   TEXT
+)
+"""
 
 
 def ensure_schema(conn) -> None:
     conn.execute(THEME_NEWS_DDL)
     conn.execute(THEME_SIGNALS_DDL)
+    conn.execute(EARNINGS_SURPRISE_DDL)
     for name, coltype in LATE_COLUMNS:
         try:
             conn.execute(f"ALTER TABLE theme_signals ADD COLUMN {name} {coltype}")
@@ -166,7 +189,8 @@ def upsert_news_signal(conn, theme_id: str, market: str, week_start: str,
 def upsert_earn_signal(conn, theme_id: str, market: str, week_start: str,
                         earn_members: int, earn_improved: int, earn_insufficient: int,
                         earn_ratio: float | None, earn_arrow: str, earn_as_of: str | None,
-                        member_count: int, mapping_run_id: str, computed_at: str) -> None:
+                        member_count: int, mapping_run_id: str, computed_at: str,
+                        surprise: dict | None = None) -> None:
     """theme_signals에 실적 축만 채워 넣는다(뉴스/주가 축은 건드리지 않음).
 
     실적 축은 주간 신호가 아니라 분기에 한 번만 바뀐다(SPEC §3.4) - 그래도
@@ -177,8 +201,9 @@ def upsert_earn_signal(conn, theme_id: str, market: str, week_start: str,
         """
         INSERT INTO theme_signals
           (theme_id, market, week_start, earn_members, earn_improved, earn_insufficient,
-           earn_ratio, earn_arrow, earn_as_of, member_count, mapping_run_id, computed_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           earn_ratio, earn_arrow, earn_as_of, earn_surprise_n, earn_surprise_beat,
+           earn_surprise_ratio, earn_surprise_median, member_count, mapping_run_id, computed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(theme_id, market, week_start) DO UPDATE SET
           earn_members = excluded.earn_members,
           earn_improved = excluded.earn_improved,
@@ -186,12 +211,19 @@ def upsert_earn_signal(conn, theme_id: str, market: str, week_start: str,
           earn_ratio = excluded.earn_ratio,
           earn_arrow = excluded.earn_arrow,
           earn_as_of = excluded.earn_as_of,
+          earn_surprise_n = excluded.earn_surprise_n,
+          earn_surprise_beat = excluded.earn_surprise_beat,
+          earn_surprise_ratio = excluded.earn_surprise_ratio,
+          earn_surprise_median = excluded.earn_surprise_median,
           member_count = excluded.member_count,
           mapping_run_id = excluded.mapping_run_id,
           computed_at = excluded.computed_at
         """,
         (theme_id, market, week_start, earn_members, earn_improved, earn_insufficient,
-         earn_ratio, earn_arrow, earn_as_of, member_count, mapping_run_id, computed_at),
+         earn_ratio, earn_arrow, earn_as_of,
+         (surprise or {}).get("n"), (surprise or {}).get("beat"),
+         (surprise or {}).get("ratio"), (surprise or {}).get("median_pct"),
+         member_count, mapping_run_id, computed_at),
     )
 
 
@@ -266,3 +298,43 @@ def get_approved_theme_members(conn, theme_id: str, market: str,
         (theme_id, market, run_id, *linkages),
     ).fetchall()
     return [{"ticker": r[0], "run_id": run_id} for r in rows]
+
+
+def get_surprises(conn, tickers: list[str]) -> dict[str, dict]:
+    """종목별 최근 서프라이즈. 빈 목록이면 빈 dict."""
+    if not tickers:
+        return {}
+    out: dict[str, dict] = {}
+    chunk_size = 200  # SQL 변수 한도 회피
+    for i in range(0, len(tickers), chunk_size):
+        chunk = tickers[i:i + chunk_size]
+        rows = conn.execute(
+            "SELECT ticker, market, report_date, surprise_pct, eps_estimate, eps_reported, fetched_at "
+            f"FROM earnings_surprise WHERE ticker IN ({','.join('?' * len(chunk))})",
+            tuple(chunk),
+        ).fetchall()
+        for r in rows:
+            out[r[0]] = {"market": r[1], "report_date": r[2],
+                         "surprise_pct": float(r[3]) if r[3] is not None else None,
+                         "eps_estimate": r[4], "eps_reported": r[5], "fetched_at": r[6]}
+    return out
+
+
+def upsert_surprise(conn, ticker: str, market: str, report_date: str | None,
+                    surprise_pct: float | None, eps_estimate: float | None,
+                    eps_reported: float | None, fetched_at: str) -> None:
+    conn.execute(
+        """
+        INSERT INTO earnings_surprise
+          (ticker, market, report_date, surprise_pct, eps_estimate, eps_reported, fetched_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(ticker) DO UPDATE SET
+          market = excluded.market,
+          report_date = excluded.report_date,
+          surprise_pct = excluded.surprise_pct,
+          eps_estimate = excluded.eps_estimate,
+          eps_reported = excluded.eps_reported,
+          fetched_at = excluded.fetched_at
+        """,
+        (ticker, market, report_date, surprise_pct, eps_estimate, eps_reported, fetched_at),
+    )

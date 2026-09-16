@@ -51,12 +51,20 @@ CREATE TABLE IF NOT EXISTS theme_signals (
   earn_ratio        REAL,
   earn_arrow        TEXT,
   earn_as_of        TEXT,                 -- 기준 분기 'YYYY-Qn'
+  -- 실적 발표 서프라이즈(2026-09-16 추가) - 축이 아니라 실적 축 옆에 붙는 참고 수치.
+  -- 분기 매출 성장률은 분기에 한 번 움직이지만 서프라이즈는 발표 당일 확정된다.
+  earn_surprise_n      INTEGER,           -- 최근 100일 안에 발표한 소속 기업 수
+  earn_surprise_beat   INTEGER,           -- 그중 추정치를 넘긴 기업 수
+  earn_surprise_ratio  REAL,              -- beat / n (표본 5개 미만이면 NULL)
+  earn_surprise_median REAL,              -- 서프라이즈(%) 중앙값
 
   -- 주가 축
   price_median_ret  REAL,                 -- 소속 기업 4주 수익률 중앙값
   price_index_ret   REAL,                 -- 시장 지수 4주 수익률
   price_excess      REAL,                 -- 차이
   price_arrow       TEXT,
+  price_volume_ratio REAL,                -- 거래대금(종가x거래량) 최근 4주 / 직전 4주 중앙값
+                                          -- (2026-09-16 추가) 참고 수치 - 화살표를 만들지 않는다
 
   label             TEXT,                 -- 조합 라벨 (없으면 NULL)
   member_count      INTEGER,              -- 그 주 기준 소속 기업 수

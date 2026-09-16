@@ -30,8 +30,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
 from src.db.fundamentals_cache import ensure_schema as ensure_fundamentals_schema, get_cached_financials_bulk
-from src.db.theme_signals import ensure_schema, get_approved_theme_members, upsert_earn_signal
+from src.db.theme_signals import (ensure_schema, get_approved_theme_members, get_surprises,
+                                   upsert_earn_signal)
 from analyzers.theme_earnings import compute_earn_signal, market_median_growth
+from collectors.earnings_surprise_collector import summarize_theme
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 
@@ -128,20 +130,28 @@ def main() -> None:
             _log(f"{market}: 기준 성장률(중앙값) {ref*100:.1f}% "
                  f"(표본 {len(market_tickers)}개)")
 
+    # 실적 발표 서프라이즈(참고 수치). scripts/collect_earnings_surprise.py가 쌓아둔 값만
+    # 읽는다 - 여기서 새로 조회하지 않는다(종목별 호출이라 수집은 따로 예산제로 돈다).
+    surprises = get_surprises(conn, sorted(all_tickers))
+    _log(f"서프라이즈 보유 {len(surprises)}/{len(all_tickers)}종목")
+
     now = datetime.utcnow().isoformat()
     for (theme_id, market), members in members_by_theme_market.items():
         result = compute_earn_signal(members, revenue_by_ticker, thresholds,
                                       reference_by_market.get(market))
+        surprise = summarize_theme(members, surprises)
         run_id = members[0]["run_id"]
+        sp_str = (f"{surprise['beat']}/{surprise['n']}" if surprise["n"] else "-")
         _log(f"{theme_id}({market}): members={result['members']} "
              f"기준초과={result['improved']} insufficient={result['insufficient']} "
-             f"ratio={result['ratio']} arrow={result['arrow']} as_of={result['as_of']}")
+             f"ratio={result['ratio']} arrow={result['arrow']} as_of={result['as_of']} "
+             f"서프라이즈 상회={sp_str}")
 
         upsert_earn_signal(
             conn, theme_id, market, week_start,
             result["members"], result["improved"], result["insufficient"],
             result["ratio"], result["arrow"], result["as_of"],
-            result["members"], run_id, now,
+            result["members"], run_id, now, surprise,
         )
         conn.commit()
 

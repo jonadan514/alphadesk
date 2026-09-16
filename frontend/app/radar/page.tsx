@@ -35,6 +35,10 @@ interface ThemeSignal {
   price_index_ret: number | null;
   price_excess: number | null;
   price_volume_ratio: number | null;
+  earn_surprise_n: number | null;
+  earn_surprise_beat: number | null;
+  earn_surprise_ratio: number | null;
+  earn_surprise_median: number | null;
   price_arrow: Arrow;
   label: string | null;
   member_count: number | null;
@@ -432,6 +436,18 @@ function ThemeCard({ signal, market, compact = false }:
                     {signal.earn_members}개사 중 {signal.earn_improved}개
                   </b> 매출 성장률이 시장 중앙값 초과
                   {signal.earn_as_of && <span className="ml-1 text-[11px]" style={{ color: FAINT }}>{signal.earn_as_of} 기준</span>}
+                  {signal.earn_surprise_n != null && signal.earn_surprise_n > 0 && (
+                    <div className="mt-1 text-[12px]" style={{ color: MUTED }}>
+                      최근 발표 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>
+                        {signal.earn_surprise_n}개사 중 {signal.earn_surprise_beat}개
+                      </b> 추정치 상회
+                      {signal.earn_surprise_median != null && (
+                        <> · 서프라이즈 중앙값 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>
+                          {signal.earn_surprise_median > 0 ? "+" : ""}{signal.earn_surprise_median.toFixed(1)}%
+                        </b></>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : "실적 데이터 없음"}
             </div>

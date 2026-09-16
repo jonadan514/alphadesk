@@ -18,6 +18,10 @@ on:
         required: false
         type: boolean
         default: false
+      surprise_budget:
+        description: "실적 서프라이즈를 새로 조회할 종목 수 (비우면 150, 0이면 수집 건너뜀)"
+        required: false
+        default: ""
 
 jobs:
   compute:
@@ -35,6 +39,19 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      # 실적 발표 서프라이즈(참고 수치) 수집. 종목별 호출이라 예산제로 나눠 받는다 -
+      # 실패해도 실적 축 계산은 그대로 진행한다(서프라이즈만 비어 있게 된다).
+      - name: Collect earnings surprise
+        continue-on-error: true
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          BUDGET="${{ inputs.surprise_budget }}"
+          if [ "$BUDGET" = "0" ]; then echo "수집 건너뜀"; exit 0; fi
+          python scripts/collect_earnings_surprise.py ${BUDGET:+--budget "$BUDGET"}
 
       - name: Compute
         env:
