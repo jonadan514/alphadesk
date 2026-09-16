@@ -22,17 +22,23 @@ LLM 매핑에는 도구로 다 걸러지지 않는 오류가 남는다(2026-09-1
    (`evidence_audit_<run>_KR.txt/.json`, `_US`, `review_draft_<run>_KR.txt/.json`, `_US`)
    - 초안은 판정 원장(`data/eval/mapping_decisions.json`)을 적용한 결과다. 이미 판정한
      (테마, 종목)은 `exclude`·`restore`에 자동으로 들어가 있고, **사람이 볼 것은 `needs_review`뿐**이다
-   - `info_hold_*`는 판단보류로 유지했던 행 - 이번에 다시 볼지 선택
-2. **검토 파일 작성** - 초안 json을 `data/eval/<버전>_manual_review_<날짜>.json`으로 저장하고
-   `needs_review` 각 행을 아래 기준으로 `exclude`/`keep`에 옮긴다. 자동 기입분도 훑어본다
-   (회사 사업이 바뀌었으면 고친다 - 원장 판정은 400일 지나면 자동 만료)
-   - `exclude`: 감사가 틀렸다고 한 행 중 **확신 있는 오류만**
-   - `keep`: 감사 오탐(대개 한글 인용·엉뚱한 원문 인용으로 인용 검증 실패) 또는 판단보류
-   - `restore`: 현재 승인분에 있는데 새 run이 놓친 행 중 정의에 맞는 것. **제외보다 높은 확신**
+   - `info_hold_in_run`은 판단보류로 유지했던 행이 이번 run에도 있는 경우
+2. **검토 파일 작성** - 초안 json을 `data/eval/<버전>_manual_review_<날짜>.json`으로 저장한다.
+   사람이 할 일은 두 가지다.
+   - **`needs_review`를 판단해 `exclude`/`keep`으로 옮긴다** (처음 보는 경우만 여기 온다)
+     - `exclude`: 감사가 틀렸다고 한 행 중 **확신 있는 오류만**
+     - `keep`: 감사 오탐(대개 한글 인용·엉뚱한 원문 인용으로 인용 검증 실패) 또는 판단보류
+   - **`restore`에서 빼야 할 것만 지운다** (2026-09-16 변경 - 넣는 방식에서 빼는 방식으로).
+     한 번 사람이 확인한 소속은 기본으로 되살아난다. LLM 매핑은 실행마다 흔들려서(같은
+     프롬프트 두 run 일치율 83%) 멀쩡한 소속이 매 분기 무작위로 빠지기 때문이다.
+     **사업이 바뀌어 더는 맞지 않는 것만 지운다** - `[판정 N일 지남]` 표시가 붙은 행을 먼저 본다
+     (OXY의 OxyChem 매각, Viatris 바이오시밀러 매각, GM Cruise 중단 같은 사례)
    - `unapprove`: 병합 run에 행이 없는 테마에서 오류로 확정한 예전 행
    - 판정마다 이유를 남긴다. 코드는 반드시 이름맵과 대조(기억으로 적은 코드는 틀린다)
 3. **현재 승인분과 테마별 비교** - 정당한 소속을 잃는 테마가 있는지 확인 후 restore에 반영
 4. **병합** - `Build Merged Mapping Run` dry_run=true 로 행 수·누락 확인 → dry_run=false
+   - 되살릴 근거 문장은 승인된 최신 행에서 가져오고, 없으면 과거 아무 run에서나 찾는다.
+     한 분기 빠졌다고 확정 소속이 영영 못 돌아오는 일을 막기 위함(2026-09-16)
 5. **승인** - `Approve Theme Mapping`, run_id=병합 run, only_market=KR
    - US는 변경 사유가 있는 테마만(신규 테마 등) 원 run에서 only_market=US + exclude로
 6. **게이트 감사** - `Audit Mapping Evidence`, run_id 비움(화면 표시분), eval_labels 지정

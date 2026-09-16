@@ -58,6 +58,32 @@ def latest_approved_run(conn, theme_id: str, market: str, before: str | None = N
     return row[0] if row and row[0] else None
 
 
+def find_source_row(conn, theme_id: str, ticker: str, market: str, before: str) -> tuple | None:
+    """되살릴 원본 행을 찾는다. 승인된 최신 행을 먼저 보고, 없으면 과거 아무 run에서나 찾는다.
+
+    왜 승인분만 보면 안 되는가(2026-09-16): LLM 매핑은 실행마다 결과가 흔들려서, 사람이
+    정상이라 확정한 소속도 어느 분기에 한 번 빠질 수 있다. 그 분기 병합 run에 행이 없으면
+    다음 분기에는 "승인된 이력"이 사라져 영영 되살릴 수 없게 된다 - 한 번의 실행 편차가
+    확정 소속을 영구히 지우는 셈이다. 그래서 승인 여부와 무관하게 과거 행에서 근거를 가져온다
+    (판정 원장이 "이 소속은 사람이 확인했다"는 근거고, 여기서 찾는 건 근거 문장일 뿐이다).
+    """
+    src_run = latest_approved_run(conn, theme_id, market, before=before)
+    if src_run:
+        row = conn.execute(
+            f"SELECT {', '.join(COLS)} FROM theme_members "
+            "WHERE theme_id = ? AND ticker = ? AND market = ? AND run_id = ? AND approved = 1",
+            (theme_id, ticker, market, src_run),
+        ).fetchone()
+        if row:
+            return row
+    return conn.execute(
+        f"SELECT {', '.join(COLS)} FROM theme_members "
+        "WHERE theme_id = ? AND ticker = ? AND market = ? AND run_id < ? "
+        "ORDER BY run_id DESC LIMIT 1",
+        (theme_id, ticker, market, before),
+    ).fetchone()
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--review", required=True)
@@ -97,20 +123,17 @@ def main() -> int:
         if (tid, code) in kept_keys:
             _log(f"  되살리기 불필요(이미 유지됨): {tid} {code}")
             continue
-        src_run = latest_approved_run(conn, tid, args.market, before=base)
-        row = None
-        if src_run:
-            row = conn.execute(
-                f"SELECT {', '.join(COLS)} FROM theme_members "
-                "WHERE theme_id = ? AND ticker = ? AND market = ? AND run_id = ? AND approved = 1",
-                (tid, code, args.market, src_run),
-            ).fetchone()
+        row = find_source_row(conn, tid, code, args.market, base)
         if not row:
             not_found.append((tid, code))
             continue
-        restored.append(dict(zip(COLS, row)))
+        src = dict(zip(COLS, row))
+        from_unapproved = src["run_id"] != latest_approved_run(conn, tid, args.market, before=base)
+        if from_unapproved:
+            _log(f"  되살리기(승인 이력 없음, run {src['run_id']}에서 근거 복사): {tid} {code}")
+        restored.append(src)
     if not_found:
-        _log(f"경고: 되살릴 원본을 못 찾음 {len(not_found)}건 {not_found} - 병합에서 빠진다")
+        _log(f"경고: 되살릴 원본을 어느 run에서도 못 찾음 {len(not_found)}건 {not_found} - 병합에서 빠진다")
     _log(f"되살리기 {len(restored)}행")
 
     final = kept + restored

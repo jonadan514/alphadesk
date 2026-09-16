@@ -1,10 +1,15 @@
 """새 매핑 run에 판정 원장을 적용해 검토 초안을 만든다.
 
 build_decision_ledger.py가 모은 사람 판정을 새 run의 감사 결과와 맞춰 본다:
-  - 원장에서 exclude인 행이 또 나왔다       -> 초안 exclude에 자동 기입
-  - 원장에서 keep인 행이 이번 run에서 빠졌다 -> 초안 restore에 자동 기입
-  - 원장에 없는데 감사가 걸렀다(또는 판정 누락) -> needs_review: 사람이 볼 것은 이것뿐
-  - 원장에서 keep/hold인데 감사가 걸렀다     -> 넘긴다(감사 편차로 이미 확인한 것)
+  - 원장에서 exclude인 행이 또 나왔다          -> 초안 exclude에 자동 기입
+  - 원장에서 keep/hold인 행이 이번 run에서 빠졌다 -> 초안 restore에 자동 기입(기본 복원)
+  - 원장에 없는데 감사가 걸렀다(또는 판정 누락)   -> needs_review: 사람이 볼 것은 이것뿐
+  - 원장에서 keep/hold인데 감사가 걸렀다        -> 넘긴다(감사 편차로 이미 확인한 것)
+
+복원은 빼는 방식이다(2026-09-16 변경). 전에는 사람이 복원 목록을 보고 넣을 것을 골랐는데,
+LLM 매핑은 실행마다 결과가 흔들려서 멀쩡한 소속이 매 분기 무작위로 빠진다(같은 프롬프트로
+돌린 두 run의 일치율 83%). 한 번 사람이 확인한 소속은 기본으로 되살리고, 사업이 바뀌어
+더 이상 맞지 않는 것만 사람이 restore에서 지운다.
 
 초안은 build_merged_mapping_run.py가 읽는 검토 파일 형식 그대로다. 사람은
 needs_review만 판단해 exclude/keep에 옮기고 data/eval/에 저장한 뒤 병합한다.
@@ -35,7 +40,8 @@ sys.path.insert(0, str(ROOT))
 from scripts.audit_mapping_evidence import is_error  # noqa: E402
 
 LEDGER = ROOT / "data" / "eval" / "mapping_decisions.json"
-TTL_DAYS = 400  # 4분기 + 여유. 분기 run이 조금 늦어져도 직전 4개 분기 판정은 쓰이게.
+TTL_DAYS = 400    # 4분기 + 여유. 분기 run이 조금 늦어져도 직전 4개 분기 판정은 쓰이게.
+STALE_DAYS = 300  # 만료는 아니지만 "사업이 바뀌었을 수 있다"고 표시할 나이
 
 
 def needs_look(v: dict) -> bool:
@@ -86,14 +92,21 @@ def main() -> int:
             needs_review.append([*key, f"감사 evidence={v.get('evidence')} fit={v.get('fit')}: "
                                        f"{v.get('reason', '')}"])
 
-    restore, dropped_holds = [], []
+    # 확정 소속 복원: keep과 hold(판단보류로 유지했던 것) 모두 기본 복원 대상이다.
+    # 오래된 판정은 사업이 바뀌었을 수 있으니 눈에 띄게 표시한다(만료는 TTL_DAYS에서 이미 걸러짐).
+    restore, stale = [], []
     for key, dec in sorted(ledger.items()):
         if key in run_keys or key[0] not in run_themes:
             continue
-        if dec["decision"] == "keep":
-            restore.append([*key, f"이전 판정({dec['decided_at']}) 정상 편입인데 이번 run에서 빠짐: {dec['reason']}"])
-        elif dec["decision"] == "hold":
-            dropped_holds.append([*key, dec["reason"]])
+        if dec["decision"] not in ("keep", "hold"):
+            continue
+        age = (today - datetime.strptime(dec["decided_at"], "%Y-%m-%d").date()).days
+        tag = "판단보류였음" if dec["decision"] == "hold" else "정상 편입"
+        note = f"이전 판정({dec['decided_at']}) {tag}인데 이번 run에서 빠짐: {dec['reason']}"
+        if age >= STALE_DAYS:
+            note = f"[판정 {age}일 지남 - 사업 변화 확인] " + note
+            stale.append([*key, dec["reason"]])
+        restore.append([*key, note])
 
     flagged = sum(1 for v in audit if needs_look(v))
     summary = [
@@ -101,14 +114,17 @@ def main() -> int:
         f"  이전 판정으로 자동 처리 {flagged_excluded + flagged_kept}건"
         f" (제외 {flagged_excluded} / 감사 편차로 유지 {flagged_kept})",
         f"  사람 검토 필요 {len(needs_review)}건",
-        f"자동 제외 {len(exclude)}건(감사 통과분 포함) / 복원 초안 {len(restore)}건"
+        f"자동 제외 {len(exclude)}건(감사 통과분 포함) / 자동 복원 {len(restore)}건"
+        + (f" - 그중 오래된 판정 {len(stale)}건 확인 필요" if stale else "")
         + (f" / 만료 판정 {expired}건 미사용" if expired else ""),
     ]
 
     draft = {
-        "_about": (f"apply_decision_ledger.py 자동 초안 ({today}). needs_review만 판단해 exclude/keep으로 "
-                   "옮긴 뒤 data/eval/에 저장하고 build-merged로 병합. restore는 이전 승인분에 원본이 "
-                   "있어야 복원된다(없으면 병합 로그에 경고)."),
+        "_about": (f"apply_decision_ledger.py 자동 초안 ({today}). 사람이 할 일은 두 가지다: "
+                   "(1) needs_review를 판단해 exclude/keep으로 옮긴다. "
+                   "(2) restore는 이미 확정된 소속이라 기본으로 되살아난다 - 사업이 바뀌어 "
+                   "더는 맞지 않는 것만 지운다(특히 '판정 N일 지남' 표시가 붙은 행). "
+                   "그 뒤 data/eval/에 저장하고 build-merged로 병합."),
         "run_id": args.run_id,
         "market": args.market,
         "summary": summary,
@@ -117,7 +133,7 @@ def main() -> int:
         "keep": [],
         "restore": restore,
         "info_hold_in_run": hold_seen,
-        "info_hold_dropped": dropped_holds,
+        "info_restore_stale": stale,
     }
     out_dir = ROOT / args.out_dir
     out_dir.mkdir(exist_ok=True)
@@ -126,10 +142,10 @@ def main() -> int:
                                           encoding="utf-8")
     lines = summary + ["", "== 사람 검토 필요 =="] + [f"  [{t}] {c} {r}" for t, c, r in needs_review]
     lines += ["", "== 자동 제외 =="] + [f"  [{t}] {c} {r}" for t, c, r in exclude]
-    lines += ["", "== 복원 초안 =="] + [f"  [{t}] {c} {r}" for t, c, r in restore]
-    if dropped_holds:
-        lines += ["", "== 참고: 판단보류였는데 이번에 빠진 것(복원하지 않음) =="]
-        lines += [f"  [{t}] {c} {r}" for t, c, r in dropped_holds]
+    lines += ["", "== 자동 복원 (빼려면 restore에서 지운다) =="] + [f"  [{t}] {c} {r}" for t, c, r in restore]
+    if stale:
+        lines += ["", "== 그중 판정이 오래된 것 - 사업 변화 확인 =="]
+        lines += [f"  [{t}] {c} {r}" for t, c, r in stale]
     (out_dir / f"{stem}.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     print("\n".join(lines))
