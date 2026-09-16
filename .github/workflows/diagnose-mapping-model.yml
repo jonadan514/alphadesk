@@ -1,0 +1,28 @@
+name: Diagnose Mapping Model
+
+# 매핑 모델을 바꾸면 결과가 얼마나 좋아지는지 A/B로 잰다. 진단용 - DB에 쓰지 않는다.
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "비교할 모델 공백 구분 (비우면 키가 쓸 수 있는 후보 자동 선택)"
+        required: false
+        default: ""
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Diagnose
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/diagnose_mapping_model.py --models ${{ inputs.models }} 2>&1 | grep -v "청크 .* 완료"
