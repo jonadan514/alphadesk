@@ -14,20 +14,34 @@ RATE_LIMIT_BACKOFF = [60, 180, 600]
 BATCH_SIZE = 100
 LOOKBACK_TRADING_DAYS = 20  # 4주 = 5거래일 x 4
 MIN_TRADING_DAYS = LOOKBACK_TRADING_DAYS + 1  # 상장 4주 미만 제외(§4.3)
+# 거래대금 비교용: 최근 20거래일 평균을 그 직전 20거래일 평균과 견준다.
+# 둘 다 담으려면 41거래일이 필요해 조회 기간을 90일로 잡는다(45일로는 31거래일뿐).
+VOLUME_MIN_TRADING_DAYS = LOOKBACK_TRADING_DAYS * 2 + 1
+DOWNLOAD_PERIOD = "90d"
 
 
 def compute_return_batch(tickers: list[str], batch_size: int = BATCH_SIZE) -> dict[str, float | None]:
-    """4주(20거래일) 수익률을 배치로 계산한다.
+    """4주(20거래일) 수익률만 필요할 때 쓰는 얇은 래퍼 - 계산은 아래 함수가 한다."""
+    return {t: v["ret"] for t, v in compute_price_batch(tickers, batch_size).items()}
 
-    반환: {ticker: 수익률(float) 또는 None(제외 - 상장 4주 미만/거래정지/조회실패)}.
+
+def compute_price_batch(tickers: list[str], batch_size: int = BATCH_SIZE) -> dict[str, dict]:
+    """4주(20거래일) 수익률과 거래대금 변화를 한 번의 배치 조회로 계산한다.
+
+    반환: {ticker: {"ret": 수익률|None, "vol_ratio": 거래대금비|None}}.
     인자로 준 모든 티커에 대해 키가 존재한다.
+
+    ret       : 20거래일 전 종가 대비 수익률. None이면 제외(상장 4주 미만/거래정지/조회실패).
+    vol_ratio : 최근 20거래일 평균 거래대금 / 그 직전 20거래일 평균 거래대금.
+                수익률보다 반 박자 빠른 관심도 지표로 쓴다(2026-09-16 추가). 41거래일치
+                데이터가 없으면 None - 수익률은 있는데 이것만 없는 경우가 정상적으로 생긴다.
 
     날짜(금요일) 대신 거래일 개수(20)로 4주 전을 잡는다 - 공휴일 때문에
     "정확히 28일 전"을 날짜로 찾으면 어긋날 수 있어 더 안정적이다.
     """
-    returns: dict[str, float | None] = {t: None for t in tickers}
+    out: dict[str, dict] = {t: {"ret": None, "vol_ratio": None} for t in tickers}
     if not tickers:
-        return returns
+        return out
 
     rate_limited_this_run = False
     for i in range(0, len(tickers), batch_size):
@@ -40,7 +54,8 @@ def compute_return_batch(tickers: list[str], batch_size: int = BATCH_SIZE) -> di
         while True:
             try:
                 # 20거래일 + 휴장일 여유분 확보 - 45일이면 공휴일 섞여도 20거래일은 충분
-                df = yf.download(chunk, period="45d", progress=False, group_by="ticker", threads=True)
+                df = yf.download(chunk, period=DOWNLOAD_PERIOD, progress=False,
+                                 group_by="ticker", threads=True)
                 break
             except Exception as e:
                 if isinstance(e, YFRateLimitError) and rate_limit_attempt < len(RATE_LIMIT_BACKOFF):
@@ -73,8 +88,16 @@ def compute_return_batch(tickers: list[str], batch_size: int = BATCH_SIZE) -> di
                 prior = float(closes.iloc[-1 - LOOKBACK_TRADING_DAYS])
                 if not prior:
                     continue
-                returns[sym] = current / prior - 1
+                out[sym]["ret"] = current / prior - 1
+
+                # 거래대금 = 종가 x 거래량. 거래량만 쓰면 액면분할·저가주가 과대 표시된다.
+                if len(closes) >= VOLUME_MIN_TRADING_DAYS:
+                    turnover = (closes * volumes.fillna(0)).dropna()
+                    recent = turnover.iloc[-LOOKBACK_TRADING_DAYS:].mean()
+                    before = turnover.iloc[-2 * LOOKBACK_TRADING_DAYS:-LOOKBACK_TRADING_DAYS].mean()
+                    if before and float(before) > 0:
+                        out[sym]["vol_ratio"] = float(recent) / float(before)
             except (KeyError, TypeError, IndexError):
                 continue
 
-    return returns
+    return out

@@ -36,6 +36,10 @@ SP500_CSV = REPO_ROOT / "data" / "sp500_list.csv"
 
 US_MIN_CAP = 2_000_000_000        # $2B
 KR_MIN_CAP = 200_000_000_000      # 2000억원
+# 스크리닝 전용 하한. data/kr_universe.json은 테마 매핑을 위해 3000억까지 넓게 받지만
+# (scripts/fetch_kr_universe_pykrx.py), 주간 스크리닝은 재수집 예산이 정해져 있어
+# 종목이 늘면 캐시 회전만 느려진다 - 스크리닝이 보는 범위는 기존 5000억 그대로 둔다.
+KR_SCREEN_MIN_CAP = 500_000_000_000
 
 # 공공데이터포털 "금융위원회_KRX상장종목정보" — pykrx(data.krx.co.kr 스크래핑)가
 # 자동화된 접근을 IP 차단하는 문제(2026-07~08월 4주 연속 실패, pykrx GitHub #170/#151)를
@@ -585,7 +589,15 @@ def collect_universe(markets: list[str] = ("US", "KR"), refresh_budget: int | No
     if "US" in markets:
         items += get_us_universe()
     if "KR" in markets:
-        items += get_kr_universe()
+        kr = get_kr_universe()
+        # 시총 정보가 없는 폴백 소스(공공데이터 API·정적 목록)는 거르지 않는다 - 하한을
+        # 적용하려다 유니버스를 통째로 비우는 쪽이 더 위험하다.
+        screened = [it for it in kr
+                    if not it.get("market_cap") or it["market_cap"] >= KR_SCREEN_MIN_CAP]
+        if len(screened) != len(kr):
+            logger.info("KR 스크리닝 하한 %s 적용: %d -> %d 종목 (매핑용 유니버스는 전체를 쓴다)",
+                        f"{KR_SCREEN_MIN_CAP:,}", len(kr), len(screened))
+        items += screened
 
     conn = get_db()
     ensure_schema(conn)

@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS theme_signals (
   price_index_ret   REAL,
   price_excess      REAL,
   price_arrow       TEXT,
+  price_volume_ratio REAL,
 
   label             TEXT,
   member_count      INTEGER,
@@ -55,9 +56,19 @@ CREATE TABLE IF NOT EXISTS theme_signals (
 """
 
 
+# 이미 만들어진 theme_signals에 뒤늦게 붙인 컬럼들. DDL만 고치면 기존 DB에는
+# 반영되지 않아(CREATE TABLE IF NOT EXISTS라서) 쓰기 때 "no such column"이 난다.
+LATE_COLUMNS = [("price_volume_ratio", "REAL")]
+
+
 def ensure_schema(conn) -> None:
     conn.execute(THEME_NEWS_DDL)
     conn.execute(THEME_SIGNALS_DDL)
+    for name, coltype in LATE_COLUMNS:
+        try:
+            conn.execute(f"ALTER TABLE theme_signals ADD COLUMN {name} {coltype}")
+        except Exception:
+            pass  # 이미 있는 컬럼 - 정상
     conn.commit()
 
 
@@ -187,25 +198,27 @@ def upsert_earn_signal(conn, theme_id: str, market: str, week_start: str,
 def upsert_price_signal(conn, theme_id: str, market: str, week_start: str,
                          price_median_ret: float | None, price_index_ret: float | None,
                          price_excess: float | None, price_arrow: str,
-                         member_count: int, mapping_run_id: str, computed_at: str) -> None:
+                         member_count: int, mapping_run_id: str, computed_at: str,
+                         price_volume_ratio: float | None = None) -> None:
     """theme_signals에 주가 축만 채워 넣는다(뉴스/실적 축은 건드리지 않음)."""
     conn.execute(
         """
         INSERT INTO theme_signals
           (theme_id, market, week_start, price_median_ret, price_index_ret, price_excess,
-           price_arrow, member_count, mapping_run_id, computed_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           price_arrow, price_volume_ratio, member_count, mapping_run_id, computed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(theme_id, market, week_start) DO UPDATE SET
           price_median_ret = excluded.price_median_ret,
           price_index_ret = excluded.price_index_ret,
           price_excess = excluded.price_excess,
           price_arrow = excluded.price_arrow,
+          price_volume_ratio = excluded.price_volume_ratio,
           member_count = excluded.member_count,
           mapping_run_id = excluded.mapping_run_id,
           computed_at = excluded.computed_at
         """,
         (theme_id, market, week_start, price_median_ret, price_index_ret, price_excess,
-         price_arrow, member_count, mapping_run_id, computed_at),
+         price_arrow, price_volume_ratio, member_count, mapping_run_id, computed_at),
     )
 
 

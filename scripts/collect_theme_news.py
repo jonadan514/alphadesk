@@ -8,7 +8,7 @@ Phase A는 미국 시장만 대상이었으나, Phase B에서 한국(keywords_ko
 weeks-back 하나로 평시 주간 실행과 콜드스타트 백필을 겸한다 - 매주 도는
 정상 실행(weeks-back=1)과 최초 8주 백필(weeks-back=8)이 로직상 동일하고
 (둘 다 after:/before: 날짜 범위로 특정 주를 조회), 오래된 주부터 최신 주
-순서로 처리해야 baseline(직전 4주 평균)이 순서대로 쌓이기 때문이다.
+순서로 처리해야 baseline(직전 8주 중앙값)이 순서대로 쌓이기 때문이다.
 
 Usage:
   python scripts/collect_theme_news.py                        # 이번 주(가장 최근 주)만
@@ -18,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import statistics
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -44,12 +45,22 @@ def _current_week_monday(today: date) -> date:
     return today - timedelta(days=today.weekday())
 
 
+BASELINE_WEEKS = 8      # 기준선을 만들 때 참고하는 직전 주 수
+BASELINE_MIN_WEEKS = 4  # 이만큼도 없으면 판정 보류
+
+
 def compute_news_arrow(news_count: int, min_articles: int, prior_counts: list[int],
                         thresholds: dict) -> tuple[float | None, float | None, str]:
-    """SPEC §2.3 판정 로직. 반환: (baseline, ratio, arrow)."""
-    if len(prior_counts) < 4:
+    """SPEC §2.3 판정 로직. 반환: (baseline, ratio, arrow).
+
+    기준선은 직전 8주의 **중앙값**이다(2026-09-16 변경, 이전에는 직전 4주 평균).
+    평균 4주는 한 주 급증이 그다음 4주의 기준선을 통째로 끌어올려, 테마가 실제로
+    달아오르는 구간에서 오히려 화살표가 죽는 문제가 있었다. 중앙값은 그 급증 주를
+    한 표로만 세고, 8주로 넓히면 기준선 자체가 덜 출렁인다.
+    """
+    if len(prior_counts) < BASELINE_MIN_WEEKS:
         return None, None, "na"
-    baseline = sum(prior_counts) / len(prior_counts)
+    baseline = statistics.median(prior_counts)
     if news_count < min_articles or baseline == 0:
         return baseline, None, "na"
     ratio = news_count / baseline
@@ -109,7 +120,7 @@ def main() -> None:
                 continue
             min_articles = theme.get("min_articles", default_min_articles)
             # 키워드가 바뀐 테마는 바뀐 주 이전 건수를 기준선에 쓰지 않는다(유지보수 규칙 2).
-            # 기준선 4주가 쌓일 때까지 뉴스 축은 na(데이터부족)로 남는다 - 탈락이 아니다.
+            # 기준선 최소 4주가 쌓일 때까지 뉴스 축은 na(데이터부족)로 남는다 - 탈락이 아니다.
             kw_changed = theme.get("keywords_changed_at")
             since = None
             if kw_changed:
@@ -128,7 +139,7 @@ def main() -> None:
                      f"(키워드별 {stats['per_keyword']})")
 
                 prior_counts = get_prior_news_counts(conn, theme_id, market, week_start.isoformat(),
-                                                     weeks=4, since=since)
+                                                     weeks=BASELINE_WEEKS, since=since)
                 baseline, ratio, arrow = compute_news_arrow(news_count, min_articles, prior_counts, thresholds)
                 ratio_str = f"{ratio:.2f}" if ratio is not None else "-"
                 baseline_str = f"{baseline:.1f}" if baseline is not None else "-"

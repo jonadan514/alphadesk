@@ -14,7 +14,7 @@ on:
         required: false
         default: ""
       kr_min_cap:
-        description: "KR 유니버스 시총 하한 원 단위 (비우면 2000억). 크게 잡을수록 종목이 줄어든다"
+        description: "KR 유니버스 시총 하한 원 단위 (비우면 3000억 - 매핑용 기본값). 스크리닝은 5000억으로 다시 걸러진다"
         required: false
         default: ""
       fetch_universe:

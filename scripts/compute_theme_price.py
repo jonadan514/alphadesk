@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from src.db.data_store import get_db
 from src.db.theme_signals import ensure_schema, get_approved_theme_members, upsert_price_signal
 from analyzers.theme_price import compute_price_signal
-from collectors.theme_price_collector import compute_return_batch
+from collectors.theme_price_collector import compute_price_batch
 from collectors.kr_kospi_list import yf_suffix as kr_yf_suffix
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
@@ -104,7 +104,8 @@ def main() -> None:
 
     # 지수(^GSPC/^KS11)도 같은 배치 호출에 얹어서 조회 - 종목별 개별 호출 금지(SPEC §4.3).
     query_symbols = sorted(yf_symbols) + sorted(INDEX_SYMBOL.values())
-    raw_returns = compute_return_batch(query_symbols)
+    raw = compute_price_batch(query_symbols)
+    raw_returns = {k: v["ret"] for k, v in raw.items()}
 
     index_returns = {mkt: raw_returns.get(sym) for mkt, sym in INDEX_SYMBOL.items()}
     for mkt, ret in index_returns.items():
@@ -118,19 +119,26 @@ def main() -> None:
         returns_by_ticker = {
             m["ticker"]: raw_returns.get(to_yf_symbol(m["ticker"], market)) for m in members
         }
+        vol_by_ticker = {
+            m["ticker"]: (raw.get(to_yf_symbol(m["ticker"], market)) or {}).get("vol_ratio")
+            for m in members
+        }
         index_return = index_returns[market]
 
-        result = compute_price_signal(members, returns_by_ticker, index_return, thresholds)
+        result = compute_price_signal(members, returns_by_ticker, index_return, thresholds,
+                                      vol_by_ticker)
         run_id = members[0]["run_id"]
         median_str = f"{result['median_ret']:.3f}" if result["median_ret"] is not None else "-"
         excess_str = f"{result['excess']:.3f}" if result["excess"] is not None else "-"
+        vol_str = f"{result['volume_ratio']:.2f}" if result.get("volume_ratio") is not None else "-"
         _log(f"{theme_id}({market}): valid={result['valid_count']}/{len(members)} "
-             f"median={median_str} index={index_return} excess={excess_str} arrow={result['arrow']}")
+             f"median={median_str} index={index_return} excess={excess_str} arrow={result['arrow']} "
+             f"거래대금비={vol_str}")
 
         upsert_price_signal(
             conn, theme_id, market, week_start,
             result["median_ret"], result["index_ret"], result["excess"], result["arrow"],
-            len(members), run_id, now,
+            len(members), run_id, now, result.get("volume_ratio"),
         )
         conn.commit()
 

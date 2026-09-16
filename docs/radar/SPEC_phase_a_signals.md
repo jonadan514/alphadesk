@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS theme_signals (
 
   -- 뉴스 축
   news_count        INTEGER,
-  news_baseline     REAL,                 -- 직전 4주 평균
+  news_baseline     REAL,                 -- 직전 8주 중앙값(2026-09-16 변경, 이전 4주 평균)
   news_ratio        REAL,                 -- count / baseline
   news_arrow        TEXT,                 -- 'up2'|'up1'|'flat'|'down'|'na'
 

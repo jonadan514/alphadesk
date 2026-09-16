@@ -34,6 +34,7 @@ interface ThemeSignal {
   price_median_ret: number | null;
   price_index_ret: number | null;
   price_excess: number | null;
+  price_volume_ratio: number | null;
   price_arrow: Arrow;
   label: string | null;
   member_count: number | null;
@@ -436,11 +437,16 @@ function ThemeCard({ signal, market, compact = false }:
             </div>
             <div className="rounded-lg px-3 py-2 text-[13px]" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: MUTED }}>
               뉴스 이번 주 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>{signal.news_count ?? "-"}건</b>
-              {" / "}4주 평균 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>{signal.news_baseline != null ? Math.round(signal.news_baseline) : "-"}건</b>
+              {" / "}8주 중앙값 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>{signal.news_baseline != null ? Math.round(signal.news_baseline) : "-"}건</b>
             </div>
             <div className="rounded-lg px-3 py-2 text-[13px]" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: MUTED }}>
               주가 중앙값 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>{pct(signal.price_median_ret)}</b>
               {signal.price_excess != null && <> · 지수 대비 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>{pct(signal.price_excess)}p</b></>}
+              {signal.price_volume_ratio != null && (
+                <> · 거래대금 <b style={{ fontFamily: MONO, color: "var(--text-primary)" }}>
+                  x{signal.price_volume_ratio.toFixed(2)}
+                </b> <span className="text-[11px]" style={{ color: FAINT }}>(직전 4주 대비)</span></>
+              )}
             </div>
           </div>
           <MembersTable members={members ?? []} loading={loadingMembers} market={market} />
