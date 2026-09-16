@@ -14,6 +14,10 @@ on:
         description: "KR 유니버스 시총 하한 (비우면 3000억)"
         required: false
         default: ""
+      relengthen:
+        description: "true면 예전 상한(700자)에서 잘린 사업요약을 다시 받아 2500자로 늘린다"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -48,10 +52,11 @@ jobs:
         continue-on-error: true
         env:
           PYTHONUNBUFFERED: "1"
+          RELEN: ${{ inputs.relengthen == 'true' && '1' || '' }}
         run: |
           python scripts/fetch_kr_profiles.py --only-missing
-          python scripts/fetch_us_profiles.py --only-missing
-          python scripts/add_long_summaries.py || true
+          python scripts/fetch_us_profiles.py --only-missing ${RELEN:+--relengthen}
+          python scripts/add_long_summaries.py ${RELEN:+--relengthen} || true
 
       - name: Report coverage
         run: |

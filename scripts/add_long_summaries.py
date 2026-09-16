@@ -10,16 +10,26 @@
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-LONG_CHARS = 700
+# 2026-09-16: 700 -> 2500. 700자에서 잘린 뒤쪽에 인용하려던 문구가 있어 감사의 "인용 검증
+# 실패"가 무더기로 났다(누적 241건 중 77%가 실제로는 정상인 편입). 감사는 테마당 수십 종목만
+# 보므로 길어도 비용이 작다 - 프롬프트에 넣을 때 다시 자른다(audit_mapping_evidence.INFO_CHARS).
+LONG_CHARS = 2500
+PREV_LONG_CHARS = 700  # 이 길이에 딱 맞으면 예전 상한에서 잘린 것으로 본다
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--relengthen", action="store_true",
+                     help="예전 상한(700자)에서 잘린 요약도 다시 받아 늘린다")
+    args = ap.parse_args()
+
     import yfinance as yf
 
     path = ROOT / "data" / "kr_profiles.json"
@@ -27,7 +37,13 @@ def main() -> int:
     items = json.loads((ROOT / "data" / "kr_universe.json").read_text(encoding="utf-8"))["items"]
     yf_sym = {i["symbol"]: i["yf_symbol"] for i in items}
 
-    todo = [c for c in profiles if not profiles[c].get("summary_long") and c in yf_sym]
+    def needs(code: str) -> bool:
+        cur = profiles[code].get("summary_long")
+        if not cur:
+            return True
+        return args.relengthen and len(cur) >= PREV_LONG_CHARS
+
+    todo = [c for c in profiles if c in yf_sym and needs(c)]
     print(f"summary_long 추가 대상 {len(todo)}종목", flush=True)
     got = 0
     for n, code in enumerate(todo, 1):

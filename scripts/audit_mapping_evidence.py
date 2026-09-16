@@ -93,8 +93,16 @@ def load_rows(conn, market: str, run_id: str | None) -> list[dict]:
     return out
 
 
+# 감사에 넣는 사업요약 길이. 프로필에는 2500자까지 저장하지만(fetch 스크립트), 테마당
+# 수십 종목을 한 프롬프트에 넣으므로 여기서 다시 자른다. 700자였을 때는 인용하려던 문구가
+# 잘린 뒤에 있어 "인용 검증 실패"가 무더기로 났다(누적 241건 중 77%가 실제로는 정상).
+INFO_CHARS = 1800
+
+
 def _business_info(prof: dict) -> str:
     summary = prof.get("summary_long") or prof.get("summary")
+    if summary:
+        summary = summary[:INFO_CHARS]
     parts = [x for x in (prof.get("industry"), summary) if x]
     return " / ".join(parts) if parts else "(사업정보 없음)"
 
@@ -159,6 +167,49 @@ def judge(theme: dict, members: list[dict], names: dict, profiles: dict, api_key
     r.raise_for_status()
     parsed = json.loads(r.json()["choices"][0]["message"]["content"])
     return {str(v.get("ticker")): v for v in parsed.get("verdicts", [])}
+
+
+def requote(theme: dict, items: list[tuple[dict, dict]], profiles: dict, api_key: str) -> dict[str, str]:
+    """인용 검증에 실패한 기업만 모아, 사업정보 원문에서 문구를 다시 뽑게 한다.
+
+    왜 필요한가(2026-09-16 실측): 인용 실패로 뒤집힌 241건 중 사람이 실제 오류로 판정한 건
+    23%뿐이었다. 대부분은 모델이 한국어로 옮겨 적거나 요약해서 원문과 글자가 안 맞은 것이다.
+    한 번 더 "영문 원문 그대로"를 요구하면 그 중 상당수가 정상으로 확인된다. 여기서도 못 찾으면
+    그때 모순으로 처리한다 - 사업정보에 없는 주장을 통과시키지 않는다는 규칙은 그대로다.
+
+    반환: {ticker: 다시 받은 인용문}
+    """
+    if not items:
+        return {}
+    lines = []
+    for m, v in items:
+        lines.append(f"- {m['ticker']}\n"
+                     f"    근거: {m['evidence']}\n"
+                     f"    사업정보 원문: {_business_info(profiles.get(m['ticker']) or {})}")
+    prompt = f"""아래 각 기업에 대해, 근거를 뒷받침하는 문구가 **사업정보 원문에 있는지**만 확인하시오.
+
+{chr(10).join(lines)}
+
+규칙:
+- 있으면 그 문구를 **원문에서 글자 그대로 복사**하시오(영문이면 영문 그대로, 3-12단어).
+  번역하거나 요약하지 마시오. 원문에 없는 단어를 넣으면 안 된다.
+- 근거를 뒷받침하는 문구가 원문에 없으면 빈 문자열("")로 답하시오.
+
+반드시 아래 JSON으로만 답하시오:
+{{"quotes": [{{"ticker": "...", "support": "원문 그대로"}}]}}"""
+    r = requests.post(
+        "https://api.openai.com/v1/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={"model": MODEL,
+              "messages": [{"role": "system", "content": "당신은 원문에서 근거 문구를 찾아 그대로 옮기는 검증자입니다."},
+                           {"role": "user", "content": prompt}],
+              "temperature": 0.0, "max_tokens": 2000,
+              "response_format": {"type": "json_object"}},
+        timeout=180,
+    )
+    r.raise_for_status()
+    parsed = json.loads(r.json()["choices"][0]["message"]["content"])
+    return {str(q.get("ticker")): str(q.get("support", "")) for q in parsed.get("quotes", [])}
 
 
 def _verify_support(v: dict, info: str) -> dict:
@@ -277,22 +328,52 @@ def main() -> int:
             for m in members:
                 results.append((m, {"evidence": "error", "fit": "error", "reason": "판정 호출 실패"}))
             continue
+        raw = {m["ticker"]: v.get(m["ticker"],
+                                  {"evidence": "missing", "fit": "missing",
+                                   "reason": "재질의 후에도 응답에 없음"}) for m in members}
+        checked = {m["ticker"]: _verify_support(raw[m["ticker"]],
+                                                _business_info(profiles.get(m["ticker"]) or {}))
+                   for m in members}
+
+        # 인용만 어긋난 건은 한 번 더 묻는다. 판정 자체가 모순인 건(원본이 contradicts)은 대상이 아니다.
+        retry = [(m, raw[m["ticker"]]) for m in members
+                 if checked[m["ticker"]].get("quote_verified") is False
+                 and raw[m["ticker"]].get("evidence") == "consistent"]
+        if retry:
+            try:
+                time.sleep(0.5)
+                quotes = requote(themes[tid], retry, profiles, api_key)
+                recovered = 0
+                for m, rv in retry:
+                    q = quotes.get(m["ticker"])
+                    if not q:
+                        continue
+                    again = _verify_support({**rv, "support": q},
+                                            _business_info(profiles.get(m["ticker"]) or {}))
+                    if again.get("quote_verified"):
+                        checked[m["ticker"]] = {**again, "requoted": True}
+                        recovered += 1
+                _log(f"{tid}: 인용 재질의 {len(retry)}건 -> 확인됨 {recovered}건")
+            except Exception as e:
+                _log(f"{tid}: 인용 재질의 실패 {type(e).__name__}: {str(e)[:100]} - 1차 판정 유지")
+
         for m in members:
-            verdict = v.get(m["ticker"], {"evidence": "missing", "fit": "missing", "reason": "재질의 후에도 응답에 없음"})
-            info = _business_info(profiles.get(m["ticker"]) or {})
-            results.append((m, _verify_support(verdict, info)))
+            results.append((m, checked[m["ticker"]]))
         time.sleep(0.5)
 
     ev = Counter(v.get("evidence") for _, v in results)
     fit = Counter(v.get("fit") for _, v in results)
     errors = [(m, v) for m, v in results if is_error(v)]
     overturned = sum(1 for _, v in results if v.get("quote_verified") is False)
+    requoted = sum(1 for _, v in results if v.get("requoted"))
     still_missing = sum(1 for _, v in results if v.get("evidence") == "missing")
     lines = [f"대상: {scope} / {args.market} {len(results)}건",
              "근거: " + " / ".join(f"{k} {ev[k]}" for k in ("consistent", "contradicts", "unverifiable", "missing", "error") if ev[k]),
              "테마적합: " + " / ".join(f"{k} {fit[k]}" for k in ("fits", "not_fits", "unclear", "missing", "error") if fit[k]),
              f"틀린 편입(근거 모순 또는 테마 부적합): {len(errors)}건 ({len(errors) / max(len(results), 1):.0%})",
-             f"  그중 인용 검증 실패로 뒤집힌 것: {overturned}건 / 재질의 후에도 판정 누락: {still_missing}건"
+             f"  그중 인용 검증 실패로 뒤집힌 것: {overturned}건"
+             + (f" (재질의로 확인된 것 {requoted}건은 제외)" if requoted else "")
+             + f" / 재질의 후에도 판정 누락: {still_missing}건"
              + (" <- 누락분은 오류로 치지 않았으니 수동 확인 필요" if still_missing else ""),
              ""]
     lines.append("== 틀린 편입 ==")

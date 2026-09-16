@@ -3,7 +3,8 @@
 build_decision_ledger.py가 모은 사람 판정을 새 run의 감사 결과와 맞춰 본다:
   - 원장에서 exclude인 행이 또 나왔다          -> 초안 exclude에 자동 기입
   - 원장에서 keep/hold인 행이 이번 run에서 빠졌다 -> 초안 restore에 자동 기입(기본 복원)
-  - 원장에 없는데 감사가 걸렀다(또는 판정 누락)   -> needs_review: 사람이 볼 것은 이것뿐
+  - 원장에 없는데 감사가 두 축 모두 걸렀다       -> 자동 제외(실측 정확도 89%)
+  - 원장에 없는데 감사가 한쪽만 걸렀다(또는 판정 누락) -> needs_review: 사람이 볼 것은 이것뿐
   - 원장에서 keep/hold인데 감사가 걸렀다        -> 넘긴다(감사 편차로 이미 확인한 것)
 
 복원은 빼는 방식이다(2026-09-16 변경). 전에는 사람이 복원 목록을 보고 넣을 것을 골랐는데,
@@ -49,6 +50,19 @@ def needs_look(v: dict) -> bool:
     return is_error(v) or v.get("evidence") in ("missing", "error")
 
 
+def both_axes_failed(v: dict) -> bool:
+    """감사가 근거와 테마 적합성 **둘 다** 문제 삼은 행.
+
+    2026-09-16 실측(누적 감사 판정 1,845건을 사람 판정과 대조):
+      근거모순 + 테마부적합 : 423건 중 89%가 실제 오류  <- 이 조합만 자동 제외
+      근거맞음 + 테마부적합 : 133건 중 60%
+      인용실패 + 테마적합   : 241건 중 23%  (대부분 인용이 원문과 글자가 안 맞았을 뿐)
+    한쪽만 실패한 건은 사람이 본다. 원장에 keep/hold가 있으면 그쪽이 우선하므로,
+    이미 확인한 편입이 이 규칙에 걸려 빠지는 일은 없다.
+    """
+    return v.get("evidence") == "contradicts" and v.get("fit") == "not_fits"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-id", required=True)
@@ -76,7 +90,7 @@ def main() -> int:
     run_keys = {(v["theme_id"], v["ticker"]) for v in audit}
     run_themes = {t for t, _ in run_keys}
 
-    exclude, needs_review, hold_seen = [], [], []
+    exclude, rule_exclude, needs_review, hold_seen = [], [], [], []
     flagged_excluded = flagged_kept = 0
     for v in audit:
         key = (v["theme_id"], v["ticker"])
@@ -88,6 +102,9 @@ def main() -> int:
             flagged_kept += needs_look(v)
             if dec["decision"] == "hold":
                 hold_seen.append([*key, dec["reason"]])
+        elif both_axes_failed(v):
+            rule_exclude.append([*key, f"감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: "
+                                       f"{v.get('reason', '')}"])
         elif needs_look(v):
             needs_review.append([*key, f"감사 evidence={v.get('evidence')} fit={v.get('fit')}: "
                                        f"{v.get('reason', '')}"])
@@ -113,6 +130,7 @@ def main() -> int:
         f"{args.market} {len(audit)}행 / 감사 적발 {flagged}건",
         f"  이전 판정으로 자동 처리 {flagged_excluded + flagged_kept}건"
         f" (제외 {flagged_excluded} / 감사 편차로 유지 {flagged_kept})",
+        f"  규칙으로 자동 제외 {len(rule_exclude)}건 (두 축 모두 실패 - 실측 정확도 89%)",
         f"  사람 검토 필요 {len(needs_review)}건",
         f"자동 제외 {len(exclude)}건(감사 통과분 포함) / 자동 복원 {len(restore)}건"
         + (f" - 그중 오래된 판정 {len(stale)}건 확인 필요" if stale else "")
@@ -129,7 +147,8 @@ def main() -> int:
         "market": args.market,
         "summary": summary,
         "needs_review": needs_review,
-        "exclude": exclude,
+        "exclude": exclude + rule_exclude,
+        "info_rule_exclude": rule_exclude,
         "keep": [],
         "restore": restore,
         "info_hold_in_run": hold_seen,
@@ -141,7 +160,8 @@ def main() -> int:
     (out_dir / f"{stem}.json").write_text(json.dumps(draft, ensure_ascii=False, indent=1) + "\n",
                                           encoding="utf-8")
     lines = summary + ["", "== 사람 검토 필요 =="] + [f"  [{t}] {c} {r}" for t, c, r in needs_review]
-    lines += ["", "== 자동 제외 =="] + [f"  [{t}] {c} {r}" for t, c, r in exclude]
+    lines += ["", "== 자동 제외(이전 판정) =="] + [f"  [{t}] {c} {r}" for t, c, r in exclude]
+    lines += ["", "== 자동 제외(두 축 모두 실패 규칙) =="] + [f"  [{t}] {c} {r}" for t, c, r in rule_exclude]
     lines += ["", "== 자동 복원 (빼려면 restore에서 지운다) =="] + [f"  [{t}] {c} {r}" for t, c, r in restore]
     if stale:
         lines += ["", "== 그중 판정이 오래된 것 - 사업 변화 확인 =="]

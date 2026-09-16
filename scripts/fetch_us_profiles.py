@@ -19,11 +19,16 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "us_profiles.json"
+# 감사용 긴 요약 길이(2026-09-16: 700 -> 2500). 700자에서 잘린 뒤쪽에 인용할 문구가 있어
+# 감사가 멀쩡한 편입을 "인용 검증 실패"로 뒤집는 일이 잦았다.
+LONG_CHARS = 2500
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only-missing", action="store_true")
+    ap.add_argument("--relengthen", action="store_true",
+                     help="예전 상한(700자)에서 잘린 summary_long을 다시 받아 늘린다")
     args = ap.parse_args()
 
     import yfinance as yf
@@ -33,7 +38,9 @@ def main() -> int:
     out: dict[str, dict] = {}
     if args.only_missing and OUT.exists():
         out = json.loads(OUT.read_text(encoding="utf-8"))
-        tickers = [t for t in tickers if t not in out]
+        tickers = [t for t in tickers
+                   if t not in out
+                   or (args.relengthen and len((out[t].get("summary_long") or "")) >= 700)]
     print(f"조회 대상 {len(tickers)}종목", flush=True)
 
     missing = 0
@@ -48,7 +55,7 @@ def main() -> int:
             s = (info.get("longBusinessSummary") or "").strip()
             if s:
                 rec["summary"] = s[:140]
-                rec["summary_long"] = s[:700]
+                rec["summary_long"] = s[:LONG_CHARS]
         except Exception:
             pass
         if rec:
