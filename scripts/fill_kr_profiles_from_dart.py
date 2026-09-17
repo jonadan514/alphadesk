@@ -109,10 +109,12 @@ def main() -> int:
         if rcept:
             overview = dart.business_overview(rcept)
             time.sleep(0.15)
-        if overview:
+        # yfinance 요약이 이미 있으면 덮어쓰지 않는다 - 산업분류만 비어 있던 종목도 대상에
+        # 들어오는데, 그 종목의 기존 요약은 멀쩡하다.
+        if overview and not rec.get("summary"):
             rec["summary"] = overview[:140]
             rec["summary_long"] = overview[:2500]
-        else:
+        elif not overview:
             no_overview += 1
         if rec != profiles.get(t):
             rec["source"] = "dart"
