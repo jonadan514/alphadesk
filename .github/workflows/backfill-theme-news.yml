@@ -1,0 +1,47 @@
+name: Backfill Theme News Counts
+
+# 분기 재설계(docs/REDESIGN_SPEC.md 6장)용 주간 기사 수 이력 백필.
+# 기사 원문은 저장하지 않고 건수만 theme_news_weekly에 남긴다.
+# 작업 하나가 6시간 제한이라 날짜 구간을 나눠 여러 번 돌린다. 이미 센 주는 건너뛰므로
+# 중간에 끊기면 같은 구간으로 다시 실행하면 이어서 한다.
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "첫 주 YYYY-MM-DD (그 주 월요일로 맞춘다)"
+        required: true
+      end:
+        description: "마지막 주 YYYY-MM-DD (비우면 지난주)"
+        required: false
+        default: ""
+      force:
+        description: "true면 이미 센 주도 다시 센다"
+        required: false
+        default: "false"
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        market: [KR, US]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Backfill
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          ARGS=(--market "${{ matrix.market }}" --start "${{ inputs.start }}")
+          [ -n "${{ inputs.end }}" ] && ARGS+=(--end "${{ inputs.end }}")
+          [ "${{ inputs.force }}" = "true" ] && ARGS+=(--force)
+          python scripts/backfill_theme_news_counts.py "${ARGS[@]}"
