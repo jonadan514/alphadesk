@@ -119,6 +119,23 @@ def _retry_wait(resp: requests.Response | None, attempt: int) -> float:
     return min(2 ** (attempt + 1), 32) + random.random()
 
 
+def _chat_payload(system: str, prompt: str, temperature: float) -> dict:
+    """모델 계열에 맞는 요청 본문. o-시리즈와 gpt-5 계열은 temperature를 받지 않고
+    max_tokens 대신 max_completion_tokens를 쓴다 - 그냥 보내면 400으로 거절당한다
+    (2026-09-16 모델 A/B에서 o4-mini·gpt-5-mini가 전부 실패한 원인)."""
+    body: dict = {
+        "model": OPENAI_MODEL,
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+        "response_format": {"type": "json_object"},
+    }
+    if OPENAI_MODEL.startswith(("o1", "o3", "o4", "gpt-5")):
+        body["max_completion_tokens"] = 4000   # 추론 토큰이 따로 소모돼 넉넉히 준다
+    else:
+        body["temperature"] = temperature
+        body["max_tokens"] = 2000
+    return body
+
+
 def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.2) -> dict | None:
     global CALL_FAILURES
     last_err = ""
@@ -128,16 +145,7 @@ def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.
             resp = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json={
-                    "model": OPENAI_MODEL,
-                    "messages": [
-                        {"role": "system", "content": system},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "temperature": temperature,
-                    "max_tokens": 2000,
-                    "response_format": {"type": "json_object"},
-                },
+                json=_chat_payload(system, prompt, temperature),
                 timeout=90,
             )
             # v7부터 미국 청크가 2만 토큰을 넘어 분당 토큰 한도(429)에 걸린다 - 기다렸다 다시 부른다.
