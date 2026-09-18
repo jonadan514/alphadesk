@@ -127,11 +127,16 @@ def main() -> int:
         time.sleep(0.15)
 
         overview = None
-        rcept = dart.latest_annual_report_no(cc, bgn.strftime("%Y%m%d"), end.strftime("%Y%m%d"))
-        time.sleep(0.15)
-        if rcept:
-            overview = dart.business_overview(rcept)
+        try:
+            rcept = dart.latest_annual_report_no(cc, bgn.strftime("%Y%m%d"), end.strftime("%Y%m%d"))
             time.sleep(0.15)
+            if rcept:
+                overview = dart.business_overview(rcept)
+                time.sleep(0.15)
+        except dart.DartKeyError:
+            raise
+        except Exception as e:  # noqa: BLE001 - 한 종목 실패로 전체를 멈추지 않는다
+            _log(f"  {t} {name}: 사업의 개요 조회 실패 {type(e).__name__}: {str(e)[:100]}")
         # yfinance 요약이 이미 있으면 덮어쓰지 않는다 - 산업분류만 비어 있던 종목도 대상에
         # 들어오는데, 그 종목의 기존 요약은 멀쩡하다.
         if overview and not rec.get("summary"):

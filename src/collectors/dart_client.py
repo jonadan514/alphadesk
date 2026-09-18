@@ -27,7 +27,7 @@ import requests
 
 BASE = "https://opendart.fss.or.kr/api"
 MAX_ATTEMPTS = 5
-NO_DATA = "013"
+NO_DATA = ("013", "014")   # 013 조회된 데이터 없음 / 014 파일이 존재하지 않습니다
 RETRY_STATUSES = {"020", "800", "900"}
 
 
@@ -60,7 +60,7 @@ def _get(path: str, params: dict, *, binary: bool = False):
                     msg = r.content[:300].decode("utf-8", errors="replace")
                     if "010" in msg or "011" in msg:
                         raise DartKeyError("DART 키가 유효하지 않다")
-                    if NO_DATA in msg:
+                    if any(f"<status>{code}</status>" in msg or code in msg for code in NO_DATA):
                         return None
                     last = msg
                     time.sleep(min(2 ** (attempt + 1), 30))
@@ -70,8 +70,8 @@ def _get(path: str, params: dict, *, binary: bool = False):
             status = str(data.get("status", ""))
             if status == "000":
                 return data
-            if status == NO_DATA:
-                return {"status": NO_DATA, "list": []}
+            if status in NO_DATA:
+                return {"status": status, "list": []}
             if status in ("010", "011", "012"):
                 raise DartKeyError(f"DART 키 오류 status={status}")
             if status in RETRY_STATUSES:
@@ -163,13 +163,19 @@ def _extract_overview(plain: str, max_chars: int) -> str | None:
     best = None
     for pat in _START_PATTERNS:
         for m in re.finditer(pat, plain):
+            # 앞뒤로 "참조/참고하시기 바랍니다" 같은 상호참조 문구면 본문이 아니다.
+            around = plain[max(0, m.start() - 60):m.start()]
+            if re.search(r"참조|참고|기재", around):
+                continue
             rest = plain[m.end():m.end() + 20000]
             end = None
             for ep in _END_PATTERNS:
                 found = re.search(ep, rest)
                 if found and (end is None or found.start() < end):
                     end = found.start()
-            body = (rest[:end] if end else rest).strip()
+            if end is None:
+                continue  # 다음 절 제목이 안 나오면 목차나 상호참조다 - 본문은 반드시 닫힌다
+            body = rest[:end].strip()
             if len(body) >= 200 and (best is None or len(body) > len(best)):
                 best = body
     return best[:max_chars] if best else None
