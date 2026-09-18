@@ -143,7 +143,9 @@ def main() -> int:
             rec["source"] = "dart"
             profiles[t] = rec
             filled += 1
-        _log(f"  {t} {name}: 업종 {rec.get('industry', '-')} / 개요 {len(overview) if overview else 0}자")
+        snippet = " ".join((overview or "")[:70].split())
+        _log(f"  {t} {name}: 업종 {rec.get('industry', '-')} / 개요 {len(overview) if overview else 0}자"
+             + (f" | {snippet}" if snippet else ""))
 
     PROFILES.write_text(json.dumps(profiles, ensure_ascii=False, indent=1), encoding="utf-8")
     _log(f"완료: 보강 {filled} / 기업코드 없음 {no_corp} / 사업의 개요 못 찾음 {no_overview}")
