@@ -135,26 +135,60 @@ def latest_annual_report_no(corp_code: str, bgn_de: str, end_de: str) -> str | N
 
 _TAG_RE = re.compile(r"<[^>]+>")
 _SPACE_RE = re.compile(r"\s+")
+# 공시 원문은 회사·연도마다 인코딩이 다르다(최근은 utf-8, 예전 양식은 EUC-KR 계열).
+# utf-8로만 읽으면 한글이 깨져 제목 검색이 전부 실패한다 - 2026-09-18에 5종목 중 3종목이
+# "사업의 개요 못 찾음"으로 나온 원인이었다.
+DOC_ENCODINGS = ("utf-8", "cp949", "euc-kr")
+# 구간 시작·끝 제목. 번호 표기가 "1.", "1)", "가." 등으로 회사마다 다르다.
+_START_PATTERNS = (r"사업의\s*개요", r"Ⅱ\s*[.．]?\s*사업의\s*내용", r"II\s*[.．]?\s*사업의\s*내용")
+_END_PATTERNS = (r"주요\s*제품\s*및\s*서비스", r"주요\s*제품\s*및\s*원재료", r"2\s*[.．)]\s*주요",
+                 r"원재료\s*및\s*생산설비", r"매출\s*및\s*수주상황")
+
+
+def _decode(data: bytes) -> str:
+    for enc in DOC_ENCODINGS:
+        try:
+            return data.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return data.decode("utf-8", errors="replace")
+
+
+def _extract_overview(plain: str, max_chars: int) -> str | None:
+    """태그를 걷어낸 텍스트에서 '사업의 개요' 본문 중 가장 실한 구간을 고른다.
+
+    같은 제목이 목차에도 나오기 때문에 첫 번째를 쓰면 목차 몇 글자만 잡힌다.
+    모든 등장 위치를 보고 뒤따르는 본문이 가장 긴 것을 쓴다.
+    """
+    best = None
+    for pat in _START_PATTERNS:
+        for m in re.finditer(pat, plain):
+            rest = plain[m.end():m.end() + 20000]
+            end = None
+            for ep in _END_PATTERNS:
+                found = re.search(ep, rest)
+                if found and (end is None or found.start() < end):
+                    end = found.start()
+            body = (rest[:end] if end else rest).strip()
+            if len(body) >= 200 and (best is None or len(body) > len(best)):
+                best = body
+    return best[:max_chars] if best else None
 
 
 def business_overview(rcept_no: str, max_chars: int = 2500) -> str | None:
-    """사업보고서 원문에서 'II. 사업의 내용'의 '1. 사업의 개요' 본문을 뽑는다.
+    """사업보고서 원문에서 'II. 사업의 내용'의 '사업의 개요' 본문을 뽑는다.
 
-    원문은 DART 전용 XML이라 구조가 회사마다 조금씩 다르다. 제목 문자열로 구간을 잡고
-    태그를 걷어낸 텍스트만 쓴다. 못 찾으면 None(사업정보 없음과 같게 취급).
+    원문 zip 안의 모든 파일을 훑는다 - 본문이 가장 큰 파일이 아닐 수 있고(첨부·감사보고서가
+    더 큰 경우가 있다), 회사마다 파일을 쪼개는 방식이 다르다. 못 찾으면 None.
     """
     raw = _get("document.xml", {"rcept_no": rcept_no}, binary=True)
     if not raw:
         return None
+    best = None
     with zipfile.ZipFile(io.BytesIO(raw)) as zf:
-        # 본문이 가장 큰 파일이다(첨부·감사보고서는 따로 있다)
-        name = max(zf.namelist(), key=lambda n: zf.getinfo(n).file_size)
-        text = zf.read(name).decode("utf-8", errors="replace")
-    plain = _SPACE_RE.sub(" ", _TAG_RE.sub(" ", text))
-    start = re.search(r"1\s*\.\s*사업의\s*개요", plain)
-    if not start:
-        return None
-    rest = plain[start.end():]
-    end = re.search(r"2\s*\.\s*주요\s*(제품|사업)", rest)
-    body = (rest[:end.start()] if end else rest).strip()
-    return body[:max_chars] if len(body) >= 50 else None
+        for name in sorted(zf.namelist(), key=lambda n: -zf.getinfo(n).file_size):
+            plain = _SPACE_RE.sub(" ", _TAG_RE.sub(" ", _decode(zf.read(name))))
+            got = _extract_overview(plain, max_chars)
+            if got and (best is None or len(got) > len(best)):
+                best = got
+    return best

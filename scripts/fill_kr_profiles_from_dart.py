@@ -66,6 +66,29 @@ KSIC_DIVISION = {
 }
 
 
+# 중분류로는 오해를 부르는 코드. 지주회사는 KSIC상 금융업(64)으로 분류되는데, 그대로
+# "금융업"이라고 적으면 매핑 프롬프트가 에코프로·LG 같은 사업지주회사를 금융사로 읽는다.
+KSIC_SPECIFIC = {
+    "642": "지주회사", "64992": "지주회사", "6499": "기타 금융업",
+    "261": "반도체 제조업", "262": "전자부품 제조업", "263": "컴퓨터 및 주변장치 제조업",
+    "264": "통신 및 방송장비 제조업", "265": "영상·음향기기 제조업",
+    "271": "의료용 기기 제조업", "272": "측정·시험·항해·제어 장비 제조업",
+    "212": "의약품 제조업", "213": "의료용품 제조업",
+}
+
+
+def industry_label(code: str) -> str:
+    """DART 업종코드(KSIC) -> 사람이 읽을 업종명."""
+    code = str(code or "").strip()
+    if not code:
+        return ""
+    for length in (5, 4, 3):
+        hit = KSIC_SPECIFIC.get(code[:length])
+        if hit:
+            return hit
+    return KSIC_DIVISION.get(code[:2], f"KSIC {code}")
+
+
 def _log(msg: str) -> None:
     print(f"[dart-profile] {msg}", flush=True)
 
@@ -99,7 +122,7 @@ def main() -> int:
         info = dart.fetch_company(cc)
         code = str(info.get("induty_code") or "")
         if code and not rec.get("industry"):
-            rec["industry"] = KSIC_DIVISION.get(code[:2], f"KSIC {code}")
+            rec["industry"] = industry_label(code)
             rec["industry_code"] = code
         time.sleep(0.15)
 
