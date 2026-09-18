@@ -96,12 +96,16 @@ def _log(msg: str) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tickers", nargs="*", default=None)
+    ap.add_argument("--refresh-dart", action="store_true",
+                     help="이미 DART로 채운 종목(source=dart)의 사업의 개요를 다시 받아 덮어쓴다")
     args = ap.parse_args()
 
     profiles = json.loads(PROFILES.read_text(encoding="utf-8"))
     universe = {i["symbol"]: i for i in json.loads(UNIVERSE.read_text(encoding="utf-8"))["items"]}
     if args.tickers:
         todo = args.tickers
+    elif args.refresh_dart:
+        todo = [s for s in universe if (profiles.get(s) or {}).get("source") == "dart"]
     else:
         todo = [s for s in universe if not (profiles.get(s) or {}).get("industry")
                 or not (profiles.get(s) or {}).get("summary")]
@@ -139,7 +143,10 @@ def main() -> int:
             _log(f"  {t} {name}: 사업의 개요 조회 실패 {type(e).__name__}: {str(e)[:100]}")
         # yfinance 요약이 이미 있으면 덮어쓰지 않는다 - 산업분류만 비어 있던 종목도 대상에
         # 들어오는데, 그 종목의 기존 요약은 멀쩡하다.
-        if overview and not rec.get("summary"):
+        if overview and args.refresh_dart and rec.get("source") == "dart":
+            rec["summary"] = overview[:140]
+            rec["summary_long"] = overview[:2500]
+        elif overview and not rec.get("summary"):
             rec["summary"] = overview[:140]
             rec["summary_long"] = overview[:2500]
         elif not overview:

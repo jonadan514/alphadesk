@@ -163,9 +163,11 @@ def _extract_overview(plain: str, max_chars: int) -> str | None:
     best = None
     for pat in _START_PATTERNS:
         for m in re.finditer(pat, plain):
-            # 앞뒤로 "참조/참고하시기 바랍니다" 같은 상호참조 문구면 본문이 아니다.
-            around = plain[max(0, m.start() - 60):m.start()]
-            if re.search(r"참조|참고|기재", around):
+            # 상호참조("...'1. 사업의 개요'를 참조하시기 바랍니다")는 본문이 아니다.
+            # 참조 문구는 제목 앞에도("아래 1. 사업의 개요 참고") 뒤에도 올 수 있어 양쪽을 본다.
+            before = plain[max(0, m.start() - 25):m.start()]
+            after = plain[m.end():m.end() + 25]
+            if re.search(r"참조|참고|기재", before) or re.search(r"참조|참고", after):
                 continue
             rest = plain[m.end():m.end() + 20000]
             end = None
