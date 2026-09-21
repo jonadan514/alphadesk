@@ -136,3 +136,49 @@ def test_기준_성장률이_None이면_0을_쓴다():
 def test_기준일은_가장_최근_분기다():
     members, rev = members_and_revenue(improved=5, not_improved=0)
     assert compute_earn_signal(members, rev, THRESHOLDS, 0.10)["as_of"] == "2026-Q2"
+
+
+# ── 시장 중앙값의 표본 범위 (작업지시서 Phase 2) ───────────────
+#
+# "시장 중앙값"은 그 시장 유니버스 **전체**의 성장률 중앙값이어야 한다. 전에는 테마에
+# 한 번이라도 소속된 기업만 표본이었다 - 그러면 소속 기업이 곧 표본이라 절반이 자동으로
+# 기준 위에 놓이고(개선 비율이 0.5 근처로 쏠림), 테마가 몰려 있는 업종 성장이 기준선에
+# 그대로 섞여 들어간다.
+
+from analyzers.theme_earnings import reference_growth_for_market
+
+
+def universe_revenue(n_high: int, n_low: int, *, market_prefix: str = "U"):
+    """성장률 0.30인 기업 n_high개와 0.00인 기업 n_low개로 이뤄진 유니버스."""
+    rev = {f"{market_prefix}H{i}": growing(0.30) for i in range(n_high)}
+    rev.update({f"{market_prefix}L{i}": growing(0.00) for i in range(n_low)})
+    return rev
+
+
+def test_기준_성장률은_테마_소속이_아니라_시장_전체로_낸다():
+    # 유니버스: 성장 기업 5 + 정체 기업 25 -> 중앙값 0.00
+    # 테마 소속은 성장 기업 5곳뿐 - 소속만 표본으로 쓰면 중앙값이 0.30으로 나온다.
+    universe = universe_revenue(5, 25)
+    assert reference_growth_for_market(universe, "US") == pytest.approx(0.00)
+    # 같은 데이터에서 성장 기업 20곳만 소속이라고 치면(표본 20개 충족) 소속 기준 중앙값은 0.30이다
+    only_members = universe_revenue(20, 0)
+    assert market_median_growth(only_members) == pytest.approx(0.30)
+
+
+def test_소속이_성장_기업뿐이어도_시장_기준에서는_개선으로_판정된다():
+    universe = universe_revenue(5, 25)
+    ref = reference_growth_for_market(universe, "US")
+    members = [{"ticker": f"UH{i}"} for i in range(5)]
+    r = compute_earn_signal(members, universe, THRESHOLDS, reference_growth=ref)
+    assert r["ratio"] == 1.0 and r["arrow"] == "up2"
+
+
+def test_유니버스_표본이_20개_미만이면_None을_돌려준다():
+    assert reference_growth_for_market(universe_revenue(5, 10), "US") is None
+
+
+def test_데이터가_없는_종목은_표본에서_뺀다():
+    universe = universe_revenue(10, 10)
+    universe["NONE1"] = None
+    universe["SHORT"] = series([1, 2])
+    assert reference_growth_for_market(universe, "US") == pytest.approx(0.15)
