@@ -32,6 +32,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from collectors import dart_client as dart
+from collectors.kr_profiles import backfill_field_sources
 
 PROFILES = ROOT / "data" / "kr_profiles.json"
 UNIVERSE = ROOT / "data" / "kr_universe.json"
@@ -89,6 +90,43 @@ def industry_label(code: str) -> str:
     return KSIC_DIVISION.get(code[:2], f"KSIC {code}")
 
 
+def apply_dart_fields(existing: dict, *, industry: str | None, industry_code: str | None,
+                      overview: str | None, refresh: bool = False) -> dict:
+    """DART가 가져온 값을 프로필에 반영한다. 원본을 바꾸지 않고 새 dict를 돌려준다.
+
+    실제로 바꾼 필드만 <필드>_source="dart"로 기록한다 - 예전에는 레코드 전체에
+    source="dart" 하나만 붙여서, 산업분류는 DART지만 요약은 yfinance인 경우를 구별할 수 없었다.
+    기존 source 필드는 하위 호환을 위해 그대로 남긴다(무언가 바꿨을 때만).
+
+    기존 값이 있으면 덮어쓰지 않는다. 예외는 refresh=True일 때 **DART가 채운** 요약뿐이다 -
+    yfinance 요약은 refresh여도 건드리지 않는다.
+    """
+    rec = backfill_field_sources(existing)
+    changed = False
+
+    if industry and not rec.get("industry"):
+        rec["industry"] = industry
+        rec["industry_source"] = "dart"
+        if industry_code:
+            rec["industry_code"] = industry_code
+        changed = True
+
+    if overview:
+        dart_owned = rec.get("summary_source") == "dart"
+        if not rec.get("summary") or (refresh and dart_owned):
+            rec["summary"] = overview[:140]
+            rec["summary_source"] = "dart"
+            changed = True
+        if not rec.get("summary_long") or (refresh and rec.get("summary_long_source") == "dart"):
+            rec["summary_long"] = overview[:2500]
+            rec["summary_long_source"] = "dart"
+            changed = True
+
+    if changed:
+        rec["source"] = "dart"
+    return rec
+
+
 def _log(msg: str) -> None:
     print(f"[dart-profile] {msg}", flush=True)
 
@@ -122,12 +160,9 @@ def main() -> int:
             no_corp += 1
             _log(f"  {t} {name}: DART 기업코드 없음")
             continue
-        rec = dict(profiles.get(t) or {})
+        existing = profiles.get(t) or {}
         info = dart.fetch_company(cc)
         code = str(info.get("induty_code") or "")
-        if code and not rec.get("industry"):
-            rec["industry"] = industry_label(code)
-            rec["industry_code"] = code
         time.sleep(0.15)
 
         overview = None
@@ -141,18 +176,13 @@ def main() -> int:
             raise
         except Exception as e:  # noqa: BLE001 - 한 종목 실패로 전체를 멈추지 않는다
             _log(f"  {t} {name}: 사업의 개요 조회 실패 {type(e).__name__}: {str(e)[:100]}")
-        # yfinance 요약이 이미 있으면 덮어쓰지 않는다 - 산업분류만 비어 있던 종목도 대상에
-        # 들어오는데, 그 종목의 기존 요약은 멀쩡하다.
-        if overview and args.refresh_dart and rec.get("source") == "dart":
-            rec["summary"] = overview[:140]
-            rec["summary_long"] = overview[:2500]
-        elif overview and not rec.get("summary"):
-            rec["summary"] = overview[:140]
-            rec["summary_long"] = overview[:2500]
-        elif not overview:
+        if not overview:
             no_overview += 1
-        if rec != profiles.get(t):
-            rec["source"] = "dart"
+
+        rec = apply_dart_fields(existing, industry=industry_label(code) if code else None,
+                                industry_code=code or None, overview=overview,
+                                refresh=args.refresh_dart)
+        if rec != existing:
             profiles[t] = rec
             filled += 1
         snippet = " ".join((overview or "")[:70].split())

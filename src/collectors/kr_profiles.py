@@ -18,6 +18,34 @@ PROFILES = ROOT / "data" / "kr_profiles.json"
 OVERRIDES = ROOT / "data" / "kr_profile_overrides.json"
 
 
+# 출처를 필드별로 기록하는 대상. 각 필드의 출처는 "<필드>_source"에 남긴다
+# ("dart" | "yfinance" | "override"). 기존 kr_profile_overrides.json이 이미
+# industry_source="override"를 쓰고 있어 같은 규칙을 따른다.
+FIELD_SOURCE_KEYS = ("industry", "summary", "summary_long")
+
+
+def backfill_field_sources(rec: dict) -> dict:
+    """출처가 안 적힌 기존 값에 출처를 채운다(원본은 바꾸지 않고 새 dict를 돌려준다).
+
+    옛 데이터는 전부 yfinance에서 왔고, 예외는 DART로 보강한 종목뿐이다. 옛 형식에서는
+    레코드 전체에 source="dart" 하나만 있었으므로 필드별로 이렇게 가른다.
+      industry : industry_code가 있으면 DART가 채운 것, 없으면 yfinance 원본
+      summary  : source="dart"인 레코드면 DART가 채운 것(DART 보강은 요약이 비어 있을 때만 쓴다)
+    값이 없는 필드에는 출처를 만들지 않는다. 이미 출처가 있으면 바꾸지 않는다.
+    """
+    out = dict(rec)
+    legacy_dart = rec.get("source") == "dart"
+    for key in FIELD_SOURCE_KEYS:
+        src_key = f"{key}_source"
+        if not rec.get(key) or rec.get(src_key):
+            continue
+        if key == "industry":
+            out[src_key] = "dart" if rec.get("industry_code") else "yfinance"
+        else:
+            out[src_key] = "dart" if legacy_dart else "yfinance"
+    return out
+
+
 def load_kr_profiles() -> dict[str, dict]:
     if not PROFILES.exists():
         return {}
