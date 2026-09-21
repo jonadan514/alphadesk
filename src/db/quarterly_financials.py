@@ -112,6 +112,28 @@ def insert_quarter(conn, ticker: str, market: str, year: int, quarter: int, valu
 
 _RAW_COLS = ("fiscal_year", "fiscal_quarter", "revenue", "operating_income", "net_income",
              "source", "fs_div", "derived", "collected_at")
+_INT_COLS = ("fiscal_year", "fiscal_quarter")
+_FLOAT_COLS = ("revenue", "operating_income", "net_income")
+
+
+def _coerce(rec: dict) -> dict:
+    """숫자 컬럼을 실제 숫자로 되돌린다.
+
+    Turso HTTP 클라이언트는 INTEGER 컬럼을 **문자열**로 돌려준다(Hrana 프로토콜이 64비트
+    정밀도 손실을 막으려고 정수를 문자열로 싣는데, _TursoConn.fetchall()이 타입 변환 없이
+    그대로 넘긴다). 로컬 sqlite는 int를 주므로 테스트로는 드러나지 않는다 - 이 저장소는
+    2026-09-01에 같은 함정으로 뉴스 기준선 계산이 `int + str`로 죽은 적이 있다.
+
+    여기서 한 번 보정해두면 읽는 쪽이 `연도 - 1`, `분기 == 4` 같은 계산을 그냥 할 수 있다.
+    """
+    out = dict(rec)
+    for key in _INT_COLS:
+        if out.get(key) is not None:
+            out[key] = int(out[key])
+    for key in _FLOAT_COLS:
+        if out.get(key) is not None:
+            out[key] = float(out[key])
+    return out
 
 
 def select_quarters(conn, ticker: str, market: str) -> list[dict]:
@@ -124,8 +146,8 @@ def select_quarters(conn, ticker: str, market: str) -> list[dict]:
 
     best: dict[tuple[int, int], dict] = {}
     for r in rows:
-        rec = dict(zip(_RAW_COLS, r))
-        key = (int(rec["fiscal_year"]), int(rec["fiscal_quarter"]))
+        rec = _coerce(dict(zip(_RAW_COLS, r)))
+        key = (rec["fiscal_year"], rec["fiscal_quarter"])
         cur = best.get(key)
         if cur is None or _rank(rec) > _rank(cur):
             best[key] = rec

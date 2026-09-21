@@ -7,6 +7,8 @@
 """
 from __future__ import annotations
 
+import pytest
+
 from src.db.quarterly_financials import (ensure_schema, insert_quarter, migrate_legacy_rows,
                                           select_quarters)
 
@@ -130,3 +132,60 @@ def test_옮긴_뒤_연결재무를_새로_받으면_그것을_쓴다(memory_db)
     migrate_legacy_rows(memory_db)
     put(memory_db, fs="CFS", revenue=130, on="2026-09-21")
     assert select_quarters(memory_db, "005930", "KR")[0]["revenue"] == 130
+
+
+# ── 운영 DB(Turso) 반환 타입 ──────────────────────────────────
+#
+# Turso는 INTEGER 컬럼을 문자열로 돌려준다. 로컬 sqlite만으로 테스트하면 이 차이가 드러나지
+# 않아, 다음 단계(변화 신호 계산)가 `연도 - 1`이나 `분기 == 4`를 할 때 운영에서만 틀린다.
+
+def test_운영DB에서도_연도와_분기가_숫자다(turso_like_db):
+    ensure_schema(turso_like_db)
+    put(turso_like_db, year=2026, quarter=2, revenue=1_000_000)
+    row = select_quarters(turso_like_db, "005930", "KR")[0]
+    assert row["fiscal_year"] == 2026 and row["fiscal_quarter"] == 2
+    assert isinstance(row["fiscal_year"], int) and isinstance(row["fiscal_quarter"], int)
+
+
+def test_운영DB에서도_금액이_숫자다(turso_like_db):
+    ensure_schema(turso_like_db)
+    put(turso_like_db, revenue=1_234_500, op=100, net=50)
+    row = select_quarters(turso_like_db, "005930", "KR")[0]
+    assert row["revenue"] == pytest.approx(1_234_500)
+    assert isinstance(row["revenue"], float) and isinstance(row["operating_income"], float)
+
+
+def test_운영DB에서_직전_분기_계산이_된다(turso_like_db):
+    """변화 신호가 쓰는 '1년 전 같은 분기' 찾기 - 문자열이면 여기서 깨진다."""
+    ensure_schema(turso_like_db)
+    for y, q in [(2026, 2), (2026, 1), (2025, 4), (2025, 3), (2025, 2)]:
+        put(turso_like_db, year=y, quarter=q, revenue=100 + q)
+    rows = select_quarters(turso_like_db, "005930", "KR")
+    latest = rows[0]
+    year_ago = (latest["fiscal_year"] - 1, latest["fiscal_quarter"])
+    assert year_ago == (2025, 2)
+    assert any((r["fiscal_year"], r["fiscal_quarter"]) == year_ago for r in rows)
+
+
+def test_운영DB에서도_연결재무_우선이_동작한다(turso_like_db):
+    ensure_schema(turso_like_db)
+    put(turso_like_db, fs="OFS", revenue=100, on="2026-09-01")
+    put(turso_like_db, fs="CFS", revenue=130, on="2026-09-20")
+    row = select_quarters(turso_like_db, "005930", "KR")[0]
+    assert row["fs_div"] == "CFS" and row["revenue"] == pytest.approx(130)
+
+
+def test_운영DB에서도_최신순_정렬이_맞다(turso_like_db):
+    ensure_schema(turso_like_db)
+    for y, q in [(2025, 3), (2026, 10 - 9), (2025, 4), (2026, 2)]:
+        put(turso_like_db, year=y, quarter=q)
+    got = [(r["fiscal_year"], r["fiscal_quarter"]) for r in select_quarters(turso_like_db, "005930", "KR")]
+    assert got == [(2026, 2), (2026, 1), (2025, 4), (2025, 3)]
+
+
+def test_금액이_없는_분기도_읽을_수_있다(turso_like_db):
+    """계산 불가를 탈락으로 처리하지 않는다(원칙 4) - None이 그대로 와야 한다."""
+    ensure_schema(turso_like_db)
+    put(turso_like_db, revenue=None, op=None, net=None)
+    row = select_quarters(turso_like_db, "005930", "KR")[0]
+    assert row["revenue"] is None and row["operating_income"] is None
