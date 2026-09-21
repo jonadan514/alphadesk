@@ -21,6 +21,7 @@ import re
 import time
 import xml.etree.ElementTree as ET
 import zipfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -87,10 +88,34 @@ def _get(path: str, params: dict, *, binary: bool = False):
 
 # ── 기업코드 매핑 ──────────────────────────────────────────────
 
+def meta_path(cache: Path) -> Path:
+    """캐시 파일 옆의 메타 파일 경로. data/dart_corp_codes.json -> data/dart_corp_codes_meta.json"""
+    return cache.with_name(f"{cache.stem}_meta{cache.suffix}")
+
+
+def _cache_fetched_at(cache: Path) -> datetime | None:
+    """메타 파일에 적힌 수집 시각. 없거나 깨져 있으면 None(= 오래된 것으로 본다)."""
+    try:
+        raw = json.loads(meta_path(cache).read_text(encoding="utf-8"))["fetched_at"]
+        ts = datetime.fromisoformat(raw)
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
+
+
 def load_corp_codes(cache: Path, max_age_days: int = 30) -> dict[str, str]:
-    """{종목코드: 기업코드}. 캐시 파일이 max_age_days보다 새로우면 다운로드하지 않는다."""
-    if cache.exists() and (time.time() - cache.stat().st_mtime) < max_age_days * 86400:
+    """{종목코드: 기업코드}. 메타 파일의 수집 시각이 max_age_days 이내면 다운로드하지 않는다.
+
+    신선도를 파일 mtime으로 판단하지 않는다(2026-09-21 수정). 이 캐시는 저장소에 커밋되고
+    GitHub Actions가 매번 새로 checkout하므로 mtime은 늘 "방금"이라, 캐시가 영원히 갱신되지
+    않고 신규 상장 종목이 계속 빠졌다. 메타 파일이 없거나 깨져 있으면 오래된 것으로 보고 한 번
+    새로 받는다. 캐시 파일 형식({종목코드: 기업코드})은 그대로다.
+    """
+    fetched = _cache_fetched_at(cache)
+    if cache.exists() and fetched and (datetime.now(timezone.utc) - fetched) < timedelta(days=max_age_days):
         return json.loads(cache.read_text(encoding="utf-8"))
+
+    # 다운로드에 실패하면 예외가 그대로 올라가고 기존 캐시 파일은 건드리지 않는다.
     raw = _get("corpCode.xml", {}, binary=True)
     with zipfile.ZipFile(io.BytesIO(raw)) as zf:
         xml_bytes = zf.read(zf.namelist()[0])
@@ -103,6 +128,9 @@ def load_corp_codes(cache: Path, max_age_days: int = 30) -> dict[str, str]:
             mapping[stock] = corp
     cache.parent.mkdir(parents=True, exist_ok=True)
     cache.write_text(json.dumps(mapping, ensure_ascii=False, indent=0, sort_keys=True), encoding="utf-8")
+    meta_path(cache).write_text(
+        json.dumps({"fetched_at": datetime.now(timezone.utc).isoformat(), "count": len(mapping)}),
+        encoding="utf-8")
     return mapping
 
 

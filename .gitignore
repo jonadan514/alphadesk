@@ -15,3 +15,7 @@ output/
 data/us_daily_prices.csv
 *.tsbuildinfo
 out/
+
+# pytest 임시 폴더
+.pytest_tmp/
+.pytest_cache/
