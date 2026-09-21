@@ -46,8 +46,9 @@ LLM 매핑에는 도구로 다 걸러지지 않는 오류가 남는다(2026-09-1
    - 정답지(`data/eval/evidence_audit_labels_*.json`)의 오류가 화면에 남았는지도 확인
 7. **테마 비우기** - 검토 결과 해당 기업이 없는 테마는 `Unapprove Theme Members`
    empty_themes. 최신 run에 행이 없으면 더 오래된 승인분이 드러나기 때문이다
-8. **판정 원장 갱신** - 이번 검토 파일을 `scripts/build_decision_ledger.py`의 `REVIEW_FILES` 끝에
-   추가하고 실행, `mapping_decisions.json` 커밋. 다음 분기부터 이번 판정이 재사용된다
+8. **판정 원장 갱신** - 이번 검토 파일을 `data/eval/review_manifest.json` 끝에 `{path, decided_at}`
+   항목으로 추가하고 `python scripts/build_decision_ledger.py` 실행, `mapping_decisions.json` 커밋.
+   다음 분기부터 이번 판정이 재사용된다. manifest에서 빠진 검토 파일이 있으면 실행 때 경고가 나온다
 9. **후속** - `backfill-quarterly-financials` → 실적 → 주가 → 라벨 재계산(이번 주 week_start)
 10. **확인** - 레이더 API에서 소속 수·na 테마·이름 표시 확인. 이름맵 누락 시
    최신 유니버스로 `krStockNames.ts` 재생성
