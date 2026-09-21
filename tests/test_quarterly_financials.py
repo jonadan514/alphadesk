@@ -189,3 +189,45 @@ def test_금액이_없는_분기도_읽을_수_있다(turso_like_db):
     put(turso_like_db, revenue=None, op=None, net=None)
     row = select_quarters(turso_like_db, "005930", "KR")[0]
     assert row["revenue"] is None and row["operating_income"] is None
+
+
+# ── 이전 행 수 (검토 지적 D) ──────────────────────────────────
+#
+# 운영 DB는 execute()가 커서가 아니라 자기 자신을 돌려주고 rowcount가 없다. 예전 구현은
+# rowcount를 읽어서 실제로 몇 행을 옮겼어도 운영에서는 항상 0을 돌려줬고, 그 값으로 찍는
+# 로그가 "이전이 돌았는지"를 알려주지 못했다.
+
+def test_운영DB에서_옮긴_행_수를_돌려준다(turso_like_db):
+    ensure_schema(turso_like_db)
+    _legacy_row(turso_like_db, ticker="005930")
+    _legacy_row(turso_like_db, ticker="000660")
+    assert migrate_legacy_rows(turso_like_db) == 2
+
+
+def test_운영DB에서_이미_옮긴_행은_세지_않는다(turso_like_db):
+    ensure_schema(turso_like_db)
+    _legacy_row(turso_like_db, ticker="005930")
+    _legacy_row(turso_like_db, ticker="000660")
+    migrate_legacy_rows(turso_like_db)
+    assert migrate_legacy_rows(turso_like_db) == 0
+
+
+def test_운영DB에서_돌려준_행_수는_정수다(turso_like_db):
+    """Turso는 COUNT(*)도 문자열로 돌려준다 - 정수로 바꾸지 않으면 뺄셈에서 죽는다."""
+    ensure_schema(turso_like_db)
+    _legacy_row(turso_like_db)
+    got = migrate_legacy_rows(turso_like_db)
+    assert isinstance(got, int) and got == 1
+
+
+def test_옮길_행이_없으면_0이다(turso_like_db):
+    ensure_schema(turso_like_db)
+    assert migrate_legacy_rows(turso_like_db) == 0
+
+
+def test_로컬_sqlite에서도_옮긴_행_수가_맞다(memory_db):
+    ensure_schema(memory_db)
+    _legacy_row(memory_db, ticker="005930")
+    _legacy_row(memory_db, ticker="000660")
+    assert migrate_legacy_rows(memory_db) == 2
+    assert migrate_legacy_rows(memory_db) == 0

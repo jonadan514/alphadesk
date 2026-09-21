@@ -69,8 +69,12 @@ def migrate_legacy_rows(conn) -> int:
 
     예전 테이블에는 수집일이 시각까지만 있어 앞 10자를 수집일로 쓴다. 같은 행이 이미
     raw에 있으면 기본키 충돌로 무시된다(INSERT OR IGNORE).
+
+    옮긴 행 수는 전후의 COUNT(*) 차이로 센다. 운영 DB(_TursoConn)의 execute()는 커서가
+    아니라 자기 자신을 돌려주고 rowcount가 없어서, rowcount에 기대면 몇 행을 옮겼든 0이 나온다.
     """
-    cur = conn.execute(
+    before = _count_raw(conn)
+    conn.execute(
         """
         INSERT OR IGNORE INTO quarterly_financials_raw
           (ticker, market, fiscal_year, fiscal_quarter, fs_div, source, collected_on,
@@ -82,7 +86,12 @@ def migrate_legacy_rows(conn) -> int:
         """
     )
     conn.commit()
-    return cur.rowcount if hasattr(cur, "rowcount") and cur.rowcount is not None else 0
+    return _count_raw(conn) - before
+
+
+def _count_raw(conn) -> int:
+    """raw 테이블의 전체 행 수. Turso는 COUNT(*)도 문자열로 돌려주므로 int로 바꾼다."""
+    return int(conn.execute("SELECT COUNT(*) FROM quarterly_financials_raw").fetchone()[0])
 
 
 def insert_quarter(conn, ticker: str, market: str, year: int, quarter: int, values: dict,
