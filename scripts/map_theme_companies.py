@@ -33,6 +33,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
+from src.llm import openai_json as oj
 from src.db.theme_mapping import ensure_schema, start_mapping_run, finish_mapping_run, insert_theme_member
 from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_MIN_CAP, KR_MIN_CAP
 
@@ -104,67 +105,27 @@ def build_universe_and_names() -> tuple[list[dict], dict[str, str]]:
 # 집계해 요약·통계에 남긴다(2026-09-15 v7 US 실행에서 429 63회로 편입이 무작위로 빠졌는데
 # 로그 중간에만 찍혀 결과를 측정에 쓸 뻔했다).
 CALL_FAILURES = 0
-MAX_ATTEMPTS = 6
 
 
-def _retry_wait(resp: requests.Response | None, attempt: int) -> float:
-    """429·5xx 대기 시간. 서버가 알려주면 그 값, 아니면 지수 백오프(2,4,8,16,32초)."""
-    if resp is not None:
-        ra = resp.headers.get("retry-after")
-        try:
-            if ra:
-                return min(float(ra) + 1, 60)
-        except ValueError:
-            pass
-    return min(2 ** (attempt + 1), 32) + random.random()
+def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.2,
+                 role: str | None = None) -> dict | None:
+    """공통 호출(src/llm/openai_json.py)의 매핑용 래퍼: 실패하면 None을 돌려주고 실패 수를 센다.
 
-
-def _chat_payload(system: str, prompt: str, temperature: float) -> dict:
-    """모델 계열에 맞는 요청 본문. o-시리즈와 gpt-5 계열은 temperature를 받지 않고
-    max_tokens 대신 max_completion_tokens를 쓴다 - 그냥 보내면 400으로 거절당한다
-    (2026-09-16 모델 A/B에서 o4-mini·gpt-5-mini가 전부 실패한 원인)."""
-    body: dict = {
-        "model": OPENAI_MODEL,
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-        "response_format": {"type": "json_object"},
-    }
-    if OPENAI_MODEL.startswith(("o1", "o3", "o4", "gpt-5")):
-        body["max_completion_tokens"] = 4000   # 추론 토큰이 따로 소모돼 넉넉히 준다
-    else:
-        body["temperature"] = temperature
-        body["max_tokens"] = 2000
-    return body
-
-
-def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.2) -> dict | None:
+    재시도·모델 계열별 파라미터는 공통 모듈이 처리한다. 매핑은 청크 하나가 실패해도 다음
+    청크로 계속 가야 하므로 예외를 None으로 바꾼다(감사는 예외를 그대로 쓴다).
+    role은 config/models.yaml의 역할 이름 - 비판 패스는 mapping_critic, 나머지는 theme_mapping.
+    OPENAI_MODEL을 직접 바꾸는 진단 스크립트(diagnose_mapping_model.py)를 위해 OPENAI_MODEL이
+    기본 모델과 다르면 그것을 우선한다.
+    """
     global CALL_FAILURES
-    last_err = ""
-    for attempt in range(MAX_ATTEMPTS):
-        resp = None
-        try:
-            resp = requests.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json=_chat_payload(system, prompt, temperature),
-                timeout=90,
-            )
-            # v7부터 미국 청크가 2만 토큰을 넘어 분당 토큰 한도(429)에 걸린다 - 기다렸다 다시 부른다.
-            if resp.status_code == 429 or resp.status_code >= 500:
-                last_err = f"HTTP {resp.status_code}"
-                time.sleep(_retry_wait(resp, attempt))
-                continue
-            resp.raise_for_status()
-            text = resp.json()["choices"][0]["message"]["content"]
-            return json.loads(text)
-        except (requests.Timeout, requests.ConnectionError) as e:
-            last_err = type(e).__name__
-            time.sleep(_retry_wait(None, attempt))
-        except Exception as e:
-            last_err = f"{type(e).__name__}: {e}"
-            break
-    CALL_FAILURES += 1
-    _log(f"  OpenAI 호출 실패(최종): {last_err}")
-    return None
+    model = OPENAI_MODEL if OPENAI_MODEL != oj.DEFAULT_MODEL else oj.model_for(role or "theme_mapping")
+    try:
+        return oj.call_json(model, system, prompt, api_key=api_key,
+                            max_output_tokens=2000, temperature=temperature, timeout=90)
+    except oj.OpenAICallError as e:
+        CALL_FAILURES += 1
+        _log(f"  OpenAI 호출 실패(최종): {e}")
+        return None
 
 
 def _theme_description(theme: dict) -> str:
@@ -556,6 +517,7 @@ def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_k
         prompt,
         "당신은 까다로운 산업 분석가입니다. 근거가 약하거나 사실과 다른 후보를 엄격히 지적합니다.",
         api_key,
+        role="mapping_critic",
     )
     if not parsed or not isinstance(parsed.get("flag"), list):
         return {}
