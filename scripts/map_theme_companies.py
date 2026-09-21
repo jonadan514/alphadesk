@@ -431,8 +431,17 @@ def _evidence_subject_mismatch(ticker: str, evidence: str, names: dict[str, str]
 
 def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[str],
                       cap_lookup: dict[str, float],
-                      names: dict[str, str] | None = None) -> tuple[list[dict], dict]:
+                      names: dict[str, str] | None = None,
+                      universe_market: dict[str, str] | None = None) -> tuple[list[dict], dict]:
     """SPEC §4 코드 검증. (통과 목록, 통계) 반환.
+
+    universe_market({티커: 시장})을 주면 시장은 **유니버스 기준으로 확정**한다. LLM이 답한
+    market은 쓰지 않는다(2026-09-21 수정). 시가총액 하한이 시장마다 통화가 달라서
+    (US 20억 **달러**, KR 2000억 **원**) LLM이 시장을 잘못 답하면 엉뚱한 기준으로 걸러진다.
+      KR 종목을 US로 오판 - 원화 시총이 달러 하한보다 늘 커서 통과한다(무해)
+      US 종목을 KR로 오판 - 30억 달러짜리가 2000억 "원" 하한에 걸려 부당 탈락한다(위험)
+    전에는 저장 직전에 시장 라벨만 보정했는데, 그때는 이미 탈락 판정이 끝난 뒤라
+    잘못 떨어진 기업은 되돌아오지 않았다.
 
     재무 데이터(fundamentals_cache) 존재 여부는 여기서 탈락시키지 않는다 — 그건
     나중에 실적 축 계산(Phase A-4)이 그 시점 캐시로 판단할 몫이고, 매핑 단계는
@@ -459,8 +468,10 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
             stats["티커실재실패"] += 1
             continue
 
-        # isdigit()만 쓰면 0126Z0(삼성에피스홀딩스) 같은 영문 포함 KR 코드가 US로 분류된다.
-        market = m.get("market") or ("KR" if _KR_CODE_RE.match(ticker) else "US")
+        # 유니버스에 있는 티커면 그 시장이 사실이다. 유니버스 정보가 없을 때만(단위 테스트 등)
+        # 코드 모양으로 판단한다 - isdigit()만 쓰면 0126Z0(삼성에피스홀딩스) 같은 영문 포함
+        # KR 코드가 US로 분류되므로 정규식을 쓴다. LLM이 답한 market은 신뢰하지 않는다.
+        market = (universe_market or {}).get(ticker) or ("KR" if _KR_CODE_RE.match(ticker) else "US")
         # KR은 사실상 이 하한이 발동하지 않는다 - valid_tickers 자체가 이미
         # get_kr_universe()(5000억 이상만) 로 구성되므로, 여기까지 온 candidate는
         # 이미 5000억을 넘는다. KR_MIN_CAP(2000억)은 watchlist 스크리닝용 하한이지
@@ -622,7 +633,8 @@ def main() -> None:
         raw_b = path_b_free_generation(theme, api_key)
         _log(f"  경로 B 후보: {len(raw_b)}개")
 
-        validated, stats = validate_members(raw_a, raw_b, valid_tickers, cap_lookup, names)
+        validated, stats = validate_members(raw_a, raw_b, valid_tickers, cap_lookup, names,
+                                            universe_market)
         blocked = []
         for m in validated:
             ind = industry_theme_conflict(theme_id, m["ticker"], profiles)
@@ -634,10 +646,7 @@ def main() -> None:
         stats["업종불일치"] = len(blocked)
         stats["통과"] = len(validated)
 
-        # 저장 시장은 LLM이 답한 market이 아니라 유니버스 기준으로 정한다. LLM이
-        # 미국 티커에 "KR"을 붙이면 다른 시장 행으로 저장돼 승인·표시가 어긋난다.
-        for m in validated:
-            m["market"] = universe_market.get(m["ticker"], m["market"])
+        # (시장 확정은 validate_members가 유니버스 기준으로 이미 끝냈다 - 2026-09-21)
         _log(f"  검증 결과: {stats}")
         if stats["경로B_폐기율"] > HALLUCINATION_WARN_RATE * 100:
             _log(f"  ⚠ 경로 B 환각 폐기율 {stats['경로B_폐기율']}% — 30% 초과, 프롬프트 재검토 필요")
