@@ -24,7 +24,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
-from src.db.quarterly_financials import ensure_schema, get_quarters, upsert_quarter
+from src.db.quarterly_financials import (ensure_schema, insert_quarter, migrate_legacy_rows,
+                                          select_quarters)
 from collectors import dart_client as dart
 from collectors.dart_financials import REPORT_CODES, latest_quarters, quarterly_values
 
@@ -74,6 +75,9 @@ def main() -> int:
 
     conn = get_db()
     ensure_schema(conn)
+    moved = migrate_legacy_rows(conn)   # 예전 테이블 값을 raw로 옮긴다(여러 번 돌려도 안전)
+    if moved:
+        _log(f"예전 테이블에서 {moved}행을 원본 테이블로 옮겼다")
     today = date.today()
     now = datetime.utcnow().isoformat()
     stats = {"ok": 0, "no_corp": 0, "no_data": 0, "lt5": 0, "error": 0, "ofs": 0}
@@ -96,7 +100,7 @@ def main() -> int:
             stats["no_data"] += 1
             continue
         for (y, q), v in values.items():
-            upsert_quarter(conn, t, "KR", y, q, v, "DART", "KRW", now)
+            insert_quarter(conn, t, "KR", y, q, v, "DART", "KRW", now)
         conn.commit()
         stats["ok"] += 1
         recent = latest_quarters(values)
@@ -113,7 +117,7 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         for t in args.tickers:
             name = universe.get(t, {}).get("name", "")
-            rows = get_quarters(conn, t, "KR")[:5]
+            rows = select_quarters(conn, t, "KR")[:5]
             print(f"\n{t} {name}  (단위: 억원)")
             print(f"  {'분기':8s} {'매출':>12s} {'영업이익':>10s} {'순이익':>10s}  구분  산출")
             for r in rows:

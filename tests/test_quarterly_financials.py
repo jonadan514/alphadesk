@@ -1,0 +1,132 @@
+"""분기 재무 저장·선택 규칙 (작업지시서 Phase 6 / docs/REDESIGN_SPEC.md 4-4).
+
+핵심 규칙
+  - 수집값은 쌓는다(덮어쓰지 않는다)
+  - 읽을 때 연결재무(CFS)를 먼저 고르고, 없으면 별도재무(OFS)
+  - 같은 구분이면 나중에 수집한 값(정정공시 반영)
+"""
+from __future__ import annotations
+
+from src.db.quarterly_financials import (ensure_schema, insert_quarter, migrate_legacy_rows,
+                                          select_quarters)
+
+
+def put(conn, *, year=2026, quarter=2, fs="CFS", revenue=100, op=10, net=5,
+        on="2026-09-20", source="DART", ticker="005930", market="KR", derived="reported"):
+    insert_quarter(conn, ticker, market, year, quarter,
+                   {"revenue": revenue, "operating_income": op, "net_income": net,
+                    "fs_div": fs, "derived": derived},
+                   source, "KRW", f"{on}T00:00:00")
+    conn.commit()
+
+
+def test_넣은_값을_그대로_읽는다(memory_db):
+    ensure_schema(memory_db)
+    put(memory_db, revenue=1234, op=56, net=78)
+    rows = select_quarters(memory_db, "005930", "KR")
+    assert len(rows) == 1
+    assert (rows[0]["revenue"], rows[0]["operating_income"], rows[0]["net_income"]) == (1234, 56, 78)
+    assert rows[0]["fs_div"] == "CFS" and rows[0]["source"] == "DART"
+
+
+def test_별도재무로_먼저_저장돼도_나중에_연결재무가_들어오면_연결을_쓴다(memory_db):
+    """이게 Phase 6이 고치는 버그다. 전에는 먼저 들어온 별도재무가 그대로 남았다."""
+    ensure_schema(memory_db)
+    put(memory_db, fs="OFS", revenue=100, on="2026-09-01")
+    put(memory_db, fs="CFS", revenue=130, on="2026-09-20")
+    rows = select_quarters(memory_db, "005930", "KR")
+    assert len(rows) == 1, "분기 하나에 값 하나만 골라야 한다"
+    assert rows[0]["fs_div"] == "CFS" and rows[0]["revenue"] == 130
+
+
+def test_연결재무가_먼저였으면_나중에_별도가_들어와도_연결을_지킨다(memory_db):
+    ensure_schema(memory_db)
+    put(memory_db, fs="CFS", revenue=130, on="2026-09-01")
+    put(memory_db, fs="OFS", revenue=100, on="2026-09-20")
+    assert select_quarters(memory_db, "005930", "KR")[0]["revenue"] == 130
+
+
+def test_같은_구분이면_나중에_수집한_값을_쓴다(memory_db):
+    """정정공시로 숫자가 바뀌는 경우."""
+    ensure_schema(memory_db)
+    put(memory_db, fs="CFS", revenue=100, on="2026-09-01")
+    put(memory_db, fs="CFS", revenue=111, on="2026-09-20")
+    assert select_quarters(memory_db, "005930", "KR")[0]["revenue"] == 111
+
+
+def test_예전_값도_지우지_않고_남긴다(memory_db):
+    ensure_schema(memory_db)
+    put(memory_db, fs="OFS", revenue=100, on="2026-09-01")
+    put(memory_db, fs="CFS", revenue=130, on="2026-09-20")
+    kept = memory_db.execute("SELECT COUNT(*) FROM quarterly_financials_raw").fetchone()[0]
+    assert kept == 2, "원본은 둘 다 남아 있어야 한다(원칙 5)"
+
+
+def test_같은_날_같은_구분으로_다시_수집하면_그_행만_갱신된다(memory_db):
+    ensure_schema(memory_db)
+    put(memory_db, fs="CFS", revenue=100, on="2026-09-20")
+    put(memory_db, fs="CFS", revenue=105, on="2026-09-20")
+    n = memory_db.execute("SELECT COUNT(*) FROM quarterly_financials_raw").fetchone()[0]
+    assert n == 1 and select_quarters(memory_db, "005930", "KR")[0]["revenue"] == 105
+
+
+def test_분기는_최신순으로_돌려준다(memory_db):
+    ensure_schema(memory_db)
+    for y, q in [(2025, 3), (2026, 1), (2025, 4), (2026, 2)]:
+        put(memory_db, year=y, quarter=q)
+    got = [(r["fiscal_year"], r["fiscal_quarter"]) for r in select_quarters(memory_db, "005930", "KR")]
+    assert got == [(2026, 2), (2026, 1), (2025, 4), (2025, 3)]
+
+
+def test_다른_기업_시장은_섞이지_않는다(memory_db):
+    ensure_schema(memory_db)
+    put(memory_db, ticker="005930", market="KR", revenue=100)
+    put(memory_db, ticker="NVDA", market="US", revenue=900)
+    assert select_quarters(memory_db, "NVDA", "US")[0]["revenue"] == 900
+    assert len(select_quarters(memory_db, "005930", "KR")) == 1
+
+
+def test_구분이_없는_출처도_저장된다(memory_db):
+    """yfinance는 연결·별도 구분이 없다."""
+    ensure_schema(memory_db)
+    put(memory_db, ticker="NVDA", market="US", fs=None, source="yfinance", revenue=900)
+    row = select_quarters(memory_db, "NVDA", "US")[0]
+    assert row["fs_div"] == "NA" and row["revenue"] == 900
+
+
+# ── 예전 테이블 이전 ──────────────────────────────────────────
+
+def _legacy_row(conn, **kw):
+    conn.execute(
+        "INSERT INTO quarterly_financials (ticker, market, fiscal_year, fiscal_quarter, revenue,"
+        " operating_income, net_income, source, fs_div, derived, currency, collected_at)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (kw.get("ticker", "005930"), "KR", 2026, 2, kw.get("revenue", 100), 10, 5,
+         "DART", kw.get("fs", "OFS"), "reported", "KRW", "2026-09-18T01:00:00"))
+    conn.commit()
+
+
+def test_예전_테이블_값을_raw로_옮긴다(memory_db):
+    ensure_schema(memory_db)
+    _legacy_row(memory_db, revenue=100)
+    migrate_legacy_rows(memory_db)
+    rows = select_quarters(memory_db, "005930", "KR")
+    assert len(rows) == 1 and rows[0]["revenue"] == 100 and rows[0]["fs_div"] == "OFS"
+
+
+def test_이전을_두_번_돌려도_중복되지_않는다(memory_db):
+    ensure_schema(memory_db)
+    _legacy_row(memory_db)
+    migrate_legacy_rows(memory_db)
+    migrate_legacy_rows(memory_db)
+    n = memory_db.execute("SELECT COUNT(*) FROM quarterly_financials_raw").fetchone()[0]
+    assert n == 1
+
+
+def test_옮긴_뒤_연결재무를_새로_받으면_그것을_쓴다(memory_db):
+    """이전 데이터(별도) + 새 수집(연결) -> 연결이 이긴다."""
+    ensure_schema(memory_db)
+    _legacy_row(memory_db, fs="OFS", revenue=100)
+    migrate_legacy_rows(memory_db)
+    put(memory_db, fs="CFS", revenue=130, on="2026-09-21")
+    assert select_quarters(memory_db, "005930", "KR")[0]["revenue"] == 130
