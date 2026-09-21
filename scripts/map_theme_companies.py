@@ -38,7 +38,10 @@ from src.db.theme_mapping import ensure_schema, start_mapping_run, finish_mappin
 from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_MIN_CAP, KR_MIN_CAP
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
-OPENAI_MODEL = "gpt-4o-mini"
+# A/B 측정용 덮어쓰기. None이면 config/models.yaml(또는 환경변수 MODEL_<ROLE>)의 역할별 모델을 쓴다.
+# diagnose_mapping_model.py가 여기에 모델 이름을 넣어 팔을 바꾼다. "기본 모델과 같은 이름"이어도
+# 덮어쓰기로 취급한다 - 예전에는 기본값과 같으면 덮어쓰기가 없는 것으로 봐서 기준선 팔이 새어나갔다.
+MODEL_OVERRIDE: str | None = None
 PROMPT_VERSION = "2026-09-15-v7"  # v7: v6 + 미국 후보에도 산업분류·사업요약(400자) 첨부, 업종-테마 불일치 코드 제외, 에너지 테마 유틸리티 경계
 UNIVERSE_CHUNK_SIZE = 200  # 청크당 줄 수 상한
 # 청크당 글자 수 예산. 줄 길이가 시장마다 달라(US 약 440자, KR 약 170자) 종목 수로 자르면
@@ -107,6 +110,11 @@ def build_universe_and_names() -> tuple[list[dict], dict[str, str]]:
 CALL_FAILURES = 0
 
 
+def active_model(role: str = "theme_mapping") -> str:
+    """이 역할의 호출에 실제로 쓸 모델. mapping_runs 기록도 이 값을 쓴다(기록과 호출이 어긋나지 않게)."""
+    return MODEL_OVERRIDE or oj.model_for(role)
+
+
 def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.2,
                  role: str | None = None) -> dict | None:
     """공통 호출(src/llm/openai_json.py)의 매핑용 래퍼: 실패하면 None을 돌려주고 실패 수를 센다.
@@ -114,11 +122,10 @@ def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.
     재시도·모델 계열별 파라미터는 공통 모듈이 처리한다. 매핑은 청크 하나가 실패해도 다음
     청크로 계속 가야 하므로 예외를 None으로 바꾼다(감사는 예외를 그대로 쓴다).
     role은 config/models.yaml의 역할 이름 - 비판 패스는 mapping_critic, 나머지는 theme_mapping.
-    OPENAI_MODEL을 직접 바꾸는 진단 스크립트(diagnose_mapping_model.py)를 위해 OPENAI_MODEL이
-    기본 모델과 다르면 그것을 우선한다.
+    모델은 active_model()이 고른다: MODEL_OVERRIDE(A/B 측정용)가 있으면 그것, 없으면 역할별 설정.
     """
     global CALL_FAILURES
-    model = OPENAI_MODEL if OPENAI_MODEL != oj.DEFAULT_MODEL else oj.model_for(role or "theme_mapping")
+    model = active_model(role or "theme_mapping")
     try:
         return oj.call_json(model, system, prompt, api_key=api_key,
                             max_output_tokens=2000, temperature=temperature, timeout=90)
@@ -126,6 +133,14 @@ def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.
         CALL_FAILURES += 1
         _log(f"  OpenAI 호출 실패(최종): {e}")
         return None
+
+
+def begin_run(conn) -> str:
+    """mapping_runs에 실행 시작을 적고 run_id를 돌려준다. 모델은 호출에 실제로 쓰는 값을 남긴다."""
+    run_id = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
+    start_mapping_run(conn, run_id, datetime.utcnow().isoformat(),
+                      active_model("theme_mapping"), PROMPT_VERSION)
+    return run_id
 
 
 def _theme_description(theme: dict) -> str:
@@ -581,8 +596,7 @@ def main() -> None:
             continue
     _log(f"시가총액 캐시 {len(cap_lookup)}종목")
 
-    run_id = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
-    start_mapping_run(conn, run_id, datetime.utcnow().isoformat(), OPENAI_MODEL, PROMPT_VERSION)
+    run_id = begin_run(conn)
 
     overall_stats: dict[str, dict] = {}
     for theme in themes:

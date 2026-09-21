@@ -87,7 +87,7 @@ def main() -> int:
     picks: dict[tuple[str, str], set[str]] = {}
     elapsed: dict[str, float] = {}
     for model in models:
-        mtc.OPENAI_MODEL = model
+        mtc.MODEL_OVERRIDE = model
         t0 = time.time()
         for tid in theme_ids:
             try:

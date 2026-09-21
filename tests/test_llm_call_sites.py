@@ -68,11 +68,24 @@ def test_매핑은_호출이_실패하면_None을_돌려주고_실패를_센다(
 
 
 def test_매핑_모델을_바꾸면_추론_모델용_파라미터가_간다(http, monkeypatch):
-    monkeypatch.setattr(mapping, "OPENAI_MODEL", "o4-mini")
+    monkeypatch.setattr(mapping, "MODEL_OVERRIDE", "o4-mini")
     http["queue"].append(Resp({"members": []}))
     mapping._openai_json("p", "s", "k")
     body = http["calls"][0]["body"]
     assert body["model"] == "o4-mini" and "temperature" not in body and "max_completion_tokens" in body
+
+
+def test_기준선_팔은_설정이_다른_모델이어도_기준선_모델로_호출한다(http, monkeypatch):
+    """A/B 측정(diagnose_mapping_model.py)의 기준선 팔.
+
+    예전에는 '덮어쓴 모델이 기본 모델과 같으면 덮어쓰기가 없는 것'으로 봐서, 설정이
+    o4-mini일 때 기준선 gpt-4o-mini 팔이 조용히 o4-mini로 호출됐다 - 측정이 "기준선 대비"가 아니게 된다.
+    """
+    monkeypatch.setenv("MODEL_THEME_MAPPING", "o4-mini")
+    monkeypatch.setattr(mapping, "MODEL_OVERRIDE", "gpt-4o-mini")
+    http["queue"].append(Resp({"members": []}))
+    mapping._openai_json("p", "s", "k")
+    assert http["calls"][0]["body"]["model"] == "gpt-4o-mini"
 
 
 def test_비판_패스는_mapping_critic_역할의_모델을_쓴다(http, monkeypatch):
