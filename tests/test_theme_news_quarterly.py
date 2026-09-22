@@ -116,12 +116,22 @@ def test_직전_분기가_주_부족이면_데이터부족이다():
     assert got["ratio"] is None and "2025Q4" in got["reason"]
 
 
-def test_이번_분기가_덜_모였으면_데이터부족이다():
-    """분기 도중에 돌리면 이번 분기가 작게 나온다 - 비율을 내지 않는다."""
-    quarters = _five_quarters(20, 10)
-    quarters[(2026, 3)]["complete"] = False
-    got = news_ratio(quarters, (2026, 3))
-    assert got["ratio"] is None and "이번 분기" in got["reason"]
+def test_분기_초에_돌리면_데이터부족이다():
+    """2026Q3 13주 중 4주만 모인 상태 - 아직 그 분기를 대표하지 못한다."""
+    weekly = {w.isoformat(): 20 for w in quarter_mondays(2026, 3)[:4]}
+    for y, q in prior_quarters(2026, 3):
+        weekly |= _full_quarter(y, q, 10)
+    got = news_ratio(aggregate_quarters(weekly), (2026, 3))
+    assert got["ratio"] is None and "이번 분기" in got["reason"] and "4/13주" in got["reason"]
+
+
+def test_분기_후반이면_그때까지의_주당_평균으로_낸다():
+    """13주 중 11주면 낸다. 주당 평균이라 남은 2주가 없어도 값이 기울지 않는다."""
+    weekly = {w.isoformat(): 20 for w in quarter_mondays(2026, 3)[:11]}
+    for y, q in prior_quarters(2026, 3):
+        weekly |= _full_quarter(y, q, 10)
+    got = news_ratio(aggregate_quarters(weekly), (2026, 3))
+    assert got["reason"] is None and got["ratio"] == pytest.approx(2.0, abs=0.01)
 
 
 def test_직전_기사_수가_0이면_데이터부족이다():
@@ -192,3 +202,24 @@ def test_운영DB에서도_건수가_숫자다(turso_like_db):
     got = get_weekly_news_counts(turso_like_db, "ai_semiconductor", "US")
     assert got == {"2026-07-06": 100, "2026-07-13": 120}
     assert all(isinstance(v, int) for v in got.values())
+
+
+# ── 보고 스크립트 (scripts/report_quarterly_news.py) ──────────
+
+from scripts.report_quarterly_news import parse_quarter, previous_quarter, week_monday  # noqa: E402
+
+
+def test_분기_문자열을_읽는다():
+    assert parse_quarter("2026Q3") == (2026, 3)
+    assert parse_quarter("2026q1") == (2026, 1)
+
+
+def test_직전_분기를_기본값으로_쓴다():
+    """분기 첫날(10/1)에 돌리면 막 끝난 분기(Q3)를 본다 - 진행 중인 Q4가 아니다."""
+    assert previous_quarter(date(2026, 10, 1)) == (2026, 3)
+    assert previous_quarter(date(2026, 1, 1)) == (2025, 4)
+
+
+def test_그_날이_속한_주의_월요일을_찾는다():
+    assert week_monday(date(2026, 9, 17)) == date(2026, 9, 14)   # 목요일 -> 그 주 월요일
+    assert week_monday(date(2026, 9, 14)) == date(2026, 9, 14)
