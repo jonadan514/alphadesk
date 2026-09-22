@@ -4,9 +4,10 @@
 
 1. **분기 이력이 실제로 다 채워졌는지.** 백필을 세 번 나눠 돌렸으므로 테마마다 빠진 주가
    없는지 확인해야 한다. 코드가 "데이터부족"이라고 말하는 이유를 그대로 보여준다.
-2. **"뉴스 많음 = 1.5배" 기준이 이 계산식에서도 맞는지.** 1.5는 원래 분기 합끼리 비교하던
-   때의 값이다. 주당 평균으로 바꿨으니 분포를 보고 다시 정해야 한다. 기준값을 추측으로
-   바꾸지 않는다 - 이 보고서의 분포를 보고 사용자가 정한다.
+2. **지금 기준값(config/quarterly.yaml)이 이 분포에서도 맞는지.** 기준값은 시장마다 다르다
+   (2026-09-22 실측에서 한국과 미국의 분포가 크게 달랐다). 기준값 후보마다 몇 개 테마가
+   걸리는지 함께 보여준다. 기준값을 코드에서 추측으로 바꾸지 않는다(원칙 3) - 이 분포를
+   보고 사람이 config/quarterly.yaml에서 정한다.
 
 Usage:
   python scripts/report_quarterly_news.py                    # 직전 분기
@@ -26,6 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
+from src.analyzers import quarterly_thresholds as qt
 from src.analyzers.theme_news_quarterly import (MIN_WEEK_COVERAGE, aggregate_quarters, news_ratio,
                                                 prior_quarters, quarter_of)
 from src.db.data_store import get_db
@@ -66,10 +68,13 @@ def main() -> int:
     themes = [t for t in data["themes"] if t.get("status") == "active"]
 
     conn = get_db()
+    config = qt.load()
     markets = [args.market] if args.market else ["KR", "US"]
     _log(f"대상 분기 {target[0]}Q{target[1]} / 직전 4분기 "
          f"{', '.join(f'{y}Q{q}' for y, q in prior_quarters(*target))}")
-    _log(f"분기 채택 기준: 그 분기 월요일 수의 {MIN_WEEK_COVERAGE:.0%} 이상 수집\n")
+    _log(f"분기 채택 기준: 그 분기 월요일 수의 {MIN_WEEK_COVERAGE:.0%} 이상 수집")
+    _log("뉴스 '많음' 기준(config/quarterly.yaml): "
+         + ", ".join(f"{m} {qt.news_high_threshold(m, config):.2f}배" for m in ["KR", "US"]) + "\n")
 
     all_ratios: list[float] = []
     for market in markets:
@@ -100,14 +105,19 @@ def main() -> int:
 
         ok = [r for r in rows if r["ratio"] is not None]
         all_ratios += [r["ratio"] for r in ok]
+        high = [r for r in ok if qt.is_news_high(r["ratio"], market, config)]
         _log(f"=== {market} - 테마 {len(rows)}개 중 비율 계산 {len(ok)}개, "
              f"데이터부족 {len(rows) - len(ok)}개 ===")
+        _log(f"기준 {qt.news_high_threshold(market, config):.2f}배 -> 뉴스 많음 {len(high)}개"
+             f"{f' ({len(high) / len(ok):.0%})' if ok else ''}")
         _log(f"{'테마':<24}{'주':>7}{'기사':>8}{'주당':>8}{'기준선':>8}{'비율':>7}  비고")
         for r in sorted(rows, key=lambda x: (x["ratio"] is None, -(x["ratio"] or 0))):
             per_week = f"{r['per_week']:.1f}" if r["per_week"] is not None else "-"
             base = f"{r['baseline']:.1f}" if r["baseline"] is not None else "-"
             ratio = f"{r['ratio']:.2f}" if r["ratio"] is not None else "-"
             note = r["reason"] or ""
+            if qt.is_news_high(r["ratio"], market, config):
+                note = ("많음 " + note).strip()
             if r["kw_changed"]:
                 note = (note + " / 키워드 변경 이력 있음").strip(" /")
             _log(f"{r['id']:<24}{r['weeks']:>7}{str(r['articles'] or '-'):>8}"
@@ -125,11 +135,11 @@ def main() -> int:
     _log(f"=== 비율 분포 (테마 {n}개) ===")
     _log(f"최소 {all_ratios[0]:.2f} / 25% {pct(0.25):.2f} / 중앙 {pct(0.5):.2f} / "
          f"75% {pct(0.75):.2f} / 최대 {all_ratios[-1]:.2f}")
-    _log("\n기준값 후보별로 '뉴스 많음'이 되는 테마 수")
+    _log("\n기준값 후보별로 '뉴스 많음'이 되는 테마 수 (두 시장 합쳐서)")
     for c in HIGH_CANDIDATES:
         hit = sum(1 for r in all_ratios if r >= c)
         _log(f"  {c:.1f}배 이상: {hit}개 ({hit / n:.0%})")
-    _log("\n기준값은 이 분포를 보고 사람이 정한다. 코드는 바꾸지 않는다.")
+    _log("\n기준값은 이 분포를 보고 사람이 config/quarterly.yaml에서 정한다. 코드는 바꾸지 않는다.")
     return 0
 
 

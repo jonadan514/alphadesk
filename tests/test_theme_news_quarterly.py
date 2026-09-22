@@ -223,3 +223,72 @@ def test_직전_분기를_기본값으로_쓴다():
 def test_그_날이_속한_주의_월요일을_찾는다():
     assert week_monday(date(2026, 9, 17)) == date(2026, 9, 14)   # 목요일 -> 그 주 월요일
     assert week_monday(date(2026, 9, 14)) == date(2026, 9, 14)
+
+
+# ── 시장별 기준값 (config/quarterly.yaml) ─────────────────────
+#
+# 2026-09-22 실측에서 같은 계산식인데도 한국(중앙 1.55)과 미국(중앙 1.11)의 분포가
+# 달랐다. 기준값 하나를 쓰면 한국은 대부분 "많음", 미국은 대부분 "적음"이 된다.
+
+from src.analyzers import quarterly_thresholds as qt  # noqa: E402
+
+
+def test_시장마다_뉴스_기준값이_다르다():
+    assert qt.news_high_threshold("KR") == 1.75
+    assert qt.news_high_threshold("US") == 1.50
+
+
+def test_모르는_시장은_기본값을_쓴다():
+    assert qt.news_high_threshold("JP") == qt.DEFAULT_NEWS_HIGH["default"]
+
+
+def test_설정_파일의_값을_읽는다(tmp_path):
+    p = tmp_path / "q.yaml"
+    p.write_text("news_high:\n  KR: 2.0\n  US: 1.1\n", encoding="utf-8")
+    cfg = qt.load(p)
+    assert qt.news_high_threshold("KR", cfg) == 2.0
+    assert qt.news_high_threshold("US", cfg) == 1.1
+
+
+def test_설정_파일이_없어도_기본값으로_돈다(tmp_path):
+    """기준값을 못 읽었다고 테마를 탈락시키지 않는다(원칙 4)."""
+    cfg = qt.load(tmp_path / "없는파일.yaml")
+    assert cfg["news_high"] == qt.DEFAULT_NEWS_HIGH
+    assert cfg["financial_on"] == qt.DEFAULT_FINANCIAL_ON
+
+
+def test_설정_파일이_깨져도_기본값으로_돈다(tmp_path):
+    p = tmp_path / "q.yaml"
+    p.write_text("news_high: [이건 목록이다\n", encoding="utf-8")
+    assert qt.load(p)["news_high"] == qt.DEFAULT_NEWS_HIGH
+
+
+def test_빠진_항목만_기본값으로_채운다(tmp_path):
+    p = tmp_path / "q.yaml"
+    p.write_text("news_high:\n  KR: 2.0\n", encoding="utf-8")
+    cfg = qt.load(p)
+    assert cfg["news_high"]["KR"] == 2.0
+    assert cfg["news_high"]["US"] == qt.DEFAULT_NEWS_HIGH["US"]
+
+
+def test_기준값_이상이면_뉴스_많음이다():
+    assert qt.is_news_high(1.75, "KR") is True
+    assert qt.is_news_high(1.74, "KR") is False
+    assert qt.is_news_high(1.50, "US") is True
+
+
+def test_같은_비율이라도_시장에_따라_판정이_갈린다():
+    """1.6배는 미국에서는 많음, 한국에서는 적음이다."""
+    assert qt.is_news_high(1.6, "US") is True
+    assert qt.is_news_high(1.6, "KR") is False
+
+
+def test_비율이_없으면_적음이_아니라_데이터부족이다():
+    """원칙 4 - 계산 불가를 '뉴스 적음'으로 처리하면 '조용한 변화'로 잘못 분류된다."""
+    assert qt.is_news_high(None, "KR") is None
+
+
+def test_설정_파일의_기본값이_코드의_기본값과_같다():
+    """둘이 어긋나면 설정 파일을 못 읽는 상황에서만 조용히 다른 기준이 적용된다."""
+    assert qt.load()["news_high"] == qt.DEFAULT_NEWS_HIGH
+    assert qt.load()["financial_on"] == qt.DEFAULT_FINANCIAL_ON
