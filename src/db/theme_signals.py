@@ -390,3 +390,38 @@ def get_collected_news_weeks(conn, market: str) -> set[tuple[str, str]]:
         "SELECT theme_id, week_start FROM theme_news_weekly WHERE market = ?", (market,)
     ).fetchall()
     return {(r[0], r[1]) for r in rows}
+
+
+def get_weekly_news_counts(conn, theme_id: str, market: str,
+                           since: str | None = None) -> dict[str, int]:
+    """주간 기사 수를 두 표에서 합쳐 읽는다 (분기 집계용, REDESIGN_SPEC 6-3).
+
+    같은 주간 건수가 두 곳에 나뉘어 있다.
+      - theme_news_weekly: 과거를 채운 백필 결과
+      - theme_signals.news_count: 매주 도는 수집이 남기는 값
+    둘 다 collect_theme_news()로 같은 주를 조회해 중복 제거 후 센 값이라 이어 붙일 수 있다.
+    같은 주가 양쪽에 있으면 백필 표를 쓴다(포화 키워드 정보가 함께 있는 쪽).
+
+    since(주 월요일)를 주면 그 주 이전은 빼고 읽는다 - 키워드가 바뀐 테마는 바뀌기 전
+    건수와 잇지 않는다(themes.yaml 유지보수 규칙 2).
+
+    Turso HTTP 클라이언트는 정수 컬럼을 문자열로 돌려주므로 int()로 맞춘다.
+    """
+    floor = since or "0000-00-00"
+    out: dict[str, int] = {}
+    rows = conn.execute(
+        "SELECT week_start, news_count FROM theme_signals "
+        "WHERE theme_id = ? AND market = ? AND week_start >= ? AND news_count IS NOT NULL",
+        (theme_id, market, floor),
+    ).fetchall()
+    for week_start, count in rows:
+        out[week_start] = int(count)
+
+    rows = conn.execute(
+        "SELECT week_start, article_count FROM theme_news_weekly "
+        "WHERE theme_id = ? AND market = ? AND week_start >= ? AND article_count IS NOT NULL",
+        (theme_id, market, floor),
+    ).fetchall()
+    for week_start, count in rows:
+        out[week_start] = int(count)      # 백필 표가 이긴다
+    return out
