@@ -292,3 +292,4 @@ def test_설정_파일의_기본값이_코드의_기본값과_같다():
     """둘이 어긋나면 설정 파일을 못 읽는 상황에서만 조용히 다른 기준이 적용된다."""
     assert qt.load()["news_high"] == qt.DEFAULT_NEWS_HIGH
     assert qt.load()["financial_on"] == qt.DEFAULT_FINANCIAL_ON
+    assert qt.load()["change_signal"] == qt.DEFAULT_CHANGE_SIGNAL
