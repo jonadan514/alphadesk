@@ -176,6 +176,8 @@
 - 소속 기업 중 변화 기업 비율 **30% 이상**, 그리고 변화 기업 **2곳 이상**
 - 비율의 분모는 변화 기업 판정이 데이터부족이 아닌 기업 수
 - 분모가 2 미만이면 데이터부족
+- 구현: `src/analyzers/theme_quarterly_classification.py`의 `financial_signal()`.
+  기업별 변화 판정(5-2)은 `src/analyzers/company_change_signals.py`의 `change_company()`.
 
 ### 7-2. 뉴스 "많음" - 기준값은 시장마다 다르다
 - 한국 **1.75 이상**, 미국 **1.50 이상** (`config/quarterly.yaml`)
@@ -207,7 +209,15 @@
 - 둘 중 하나라도 데이터부족이면 분류하지 않는다.
 - 기준값은 `config/quarterly.yaml`에 둔다 (재무 30%·2곳, 뉴스는 시장별).
   읽지 못하면 코드의 기본값으로 계속 돈다 - 기준값을 못 읽었다고 테마를 탈락시키지 않는다.
+- 구현: `theme_quarterly_classification.py`의 `classify()`.
 - 분기별 분류 결과를 이력으로 쌓는다 (지난 분기 대비 바뀐 테마를 볼 수 있게).
+  저장: `src/db/quarterly_classification.py` - PK는 (테마, 시장, 연도, 분기)라 같은
+  분기를 다시 계산하면 그 행만 갱신되고 다른 분기는 그대로 남는다.
+
+**아직 없는 것.** 위 세 모듈은 순수 계산·저장 함수만 있다. 테마 소속 기업 전체를
+불러와 각자 `select_quarters()`로 분기 재무를 읽고 `change_company()`를 돌려
+`financial_signal()`에 넘기는 **실행 스크립트**(매핑 승인 목록 순회, 뉴스 비율 계산과
+합쳐 `upsert_classification()`까지 호출)는 아직 없다. 8장 화면 반영 전에 필요하다.
 
 ## 8. 화면
 
