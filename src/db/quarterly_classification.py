@@ -32,9 +32,57 @@ CREATE TABLE IF NOT EXISTS quarterly_theme_classification (
 """
 
 
+QUARTERLY_MARKET_REFERENCE_DDL = """
+CREATE TABLE IF NOT EXISTS quarterly_market_reference (
+  market                 TEXT NOT NULL,
+  fiscal_year            INTEGER NOT NULL,
+  fiscal_quarter         INTEGER NOT NULL,
+  median_revenue_growth  REAL,      -- NULL이면 유니버스를 못 읽는 등으로 계산 불가
+  sample_size            INTEGER NOT NULL,
+  computed_at            TEXT NOT NULL,
+  PRIMARY KEY (market, fiscal_year, fiscal_quarter)
+)
+"""
+# 시장 유니버스 전체의 매출 증가율 중앙값 (5-1 화면 참고값 - 판정에는 쓰지 않는다).
+# 매 화면 요청마다 유니버스 수백 종목을 다시 계산하지 않도록 분기 실행 때 한 번 저장해둔다.
+
+
 def ensure_schema(conn) -> None:
     conn.execute(QUARTERLY_THEME_CLASSIFICATION_DDL)
+    conn.execute(QUARTERLY_MARKET_REFERENCE_DDL)
     conn.commit()
+
+
+def upsert_market_reference(conn, market: str, year: int, quarter: int,
+                            median_growth: float | None, sample_size: int,
+                            computed_at: str) -> None:
+    """이 분기 이 시장의 참고값을 기록한다. 같은 분기를 다시 계산하면 이 행만 갱신된다."""
+    conn.execute(
+        """
+        INSERT INTO quarterly_market_reference
+          (market, fiscal_year, fiscal_quarter, median_revenue_growth, sample_size, computed_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(market, fiscal_year, fiscal_quarter) DO UPDATE SET
+          median_revenue_growth = excluded.median_revenue_growth,
+          sample_size = excluded.sample_size,
+          computed_at = excluded.computed_at
+        """,
+        (market, year, quarter, median_growth, sample_size, computed_at),
+    )
+    conn.commit()
+
+
+def get_market_reference(conn, market: str, year: int, quarter: int) -> dict | None:
+    row = conn.execute(
+        "SELECT median_revenue_growth, sample_size, computed_at FROM quarterly_market_reference "
+        "WHERE market = ? AND fiscal_year = ? AND fiscal_quarter = ?",
+        (market, year, quarter),
+    ).fetchone()
+    if row is None:
+        return None
+    median, sample, at = row
+    return {"median_revenue_growth": float(median) if median is not None else None,
+            "sample_size": int(sample), "computed_at": at}
 
 
 def _bit(value: bool | None) -> int | None:

@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 
 from src.db.quarterly_financials import (ensure_schema, insert_quarter, migrate_legacy_rows,
-                                          select_quarters)
+                                          select_quarters, select_quarters_bulk)
 
 
 def put(conn, *, year=2026, quarter=2, fs="CFS", revenue=100, op=10, net=5,
@@ -231,3 +231,68 @@ def test_로컬_sqlite에서도_옮긴_행_수가_맞다(memory_db):
     _legacy_row(memory_db, ticker="000660")
     assert migrate_legacy_rows(memory_db) == 2
     assert migrate_legacy_rows(memory_db) == 0
+
+
+# ── 여러 종목 한 번에 조회 (select_quarters_bulk) ──────────────
+#
+# 분기 4칸 분류 실행 스크립트가 테마 소속 기업·유니버스 전체를 한 번의 쿼리로
+# 묶어 조회할 때 쓴다 - 종목마다 select_quarters()를 부르면 운영 DB(Turso HTTP)에
+# 종목 수만큼 왕복이 쌓인다.
+
+def test_여러_종목을_한번에_읽는다(memory_db):
+    ensure_schema(memory_db)
+    put(memory_db, ticker="005930", market="KR", revenue=100)
+    put(memory_db, ticker="000660", market="KR", revenue=200)
+    got = select_quarters_bulk(memory_db, ["005930", "000660"], "KR")
+    assert got["005930"][0]["revenue"] == 100
+    assert got["000660"][0]["revenue"] == 200
+
+
+def test_여러_종목_결과가_개별_조회와_같다(memory_db):
+    ensure_schema(memory_db)
+    put(memory_db, fs="OFS", revenue=100, on="2026-09-01")
+    put(memory_db, fs="CFS", revenue=130, on="2026-09-20")
+    put(memory_db, ticker="000660", revenue=999, year=2025, quarter=4)
+    bulk = select_quarters_bulk(memory_db, ["005930", "000660"], "KR")
+    assert bulk["005930"] == select_quarters(memory_db, "005930", "KR")
+    assert bulk["000660"] == select_quarters(memory_db, "000660", "KR")
+
+
+def test_행이_없는_종목은_결과에서_빠진다(memory_db):
+    """select_quarters()가 빈 리스트를 돌려주는 것과 같게, 호출부가 .get(t, [])로 다뤄야 한다."""
+    ensure_schema(memory_db)
+    put(memory_db, ticker="005930")
+    got = select_quarters_bulk(memory_db, ["005930", "999999"], "KR")
+    assert "999999" not in got
+    assert got.get("999999", []) == []
+
+
+def test_빈_티커_목록이면_빈_딕셔너리다(memory_db):
+    ensure_schema(memory_db)
+    assert select_quarters_bulk(memory_db, [], "KR") == {}
+
+
+def test_다른_시장_종목은_섞이지_않는다(memory_db):
+    ensure_schema(memory_db)
+    put(memory_db, ticker="005930", market="KR", revenue=100)
+    put(memory_db, ticker="005930", market="US", revenue=900)   # 같은 티커, 다른 시장(우연)
+    got = select_quarters_bulk(memory_db, ["005930"], "KR")
+    assert got["005930"][0]["revenue"] == 100
+
+
+def test_운영DB에서도_여러_종목_조회가_맞다(turso_like_db):
+    ensure_schema(turso_like_db)
+    put(turso_like_db, ticker="005930", revenue=100, op=10)
+    put(turso_like_db, ticker="000660", revenue=200, op=20)
+    got = select_quarters_bulk(turso_like_db, ["005930", "000660"], "KR")
+    assert got["005930"][0]["revenue"] == 100.0 and isinstance(got["005930"][0]["revenue"], float)
+    assert got["005930"][0]["fiscal_year"] == 2026 and isinstance(got["005930"][0]["fiscal_year"], int)
+    assert got["000660"][0]["revenue"] == 200.0
+
+
+def test_운영DB에서도_연결재무_우선이_여러_종목_조회에서도_동작한다(turso_like_db):
+    ensure_schema(turso_like_db)
+    put(turso_like_db, ticker="005930", fs="OFS", revenue=100, on="2026-09-01")
+    put(turso_like_db, ticker="005930", fs="CFS", revenue=130, on="2026-09-20")
+    got = select_quarters_bulk(turso_like_db, ["005930"], "KR")
+    assert got["005930"][0]["fs_div"] == "CFS" and got["005930"][0]["revenue"] == 130.0

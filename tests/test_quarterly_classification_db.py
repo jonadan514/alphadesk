@@ -5,9 +5,12 @@
 """
 from __future__ import annotations
 
+import pytest
+
 from src.db.quarterly_classification import (ensure_schema, get_classification,
-                                              get_theme_history, previous_classification,
-                                              upsert_classification)
+                                              get_market_reference, get_theme_history,
+                                              previous_classification, upsert_classification,
+                                              upsert_market_reference)
 
 FIN_ON = {"on": True, "changed": 3, "judged": 7, "ratio": 3 / 7}
 FIN_OFF = {"on": False, "changed": 1, "judged": 7, "ratio": 1 / 7}
@@ -135,3 +138,48 @@ def test_운영DB에서도_같은_분기_갱신이_된다(turso_like_db):
     _put(turso_like_db, classification="확인된 변화", financial=FIN_ON, news=NEWS_HIGH)
     got = get_classification(turso_like_db, "battery", "KR", 2026, 3)
     assert got["classification"] == "확인된 변화"
+
+
+# ── 시장 유니버스 참고값 (5-1 화면 참고값) ────────────────────
+
+def test_시장_참고값을_그대로_읽는다(memory_db):
+    ensure_schema(memory_db)
+    upsert_market_reference(memory_db, "KR", 2026, 3, 0.083, 412, "2026-10-01T00:00:00")
+    got = get_market_reference(memory_db, "KR", 2026, 3)
+    assert got["median_revenue_growth"] == pytest.approx(0.083) and got["sample_size"] == 412
+
+
+def test_계산_불가면_None으로_저장된다(memory_db):
+    """유니버스를 못 읽는 등으로 계산 불가일 때 - 0이 아니라 NULL이어야 한다."""
+    ensure_schema(memory_db)
+    upsert_market_reference(memory_db, "KR", 2026, 3, None, 0, "2026-10-01T00:00:00")
+    got = get_market_reference(memory_db, "KR", 2026, 3)
+    assert got["median_revenue_growth"] is None and got["sample_size"] == 0
+
+
+def test_계산한_적_없으면_None이다(memory_db):
+    ensure_schema(memory_db)
+    assert get_market_reference(memory_db, "KR", 2026, 3) is None
+
+
+def test_같은_분기_참고값도_다시_계산하면_갱신된다(memory_db):
+    ensure_schema(memory_db)
+    upsert_market_reference(memory_db, "KR", 2026, 3, 0.05, 400, "2026-10-01T00:00:00")
+    upsert_market_reference(memory_db, "KR", 2026, 3, 0.09, 410, "2026-10-02T00:00:00")
+    got = get_market_reference(memory_db, "KR", 2026, 3)
+    assert got["median_revenue_growth"] == pytest.approx(0.09) and got["sample_size"] == 410
+
+
+def test_시장끼리_참고값이_섞이지_않는다(memory_db):
+    ensure_schema(memory_db)
+    upsert_market_reference(memory_db, "KR", 2026, 3, 0.08, 400, "2026-10-01T00:00:00")
+    upsert_market_reference(memory_db, "US", 2026, 3, 0.03, 500, "2026-10-01T00:00:00")
+    assert get_market_reference(memory_db, "KR", 2026, 3)["median_revenue_growth"] == pytest.approx(0.08)
+    assert get_market_reference(memory_db, "US", 2026, 3)["median_revenue_growth"] == pytest.approx(0.03)
+
+
+def test_운영DB에서도_참고값_타입이_맞다(turso_like_db):
+    ensure_schema(turso_like_db)
+    upsert_market_reference(turso_like_db, "KR", 2026, 3, 0.083, 412, "2026-10-01T00:00:00")
+    got = get_market_reference(turso_like_db, "KR", 2026, 3)
+    assert isinstance(got["median_revenue_growth"], float) and isinstance(got["sample_size"], int)

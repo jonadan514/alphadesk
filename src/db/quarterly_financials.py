@@ -152,15 +152,50 @@ def select_quarters(conn, ticker: str, market: str) -> list[dict]:
         "WHERE ticker = ? AND market = ?",
         (ticker, market),
     ).fetchall()
+    best = _best_per_quarter(_coerce(dict(zip(_RAW_COLS, r))) for r in rows)
+    return [best[k] for k in sorted(best, reverse=True)]
 
-    best: dict[tuple[int, int], dict] = {}
+
+def select_quarters_bulk(conn, tickers: list[str], market: str) -> dict[str, list[dict]]:
+    """select_quarters()를 여러 종목에 한 번의 쿼리로 (분기 4칸 분류 실행 스크립트가 쓴다).
+
+    테마 소속 기업과 유니버스 전체(수백 종목)를 하나씩 select_quarters()로 조회하면
+    운영 DB(Turso HTTP)에 종목 수만큼 왕복이 쌓인다 - SPEC §7의 "배치로" 원칙과 같은
+    이유로 한 번의 IN 쿼리로 묶는다.
+
+    반환에 없는 티커는 raw 표에 그 종목 행이 아예 없다는 뜻이다 - 호출부는
+    `quarters_by_ticker.get(ticker, [])`로 select_quarters()가 빈 리스트를 돌려주는
+    경우와 똑같이 다루면 된다.
+    """
+    if not tickers:
+        return {}
+    placeholders = ",".join("?" for _ in tickers)
+    rows = conn.execute(
+        f"SELECT ticker, {', '.join(_RAW_COLS)} FROM quarterly_financials_raw "
+        f"WHERE market = ? AND ticker IN ({placeholders})",
+        (market, *tickers),
+    ).fetchall()
+
+    raw_by_ticker: dict[str, list] = {}
     for r in rows:
-        rec = _coerce(dict(zip(_RAW_COLS, r)))
+        raw_by_ticker.setdefault(r[0], []).append(r[1:])
+
+    out: dict[str, list[dict]] = {}
+    for ticker, raw_rows in raw_by_ticker.items():
+        best = _best_per_quarter(_coerce(dict(zip(_RAW_COLS, r))) for r in raw_rows)
+        out[ticker] = [best[k] for k in sorted(best, reverse=True)]
+    return out
+
+
+def _best_per_quarter(records) -> dict[tuple[int, int], dict]:
+    """(연도, 분기)마다 _rank()가 제일 높은 레코드 하나만 남긴다."""
+    best: dict[tuple[int, int], dict] = {}
+    for rec in records:
         key = (rec["fiscal_year"], rec["fiscal_quarter"])
         cur = best.get(key)
         if cur is None or _rank(rec) > _rank(cur):
             best[key] = rec
-    return [best[k] for k in sorted(best, reverse=True)]
+    return best
 
 
 def _rank(rec: dict) -> tuple[int, str]:

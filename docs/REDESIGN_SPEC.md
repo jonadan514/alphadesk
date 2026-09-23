@@ -214,10 +214,11 @@
   저장: `src/db/quarterly_classification.py` - PK는 (테마, 시장, 연도, 분기)라 같은
   분기를 다시 계산하면 그 행만 갱신되고 다른 분기는 그대로 남는다.
 
-**아직 없는 것.** 위 세 모듈은 순수 계산·저장 함수만 있다. 테마 소속 기업 전체를
-불러와 각자 `select_quarters()`로 분기 재무를 읽고 `change_company()`를 돌려
-`financial_signal()`에 넘기는 **실행 스크립트**(매핑 승인 목록 순회, 뉴스 비율 계산과
-합쳐 `upsert_classification()`까지 호출)는 아직 없다. 8장 화면 반영 전에 필요하다.
+- 실행: `scripts/compute_quarterly_classification.py` (9장). 승인된 매핑을 순회하며
+  분기 재무를 읽고(`select_quarters_bulk()` - 종목마다 왕복하지 않도록 시장 하나당
+  한 번에 조회) 재무·뉴스·분류·시장 참고값(5-1)까지 계산해 저장한다. 로컬 sqlite +
+  가짜 데이터로 전체 흐름을 실행해 확인했다(2026-09-23) - 운영 DB로는 아직 안 돌렸다
+  (DART 예전 표 이전이 먼저다, 9장 참고).
 
 ## 8. 화면
 
