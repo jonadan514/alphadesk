@@ -360,6 +360,27 @@ def main():
     )
     push_to_turso(passed, screening_rows)
 
+    # 4-1. 밸류 지표(PSR/PER) 채우기
+    #
+    # 위 업로드가 이 시장 행을 DELETE 후 새로 INSERT하므로 지난주에 채운 psr/per/
+    # valuation_tier는 방금 사라졌다. 업로드 **직후** 다시 계산해 넣어야 한다.
+    #
+    # 밸류는 부가 정보라 여기서 실패해도 스크리닝 자체는 성공으로 둔다 - 후보 목록은
+    # 이미 올라갔고, 분기 재무(quarterly_financials_raw)가 아직 없는 시장이면 값만
+    # 비는 게 맞다.
+    try:
+        from compute_watchlist_valuation import ensure_columns, run as fill_valuation
+        from db.data_store import get_db
+
+        vconn = get_db()
+        try:
+            ensure_columns(vconn)
+            fill_valuation(vconn, markets)
+        finally:
+            vconn.close()
+    except Exception as e:
+        logger.warning("밸류 지표 계산 실패 — 후보 목록은 정상 업로드됨: %s", e)
+
     # 5. 캐시 적중률 확인 — 낮거나 회로차단기가 작동했으면 텔레그램 경고만
     #    보내고 job은 그대로 성공 처리한다 (SPEC §6.3, job 실패 처리 안 함)
     attempted = run_state["live_ok"] + run_state["cache_fallback"] + run_state["no_data_at_all"]

@@ -3,29 +3,40 @@ import { getClient } from "@/src/lib/db";
 
 export const dynamic = "force-dynamic";
 
+const BASE_COLS = `
+  SELECT market, symbol, name, market_cap, sector,
+         piotroski, debt_ratio, interest_coverage,
+         cfo_positive_count, red_flags, regime_fit,
+         roe, current_price, data_notes, screened_at`;
+const VALUE_COLS = `${BASE_COLS}, psr, per, valuation_tier`;
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const market    = searchParams.get("market");
     const regimeFit = searchParams.get("regime_fit");
+    const valuation = searchParams.get("valuation");   // "싼 편" 등, 없으면 전체
 
     const client = getClient();
 
     const args: (string | null)[] = [];
-    let sql = `
-      SELECT market, symbol, name, market_cap, sector,
-             piotroski, debt_ratio, interest_coverage,
-             cfo_positive_count, red_flags, regime_fit,
-             roe, current_price, data_notes, screened_at
-      FROM watchlist_candidates
-      WHERE 1=1
-    `;
-    if (market)    { sql += " AND market = ?";     args.push(market); }
-    if (regimeFit) { sql += " AND regime_fit = ?"; args.push(regimeFit); }
+    let where = "";
+    if (market)    { where += " AND market = ?";     args.push(market); }
+    if (regimeFit) { where += " AND regime_fit = ?"; args.push(regimeFit); }
+    if (valuation) { where += " AND valuation_tier = ?"; args.push(valuation); }
     // 순위 없는 후보 목록 — 모멘텀/품질 점수 정렬 없음. 알파벳 순으로만 안정적 표시.
-    sql += " ORDER BY market, symbol";
+    const tail = ` FROM watchlist_candidates WHERE 1=1${where} ORDER BY market, symbol`;
 
-    const res = await client.execute({ sql, args }).catch(() => ({ rows: [], columns: [] }));
+    // psr/per/valuation_tier는 나중에 붙인 컬럼이다(compute_watchlist_valuation.py의
+    // ALTER TABLE). 이 화면이 그 스크립트보다 먼저 배포되면 SELECT가 "no such column"으로
+    // 죽는데, 아래 catch가 그걸 **빈 목록**으로 바꿔 버려서 후보 275종목이 0종목으로
+    // 보인다. 밸류 컬럼 없이 한 번 더 시도해 목록 자체는 항상 뜨게 한다.
+    const res = await client.execute({ sql: VALUE_COLS + tail, args })
+      .catch(async () => {
+        if (valuation) return { rows: [], columns: [] };   // 밸류 필터인데 컬럼이 없으면 결과 없음이 맞다
+        return await client.execute({ sql: BASE_COLS + tail, args })
+          .catch(() => ({ rows: [], columns: [] }));
+      });
 
     const candidates = res.rows.map((r: any) => {
       const obj: Record<string, unknown> = {};
