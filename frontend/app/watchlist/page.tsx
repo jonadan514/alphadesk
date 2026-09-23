@@ -20,6 +20,11 @@ interface Candidate {
   roe: number | null;
   current_price: number | null;
   data_notes?: { interest?: string; debt?: string };
+  // 직전 스크리닝 회차에 없던 종목(= 이번에 새로 필터를 통과). 직전 회차 자체가
+  // 없으면(첫 스크리닝) true가 아니라 null - 모르는 걸 "신규"로 단정하지 않는다.
+  is_new?: boolean | null;
+  first_seen?: string | null;   // 이력상 처음 후보가 된 날
+  is_reentry?: boolean;         // 예전에 후보였다가 빠진 뒤 다시 들어온 것
 }
 
 // ── 프로토타입 팔레트 (이 페이지 한정) ───────────────────────────────────────
@@ -607,6 +612,7 @@ export default function WatchlistPage() {
   const [tab, setTab]               = useState<"candidates" | "my">("candidates");
   const [marketFilter, setMarketFilter] = useState<"ALL" | "US" | "KR">("ALL");
   const [regimeFilter, setRegimeFilter] = useState<"ALL" | "growth" | "dividend" | "neutral">("ALL");
+  const [newOnly, setNewOnly] = useState(false);
   const [addedSymbols, setAddedSymbols] = useState<Set<string>>(new Set());
   const [selected, setSelected]     = useState<Candidate | null>(null);
   const [infoKey, setInfoKey]       = useState<keyof typeof INDICATOR_INFO | null>(null);
@@ -679,8 +685,14 @@ export default function WatchlistPage() {
   const filtered = candidates.filter((c) => {
     if (marketFilter !== "ALL" && c.market !== marketFilter) return false;
     if (regimeFilter !== "ALL" && c.regime_fit !== regimeFilter) return false;
+    if (newOnly && c.is_new !== true) return false;
     return true;
   });
+
+  // 후보가 275종목이라 목록만으로는 이번 주에 뭐가 달라졌는지 안 보인다.
+  // 순위를 만들지 않으면서 "먼저 볼 것"을 주는 방법 - 이번 회차 신규만 따로 센다.
+  const newCount = candidates.filter((c) => c.is_new === true).length;
+  const newKnown = candidates.some((c) => c.is_new !== null && c.is_new !== undefined);
 
   const statStyle: React.CSSProperties = {
     background: INSET_BG, border: `1px solid ${BORDER}`,
@@ -733,15 +745,19 @@ export default function WatchlistPage() {
       )}
 
       {/* 통계 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 24 }}>
         {[
-          { label: "후보 종목", value: candidates.length },
-          { label: "내 워치리스트", value: myList.length },
-          { label: "성장 후보", value: candidates.filter((c) => c.regime_fit === "growth").length },
-          { label: "배당 후보", value: candidates.filter((c) => c.regime_fit === "dividend").length },
-        ].map(({ label, value }) => (
-          <div key={label} style={statStyle}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: ACCENT, fontVariantNumeric: "tabular-nums" }}>{value}</div>
+          { label: "후보 종목", value: candidates.length, highlight: false },
+          // 이번 회차 신규는 275개 중 먼저 볼 것을 고르는 유일한 단서라 강조한다.
+          // 직전 회차가 없으면 숫자 대신 "-"(알 수 없음) - 0으로 쓰면 "신규가 없다"는
+          // 뜻이 되어 사실과 다르다.
+          { label: "이번 회차 신규", value: newKnown ? newCount : "-", highlight: true },
+          { label: "내 워치리스트", value: myList.length, highlight: false },
+          { label: "성장 후보", value: candidates.filter((c) => c.regime_fit === "growth").length, highlight: false },
+          { label: "배당 후보", value: candidates.filter((c) => c.regime_fit === "dividend").length, highlight: false },
+        ].map(({ label, value, highlight }) => (
+          <div key={label} style={{ ...statStyle, ...(highlight && newKnown && newCount > 0 ? { border: `1px solid ${GOOD}55` } : {}) }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: highlight && newKnown && newCount > 0 ? GOOD : ACCENT, fontVariantNumeric: "tabular-nums" }}>{value}</div>
             <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2 }}>{label}</div>
           </div>
         ))}
@@ -773,6 +789,17 @@ export default function WatchlistPage() {
                 padding: "4px 12px", fontSize: 12, cursor: "pointer",
               }}>{m === "ALL" ? "전체" : m}</button>
             ))}
+            {newKnown && newCount > 0 && (
+              <>
+                <div style={{ width: 1, background: BORDER_CTRL, margin: "0 4px" }} />
+                <button onClick={() => setNewOnly((v) => !v)} style={{
+                  background: newOnly ? GOOD + "20" : "transparent",
+                  color: newOnly ? GOOD : TEXT_MUTED,
+                  border: `1px solid ${newOnly ? GOOD + "40" : BORDER_CTRL}`,
+                  padding: "4px 12px", fontSize: 12, cursor: "pointer",
+                }}>이번 회차 신규만 ({newCount})</button>
+              </>
+            )}
             <div style={{ width: 1, background: BORDER_CTRL, margin: "0 4px" }} />
             {(["ALL", "growth", "dividend", "neutral"] as const).map((r) => (
               <button key={r} onClick={() => setRegimeFilter(r)} style={{
@@ -825,6 +852,19 @@ export default function WatchlistPage() {
                         </td>
                         <td style={{ padding: "8px 10px", fontWeight: 600, color: NUM, whiteSpace: "nowrap" }}>
                           {c.symbol}
+                          {c.is_new === true && (
+                            <span
+                              title={c.is_reentry
+                                ? `예전에 후보였다가 빠진 뒤 이번에 다시 통과 (최초 ${c.first_seen ?? "-"})`
+                                : "이번 회차에 처음 필터를 통과"}
+                              style={{
+                                marginLeft: 6, fontSize: 10, fontWeight: 700,
+                                color: GOOD, border: `1px solid ${GOOD}55`,
+                                padding: "1px 5px", verticalAlign: "middle",
+                              }}>
+                              {c.is_reentry ? "재진입" : "신규"}
+                            </span>
+                          )}
                         </td>
                         <td style={{ padding: "8px 10px", color: TEXT_SECONDARY, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name ?? "-"}</td>
                         <td style={{ padding: "8px 10px", color: NUM, fontVariantNumeric: "tabular-nums" }}>{formatPrice(c.market, c.current_price)}</td>
