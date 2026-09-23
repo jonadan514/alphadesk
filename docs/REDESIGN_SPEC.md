@@ -110,9 +110,13 @@
 - 판정 신호가 아니라 참고 표시다.
 - 구현: `src/analyzers/company_valuation.py`(`psr()`/`per()`/`theme_valuation_tiers()`).
   PSR·PER은 4-3처럼 select_quarters()의 최근 4분기 매출·순이익 합으로 직접 계산한다
-  (yfinance 값을 그대로 쓰지 않음). 시가총액·회사별 PSR을 테마별로 모아
-  `theme_valuation_tiers()`에 넘기는 실행 스크립트는 아직 없다(5장의 나머지처럼
-  compute_quarterly_classification.py가 회사별 결과를 저장하게 될 때 같이 붙는다).
+  (yfinance 값을 그대로 쓰지 않음). 시가총액은 `fetch_status.info_payload`(Phase 0이
+  매주 채워둔 값)를 재사용한다(`compute_quarterly_classification.load_market_caps()`).
+- `compute_quarterly_classification.py`가 회사별 변화 신호(5-1, 5-2)와 밸류 위치를
+  테마 집계 계산과 함께 `quarterly_company_signals`(`src/db/quarterly_company_signals.py`)에
+  저장한다 - "소속 기업 카드"(8장) 화면과, 사람이 "왜 이 테마가 켜졌는지" 들여다볼
+  근거가 된다. 같은 회사가 여러 테마에 속하면 테마마다 따로 저장한다(밸류 등급이
+  테마 상대 순위라 테마마다 다를 수 있어서다).
 
 ### 5-5. 기저효과 (지금은 구현하지 않음)
 - 매출이 아주 작은 기업이 쉽게 +20%를 넘는 문제가 있을 수 있다.

@@ -29,6 +29,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -42,11 +43,15 @@ sys.path.insert(0, str(ROOT / "src"))
 from src.analyzers import quarterly_thresholds as qt
 from src.analyzers.company_change_signals import (change_company, market_median_revenue_growth,
                                                    revenue_yoy_growth)
+from src.analyzers.company_valuation import per as calc_per, psr as calc_psr, theme_valuation_tiers
 from src.analyzers.theme_news_quarterly import aggregate_quarters, news_ratio, prior_quarters, quarter_of
 from src.analyzers.theme_quarterly_classification import classify, financial_signal
 from src.db.data_store import get_db
+from src.db.fundamentals_cache import ensure_schema as ensure_fundamentals_schema
 from src.db.quarterly_classification import (ensure_schema as ensure_classification_schema,
                                               upsert_classification, upsert_market_reference)
+from src.db.quarterly_company_signals import (ensure_schema as ensure_company_signals_schema,
+                                              upsert_company_signal)
 from src.db.quarterly_financials import (ensure_schema as ensure_financials_schema,
                                          select_quarters_bulk)
 from src.db.theme_signals import (ensure_schema as ensure_signals_schema,
@@ -104,13 +109,48 @@ def compute_market_reference(quarters_by_ticker: dict[str, list[dict]],
     return {"median": median, "sample": sample}
 
 
+def load_market_caps(conn) -> dict[str, float]:
+    """시가총액 조회 - Phase 0이 캐시해둔 fetch_status.info_payload를 재사용한다
+    (map_theme_companies.py의 cap_lookup과 같은 방법 - 매주 도는 유니버스 갱신이
+    이미 채워둔 값이라 여기서 새로 yfinance를 부르지 않는다). US 알파벳 티커와
+    KR 6자리 숫자 티커는 겹칠 일이 없어 시장을 나눠 조회하지 않는다."""
+    caps: dict[str, float] = {}
+    for ticker, info_payload in conn.execute("SELECT ticker, info_payload FROM fetch_status").fetchall():
+        if not info_payload:
+            continue
+        try:
+            cap = json.loads(info_payload).get("marketCap")
+        except (TypeError, ValueError):
+            continue
+        if cap:
+            caps[ticker] = float(cap)
+    return caps
+
+
 def compute_theme(theme: dict, market: str, members: list[dict],
-                  quarters_by_ticker: dict[str, list[dict]], conn, target: tuple[int, int],
-                  config: dict) -> dict:
-    """테마 하나의 재무 신호 + 뉴스 비율 + 4칸 분류."""
-    flags = [change_company(quarters_by_ticker.get(m["ticker"], []), config)["changed"]
-             for m in members]
-    financial = financial_signal(flags, config)
+                  quarters_by_ticker: dict[str, list[dict]], market_caps: dict[str, float],
+                  conn, target: tuple[int, int], config: dict, computed_at: str) -> dict:
+    """테마 하나의 재무 신호 + 뉴스 비율 + 4칸 분류 + 회사별 신호 저장(5장).
+
+    회사별 change_company()/PSR·PER은 테마 집계(financial_signal)를 내는 김에 한 번만
+    계산하고, quarterly_company_signals에 저장한다 - "소속 기업 카드" 화면과, 사람이
+    "왜 이 테마가 켜졌는지" 들여다볼 근거가 된다(둘 다 지금까지는 계산만 하고 버렸다).
+    """
+    changes = {m["ticker"]: change_company(quarters_by_ticker.get(m["ticker"], []), config)
+              for m in members}
+    financial = financial_signal([c["changed"] for c in changes.values()], config)
+
+    psr_by_ticker = {t: calc_psr(market_caps.get(t), quarters_by_ticker.get(t, []))
+                     for t in changes}
+    tiers = theme_valuation_tiers(psr_by_ticker)
+
+    for ticker, change in changes.items():
+        quarters = quarters_by_ticker.get(ticker, [])
+        upsert_company_signal(
+            conn, theme["id"], ticker, market, target[0], target[1],
+            change=change, psr=psr_by_ticker[ticker],
+            per=calc_per(market_caps.get(ticker), quarters),
+            tier=tiers[ticker], computed_at=computed_at)
 
     weekly = get_weekly_news_counts(conn, theme["id"], market, since=news_since(theme))
     quarters = aggregate_quarters(weekly)
@@ -148,8 +188,11 @@ def main() -> int:
     ensure_financials_schema(conn)
     ensure_signals_schema(conn)
     ensure_classification_schema(conn)
+    ensure_company_signals_schema(conn)
+    ensure_fundamentals_schema(conn)   # fetch_status(시가총액) - load_market_caps()가 읽는다
 
-    _log(f"대상 분기 {target[0]}Q{target[1]}")
+    market_caps = load_market_caps(conn)
+    _log(f"대상 분기 {target[0]}Q{target[1]} / 시가총액 확보 {len(market_caps)}종목")
 
     for market in markets:
         theme_members: dict[str, list[dict]] = {}
@@ -190,7 +233,7 @@ def main() -> int:
             if theme["id"] not in theme_members:
                 continue
             result = compute_theme(theme, market, theme_members[theme["id"]], quarters_by_ticker,
-                                   conn, target, config)
+                                   market_caps, conn, target, config, now)
             upsert_classification(conn, theme["id"], market, target[0], target[1],
                                   financial=result["financial"], news=result["news"],
                                   classification=result["classification"], computed_at=now)
