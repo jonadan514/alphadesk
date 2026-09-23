@@ -2241,3 +2241,91 @@ ai_semiconductor(KR) 7/8 변화 기업 -> 켜짐). 그러나 **뉴스 축이 전
 - 10/1 이후: `compute_quarterly_classification.py --quarter 2026Q3` 실행, 이번에
   나온 실제 라벨로 재무 20%·뉴스 1.75/1.50 기준값 재검토
 - `redesign-quarterly` -> `main` 병합 (운영 코드 전환, 아직 안 함)
+
+---
+
+## 2026-09-23 - 2026-09-24 - 미국 재무 수집 + 회사별 저장 + 분기 화면 구현·실배포 검증
+
+### 미국 분기 재무 수집 (yfinance)
+`scripts/collect_us_quarterly_financials.py` 신규 - 한국(DART)과 짝이지만 세 가지가
+다르다: 연결·별도 구분이 없어 `fs_div=None`("NA"로 저장, 기존 설계가 이미 이 경로를
+위해 만들어져 있었다), 4분기를 따로 계산하지 않음(yfinance가 분기별 값을 직접 줌),
+무료 API가 사실상 5분기까지만 줌. 실제 애플 데이터로 전체 파이프라인(추출 ->
+insert_quarter -> select_quarters -> change_company)을 검증했다.
+
+US 유니버스 503종목 전체를 3구간(168+168+167)으로 나눠 수집 - 1구간 168 성공/1
+데이터없음, 2구간 168 전부 성공, 3구간 166 성공/1 데이터없음. rate limit 0건,
+오류 0건. `collect-us-quarterly-financials.yml` 신규(DART와 같은 --offset/--limit
+구간 실행 패턴).
+
+### 밸류 위치 PSR/PER (SPEC 4-3, 5-4)
+`src/analyzers/company_valuation.py` 신규. PSR = 시가총액 / 최근 4분기 매출 합, PER =
+시가총액 / 최근 4분기 순이익 합(흑자만 표시). "최근 4분기"도 매출 흐름(5-1)과 같은
+원칙 - 연도·분기 산수로 정확히 연속된 4개 분기를 요구하고, 중간에 비면 데이터부족.
+3등분(`theme_valuation_tiers`)은 개별 기업이 아니라 테마 전체 단위로 데이터부족을
+판정하며(3곳 미만), 경계는 백분위수가 아니라 순위(인덱스) 기반.
+
+### 회사별 신호 저장 (SPEC 5장)
+그동안 `change_company()`/`psr()`/`per()`는 테마 집계를 내는 데만 쓰이고 계산 즉시
+버려졌다. `src/db/quarterly_company_signals.py` 신규 - PK는 (테마, 티커, 시장, 연도,
+분기). 같은 회사가 여러 테마에 속하면 테마마다 따로 저장한다(밸류 등급이 테마
+상대 순위라 테마마다 다를 수 있어서). `compute_quarterly_classification.py`가
+`load_market_caps()`(fetch_status.info_payload 재사용, map_theme_companies.py의
+cap_lookup과 같은 방법)로 시가총액을 구해 테마 집계와 함께 회사별 결과도 저장하도록
+바뀌었다.
+
+읽기 전용 점검 스크립트 `scripts/inspect_quarterly_company_signals.py` +
+`inspect-quarterly-signals.yml` 신규. 운영 DB에서 확인한 실제 값 예:
+ai_semiconductor(KR) 8개 기업 중 000660·005930 등 6곳이 매출전환·매출흐름·이익전환
+셋 다 통과, INTC는 PER이 정확히 None(적자 지속이라 표시 안 함).
+
+### 분기 4칸 분류 실측 (2026Q3, 재무는 각 기업 최신 발표분 = 2026Q2 실적)
+운영에서 `--quarter 2026Q3`로 미리보기 실행 - 뉴스 이력이 그 분기 기준으로는 완결돼
+있어 실제 라벨이 나왔다.
+- 한국: 조용한 변화 16 · 확인된 변화 6 · 관심 밖 6 · 기대 선행 1 · 데이터부족 3
+- 미국: 조용한 변화 6 · 확인된 변화 3 · 관심 밖 10 · 기대 선행 4 · 데이터부족 9
+
+**주의**: 재무는 여전히 2026Q2 실적이라 "진짜 3분기 분류"가 아니다. 11월 중순(한국
+3분기보고서 45일 규정, 미국 10-Q도 비슷한 시기) 이후 재실행하면 같은 2026Q3 자리가
+진짜 값으로 갱신된다.
+
+### 분기 화면 설계 + 구현 + 실배포 검증 (SPEC 8장)
+`docs/SPEC_quarterly_screen.md` 신규 - SPEC 8장 네 줄을 구현 가능한 수준까지 채운
+지시서. 편집 방침을 "두 축이 어긋나는 자리가 가장 쓸모 있다"로 잡았다(조용한 변화·
+기대 선행이 핵심, 확인된 변화는 이미 알려진 구간). 2×2를 필터로 겸용, 칸 크기는
+개수와 무관하게 동일, 섹션 안 정렬은 변화 기업 비율 내림차순, `-`(데이터부족)와
+`X`(탈락)를 절대 같은 모양으로 안 그림.
+
+구현: `frontend/app/api/quarterly/route.ts`, `frontend/app/api/quarterly/members/route.ts`
+(기존 `/api/radar/*`를 베낌 - 트랩 필터 배지는 `watchlist_screening_results` 코드를
+그대로 재사용, SPEC 5-3), `frontend/app/quarterly/page.tsx`, 네비게이션에 "분기 리서치"
+추가.
+
+**Vercel 프리뷰로 실배포 검증** - 로컬 `.env.local`의 Turso 자격증명이 빈 문자열로
+스크럽돼 있어 로컬에서는 확인 불가. `vercel login`(기기 코드 인증) + `vercel link` +
+`vercel curl`(Deployment Protection 우회)로 실제 프리뷰 API를 호출, Playwright에
+`x-vercel-trusted-oidc-idp-token` 헤더를 실어 실제 화면을 스크린샷으로 확인했다.
+- API 응답이 Python 백엔드 계산값과 정확히 일치(예: power_grid(KR) 확인된 변화,
+  6/11, 뉴스 1.99배)
+- 2×2 필터 클릭 동작, 데이터부족 섹션 펼치기·사유 표시("판정 가능 기업 부족 (1곳)")
+  전부 정상
+- 회사 카드에서 트랩 필터 배지(`통과 (F7)`, `탈락 (F-Score)`)까지 실제 데이터로 확인
+- 스크린샷으로 발견한 버그 하나: 테마 줄의 분류 배지가 4칸 색과 무관하게 전부
+  ACCENT_SOFT 한 색으로 그려짐 - `CLASSIFICATION_INFO`에 칸별 배경색을 추가해 수정,
+  재배포로 재확인 완료.
+
+### 브랜치 상태
+`main`이 `redesign-quarterly`보다 3커밋 앞섬(오늘 워크플로 3개를 워크트리로 등록한
+커밋들) - `collect-dart.yml`·`inspect-theme-news.yml`의 main 쪽 사본이 낡았지만
+무해하다(`workflow_dispatch --ref redesign-quarterly`는 그 브랜치의 최신 파일을
+쓴다 - main의 파일은 워크플로를 Actions 목록에 띄우는 용도일 뿐). 실행 코드
+diff가 전부 "삭제"로 보이는 건 main에 애초에 이 기능들이 없기 때문(의도한 상태).
+
+### 남은 것 (달력이 막고 있음)
+- 10월 말-11월 중순: 미국 10-Q, 한국 3분기보고서 실제 filing 이후
+  `compute_quarterly_classification.py --quarter 2026Q3` 재실행 -> 진짜 3분기 재무로
+  같은 자리가 갱신됨
+- 그 결과로 기준값(재무 20%·3/4, 뉴스 KR 1.75/US 1.50) 재검토
+- `redesign-quarterly` -> `main` 병합 (진짜 3분기 데이터로 검증한 뒤)
+- 스케줄 자동화는 아직 안 함(의도적 - 검증된 실행이 미리보기 1회뿐이라 사람이
+  확인하고 누르는 게 안전하다고 판단)

@@ -19,3 +19,5 @@ out/
 # pytest 임시 폴더
 .pytest_tmp/
 .pytest_cache/
+
+.env*
