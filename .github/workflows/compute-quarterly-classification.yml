@@ -1,0 +1,53 @@
+name: Compute Quarterly Classification
+
+# 분기 재설계 docs/REDESIGN_SPEC.md 9장. 아직 스케줄은 켜지 않는다 - 10장 로드맵의
+# "주간 Actions 비활성화, 분기 Actions 추가" 단계 전까지는 workflow_dispatch로만 돈다.
+on:
+  workflow_dispatch:
+    inputs:
+      quarter:
+        description: "대상 분기 (예: 2026Q3, 비우면 막 끝난 분기)"
+        required: false
+        default: ""
+      market:
+        description: "KR / US (비우면 둘 다)"
+        required: false
+        default: ""
+      theme_id:
+        description: "테마 ID 공백 구분 (비우면 전체)"
+        required: false
+        default: ""
+      include_peripheral:
+        description: "linkage=peripheral도 포함할지"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  compute:
+    name: Compute quarterly 4-cell classification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compute
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: >
+          python scripts/compute_quarterly_classification.py
+          ${{ inputs.quarter && format('--quarter {0}', inputs.quarter) || '' }}
+          ${{ inputs.market && format('--market {0}', inputs.market) || '' }}
+          ${{ inputs.theme_id && format('--theme-id {0}', inputs.theme_id) || '' }}
+          ${{ inputs.include_peripheral == 'true' && '--include-peripheral' || '' }}
