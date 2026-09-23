@@ -6,9 +6,15 @@
 (연초에는 작년 사업보고서가 아직 안 나와서 최신 분기가 재작년 3분기일 수 있다).
 기업당 8-12회 호출이라 KR 유니버스 664종목이면 약 6,000-8,000회 - DART 일일 한도(2만) 안이다.
 
+2026-09-23 표본 실측(5종목, 전부 8회 호출로 끝남): 종목당 약 15.6초. 664종목 전체를
+한 번에 돌리면 약 173분으로 GitHub Actions 워크플로 제한(180분)에 거의 닿는다 - 재작년
+fallback(종목당 호출 50% 추가)이 몇 종목만 걸려도 넘길 수 있다. --offset/--limit으로
+나눠 돌린다(뉴스 백필이 날짜 구간을 나눈 것과 같은 이유).
+
 Usage:
   python scripts/collect_kr_quarterly_financials.py --tickers 005930 086520   # 몇 종목만 + 표 출력
   python scripts/collect_kr_quarterly_financials.py                           # KR 유니버스 전체
+  python scripts/collect_kr_quarterly_financials.py --offset 220 --limit 220  # 이어서 한 구간만
 """
 from __future__ import annotations
 
@@ -62,13 +68,15 @@ def fmt_eok(v) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tickers", nargs="*", default=None, help="종목코드 몇 개만 (확인용)")
-    ap.add_argument("--limit", type=int, default=None, help="유니버스 앞에서 N개만")
+    ap.add_argument("--offset", type=int, default=0, help="유니버스 정렬 순서에서 이만큼 건너뛴다")
+    ap.add_argument("--limit", type=int, default=None, help="offset부터 N개만")
     args = ap.parse_args()
 
     universe = {i["symbol"]: i for i in json.loads(UNIVERSE.read_text(encoding="utf-8"))["items"]}
     tickers = args.tickers or sorted(universe)
-    if args.limit:
-        tickers = tickers[:args.limit]
+    if args.offset or args.limit:
+        end = args.offset + args.limit if args.limit else None
+        tickers = tickers[args.offset:end]
 
     corp = dart.load_corp_codes(CORP_CACHE)
     _log(f"기업코드 매핑 {len(corp)}건 / 대상 {len(tickers)}종목")
