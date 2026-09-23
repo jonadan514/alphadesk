@@ -1,0 +1,56 @@
+name: Collect US Quarterly Financials
+
+# 분기 재설계(docs/REDESIGN_SPEC.md 4-1). 미국 분기 재무를 yfinance에서 받는다.
+# 한국(collect-dart.yml)과 짝이지만 API가 달라 별도 워크플로다.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "sample(몇 종목 표로 확인) / financials(유니버스 구간 실행)"
+        required: true
+        default: "sample"
+      tickers:
+        description: "sample 모드 종목코드 공백 구분"
+        required: false
+        default: "AAPL MSFT NVDA TSLA GME"
+      offset:
+        description: "financials 모드 - 유니버스 정렬 순서에서 이만큼 건너뛴다"
+        required: false
+        default: "0"
+      limit:
+        description: "financials 모드 - offset부터 몇 종목만 (비우면 끝까지)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          case "${{ inputs.mode }}" in
+            sample)
+              python scripts/collect_us_quarterly_financials.py --tickers ${{ inputs.tickers }} ;;
+            financials)
+              if [ -n "${{ inputs.limit }}" ]; then
+                python scripts/collect_us_quarterly_financials.py --offset ${{ inputs.offset }} --limit ${{ inputs.limit }}
+              else
+                python scripts/collect_us_quarterly_financials.py --offset ${{ inputs.offset }}
+              fi ;;
+            *) echo "알 수 없는 mode"; exit 1 ;;
+          esac
