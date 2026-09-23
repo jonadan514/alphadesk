@@ -18,29 +18,35 @@ const MUTED = "var(--text-muted)";
 const MUTED_SOFT = "rgba(139,130,113,0.14)";
 const FAINT = "var(--text-faint)";
 const INFO = "var(--info)";
+const INFO_SOFT = "rgba(111,179,184,0.15)";
+const SECONDARY_SOFT = "rgba(236,231,216,0.10)";
 const MONO = 'ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", monospace';
 
 type Classification = "조용한 변화" | "확인된 변화" | "기대 선행" | "관심 밖";
 const CLASSIFICATIONS: Classification[] = ["조용한 변화", "확인된 변화", "기대 선행", "관심 밖"];
 
 // SPEC 0장 - 편집 방침. "두 축이 어긋나는 자리가 가장 쓸모 있다."
-const CLASSIFICATION_INFO: Record<Classification, { desc: string; color: string; emphasis?: boolean }> = {
+// bg는 테마 줄의 분류 배지용 - 2×2 그리드(강조는 조용한 변화에만)와 달리, 여기서는
+// 4칸이 섞여 보이는 자리가 없어(섹션별로 이미 나뉘어 있다) 배지 색은 구분 목적으로
+// 4칸 다 다르게 준다. 전부 같은 색이면 필터 없이 스크롤할 때 지금 어느 섹션인지
+// 배지만 보고는 못 알아본다.
+const CLASSIFICATION_INFO: Record<Classification, { desc: string; color: string; bg: string; emphasis?: boolean }> = {
   "조용한 변화": {
     desc: "실적이 먼저 움직였는데 시장은 아직 모릅니다. 이 화면이 있는 이유입니다.",
-    color: ACCENT,
+    color: ACCENT, bg: ACCENT_SOFT,
     emphasis: true,
   },
   "확인된 변화": {
     desc: "재무·뉴스 둘 다 맞았지만 남들도 이미 압니다. 밸류 위치를 꼭 확인하세요.",
-    color: INFO,
+    color: INFO, bg: INFO_SOFT,
   },
   "기대 선행": {
     desc: "기대가 먼저 붙었습니다. 다음 분기 재무가 따라오는지 지켜볼 구간입니다.",
-    color: "var(--text-secondary)",
+    color: "var(--text-secondary)", bg: SECONDARY_SOFT,
   },
   "관심 밖": {
     desc: "이번 분기엔 재무도 뉴스도 특별한 움직임이 없습니다.",
-    color: MUTED,
+    color: MUTED, bg: MUTED_SOFT,
   },
 };
 
@@ -399,12 +405,15 @@ function ThemeRow({ theme, market, isNa }: { theme: ThemeQuarterly; market: stri
           <span className="text-[11.5px]" style={{ color: FAINT }}>{en}</span>
         </div>
 
-        {!isNa && (
-          <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold"
-                style={{ background: ACCENT_SOFT, color: CLASSIFICATION_INFO[theme.classification as Classification]?.color ?? ACCENT }}>
-            {theme.classification}
-          </span>
-        )}
+        {!isNa && (() => {
+          const info = CLASSIFICATION_INFO[theme.classification as Classification];
+          return (
+            <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold"
+                  style={{ background: info?.bg ?? ACCENT_SOFT, color: info?.color ?? ACCENT }}>
+              {theme.classification}
+            </span>
+          );
+        })()}
         {isNa && (
           <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px]" style={{ color: FAINT, border: "1px solid var(--border)" }}>
             {naReason(theme)}
