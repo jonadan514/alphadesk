@@ -108,6 +108,11 @@
 - 흑자 기업은 PER 값도 함께 표시 (등분 없이 수치만).
 - 테마 안에서 PSR 값이 있는 기업이 3곳 미만이면 데이터부족.
 - 판정 신호가 아니라 참고 표시다.
+- 구현: `src/analyzers/company_valuation.py`(`psr()`/`per()`/`theme_valuation_tiers()`).
+  PSR·PER은 4-3처럼 select_quarters()의 최근 4분기 매출·순이익 합으로 직접 계산한다
+  (yfinance 값을 그대로 쓰지 않음). 시가총액·회사별 PSR을 테마별로 모아
+  `theme_valuation_tiers()`에 넘기는 실행 스크립트는 아직 없다(5장의 나머지처럼
+  compute_quarterly_classification.py가 회사별 결과를 저장하게 될 때 같이 붙는다).
 
 ### 5-5. 기저효과 (지금은 구현하지 않음)
 - 매출이 아주 작은 기업이 쉽게 +20%를 넘는 문제가 있을 수 있다.
