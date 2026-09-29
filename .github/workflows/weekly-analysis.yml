@@ -44,7 +44,27 @@ jobs:
           cache: 'pip'
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      # KRX 공식 섹터 지수(코스피200 섹터지수 + 유틸리티 업종지수)를 받아 둔다.
+      # pykrx 1.2.8이 pandas<3.0을 요구해(본 저장소는 pandas 3.x) 격리 venv에서
+      # 따로 돈다 - weekly-watchlist.yml의 KR 유니버스 수집과 같은 사정
+      # (docs/SPEC_kr_sector_index.md 3장). 이 단계가 실패해도(KRX 로그인 만료,
+      # KRX 점검 등) KR 분석 자체는 앵커 종목 폴백으로 계속 돌아야 하므로
+      # continue-on-error로 이 단계의 실패가 잡 전체를 막지 않게 한다.
+      - name: Fetch KRX sector index (isolated venv)
+        continue-on-error: true
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python -m venv /tmp/krxenv
+          /tmp/krxenv/bin/pip install --quiet "pandas<3.0" "pykrx==1.2.8"
+          /tmp/krxenv/bin/python scripts/fetch_krx_sector_index.py --out /tmp/krx_sector_index.json || echo "KRX 섹터 지수 수집 실패 - 앵커 폴백으로 계속"
+
       - name: Run KR analysis
+        env:
+          KRX_SECTOR_INDEX_JSON: /tmp/krx_sector_index.json
         run: python scripts/run_kr_analysis.py
 
   telegram-digest:
