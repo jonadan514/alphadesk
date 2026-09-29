@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { X, Info, Pencil } from "lucide-react";
+import { X, Info, Pencil, Search } from "lucide-react";
 import StockTechPanel from "@/src/components/StockTechPanel";
 import { themeName } from "@/src/lib/themeNames";
 
@@ -689,6 +689,9 @@ export default function WatchlistPage() {
   const [regimeFilter, setRegimeFilter] = useState<"ALL" | "growth" | "dividend" | "neutral">("ALL");
   const [newOnly, setNewOnly] = useState(false);
   const [cheapOnly, setCheapOnly] = useState(false);
+  // 275종목 중 아는 티커/이름을 바로 찾는 용도 - "새 아이디어 탐색"인 다른 필터들과
+  // 달리 "이미 아는 종목이 후보에 있는지"를 확인하는 반대 방향 쓰임새다.
+  const [searchQuery, setSearchQuery] = useState("");
   const [addedSymbols, setAddedSymbols] = useState<Set<string>>(new Set());
   const [selected, setSelected]     = useState<Candidate | null>(null);
   const [infoKey, setInfoKey]       = useState<keyof typeof INDICATOR_INFO | null>(null);
@@ -763,6 +766,11 @@ export default function WatchlistPage() {
     if (regimeFilter !== "ALL" && c.regime_fit !== regimeFilter) return false;
     if (newOnly && c.is_new !== true) return false;
     if (cheapOnly && c.valuation_tier !== "싼 편") return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const haystack = `${c.symbol} ${c.name ?? ""}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
 
@@ -863,6 +871,33 @@ export default function WatchlistPage() {
       {/* ── 스크리닝 후보 탭 ── */}
       {tab === "candidates" && (
         <>
+          {/* 검색 - 275종목 중 아는 티커/이름을 바로 찾는다. 다른 필터(신규만/싼 편만
+              등)는 "뭘 볼지 모른 채 탐색"이 목적이라 켜고 끄는 토글이지만, 이건 찾는
+              대상을 이미 알고 있는 반대 상황이라 텍스트 입력으로 둔다. */}
+          <div style={{ position: "relative", marginBottom: 12, maxWidth: 320 }}>
+            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: TEXT_MUTED, pointerEvents: "none" }} />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="티커 또는 종목명 검색"
+              style={{
+                width: "100%", boxSizing: "border-box", padding: "7px 30px",
+                fontSize: 13, fontFamily: MONO,
+                background: INPUT_BG, color: TEXT_PRIMARY, border: `1px solid ${BORDER_CTRL}`,
+                outline: "none",
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                aria-label="검색어 지우기"
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", color: TEXT_MUTED, cursor: "pointer", padding: 2, display: "flex" }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
             {(["ALL", "US", "KR"] as const).map((m) => (
               <button key={m} onClick={() => setMarketFilter(m)} style={{
@@ -909,7 +944,11 @@ export default function WatchlistPage() {
             <div style={{ color: TEXT_MUTED, textAlign: "center", padding: 60 }}>불러오는 중...</div>
           ) : filtered.length === 0 ? (
             <div style={{ color: TEXT_MUTED, textAlign: "center", padding: 60 }}>
-              {candidates.length === 0 ? "스크리닝 데이터 없음." : "필터 조건에 맞는 종목 없음."}
+              {candidates.length === 0
+                ? "스크리닝 데이터 없음."
+                : searchQuery.trim()
+                  ? "일치하는 종목 없음 - 함정 필터 통과 후보 275종목 중에만 검색합니다."
+                  : "필터 조건에 맞는 종목 없음."}
             </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
