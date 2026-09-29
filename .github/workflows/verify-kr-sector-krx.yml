@@ -1,0 +1,76 @@
+name: Verify KR Sector KRX Integration
+
+# scripts/fetch_krx_sector_index.py + kr_sector_analyzer.analyze()의 실제 KRX
+# 경로를 한 번 실행해 확인한다(SPEC_kr_sector_index.md 4장 구현 검증용). 실행
+# 결과는 운영 DB의 kr_sector_analysis 테이블(날짜별 UNIQUE)에 그대로 들어간다 -
+# 이건 weekly-analysis.yml이 매주 월요일에 하는 것과 정확히 같은 쓰기라 특별한
+# 부작용이 아니다. US 분석·텔레그램 발송은 하지 않는다(검증 목적에 불필요).
+#
+# 검증이 끝나면 이 파일은 지운다 - 상시로 둘 워크플로가 아니다.
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch KRX sector index (isolated venv)
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python -m venv /tmp/krxenv
+          /tmp/krxenv/bin/pip install --quiet "pandas<3.0" "pykrx==1.2.8"
+          /tmp/krxenv/bin/python scripts/fetch_krx_sector_index.py --out /tmp/krx_sector_index.json
+
+      - name: Show fetched JSON summary (no secrets)
+        run: |
+          python - <<'EOF'
+          import json
+          d = json.load(open("/tmp/krx_sector_index.json", encoding="utf-8"))
+          print("source:", d.get("source"), "base_date:", d.get("base_date"))
+          for k, v in d["series"].items():
+              print(f"  {k}: {len(v['dates'])}행 ({v['dates'][0]} - {v['dates'][-1]})")
+          EOF
+
+      - name: Run KR analysis (real DB write)
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          KRX_SECTOR_INDEX_JSON: /tmp/krx_sector_index.json
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/run_kr_analysis.py
+
+      - name: Confirm sector_source in stored payload
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: |
+          python - <<'EOF'
+          import sys, json
+          sys.path.insert(0, ".")
+          sys.path.insert(0, "src")
+          from src.db.data_store import get_db
+          conn = get_db()
+          row = conn.execute(
+              "SELECT date, payload FROM kr_sector_analysis ORDER BY date DESC LIMIT 1"
+          ).fetchone()
+          if not row:
+              print("행 없음")
+          else:
+              date, payload = row[0], json.loads(row[1])
+              print("date:", date, "sector_source:", payload.get("sector_source"))
+              print("sector_data 개수:", len(payload.get("sector_data", [])))
+              for s in payload.get("sector_data", []):
+                  print(f"  {s['sector']:<24} rs_1m={s.get('rs_1m')}")
+          EOF
