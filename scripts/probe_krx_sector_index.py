@@ -33,6 +33,23 @@ APP_SECTORS = [
     "Energy", "Utilities",
 ]
 
+# 1차 조사에서 나온 후보 매핑. 9개는 코스피200 섹터 지수(GICS 계열이라 앱 섹터와
+# 이름이 거의 그대로 맞는다), Utilities만 코스피200에 해당 섹터가 없어 업종지수
+# 전기·가스를 쓴다. 이 10개가 전부 시세를 주는지가 설계의 전제라 따로 검증한다.
+PROPOSED = {
+    "Technology":             ("1155", "코스피 200 정보기술"),
+    "Consumer Cyclical":      ("1158", "코스피 200 경기소비재"),
+    "Consumer Defensive":     ("1157", "코스피 200 생활소비재"),
+    "Financial Services":     ("1156", "코스피 200 금융"),
+    "Industrials":            ("1159", "코스피 200 산업재"),
+    "Healthcare":             ("1160", "코스피 200 헬스케어"),
+    "Communication Services": ("1150", "코스피 200 커뮤니케이션서비스"),
+    "Basic Materials":        ("1153", "코스피 200 철강/소재"),
+    "Energy":                 ("1154", "코스피 200 에너지/화학"),
+    "Utilities":              ("1017", "전기·가스"),           # 코스피200에 없음
+}
+BENCHMARK = ("1001", "코스피")
+
 
 def _log(msg: str) -> None:
     print(f"[probe-krx-idx] {msg}", flush=True)
@@ -90,30 +107,43 @@ def main() -> int:
             _log(f"    {t}  {name}")
         result["markets"][market] = entry
 
-    # 시세를 실제로 받아본다. 목록만 되고 시세가 안 되면 RS를 못 만든다.
+    # 후보 매핑 10개 + 벤치마크가 전부 시세를 주는지 확인한다. 설계가 이것에
+    # 통째로 달려 있어서, 목록에 이름이 보이는 것만으로는 충분하지 않다.
     _log("=" * 60)
-    _log("업종지수 시세 조회 시험")
-    samples = []
-    kospi = result["markets"].get("KOSPI", {})
-    for item in (kospi.get("tickers") or [])[:6]:
-        t = item["ticker"]
+    _log("후보 매핑 시세 조회 (섹터 10 + 벤치마크)")
+    checks: dict = {}
+    targets = [("(벤치마크) KOSPI", *BENCHMARK)] + [
+        (sector, tk, nm) for sector, (tk, nm) in PROPOSED.items()
+    ]
+    for sector, tk, expected_name in targets:
+        row: dict = {"ticker": tk, "expected_name": expected_name}
         try:
-            df = ps.get_index_ohlcv_by_date(fromdate, todate, t)
-            rows = len(df)
-            first = str(df.index[0].date()) if rows else "-"
-            last = str(df.index[-1].date()) if rows else "-"
-            _log(f"  {t} {item['name']}: {rows}행 ({first} - {last})")
-            samples.append({"ticker": t, "name": item["name"], "rows": rows})
+            actual = ps.get_index_ticker_name(tk)
         except Exception as e:
-            _log(f"  {t} {item['name']}: 실패 {type(e).__name__}: {e}")
-            samples.append({"ticker": t, "name": item["name"], "rows": 0,
-                            "error": f"{type(e).__name__}: {e}"})
-    result["ohlcv_samples"] = samples
+            actual = f"<실패 {type(e).__name__}>"
+        row["actual_name"] = actual
+        row["name_match"] = (actual == expected_name)
+        try:
+            df = ps.get_index_ohlcv_by_date(fromdate, todate, tk)
+            row["rows"] = len(df)
+            row["first"] = str(df.index[0].date()) if len(df) else None
+            row["last"] = str(df.index[-1].date()) if len(df) else None
+            # 종가가 전부 같으면(산출 중단된 지수) RS가 0으로 굳는다 - 변동 여부 확인
+            closes = df["종가"] if "종가" in df.columns else df.iloc[:, 3]
+            row["distinct_closes"] = int(closes.nunique())
+        except Exception as e:
+            row["rows"] = 0
+            row["error"] = f"{type(e).__name__}: {e}"
+        mark = "OK " if row.get("rows", 0) >= 60 and row.get("distinct_closes", 0) > 5 else "!! "
+        namenote = "" if row["name_match"] else f"  [이름 다름: {actual}]"
+        _log(f"  {mark}{sector:<24} {tk}  {row.get('rows', 0):>3}행  "
+             f"서로 다른 종가 {row.get('distinct_closes', 0):>3}{namenote}"
+             + (f"  {row['error']}" if row.get("error") else ""))
+        checks[sector] = row
+    result["proposed_checks"] = checks
 
-    _log("=" * 60)
-    _log("앱이 쓰는 섹터 이름(이 목록에 위 업종을 맞춰 붙일 수 있어야 한다):")
-    for s in APP_SECTORS:
-        _log(f"    {s}")
+    ok = sum(1 for r in checks.values() if r.get("rows", 0) >= 60 and r.get("distinct_closes", 0) > 5)
+    _log(f"  -> {ok}/{len(checks)} 사용 가능")
 
     out = os.getenv("PROBE_OUT") or "/tmp/krx_sector_index.json"
     try:
