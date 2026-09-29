@@ -2376,3 +2376,59 @@ diff가 전부 "삭제"로 보이는 건 main에 애초에 이 기능들이 없�
 - `redesign-quarterly` -> `main` 병합 (진짜 3분기 데이터로 검증한 뒤)
 - 스케줄 자동화는 아직 안 함(의도적 - 검증된 실행이 미리보기 1회뿐이라 사람이
   확인하고 누르는 게 안전하다고 판단)
+
+## 2026-09-29 - 한국 섹터 분석을 KRX 공식 지수로 교체
+
+**왜** - `kr_sector_analyzer.py`가 "한국에 섹터 ETF가 없다"는 이유로 섹터마다
+대표 종목 1-3개를 코드에 박아 쓰고 있었다(`SECTOR_ANCHORS`). Utilities는 한국전력
+한 종목이라 사실상 "한국전력 주가"를 유틸리티 섹터라고 부르는 셈이었다. 워치리스트
+밸류 축 작업 직후 "섹터분석과 워치리스트 쪽은 손 안봐도 될까"라는 질문에서 시작해,
+섹터 쪽은 이 앵커 문제를 해결하는 방향으로 정했다.
+
+**먼저 잰 것 (Opus, `probe-krx-sector-index.yml` 실측)** - pykrx로 KRX 공식 지수를
+쓸 수 있는지 세 가지를 확인했다: 지수 목록 조회(KOSPI 53개·KOSDAQ 39개), 과거
+시세(150일 구간에 99 거래일), 앱 섹터 10개에 맞춰 붙이기. 처음엔 업종지수(화학·
+전기전자 등)만 있는 줄 알았는데 GICS 계열인 **코스피200 섹터지수(1150-1160)**
+가 따로 있어서 9개 섹터가 이름 그대로 맞았다. Utilities만 코스피200에 해당
+섹터가 없어 업종지수 전기·가스(1017)를 쓰기로 했다 - 계열이 섞이는 걸 알고
+있지만 대안이 "한국전력 한 종목"이라 그대로 채택. 11개 전부 서로 다른 종가
+98-99개로 정상 산출 중인 것까지 확인해 `docs/SPEC_kr_sector_index.md`로 정리.
+
+**구현 (Sonnet, SPEC 4장 순서대로)**
+- `scripts/fetch_krx_sector_index.py` (신규) - `fetch_kr_universe_pykrx.py`와
+  같은 격리 venv 방식. pykrx 1.2.8이 `pandas<3.0`을 요구해 본 저장소(pandas 3.x)와
+  같은 환경에 둘 수 없다. 지수 하나가 실패해도 그 키만 빼고 나머지를 저장한다.
+- `kr_sector_analyzer.py` - `_fetch_sector_data()`의 시그니처·반환 타입은 그대로
+  두고, `_load_krx_index_series()`(JSON 읽기)가 성공하면 그쪽을, 실패하면 기존
+  앵커 경로(`_fetch_sector_data_yfinance`로 개명, 삭제하지 않음)로 폴백한다.
+  `analyze()` 결과에 `sector_source: "krx"|"anchors"`를 추가해 화면에서 구분
+  가능하게 함.
+- `weekly-analysis.yml`의 `kr-analysis` 잡에 격리 venv 수집 단계 추가
+  (`continue-on-error: true` - 실패해도 앵커 폴백으로 KR 분석은 계속 돈다).
+- `tests/test_kr_sector_index.py` (12개) - 특히 `fetch_krx_sector_index.
+  SECTOR_TICKERS`와 `kr_sector_analyzer.SECTOR_ANCHORS`의 키 집합이 정확히
+  일치하는지, `CYCLE_SECTORS`가 참조하는 섹터 이름에 오타가 없는지를 고정했다 -
+  어긋나면 사이클 판정이 조용히 빈 값을 먹는 게 제일 조용히 깨질 수 있는 자리라서.
+
+**실측 검증 (`verify-kr-sector-krx.yml`, 1회 실행 후 삭제)** - 실제 KRX 로그인
+자격증명으로 지수 11/11 수집 -> `run_kr_analysis.py` 정상 완료(Mid Cycle 판정) ->
+운영 DB `kr_sector_analysis`에 `sector_source: "krx"`로 저장된 것까지 실측
+확인. Technology rs_1m +3.95, Energy +3.65가 선행, Healthcare -12.28이 후행으로
+나왔다(2026-09-29 기준 실제 값 - 매주 바뀐다).
+
+전체 테스트 스위트 통과(실패 0). 검증 워크플로는 확인 후 `main`·`redesign-quarterly`
+양쪽에서 제거(상시로 둘 진단용이 아니라 이번 구현 검증용).
+
+### 하지 않기로 한 것
+- 코스닥은 넣지 않음 - 지금 분석기가 코스피 전용이라(앵커 전부 `.KS`, 벤치마크가
+  코스피) 코스닥을 넣으려면 벤치마크·사이클 판정을 다시 설계해야 한다.
+- 업종지수를 여러 개 묶어 섹터를 만드는 것도 안 함 - 묶는 가중치가 또 다른
+  자의적 선택이 된다. KRX가 이미 묶어 놓은 코스피200 섹터지수를 그대로 쓴다.
+- 미국 쪽(`sector_analyzer.py`, SPDR 11개 ETF)은 손대지 않음 - 이미 잘 돈다.
+
+### 남은 것
+- 프론트엔드(`/sector` 화면)에 `sector_source` 배지를 아직 노출하지 않았다.
+  현재는 API·DB 레벨까지만 끝났고, 화면에서 "KRX 공식 지수 기준"과 "대표 종목
+  폴백"을 구분해 보여주는 건 다음 작업.
+- 다음 정기 실행(다음 주 월요일 예약 `weekly-analysis.yml`)에서 폴백 없이
+  KRX 경로로 정상 도는지 한 번 더 자연 실행으로 확인.
