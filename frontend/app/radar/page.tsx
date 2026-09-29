@@ -616,10 +616,12 @@ export default function RadarPage() {
         <>
           {/* 발견 단계 3섹션 - 해당 없는 단계도 숨기지 않는다(헤더+개수는 항상 보인다).
               "이번 주는 이 단계가 비었다"는 것 자체가 정보라서 완전히 없애지는
-              않되, 본문(설명·카드·해당없음 안내)은 접어서 안 볼 수 있게 한다 -
-              세 섹션이 전부 비어있는 주에는 빈 칸 3개가 화면을 다 차지했었다. */}
+              않되, 본문(설명·카드·해당없음 안내)은 기본으로 접어 둔다 - 세 섹션이
+              전부 비어있는 주에는 빈 칸 3개가 화면을 다 차지했었다. 펼쳐서 본 뒤엔
+              그 선택을 기억해 다음 방문에서도 펼쳐진 채로 보여준다(collapsedStages에
+              값이 없을 때만 기본 접힘 - false를 저장해 뒀으면 펼친 채 유지).*/}
           {stageGroups.map(({ stage, items }, i) => {
-            const collapsed = !!collapsedStages[stage.key];
+            const collapsed = collapsedStages[stage.key] ?? true;
             return (
               <div key={stage.key} className="mt-8">
                 <StageRail index={i} color={stage.color} />
