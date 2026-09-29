@@ -989,9 +989,11 @@ export default function WatchlistPage() {
                           {c.symbol}
                           {c.is_new === true && (
                             <span
+                              // first_seen은 이력 기록이 쌓이기 시작한 뒤로만 알 수 있다 - 실제
+                              // 첫 통과일이 그보다 이전일 수 있어 "최초"라고 단정하지 않는다.
                               title={c.is_reentry
-                                ? `예전에 후보였다가 빠진 뒤 이번에 다시 통과 (최초 ${c.first_seen ?? "-"})`
-                                : "이번 회차에 처음 필터를 통과"}
+                                ? `예전에 후보였다가 빠진 뒤 이번에 다시 통과 (기록상 최초 등장: ${c.first_seen ?? "-"})`
+                                : "이번 회차에 처음 필터를 통과 (이력 기록 시작 이후 처음)"}
                               style={{
                                 marginLeft: 6, fontSize: 10, fontWeight: 700,
                                 color: GOOD, border: `1px solid ${GOOD}55`,
