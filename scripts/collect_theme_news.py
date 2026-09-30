@@ -18,8 +18,11 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import statistics
 import sys
+import urllib.request
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -38,6 +41,41 @@ THEMES_YAML = ROOT / "config" / "themes.yaml"
 
 def _log(msg: str) -> None:
     print(f"[news] {msg}")
+
+
+def send_telegram_warning(text: str) -> None:
+    """수집이 통째로 실패했을 때만 부른다. 미설정이면 조용히 건너뛴다
+    (run_watchlist_screen.py의 같은 이름 함수와 동일 패턴)."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        _log("TELEGRAM_BOT_TOKEN/CHAT_ID 미설정 - 경고 발송 건너뜀")
+        return
+    body = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML"}).encode()
+    req = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        data=body, headers={"Content-Type": "application/json"}, method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp.read()
+        _log("텔레그램 경고 발송 완료")
+    except Exception as e:
+        _log(f"텔레그램 경고 발송 실패(무시): {type(e).__name__}")
+
+
+def is_collection_failure(counts: list[int]) -> bool:
+    """그 주에 수집한 모든 테마가 0건이면 '뉴스 가뭄'이 아니라 수집 실패로 본다.
+
+    2026-09-28에 구글 뉴스가 Actions IP를 막아 전 테마가 0건이 됐는데, 0이
+    그대로 저장되는 바람에 기준선(직전 8주 중앙값)에 0이 섞이기 시작했다.
+    0은 NULL이 아니라서 get_prior_news_counts()의 필터에 걸리지 않는다 -
+    0이 5주쯤 쌓이면 중앙값이 0이 되고 뉴스 축이 영구히 죽는다.
+
+    테마 하나가 0건인 건 실제 정보다(그 주에 뉴스가 없었다). 하지만 30개
+    테마가 **전부** 동시에 0건일 확률은 사실상 없다 - 그건 소스가 막힌 것이다.
+    """
+    return bool(counts) and all(c == 0 for c in counts)
 
 
 def _current_week_monday(today: date) -> date:
@@ -107,54 +145,89 @@ def main() -> None:
 
     KEYWORD_FIELD = {"US": "keywords_en", "KR": "keywords_ko"}
 
+    failed_runs: list[str] = []
+
     for market, keyword_field in KEYWORD_FIELD.items():
         market_themes = [t for t in themes if market in t.get("markets", [])]
-        _log(f"대상 테마 {len(market_themes)}개({market}), 처리 주 {len(weeks)}개 "
+        collectible = []
+        for theme in market_themes:
+            if theme.get(keyword_field):
+                collectible.append(theme)
+            else:
+                _log(f"{theme['id']}({market}): {keyword_field} 없음 - 건너뜀")
+        _log(f"대상 테마 {len(collectible)}개({market}), 처리 주 {len(weeks)}개 "
              f"({weeks[0].isoformat()} ~ {weeks[-1].isoformat()})")
 
-        for theme in market_themes:
-            theme_id = theme["id"]
-            keywords = theme.get(keyword_field, [])
-            if not keywords:
-                _log(f"{theme_id}({market}): {keyword_field} 없음 - 건너뜀")
-                continue
-            min_articles = theme.get("min_articles", default_min_articles)
-            # 키워드가 바뀐 테마는 바뀐 주 이전 건수를 기준선에 쓰지 않는다(유지보수 규칙 2).
-            # 기준선 최소 4주가 쌓일 때까지 뉴스 축은 na(데이터부족)로 남는다 - 탈락이 아니다.
-            kw_changed = theme.get("keywords_changed_at")
-            since = None
-            if kw_changed:
-                kc = kw_changed if isinstance(kw_changed, date) else date.fromisoformat(str(kw_changed))
-                since = _current_week_monday(kc).isoformat()
+        # 주를 바깥 루프로 둔다 - 그 주의 모든 테마를 먼저 받아봐야 "전 테마 0건"
+        # (= 수집 실패)인지 알 수 있고, 그걸 알아야 0을 저장할지 NULL을 저장할지
+        # 정할 수 있다. 기준선은 각 테마의 **이전 주** 값만 쓰므로 주를 오름차순으로
+        # 도는 한 이 순서 변경이 계산에 주는 영향은 없다.
+        for week_start in weeks:
+            week_end = week_start + timedelta(days=7)  # before: 는 배타적이라 +7로 일요일까지 포함
+            backfilled = week_start != current_week
 
-            for week_start in weeks:
-                week_end = week_start + timedelta(days=7)  # before: 는 배타적이라 +7로 일요일까지 포함
-                backfilled = week_start != current_week
-
-                articles, stats = collect_theme_news(keywords, week_start, week_end, market=market)
+            fetched = []
+            for theme in collectible:
+                theme_id = theme["id"]
+                articles, stats = collect_theme_news(
+                    theme[keyword_field], week_start, week_end, market=market)
                 insert_theme_news_bulk(conn, theme_id, market, week_start.isoformat(), articles)
-                news_count = len(articles)
                 _log(f"{theme_id}({market}) {week_start.isoformat()}: 원본 {stats['raw_total']}건 -> "
-                     f"URL중복제거후 {stats['after_url_dedup']}건 -> 제목중복제거후 {news_count}건 "
+                     f"URL중복제거후 {stats['after_url_dedup']}건 -> 제목중복제거후 {len(articles)}건 "
                      f"(키워드별 {stats['per_keyword']})")
+                fetched.append((theme, len(articles)))
+
+            collection_failed = is_collection_failure([c for _, c in fetched])
+            if collection_failed:
+                msg = (f"{market} {week_start.isoformat()}: 테마 {len(fetched)}개가 전부 0건 - "
+                       f"수집 실패로 보고 건수를 NULL로 저장한다(0으로 저장하면 기준선이 오염된다)")
+                _log(f"  ** 경고 ** {msg}")
+                failed_runs.append(f"{market} {week_start.isoformat()} ({len(fetched)}개 테마)")
+
+            for theme, article_count in fetched:
+                theme_id = theme["id"]
+                min_articles = theme.get("min_articles", default_min_articles)
+                # 키워드가 바뀐 테마는 바뀐 주 이전 건수를 기준선에 쓰지 않는다(유지보수 규칙 2).
+                # 기준선 최소 4주가 쌓일 때까지 뉴스 축은 na(데이터부족)로 남는다 - 탈락이 아니다.
+                kw_changed = theme.get("keywords_changed_at")
+                since = None
+                if kw_changed:
+                    kc = kw_changed if isinstance(kw_changed, date) else date.fromisoformat(str(kw_changed))
+                    since = _current_week_monday(kc).isoformat()
 
                 prior_counts = get_prior_news_counts(conn, theme_id, market, week_start.isoformat(),
                                                      weeks=BASELINE_WEEKS, since=since)
-                baseline, ratio, arrow = compute_news_arrow(news_count, min_articles, prior_counts, thresholds)
+                if collection_failed:
+                    # 건수를 모르는 것이지 0인 게 아니다 - NULL로 남겨 기준선 계산에서 빠지게 한다.
+                    news_count = None
+                    baseline, ratio, arrow = None, None, "na"
+                else:
+                    news_count = article_count
+                    baseline, ratio, arrow = compute_news_arrow(
+                        news_count, min_articles, prior_counts, thresholds)
+
                 ratio_str = f"{ratio:.2f}" if ratio is not None else "-"
                 baseline_str = f"{baseline:.1f}" if baseline is not None else "-"
-                _log(f"  -> baseline={baseline_str} ratio={ratio_str} arrow={arrow} "
-                     f"(backfilled={backfilled}, 직전주 {len(prior_counts)}개 확보"
+                _log(f"  -> {theme_id} baseline={baseline_str} ratio={ratio_str} arrow={arrow} "
+                     f"(count={'NULL(수집실패)' if news_count is None else news_count}, "
+                     f"backfilled={backfilled}, 직전주 {len(prior_counts)}개 확보"
                      f"{', 키워드 변경 ' + since + ' 이후만' if since else ''})")
 
                 upsert_news_signal(
                     conn, theme_id, market, week_start.isoformat(), news_count, baseline,
                     ratio, arrow, backfilled, datetime.utcnow().isoformat(),
                 )
-                conn.commit()
+            conn.commit()
 
     conn.close()
-    _log("완료")
+    if failed_runs:
+        send_telegram_warning(
+            "⚠️ <b>테마 뉴스 수집 실패</b>\n"
+            + "\n".join(f"· {r}" for r in failed_runs)
+            + "\n\n전 테마가 0건입니다. 뉴스 소스가 막혔을 가능성이 높습니다"
+              "(건수는 NULL로 저장해 기준선 오염은 막았습니다)."
+        )
+    _log("완료" + (f" - 수집 실패 {len(failed_runs)}건" if failed_runs else ""))
 
 
 if __name__ == "__main__":

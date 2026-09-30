@@ -36,6 +36,14 @@ jobs:
         env:
           TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          # 한국 수집 소스. 둘 다 있으면 네이버 뉴스 API를 쓰고, 없으면 구글 RSS로
+          # 돌아간다(2026-09-28 구글이 Actions IP를 막은 뒤 추가한 대체 경로).
+          # 키를 빼는 것만으로 즉시 원복된다.
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          # 전 테마 0건이면 텔레그램 경고를 보낸다(조용히 깨지는 것을 막는다).
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: >
           python scripts/collect_theme_news.py
           --weeks-back "${{ inputs.weeks_back || '1' }}"

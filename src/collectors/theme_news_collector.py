@@ -12,6 +12,7 @@ Phase A는 미국 시장만 대상이었으나(keywords_en), Phase B에서 한�
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -125,6 +126,113 @@ def search_google_news_kr(keyword: str, after: date, before: date, limit: int = 
     return _search_google_news(keyword, after, before, hl="ko", gl="KR", ceid="KR:ko", limit=limit)
 
 
+# ── 네이버 뉴스 검색 API (한국 대체 소스) ──────────────────────────────────
+#
+# 2026-09-28 구글 뉴스 RSS가 GitHub Actions 공유 IP를 막아 전 테마가 0건이 됐다
+# (로컬 한국 IP에서는 같은 쿼리가 정상 응답 - 즉 코드가 아니라 IP 문제).
+# 야후·pykrx가 같은 이유로 막힌 전례가 있어(마스터플랜 Phase 0), 공식 API로
+# 옮기는 쪽이 재발 위험이 낮다.
+#
+# 구글과 다른 점 두 가지를 알고 써야 한다.
+#   1. **날짜 범위 검색이 없다.** `sort=date`로 최신순 정렬해 받아오면서 호출부가
+#      원하는 주에 드는 기사만 직접 걸러낸다. 그래서 오래된 주를 백필할수록
+#      깊이 페이지를 넘겨야 하고, start 상한(1000)에 걸리면 그 주는 실제보다
+#      적게 세어진다.
+#   2. **절대 건수가 구글과 다르다.** 뉴스 축은 "직전 8주 중앙값 대비 몇 배"라
+#      상대 지표지만, 소스를 바꾸면 기준선이 새 소스 기준으로 8주 쌓일 때까지
+#      비율을 믿으면 안 된다.
+NAVER_ENDPOINT = "https://openapi.naver.com/v1/search/news.json"
+NAVER_DISPLAY = 100      # 한 번에 받을 수 있는 최대
+NAVER_MAX_START = 1000   # start 파라미터 상한 (API 제약)
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def naver_credentials() -> tuple[str, str] | None:
+    """(client_id, client_secret) 또는 None. 값은 절대 로그에 찍지 않는다."""
+    cid = os.environ.get("NAVER_CLIENT_ID", "").strip()
+    secret = os.environ.get("NAVER_CLIENT_SECRET", "").strip()
+    return (cid, secret) if cid and secret else None
+
+
+def _clean_naver_title(raw: str) -> str:
+    """네이버는 검색어를 <b>로 감싸 돌려주고 HTML 엔티티도 섞여 온다."""
+    text = _TAG_RE.sub("", raw or "")
+    for entity, ch in (("&quot;", '"'), ("&amp;", "&"), ("&lt;", "<"),
+                       ("&gt;", ">"), ("&apos;", "'"), ("&#39;", "'")):
+        text = text.replace(entity, ch)
+    return text.strip()
+
+
+def search_naver_news_kr(keyword: str, after: date, before: date,
+                          limit: int = RESULT_LIMIT) -> list[dict]:
+    """네이버 뉴스 검색 API로 after~before(before 배타적) 기사를 모은다.
+
+    반환 필드는 구글 경로와 동일하다: title, url, published_at, source.
+    source는 네이버가 매체명을 따로 주지 않아 원문 링크의 도메인을 쓴다.
+    """
+    creds = naver_credentials()
+    if creds is None:
+        raise RuntimeError("NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 미설정")
+    client_id, client_secret = creds
+    headers = {"X-Naver-Client-Id": client_id, "X-Naver-Client-Secret": client_secret}
+
+    results: list[dict] = []
+    start = 1
+    while start <= NAVER_MAX_START and len(results) < limit:
+        params = {"query": keyword, "display": NAVER_DISPLAY, "start": start, "sort": "date"}
+        last_err: Exception | None = None
+        payload = None
+        for attempt in range(FETCH_ATTEMPTS):
+            try:
+                resp = requests.get(NAVER_ENDPOINT, params=params, headers=headers, timeout=15)
+                resp.raise_for_status()
+                payload = resp.json()
+                break
+            except Exception as e:  # noqa: BLE001 - 네트워크·파싱 실패를 같이 다룬다
+                last_err = e
+                if attempt < len(FETCH_BACKOFF_SEC):
+                    time.sleep(FETCH_BACKOFF_SEC[attempt])
+        if payload is None:
+            # 구글 경로와 같은 규칙 - 조회 실패를 0건으로 둔갑시키지 않는다.
+            raise RuntimeError(
+                f"네이버 뉴스 조회 실패({keyword} {after}~{before}): {type(last_err).__name__}")
+
+        items = payload.get("items") or []
+        if not items:
+            break
+
+        older_than_window = False
+        for item in items:
+            pub_raw = item.get("pubDate") or ""
+            try:
+                published = parsedate_to_datetime(pub_raw).date()
+            except (ValueError, TypeError):
+                continue  # 날짜를 못 읽으면 어느 주에 넣을지 알 수 없다 - 버린다
+            if published >= before:
+                continue          # 아직 창보다 최신 - 더 넘겨야 한다
+            if published < after:
+                older_than_window = True
+                break             # 최신순이라 여기부터는 전부 창 밖이다
+            url = item.get("originallink") or item.get("link") or ""
+            if not url:
+                continue
+            results.append({
+                "title": _clean_naver_title(item.get("title", "")),
+                "url": url,
+                "published_at": published.isoformat(),
+                "source": urlparse(url).netloc,
+            })
+            if len(results) >= limit:
+                break
+
+        if older_than_window or len(items) < NAVER_DISPLAY:
+            break
+        start += NAVER_DISPLAY
+        time.sleep(0.2)   # 네이버 요율제한 여유
+
+    return results
+
+
 def _collect_by_day(search_fn, keyword: str, after: date, before: date
                      ) -> tuple[list[dict], list[str], list[str]]:
     """상한에 걸린 키워드를 하루씩 나눠 다시 센다. (기사, 상한에 또 닿은 날, 실패한 날)."""
@@ -158,7 +266,13 @@ def collect_theme_news(keywords: list[str], after: date, before: date, market: s
     닿는 키워드는 stats['saturated_keywords']에 남는다 - 그 주의 수치는 실제보다 작다는
     뜻이므로, 쓰는 쪽에서 데이터부족으로 다룰지 판단한다.
     """
-    search_fn = search_google_news_kr if market == "KR" else search_google_news_en
+    # 한국은 네이버 키가 있으면 네이버를 쓴다(구글 RSS가 Actions IP에서 막힌 뒤의
+    # 대체 경로). 키가 없으면 기존 구글 경로 그대로 - 키를 넣고 빼는 것만으로
+    # 소스를 되돌릴 수 있게 해서, 새 소스가 이상하면 즉시 원복할 수 있다.
+    if market == "KR":
+        search_fn = search_naver_news_kr if naver_credentials() else search_google_news_kr
+    else:
+        search_fn = search_google_news_en
     raw: list[dict] = []
     per_keyword_counts: dict[str, int] = {}
     saturated: list[str] = []
