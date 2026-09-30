@@ -44,14 +44,23 @@ export default function GuidePage() {
         <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
           미국(S&amp;P 500) · 한국(KOSPI) 개인 투자자용 테마·재무 리서치 대시보드
         </p>
-        <Link
-          href="/guide/detail"
-          className="inline-flex items-center gap-1.5 mt-3 text-[12px] font-semibold rounded-xl px-3 py-1.5 transition-colors"
-          style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-        >
-          <span style={{ color: "#ffb020" }}>◉</span>
-          각 기능의 원리·해석법 세부 설명서 보기 →
-        </Link>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Link
+            href="/guide/playbook"
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold rounded-xl px-3 py-1.5 transition-colors"
+            style={{ background: "#ffb02018", border: "1px solid #ffb02044", color: "#ffb020" }}
+          >
+            ▶ 투자 실행 가이드 — 발굴부터 매도까지 →
+          </Link>
+          <Link
+            href="/guide/detail"
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold rounded-xl px-3 py-1.5 transition-colors"
+            style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+          >
+            <span style={{ color: "#ffb020" }}>◉</span>
+            각 기능의 원리·해석법 세부 설명서 보기 →
+          </Link>
+        </div>
       </div>
 
       {/* ── 완전 초보자 시작 가이드 ── */}
