@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import time
 from datetime import date, timedelta
@@ -50,6 +51,37 @@ MARKET_CONFIG = {
 }
 
 CANDIDATE_HISTORY_TABLE = "watchlist_candidate_history"
+
+# 한국 종목코드 -> yfinance 티커 매핑 파일(수집기가 만들어 저장소에 커밋해 둔 것).
+KR_UNIVERSE_PATH = ROOT / "data" / "kr_universe.json"
+
+
+def _kr_yf_symbol(symbol: str, universe: dict[str, str]) -> str:
+    """'005930' -> '005930.KS'. yfinance는 접미사 없는 한국 종목코드를 못 알아본다.
+
+    2026-09-30까지 이 변환이 없어서 한국 성적표가 통째로 비어 있었다 - 가격 조회가
+    전부 빈 결과를 돌려주는데도 upsert 자체는 성공해서(전부 NULL) 로그만 보면
+    정상으로 보였다. 벤치마크(^KS11)는 접미사가 필요 없어 그쪽만 값이 있었고,
+    그래서 "지수 대비 비교"의 한쪽이 영원히 비어 있었다.
+
+    유니버스 파일에 없는 종목(상장폐지·유니버스 변경 등)은 .KS로 시도한다 -
+    후보 집단이 대형주 쪽에 쏠려 있어 코스피일 확률이 높고, 틀리면 그 종목만
+    값이 안 채워질 뿐 다음 실행에서 다시 시도된다(멱등적).
+    """
+    mapped = universe.get(symbol)
+    if mapped:
+        return mapped
+    return symbol if "." in symbol else f"{symbol}.KS"
+
+
+def _load_kr_universe() -> dict[str, str]:
+    try:
+        items = json.loads(KR_UNIVERSE_PATH.read_text(encoding="utf-8")).get("items", [])
+    except Exception as e:
+        _log(f"경고 - kr_universe.json을 읽지 못했다({type(e).__name__}). .KS로 폴백한다.")
+        return {}
+    return {it["symbol"]: it["yf_symbol"] for it in items
+            if it.get("symbol") and it.get("yf_symbol")}
 
 
 def _returns_ddl(table: str) -> str:
@@ -205,13 +237,27 @@ def run(market: str) -> None:
     # 730일(2년) 전방 창까지 커버해야 하므로 넉넉하게 5y까지 확보
     period = "5y" if days_span > 365 else "1y"
 
+    # 한국은 종목코드에 거래소 접미사를 붙여야 yfinance가 알아듣는다. 표에 저장하는
+    # 키는 원래 종목코드 그대로 두고(watchlist_candidate_history와 맞춰야 한다),
+    # 가격 조회용 티커만 따로 만든다.
+    kr_universe = _load_kr_universe() if market == "KR" else {}
+    fetch_symbol = (
+        (lambda s: _kr_yf_symbol(s, kr_universe)) if market == "KR" else (lambda s: s)
+    )
+
     price_cache: dict[str, pd.DataFrame] = {}
     _log(f"{market}: 종목 {len(symbols)}개 + 벤치마크({cfg['benchmark']}) 가격 조회 시작 (period={period})")
-    for i, sym in enumerate(sorted(symbols) + [cfg["benchmark"]], 1):
-        price_cache[sym] = fetcher.fetch_ohlcv(sym, period=period)
+    for i, sym in enumerate(sorted(symbols), 1):
+        price_cache[sym] = fetcher.fetch_ohlcv(fetch_symbol(sym), period=period)
         if i % 25 == 0:
             _log(f"  {i}/{len(symbols)+1} 조회 완료")
         time.sleep(0.2)  # 레이트리밋 여유
+    # 벤치마크(SPY/^KS11)는 접미사 변환 대상이 아니다 - 그대로 조회한다.
+    price_cache[cfg["benchmark"]] = fetcher.fetch_ohlcv(cfg["benchmark"], period=period)
+
+    empty = sum(1 for s in symbols if price_cache.get(s) is None or price_cache[s].empty)
+    if empty:
+        _log(f"  경고 - 가격을 못 받은 종목 {empty}/{len(symbols)}개 (그 종목은 수익률이 NULL로 남는다)")
 
     bench_df = price_cache.get(cfg["benchmark"])
 
