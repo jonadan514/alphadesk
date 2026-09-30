@@ -83,6 +83,19 @@ def test_점표기_티커를_야후_표기로_바꾼다(universe_files):
     assert items[0]["yf_symbol"] == "BRK-B"
 
 
+def test_매핑용_이름에_sp400이_빠지지_않는다():
+    """유니버스에는 중형주가 들어오는데 이름이 없으면 LLM이 티커만 보고 판단한다
+    ("MP"가 MP Materials인지 알 수 없다). 중형주를 넣은 이유가 얇은 테마를
+    채우는 것이므로, 이름이 빠지면 편입 효과가 통째로 사라진다."""
+    from scripts.map_theme_companies import build_universe_and_names
+
+    universe, names = build_universe_and_names()
+    us_symbols = [i["symbol"] for i in universe if i["market"] == "US"]
+    missing = [s for s in us_symbols if s not in names]
+    assert not missing, f"이름이 없는 미국 종목 {len(missing)}개: {missing[:10]}"
+    assert names.get("MP") == "MP Materials"
+
+
 def test_실제_저장된_sp400_파일이_기대한_모양이다():
     """저장소에 커밋된 data/sp400_list.csv 자체를 확인한다 - 구조가 바뀌면
     유니버스가 조용히 sp500만으로 줄어든다."""

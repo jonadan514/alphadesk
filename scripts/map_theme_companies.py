@@ -82,20 +82,30 @@ def load_themes(theme_ids: list[str] | None) -> list[dict]:
 
 def build_universe_and_names() -> tuple[list[dict], dict[str, str]]:
     """유니버스(경로 A 제약용)와 티커→회사명 매핑을 만든다.
-    US 이름은 sp500_list.csv(이미 있음)에서, KR은 get_kr_universe()가 이미 포함."""
+
+    US 이름은 sp500_list.csv + sp400_list.csv에서, KR은 get_kr_universe()가 이미 포함.
+
+    sp400을 빼먹으면 안 된다: 유니버스에는 중형주 400종목이 들어오는데 이름이
+    없으면 LLM이 티커만 보고 판단하게 된다("MP"가 MP Materials인지 알 수 없다).
+    중형주를 넣은 이유가 얇은 테마를 채우는 것이었으므로, 정작 그 종목들의
+    이름이 빠지면 편입 효과가 통째로 사라진다(docs/SPEC_us_universe_sp400.md).
+    """
     us_items = get_us_universe()
     kr_items = get_kr_universe()
 
     names: dict[str, str] = {}
-    sp500_csv = ROOT / "data" / "sp500_list.csv"
-    if sp500_csv.exists():
-        df = pd.read_csv(sp500_csv)
+    for csv_name in ("sp500_list.csv", "sp400_list.csv"):
+        path = ROOT / "data" / csv_name
+        if not path.exists():
+            continue
+        df = pd.read_csv(path)
         sym_col = next((c for c in df.columns if "symbol" in c.lower() or "ticker" in c.lower()), df.columns[0])
         name_col = next((c for c in df.columns if c.lower() in ("security", "name")), None)
-        if name_col:
-            for _, row in df.iterrows():
-                sym = str(row[sym_col]).replace(".", "-")
-                names[sym] = str(row[name_col])
+        if not name_col:
+            continue
+        for _, row in df.iterrows():
+            sym = str(row[sym_col]).replace(".", "-")
+            names[sym] = str(row[name_col])
 
     for it in kr_items:
         if it.get("name"):
