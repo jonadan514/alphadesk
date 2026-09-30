@@ -33,11 +33,15 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
+from src.llm import openai_json as oj
 from src.db.theme_mapping import ensure_schema, start_mapping_run, finish_mapping_run, insert_theme_member
 from collectors.watchlist_collector import get_us_universe, get_kr_universe, US_MIN_CAP, KR_MIN_CAP
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
-OPENAI_MODEL = "gpt-4o-mini"
+# A/B 측정용 덮어쓰기. None이면 config/models.yaml(또는 환경변수 MODEL_<ROLE>)의 역할별 모델을 쓴다.
+# diagnose_mapping_model.py가 여기에 모델 이름을 넣어 팔을 바꾼다. "기본 모델과 같은 이름"이어도
+# 덮어쓰기로 취급한다 - 예전에는 기본값과 같으면 덮어쓰기가 없는 것으로 봐서 기준선 팔이 새어나갔다.
+MODEL_OVERRIDE: str | None = None
 PROMPT_VERSION = "2026-09-15-v7"  # v7: v6 + 미국 후보에도 산업분류·사업요약(400자) 첨부, 업종-테마 불일치 코드 제외, 에너지 테마 유틸리티 경계
 UNIVERSE_CHUNK_SIZE = 200  # 청크당 줄 수 상한
 # 청크당 글자 수 예산. 줄 길이가 시장마다 달라(US 약 440자, KR 약 170자) 종목 수로 자르면
@@ -104,67 +108,39 @@ def build_universe_and_names() -> tuple[list[dict], dict[str, str]]:
 # 집계해 요약·통계에 남긴다(2026-09-15 v7 US 실행에서 429 63회로 편입이 무작위로 빠졌는데
 # 로그 중간에만 찍혀 결과를 측정에 쓸 뻔했다).
 CALL_FAILURES = 0
-MAX_ATTEMPTS = 6
 
 
-def _retry_wait(resp: requests.Response | None, attempt: int) -> float:
-    """429·5xx 대기 시간. 서버가 알려주면 그 값, 아니면 지수 백오프(2,4,8,16,32초)."""
-    if resp is not None:
-        ra = resp.headers.get("retry-after")
-        try:
-            if ra:
-                return min(float(ra) + 1, 60)
-        except ValueError:
-            pass
-    return min(2 ** (attempt + 1), 32) + random.random()
+def active_model(role: str = "theme_mapping") -> str:
+    """이 역할의 호출에 실제로 쓸 모델. mapping_runs 기록도 이 값을 쓴다(기록과 호출이 어긋나지 않게)."""
+    return MODEL_OVERRIDE or oj.model_for(role)
 
 
-def _chat_payload(system: str, prompt: str, temperature: float) -> dict:
-    """모델 계열에 맞는 요청 본문. o-시리즈와 gpt-5 계열은 temperature를 받지 않고
-    max_tokens 대신 max_completion_tokens를 쓴다 - 그냥 보내면 400으로 거절당한다
-    (2026-09-16 모델 A/B에서 o4-mini·gpt-5-mini가 전부 실패한 원인)."""
-    body: dict = {
-        "model": OPENAI_MODEL,
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-        "response_format": {"type": "json_object"},
-    }
-    if OPENAI_MODEL.startswith(("o1", "o3", "o4", "gpt-5")):
-        body["max_completion_tokens"] = 4000   # 추론 토큰이 따로 소모돼 넉넉히 준다
-    else:
-        body["temperature"] = temperature
-        body["max_tokens"] = 2000
-    return body
+def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.2,
+                 role: str | None = None) -> dict | None:
+    """공통 호출(src/llm/openai_json.py)의 매핑용 래퍼: 실패하면 None을 돌려주고 실패 수를 센다.
 
-
-def _openai_json(prompt: str, system: str, api_key: str, temperature: float = 0.2) -> dict | None:
+    재시도·모델 계열별 파라미터는 공통 모듈이 처리한다. 매핑은 청크 하나가 실패해도 다음
+    청크로 계속 가야 하므로 예외를 None으로 바꾼다(감사는 예외를 그대로 쓴다).
+    role은 config/models.yaml의 역할 이름 - 비판 패스는 mapping_critic, 나머지는 theme_mapping.
+    모델은 active_model()이 고른다: MODEL_OVERRIDE(A/B 측정용)가 있으면 그것, 없으면 역할별 설정.
+    """
     global CALL_FAILURES
-    last_err = ""
-    for attempt in range(MAX_ATTEMPTS):
-        resp = None
-        try:
-            resp = requests.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json=_chat_payload(system, prompt, temperature),
-                timeout=90,
-            )
-            # v7부터 미국 청크가 2만 토큰을 넘어 분당 토큰 한도(429)에 걸린다 - 기다렸다 다시 부른다.
-            if resp.status_code == 429 or resp.status_code >= 500:
-                last_err = f"HTTP {resp.status_code}"
-                time.sleep(_retry_wait(resp, attempt))
-                continue
-            resp.raise_for_status()
-            text = resp.json()["choices"][0]["message"]["content"]
-            return json.loads(text)
-        except (requests.Timeout, requests.ConnectionError) as e:
-            last_err = type(e).__name__
-            time.sleep(_retry_wait(None, attempt))
-        except Exception as e:
-            last_err = f"{type(e).__name__}: {e}"
-            break
-    CALL_FAILURES += 1
-    _log(f"  OpenAI 호출 실패(최종): {last_err}")
-    return None
+    model = active_model(role or "theme_mapping")
+    try:
+        return oj.call_json(model, system, prompt, api_key=api_key,
+                            max_output_tokens=2000, temperature=temperature, timeout=90)
+    except oj.OpenAICallError as e:
+        CALL_FAILURES += 1
+        _log(f"  OpenAI 호출 실패(최종): {e}")
+        return None
+
+
+def begin_run(conn) -> str:
+    """mapping_runs에 실행 시작을 적고 run_id를 돌려준다. 모델은 호출에 실제로 쓰는 값을 남긴다."""
+    run_id = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
+    start_mapping_run(conn, run_id, datetime.utcnow().isoformat(),
+                      active_model("theme_mapping"), PROMPT_VERSION)
+    return run_id
 
 
 def _theme_description(theme: dict) -> str:
@@ -431,8 +407,17 @@ def _evidence_subject_mismatch(ticker: str, evidence: str, names: dict[str, str]
 
 def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[str],
                       cap_lookup: dict[str, float],
-                      names: dict[str, str] | None = None) -> tuple[list[dict], dict]:
+                      names: dict[str, str] | None = None,
+                      universe_market: dict[str, str] | None = None) -> tuple[list[dict], dict]:
     """SPEC §4 코드 검증. (통과 목록, 통계) 반환.
+
+    universe_market({티커: 시장})을 주면 시장은 **유니버스 기준으로 확정**한다. LLM이 답한
+    market은 쓰지 않는다(2026-09-21 수정). 시가총액 하한이 시장마다 통화가 달라서
+    (US 20억 **달러**, KR 2000억 **원**) LLM이 시장을 잘못 답하면 엉뚱한 기준으로 걸러진다.
+      KR 종목을 US로 오판 - 원화 시총이 달러 하한보다 늘 커서 통과한다(무해)
+      US 종목을 KR로 오판 - 30억 달러짜리가 2000억 "원" 하한에 걸려 부당 탈락한다(위험)
+    전에는 저장 직전에 시장 라벨만 보정했는데, 그때는 이미 탈락 판정이 끝난 뒤라
+    잘못 떨어진 기업은 되돌아오지 않았다.
 
     재무 데이터(fundamentals_cache) 존재 여부는 여기서 탈락시키지 않는다 — 그건
     나중에 실적 축 계산(Phase A-4)이 그 시점 캐시로 판단할 몫이고, 매핑 단계는
@@ -459,8 +444,10 @@ def validate_members(raw_a: list[dict], raw_b: list[dict], valid_tickers: set[st
             stats["티커실재실패"] += 1
             continue
 
-        # isdigit()만 쓰면 0126Z0(삼성에피스홀딩스) 같은 영문 포함 KR 코드가 US로 분류된다.
-        market = m.get("market") or ("KR" if _KR_CODE_RE.match(ticker) else "US")
+        # 유니버스에 있는 티커면 그 시장이 사실이다. 유니버스 정보가 없을 때만(단위 테스트 등)
+        # 코드 모양으로 판단한다 - isdigit()만 쓰면 0126Z0(삼성에피스홀딩스) 같은 영문 포함
+        # KR 코드가 US로 분류되므로 정규식을 쓴다. LLM이 답한 market은 신뢰하지 않는다.
+        market = (universe_market or {}).get(ticker) or ("KR" if _KR_CODE_RE.match(ticker) else "US")
         # KR은 사실상 이 하한이 발동하지 않는다 - valid_tickers 자체가 이미
         # get_kr_universe()(5000억 이상만) 로 구성되므로, 여기까지 온 candidate는
         # 이미 5000억을 넘는다. KR_MIN_CAP(2000억)은 watchlist 스크리닝용 하한이지
@@ -545,6 +532,7 @@ def critique_pass(theme: dict, members: list[dict], names: dict[str, str], api_k
         prompt,
         "당신은 까다로운 산업 분석가입니다. 근거가 약하거나 사실과 다른 후보를 엄격히 지적합니다.",
         api_key,
+        role="mapping_critic",
     )
     if not parsed or not isinstance(parsed.get("flag"), list):
         return {}
@@ -608,8 +596,7 @@ def main() -> None:
             continue
     _log(f"시가총액 캐시 {len(cap_lookup)}종목")
 
-    run_id = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
-    start_mapping_run(conn, run_id, datetime.utcnow().isoformat(), OPENAI_MODEL, PROMPT_VERSION)
+    run_id = begin_run(conn)
 
     overall_stats: dict[str, dict] = {}
     for theme in themes:
@@ -622,7 +609,8 @@ def main() -> None:
         raw_b = path_b_free_generation(theme, api_key)
         _log(f"  경로 B 후보: {len(raw_b)}개")
 
-        validated, stats = validate_members(raw_a, raw_b, valid_tickers, cap_lookup, names)
+        validated, stats = validate_members(raw_a, raw_b, valid_tickers, cap_lookup, names,
+                                            universe_market)
         blocked = []
         for m in validated:
             ind = industry_theme_conflict(theme_id, m["ticker"], profiles)
@@ -634,10 +622,7 @@ def main() -> None:
         stats["업종불일치"] = len(blocked)
         stats["통과"] = len(validated)
 
-        # 저장 시장은 LLM이 답한 market이 아니라 유니버스 기준으로 정한다. LLM이
-        # 미국 티커에 "KR"을 붙이면 다른 시장 행으로 저장돼 승인·표시가 어긋난다.
-        for m in validated:
-            m["market"] = universe_market.get(m["ticker"], m["market"])
+        # (시장 확정은 validate_members가 유니버스 기준으로 이미 끝냈다 - 2026-09-21)
         _log(f"  검증 결과: {stats}")
         if stats["경로B_폐기율"] > HALLUCINATION_WARN_RATE * 100:
             _log(f"  ⚠ 경로 B 환각 폐기율 {stats['경로B_폐기율']}% — 30% 초과, 프롬프트 재검토 필요")

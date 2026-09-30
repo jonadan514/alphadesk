@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { X, Info, Pencil } from "lucide-react";
+import { X, Info, Pencil, Search } from "lucide-react";
 import StockTechPanel from "@/src/components/StockTechPanel";
 import { themeName } from "@/src/lib/themeNames";
 
@@ -19,7 +19,23 @@ interface Candidate {
   regime_fit: "growth" | "dividend" | "neutral";
   roe: number | null;
   current_price: number | null;
+  // 밸류 지표. 이 목록의 다른 지표는 전부 "튼튼한가"를 보는데, 이 둘만 "싼가"를 본다.
+  // 4분기 중 한 분기라도 비면 null, PER은 적자면 null(원칙 4 - 계산 불가는 탈락이 아니다).
+  psr?: number | null;
+  per?: number | null;
+  valuation_tier?: string | null;   // 싼 편 / 중간 / 비싼 편. 같은 시장 후보 안에서 3등분
+  // 성장 지표. 밸류와 달리 절대 기준(0%, 10%)으로 나눈다 - 후보 대부분이 이미
+  // 성장 중이라 순위로 나누면 +3% 성장 기업에 "역성장" 라벨이 붙는다(SPEC_watchlist_growth.md).
+  revenue_cagr_3y?: number | null;
+  revenue_yoy?: number | null;
+  op_margin_direction?: "개선" | "악화" | null;
+  growth_tier?: string | null;   // 성장 / 정체 / 역성장
   data_notes?: { interest?: string; debt?: string };
+  // 직전 스크리닝 회차에 없던 종목(= 이번에 새로 필터를 통과). 직전 회차 자체가
+  // 없으면(첫 스크리닝) true가 아니라 null - 모르는 걸 "신규"로 단정하지 않는다.
+  is_new?: boolean | null;
+  first_seen?: string | null;   // 이력상 처음 후보가 된 날
+  is_reentry?: boolean;         // 예전에 후보였다가 빠진 뒤 다시 들어온 것
 }
 
 // ── 프로토타입 팔레트 (이 페이지 한정) ───────────────────────────────────────
@@ -112,6 +128,33 @@ const INDICATOR_INFO = {
       { range: "1x 미만", color: BAD, label: "스크리닝 제외" },
     ],
   },
+  valuation: {
+    title: "밸류 위치 (PSR 기준)",
+    desc: "PSR은 시가총액을 최근 4분기 매출 합으로 나눈 값, PER은 순이익 합으로 나눈 값입니다. "
+        + "같은 시장 후보 전체를 PSR 낮은 순으로 줄 세워 셋으로 나눈 위치를 보여줍니다. "
+        + "절대적으로 싸다는 뜻이 아니라 '이 후보들 중에서' 싼 쪽이라는 뜻이고, 순위나 점수는 아닙니다. "
+        + "4분기가 이어지지 않으면 '-', 적자 기업은 PER만 '-'로 둡니다.",
+    levels: [
+      { range: "싼 편", color: GOOD, label: "후보 중 PSR 하위 1/3" },
+      { range: "중간", color: WARN, label: "가운데 1/3" },
+      { range: "비싼 편", color: CAUTION, label: "후보 중 PSR 상위 1/3" },
+      { range: "-", color: TEXT_FAINT, label: "분기 재무가 모자라 계산 불가" },
+    ],
+  },
+  growth: {
+    title: "성장 위치 (매출 3년 CAGR 기준)",
+    desc: "연차 재무제표의 최근 4개 회계연도(정확히 3년 간격)로 매출 연평균성장률(CAGR)을 구합니다. "
+        + "밸류(PSR)는 후보들 중 상대적인 순위지만, 성장은 절대 기준입니다 - 후보 대부분이 "
+        + "이미 성장 중이라 순위로 나누면 +3% 성장 기업에 '역성장' 라벨이 붙기 때문입니다. "
+        + "역성장이 재무 부실을 뜻하지는 않습니다 - 무차입 흑자 기업도 매출이 줄 수 있고, "
+        + "함정 필터가 걸러내지 못하는 부분을 보여주는 것이 이 지표의 목적입니다.",
+    levels: [
+      { range: "성장", color: GOOD, label: "3년 CAGR 10% 이상" },
+      { range: "정체", color: WARN, label: "0% ~ 10%" },
+      { range: "역성장", color: CAUTION, label: "0% 미만 - 매출이 3년간 줄었다" },
+      { range: "-", color: TEXT_FAINT, label: "회계기간 부족 등으로 계산 불가" },
+    ],
+  },
   regime: {
     title: "시장 체제 적합도",
     desc: "현재 시장 흐름(성장장/배당장)에서 이 종목이 어느 전략에 더 어울리는지를 나타냅니다.",
@@ -156,6 +199,72 @@ function RegimeBadge({ fit }: { fit: string }) {
   return (
     <span style={{ background: color + "20", color, border: `1px solid ${color}40`, padding: "1px 6px", fontSize: 11 }}>
       {label}
+    </span>
+  );
+}
+
+// 밸류 등급은 "싼 편"만 GOOD으로 칠하고 "비싼 편"은 CAUTION까지만 쓴다 - 비싼 게
+// 재무 문제는 아니라서, F-Score 탈락과 같은 BAD(빨강)로 보이면 안 된다.
+const TIER_COLOR: Record<string, string> = {
+  "싼 편": GOOD,
+  "중간": WARN,
+  "비싼 편": CAUTION,
+};
+function ValuationBadge({ tier }: { tier?: string | null }) {
+  if (!tier) return <span style={{ color: TEXT_FAINT }}>-</span>;
+  const color = TIER_COLOR[tier] ?? TEXT_SECONDARY;
+  return (
+    <span style={{ background: color + "20", color, border: `1px solid ${color}40`, padding: "1px 6px", fontSize: 11, whiteSpace: "nowrap" }}>
+      {tier}
+    </span>
+  );
+}
+
+// PSR·PER을 한 칸에 같이 둔다 - 배지(등급)가 먼저 눈에 들어오고, 근거 숫자는 그
+// 옆에서 확인하는 순서라 칸을 따로 벌릴 만큼 각각 독립적으로 보지 않는다.
+// 자릿수는 상세 카드와 맞춘다 - 같은 값이 표에서 "2.5", 상세에서 "2.46"으로 보이면
+// 다른 숫자처럼 읽힌다. PSR은 1 미만이 흔해 두 자리, PER은 한 자리면 충분하다.
+const fmtPsr = (v?: number | null) => (v == null ? "-" : v >= 100 ? v.toFixed(0) : v.toFixed(2));
+const fmtPer = (v?: number | null) => (v == null ? "-" : v >= 100 ? v.toFixed(0) : v.toFixed(1));
+
+function ValuationNumbers({ psr, per }: { psr?: number | null; per?: number | null }) {
+  return (
+    <span style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+      <span style={{ color: psr == null ? TEXT_FAINT : NUM }}>{fmtPsr(psr)}</span>
+      <span style={{ color: TEXT_FAINT }}> / </span>
+      <span style={{ color: per == null ? TEXT_FAINT : NUM }}>{fmtPer(per)}</span>
+    </span>
+  );
+}
+
+// 성장 등급은 밸류와 달리 절대 기준(0%, 10%)이다 - "역성장"을 BAD(빨강)로 칠하지
+// 않는다. 빨강은 F-Score 탈락 같은 재무 부실에 쓰는 색이고, 역성장은 재무 부실이
+// 아니다(밸류의 "비싼 편"에 CAUTION까지만 쓴 것과 같은 규칙).
+const GROWTH_TIER_COLOR: Record<string, string> = {
+  "성장": GOOD,
+  "정체": WARN,
+  "역성장": CAUTION,
+};
+function GrowthBadge({ tier }: { tier?: string | null }) {
+  if (!tier) return <span style={{ color: TEXT_FAINT }}>-</span>;
+  const color = GROWTH_TIER_COLOR[tier] ?? TEXT_SECONDARY;
+  return (
+    <span style={{ background: color + "20", color, border: `1px solid ${color}40`, padding: "1px 6px", fontSize: 11, whiteSpace: "nowrap" }}>
+      {tier}
+    </span>
+  );
+}
+
+// 성장률은 음수도 흔해 부호를 항상 보여준다(밸류처럼 항상 양수인 배수와 다르다).
+const fmtGrowthPct = (v?: number | null) =>
+  v == null ? "-" : `${v >= 0 ? "+" : ""}${(v * 100).toFixed(1)}%`;
+
+function GrowthNumbers({ cagr3y, yoy }: { cagr3y?: number | null; yoy?: number | null }) {
+  return (
+    <span style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+      <span style={{ color: cagr3y == null ? TEXT_FAINT : cagr3y >= 0 ? NUM : CAUTION }}>{fmtGrowthPct(cagr3y)}</span>
+      <span style={{ color: TEXT_FAINT }}> / </span>
+      <span style={{ color: yoy == null ? TEXT_FAINT : yoy >= 0 ? NUM : CAUTION }}>{fmtGrowthPct(yoy)}</span>
     </span>
   );
 }
@@ -521,6 +630,54 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
               </div>
             </div>
 
+            {/* 밸류 위치 — 위 4칸이 전부 "튼튼한가"라서, "싼가"는 따로 한 줄로 둔다.
+                단독 카드로 두는 이유: 위 격자에 끼워 넣으면 재무 건전성 지표처럼
+                읽히는데 이건 판단 기준이 다르다(같은 시장 후보와의 상대 위치). */}
+            <div className="p-3 mt-3" style={insetCard}>
+              <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>밸류 위치 (같은 시장 후보 중)</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <ValuationBadge tier={c.valuation_tier} />
+                <span className="text-[12px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                  PSR {fmtPsr(c.psr)}
+                  <span style={{ color: TEXT_FAINT }}> · </span>
+                  PER {fmtPer(c.per)}
+                </span>
+              </div>
+              <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                {c.valuation_tier
+                  ? "최근 4분기 매출·순이익 합 기준. 절대적으로 싸다는 뜻이 아니라 후보들 중 위치입니다."
+                  : c.psr != null
+                    ? "후보 중 PSR을 구한 곳이 3곳 미만이라 등급을 나누지 않습니다."
+                    : "최근 4분기 재무나 시가총액이 없어 계산할 수 없습니다."}
+                {c.psr != null && c.per == null && " 순이익 합이 0 이하여서 PER은 표시하지 않습니다."}
+              </p>
+            </div>
+
+            {/* 성장 위치 — 밸류와 나란히 두되 기준이 다르다는 걸 문구로 밝힌다.
+                밸류는 후보들 중 상대 순위, 성장은 절대 기준(0%/10%) -
+                무차입 흑자인데 매출이 줄어드는 가치 함정을 밸류만으로는 못 본다. */}
+            <div className="p-3 mt-3" style={insetCard}>
+              <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>성장 위치 (매출 3년 CAGR, 절대 기준)</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <GrowthBadge tier={c.growth_tier} />
+                <span className="text-[12px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                  3년 {fmtGrowthPct(c.revenue_cagr_3y)}
+                  <span style={{ color: TEXT_FAINT }}> · </span>
+                  1년 {fmtGrowthPct(c.revenue_yoy)}
+                </span>
+                {c.op_margin_direction && (
+                  <span className="text-[12px]" style={{ color: c.op_margin_direction === "개선" ? GOOD : CAUTION }}>
+                    영업이익률 {c.op_margin_direction}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                {c.growth_tier
+                  ? "연차 재무제표 최근 4개 회계연도(정확히 3년 간격) 기준. 후보들 중 순위가 아니라 절대 기준입니다."
+                  : "회계기간이 부족하거나 간격이 맞지 않아 계산할 수 없습니다."}
+              </p>
+            </div>
+
             {/* 체제 적합도 */}
             <div className="p-3 mt-3" style={insetCard}>
               <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>시장 체제 적합도</p>
@@ -607,6 +764,12 @@ export default function WatchlistPage() {
   const [tab, setTab]               = useState<"candidates" | "my">("candidates");
   const [marketFilter, setMarketFilter] = useState<"ALL" | "US" | "KR">("ALL");
   const [regimeFilter, setRegimeFilter] = useState<"ALL" | "growth" | "dividend" | "neutral">("ALL");
+  const [newOnly, setNewOnly] = useState(false);
+  const [cheapOnly, setCheapOnly] = useState(false);
+  const [growingOnly, setGrowingOnly] = useState(false);
+  // 275종목 중 아는 티커/이름을 바로 찾는 용도 - "새 아이디어 탐색"인 다른 필터들과
+  // 달리 "이미 아는 종목이 후보에 있는지"를 확인하는 반대 방향 쓰임새다.
+  const [searchQuery, setSearchQuery] = useState("");
   const [addedSymbols, setAddedSymbols] = useState<Set<string>>(new Set());
   const [selected, setSelected]     = useState<Candidate | null>(null);
   const [infoKey, setInfoKey]       = useState<keyof typeof INDICATOR_INFO | null>(null);
@@ -679,8 +842,32 @@ export default function WatchlistPage() {
   const filtered = candidates.filter((c) => {
     if (marketFilter !== "ALL" && c.market !== marketFilter) return false;
     if (regimeFilter !== "ALL" && c.regime_fit !== regimeFilter) return false;
+    if (newOnly && c.is_new !== true) return false;
+    if (cheapOnly && c.valuation_tier !== "싼 편") return false;
+    if (growingOnly && c.growth_tier !== "성장") return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const haystack = `${c.symbol} ${c.name ?? ""}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
+
+  // 후보가 275종목이라 목록만으로는 이번 주에 뭐가 달라졌는지 안 보인다.
+  // 순위를 만들지 않으면서 "먼저 볼 것"을 주는 방법 - 이번 회차 신규만 따로 센다.
+  const newCount = candidates.filter((c) => c.is_new === true).length;
+  const newKnown = candidates.some((c) => c.is_new !== null && c.is_new !== undefined);
+
+  // "탄탄한데 싸기도 한 것" - 이 목록은 이미 재무 필터를 통과한 종목만 있으니,
+  // 밸류 하위 1/3을 걸면 그게 바로 새 아이디어를 찾기 시작할 자리가 된다.
+  // 밸류 컬럼이 아직 채워지지 않았으면(스크립트 미실행) 버튼을 아예 숨긴다.
+  const cheapCount = candidates.filter((c) => c.valuation_tier === "싼 편").length;
+  const tierKnown = candidates.some((c) => c.valuation_tier != null);
+
+  // 함정 필터가 못 거르는 것 - 무차입 흑자인데 매출이 3년째 주는 기업. "싼 편만"과
+  // 나란히 둬야 그 조합(싸면서 안 자라는 것)이 눈에 보인다(SPEC_watchlist_growth.md).
+  const growingCount = candidates.filter((c) => c.growth_tier === "성장").length;
+  const growthKnown = candidates.some((c) => c.growth_tier != null);
 
   const statStyle: React.CSSProperties = {
     background: INSET_BG, border: `1px solid ${BORDER}`,
@@ -733,15 +920,19 @@ export default function WatchlistPage() {
       )}
 
       {/* 통계 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 24 }}>
         {[
-          { label: "후보 종목", value: candidates.length },
-          { label: "내 워치리스트", value: myList.length },
-          { label: "성장 후보", value: candidates.filter((c) => c.regime_fit === "growth").length },
-          { label: "배당 후보", value: candidates.filter((c) => c.regime_fit === "dividend").length },
-        ].map(({ label, value }) => (
-          <div key={label} style={statStyle}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: ACCENT, fontVariantNumeric: "tabular-nums" }}>{value}</div>
+          { label: "후보 종목", value: candidates.length, highlight: false },
+          // 이번 회차 신규는 275개 중 먼저 볼 것을 고르는 유일한 단서라 강조한다.
+          // 직전 회차가 없으면 숫자 대신 "-"(알 수 없음) - 0으로 쓰면 "신규가 없다"는
+          // 뜻이 되어 사실과 다르다.
+          { label: "이번 회차 신규", value: newKnown ? newCount : "-", highlight: true },
+          { label: "내 워치리스트", value: myList.length, highlight: false },
+          { label: "성장 후보", value: candidates.filter((c) => c.regime_fit === "growth").length, highlight: false },
+          { label: "배당 후보", value: candidates.filter((c) => c.regime_fit === "dividend").length, highlight: false },
+        ].map(({ label, value, highlight }) => (
+          <div key={label} style={{ ...statStyle, ...(highlight && newKnown && newCount > 0 ? { border: `1px solid ${GOOD}55` } : {}) }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: highlight && newKnown && newCount > 0 ? GOOD : ACCENT, fontVariantNumeric: "tabular-nums" }}>{value}</div>
             <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2 }}>{label}</div>
           </div>
         ))}
@@ -764,6 +955,33 @@ export default function WatchlistPage() {
       {/* ── 스크리닝 후보 탭 ── */}
       {tab === "candidates" && (
         <>
+          {/* 검색 - 275종목 중 아는 티커/이름을 바로 찾는다. 다른 필터(신규만/싼 편만
+              등)는 "뭘 볼지 모른 채 탐색"이 목적이라 켜고 끄는 토글이지만, 이건 찾는
+              대상을 이미 알고 있는 반대 상황이라 텍스트 입력으로 둔다. */}
+          <div style={{ position: "relative", marginBottom: 12, maxWidth: 320 }}>
+            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: TEXT_MUTED, pointerEvents: "none" }} />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="티커 또는 종목명 검색"
+              style={{
+                width: "100%", boxSizing: "border-box", padding: "7px 30px",
+                fontSize: 13, fontFamily: MONO,
+                background: INPUT_BG, color: TEXT_PRIMARY, border: `1px solid ${BORDER_CTRL}`,
+                outline: "none",
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                aria-label="검색어 지우기"
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", color: TEXT_MUTED, cursor: "pointer", padding: 2, display: "flex" }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
             {(["ALL", "US", "KR"] as const).map((m) => (
               <button key={m} onClick={() => setMarketFilter(m)} style={{
@@ -773,6 +991,39 @@ export default function WatchlistPage() {
                 padding: "4px 12px", fontSize: 12, cursor: "pointer",
               }}>{m === "ALL" ? "전체" : m}</button>
             ))}
+            {newKnown && newCount > 0 && (
+              <>
+                <div style={{ width: 1, background: BORDER_CTRL, margin: "0 4px" }} />
+                <button onClick={() => setNewOnly((v) => !v)} style={{
+                  background: newOnly ? GOOD + "20" : "transparent",
+                  color: newOnly ? GOOD : TEXT_MUTED,
+                  border: `1px solid ${newOnly ? GOOD + "40" : BORDER_CTRL}`,
+                  padding: "4px 12px", fontSize: 12, cursor: "pointer",
+                }}>이번 회차 신규만 ({newCount})</button>
+              </>
+            )}
+            {tierKnown && (
+              <>
+                <div style={{ width: 1, background: BORDER_CTRL, margin: "0 4px" }} />
+                <button onClick={() => setCheapOnly((v) => !v)} style={{
+                  background: cheapOnly ? GOOD + "20" : "transparent",
+                  color: cheapOnly ? GOOD : TEXT_MUTED,
+                  border: `1px solid ${cheapOnly ? GOOD + "40" : BORDER_CTRL}`,
+                  padding: "4px 12px", fontSize: 12, cursor: "pointer",
+                }}>싼 편만 ({cheapCount})</button>
+              </>
+            )}
+            {growthKnown && (
+              <>
+                <div style={{ width: 1, background: BORDER_CTRL, margin: "0 4px" }} />
+                <button onClick={() => setGrowingOnly((v) => !v)} style={{
+                  background: growingOnly ? GOOD + "20" : "transparent",
+                  color: growingOnly ? GOOD : TEXT_MUTED,
+                  border: `1px solid ${growingOnly ? GOOD + "40" : BORDER_CTRL}`,
+                  padding: "4px 12px", fontSize: 12, cursor: "pointer",
+                }}>성장만 ({growingCount})</button>
+              </>
+            )}
             <div style={{ width: 1, background: BORDER_CTRL, margin: "0 4px" }} />
             {(["ALL", "growth", "dividend", "neutral"] as const).map((r) => (
               <button key={r} onClick={() => setRegimeFilter(r)} style={{
@@ -788,7 +1039,11 @@ export default function WatchlistPage() {
             <div style={{ color: TEXT_MUTED, textAlign: "center", padding: 60 }}>불러오는 중...</div>
           ) : filtered.length === 0 ? (
             <div style={{ color: TEXT_MUTED, textAlign: "center", padding: 60 }}>
-              {candidates.length === 0 ? "스크리닝 데이터 없음." : "필터 조건에 맞는 종목 없음."}
+              {candidates.length === 0
+                ? "스크리닝 데이터 없음."
+                : searchQuery.trim()
+                  ? "일치하는 종목 없음 - 함정 필터 통과 후보 275종목 중에만 검색합니다."
+                  : "필터 조건에 맞는 종목 없음."}
             </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
@@ -805,6 +1060,10 @@ export default function WatchlistPage() {
                     <ColHeader label="F-Score" infoKey="fscore" onInfo={setInfoKey} />
                     <ColHeader label="부채비율" infoKey="debt" onInfo={setInfoKey} />
                     <ColHeader label="이자보상" infoKey="interest" onInfo={setInfoKey} />
+                    <ColHeader label="밸류" infoKey="valuation" onInfo={setInfoKey} />
+                    <ColHeader label="PSR / PER" infoKey="valuation" onInfo={setInfoKey} />
+                    <ColHeader label="성장" infoKey="growth" onInfo={setInfoKey} />
+                    <ColHeader label="3년 / 1년" infoKey="growth" onInfo={setInfoKey} />
                     <ColHeader label="체제" infoKey="regime" onInfo={setInfoKey} />
                     <th style={{ padding: "8px 10px" }} />
                   </tr>
@@ -825,6 +1084,21 @@ export default function WatchlistPage() {
                         </td>
                         <td style={{ padding: "8px 10px", fontWeight: 600, color: NUM, whiteSpace: "nowrap" }}>
                           {c.symbol}
+                          {c.is_new === true && (
+                            <span
+                              // first_seen은 이력 기록이 쌓이기 시작한 뒤로만 알 수 있다 - 실제
+                              // 첫 통과일이 그보다 이전일 수 있어 "최초"라고 단정하지 않는다.
+                              title={c.is_reentry
+                                ? `예전에 후보였다가 빠진 뒤 이번에 다시 통과 (기록상 최초 등장: ${c.first_seen ?? "-"})`
+                                : "이번 회차에 처음 필터를 통과 (이력 기록 시작 이후 처음)"}
+                              style={{
+                                marginLeft: 6, fontSize: 10, fontWeight: 700,
+                                color: GOOD, border: `1px solid ${GOOD}55`,
+                                padding: "1px 5px", verticalAlign: "middle",
+                              }}>
+                              {c.is_reentry ? "재진입" : "신규"}
+                            </span>
+                          )}
                         </td>
                         <td style={{ padding: "8px 10px", color: TEXT_SECONDARY, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name ?? "-"}</td>
                         <td style={{ padding: "8px 10px", color: NUM, fontVariantNumeric: "tabular-nums" }}>{formatPrice(c.market, c.current_price)}</td>
@@ -837,6 +1111,10 @@ export default function WatchlistPage() {
                         <td style={{ padding: "8px 10px" }}>
                           <MetricOrNote value={c.interest_coverage} note={c.data_notes?.interest} format={(v) => v.toFixed(1) + "x"} />
                         </td>
+                        <td style={{ padding: "8px 10px" }}><ValuationBadge tier={c.valuation_tier} /></td>
+                        <td style={{ padding: "8px 10px" }}><ValuationNumbers psr={c.psr} per={c.per} /></td>
+                        <td style={{ padding: "8px 10px" }}><GrowthBadge tier={c.growth_tier} /></td>
+                        <td style={{ padding: "8px 10px" }}><GrowthNumbers cagr3y={c.revenue_cagr_3y} yoy={c.revenue_yoy} /></td>
                         <td style={{ padding: "8px 10px" }}><RegimeBadge fit={c.regime_fit} /></td>
                         <td style={{ padding: "8px 10px" }} onClick={(e) => e.stopPropagation()}>
                           <button

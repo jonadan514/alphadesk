@@ -90,13 +90,32 @@ export default function SectorPage() {
   return (
     <div className="space-y-2">
       {/* Header */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[12px] font-bold px-2 py-0.5 rounded" style={{ background: "#262112", color: "#726b58" }}>
           <FlagIcon market={isKR ? "KR" : "US"} size={14} />{" "}{isKR ? "KOSPI" : "S&P 500"}
         </span>
         <h1 className="text-base font-bold text-white">섹터 분석</h1>
         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{data.date}</span>
-        <InfoTooltip content={isKR ? "KOSPI 섹터별 앵커 종목 기반 상대강도 분석입니다." : "11개 SPDR ETF 기반 섹터 순환 분석입니다. SPY 대비 상대 강도(RS)로 경기 사이클을 판단합니다."} />
+        {/* KR만 두 경로가 있다 - KRX가 코스피200 섹터지수를 못 내려주면(로그인 만료,
+            점검 등) 대표 종목 평균으로 조용히 폴백하는데, 그 사실이 화면에 안 보이면
+            "왜 이 숫자가 지난주랑 계산 기준이 다른가"를 알 방법이 없다.
+            KRX_SECTOR_INDEX_JSON을 붙이기 전 캐시(sector_source 필드 자체가 없음)도
+            폴백과 같은 취급 - 그때는 항상 앵커 종목으로 계산됐었다. */}
+        {isKR && (
+          <span
+            className="text-[11px] font-semibold px-2 py-0.5 rounded"
+            style={
+              data.sector_source === "krx"
+                ? { background: "#4ade8020", color: "#4ade80" }
+                : { background: "#facc1520", color: "#facc15" }
+            }
+          >
+            {data.sector_source === "krx" ? "KRX 공식 지수" : "대표 종목 기준 (폴백)"}
+          </span>
+        )}
+        <InfoTooltip content={isKR
+          ? "코스피200 섹터지수(정보기술·금융 등) + 유틸리티 업종지수(전기·가스) 기반 상대강도 분석입니다. KRX 지수를 받지 못하면 섹터별 대표 종목 평균으로 계산합니다."
+          : "11개 SPDR ETF 기반 섹터 순환 분석입니다. SPY 대비 상대 강도(RS)로 경기 사이클을 판단합니다."} />
       </div>
 
       {/* 경기 사이클 */}

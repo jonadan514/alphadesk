@@ -20,6 +20,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/sector",    label: "섹터 분석", emoji: "🏭", color: "#ffb020" },
       { href: "/radar",     label: "테마 레이더", emoji: "📡", color: "#ffb020" },
+      { href: "/quarterly", label: "분기 리서치", emoji: "🗓️", color: "#ffb020" },
     ],
   },
   {

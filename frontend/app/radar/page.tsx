@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { themeName } from "@/src/lib/themeNames";
 import { useMarket } from "@/src/contexts/MarketContext";
 import { krStockName } from "@/src/lib/krStockNames";
@@ -485,11 +486,47 @@ function ThemeCard({ signal, market, compact = false }:
   );
 }
 
+// 단계 섹션 접기 상태를 기억해 둔다 - 이 브라우저에서 마지막으로 접어둔 상태
+// 그대로 다음에 열린다. 서버에 저장하지 않는다(보는 사람마다 취향이 다를 뿐
+// 데이터가 아니다). 접근 실패(프라이빗 모드 등)해도 화면은 정상 동작해야 하므로
+// 모두 try/catch로 감싼다.
+const STAGE_COLLAPSE_KEY = "radar_collapsed_stages";
+
+function loadCollapsedStages(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(STAGE_COLLAPSE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveCollapsedStages(v: Record<string, boolean>): void {
+  try {
+    localStorage.setItem(STAGE_COLLAPSE_KEY, JSON.stringify(v));
+  } catch {
+    // 저장 실패해도 이번 화면에서는 그대로 접고 펼 수 있다 - 다음 방문에서만 기억을 못 한다.
+  }
+}
+
 export default function RadarPage() {
   const { market } = useMarket();
   const [weekStart, setWeekStart] = useState<string | null>(null);
   const [signals, setSignals] = useState<ThemeSignal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setCollapsedStages(loadCollapsedStages());
+  }, []);
+
+  const toggleStage = (key: string) => {
+    setCollapsedStages((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      saveCollapsedStages(next);
+      return next;
+    });
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -577,26 +614,51 @@ export default function RadarPage() {
         <div className="py-16 text-center text-[13px]" style={{ color: MUTED }}>아직 계산된 테마 신호가 없습니다.</div>
       ) : (
         <>
-          {/* 발견 단계 3섹션 - 해당 없는 단계도 숨기지 않는다. 구조가 유지돼야
-              "이번 주는 이 단계가 비었다"는 것 자체가 정보가 된다. */}
-          {stageGroups.map(({ stage, items }, i) => (
-            <div key={stage.key} className="mt-8">
-              <StageRail index={i} color={stage.color} />
-              <div className="mb-1 flex flex-wrap items-baseline gap-2.5">
-                <h2 className="text-[16.5px] font-extrabold" style={{ color: stage.color }}>{stage.name}</h2>
-                <span className="text-[11.5px]" style={{ color: FAINT, fontFamily: MONO }}>{stage.when}</span>
+          {/* 발견 단계 3섹션 - 해당 없는 단계도 숨기지 않는다(헤더+개수는 항상 보인다).
+              "이번 주는 이 단계가 비었다"는 것 자체가 정보라서 완전히 없애지는
+              않되, 본문(설명·카드·해당없음 안내)은 기본으로 접어 둔다 - 세 섹션이
+              전부 비어있는 주에는 빈 칸 3개가 화면을 다 차지했었다. 펼쳐서 본 뒤엔
+              그 선택을 기억해 다음 방문에서도 펼쳐진 채로 보여준다(collapsedStages에
+              값이 없을 때만 기본 접힘 - false를 저장해 뒀으면 펼친 채 유지).*/}
+          {stageGroups.map(({ stage, items }, i) => {
+            const collapsed = collapsedStages[stage.key] ?? true;
+            return (
+              <div key={stage.key} className="mt-8">
+                <StageRail index={i} color={stage.color} />
+                <button
+                  type="button"
+                  onClick={() => toggleStage(stage.key)}
+                  className="mb-1 flex w-full items-center gap-2 text-left"
+                  style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+                  aria-expanded={!collapsed}
+                >
+                  {collapsed
+                    ? <ChevronRight size={15} style={{ color: MUTED, flexShrink: 0 }} />
+                    : <ChevronDown size={15} style={{ color: MUTED, flexShrink: 0 }} />}
+                  <span className="flex flex-wrap items-baseline gap-2.5">
+                    <h2 className="text-[16.5px] font-extrabold" style={{ color: stage.color }}>{stage.name}</h2>
+                    <span className="text-[11.5px]" style={{ color: FAINT, fontFamily: MONO }}>{stage.when}</span>
+                    <span className="text-[11.5px] font-semibold" style={{ color: items.length > 0 ? stage.color : FAINT, fontFamily: MONO }}>
+                      {items.length > 0 ? `${items.length}개` : "해당 없음"}
+                    </span>
+                  </span>
+                </button>
+                {!collapsed && (
+                  <>
+                    <p className="mb-3 max-w-[70ch] text-[12.5px]" style={{ color: MUTED }}>{stage.desc}</p>
+                    {items.length > 0 ? (
+                      items.map((s) => <ThemeCard key={s.theme_id} signal={s} market={market} />)
+                    ) : (
+                      <div className="rounded-xl px-4 py-3 text-[12.5px]"
+                           style={{ border: "1px dashed var(--border-ctrl)", background: "var(--bg-inset)", color: MUTED }}>
+                        이번 주 해당 없음 — {(stage.labels as readonly string[]).join(" · ")} 조합에 맞는 테마가 없었습니다.
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <p className="mb-3 max-w-[70ch] text-[12.5px]" style={{ color: MUTED }}>{stage.desc}</p>
-              {items.length > 0 ? (
-                items.map((s) => <ThemeCard key={s.theme_id} signal={s} market={market} />)
-              ) : (
-                <div className="rounded-xl px-4 py-3 text-[12.5px]"
-                     style={{ border: "1px dashed var(--border-ctrl)", background: "var(--bg-inset)", color: MUTED }}>
-                  이번 주 해당 없음 — {(stage.labels as readonly string[]).join(" · ")} 조합에 맞는 테마가 없었습니다.
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
 
           {unlabeledMoving.length > 0 && (
             <div className="mt-10">

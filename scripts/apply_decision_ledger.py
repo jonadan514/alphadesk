@@ -14,7 +14,7 @@ LLM 매핑은 실행마다 결과가 흔들려서 멀쩡한 소속이 매 분기
 
 초안은 build_merged_mapping_run.py가 읽는 검토 파일 형식 그대로다. 사람은
 needs_review만 판단해 exclude/keep에 옮기고 data/eval/에 저장한 뒤 병합한다.
-그 파일을 build_decision_ledger.py의 REVIEW_FILES에 추가하면 다음 분기부터 재사용된다.
+그 파일을 data/eval/review_manifest.json에 추가하고 build_decision_ledger.py를 돌리면 다음 분기부터 재사용된다.
 
 판정 유효기간: 회사 사업은 바뀐다(예: 매각·신사업). TTL_DAYS가 지난 판정은 쓰지 않고
 needs_review로 되돌린다.

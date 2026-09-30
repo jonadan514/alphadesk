@@ -70,6 +70,20 @@ def market_median_growth(quarterly_revenue_by_ticker: dict[str, pd.Series | None
     return statistics.median(vals)
 
 
+def reference_growth_for_market(universe_revenue: dict[str, pd.Series | None], market: str,
+                                 min_sample: int = MIN_MEDIAN_SAMPLE) -> float | None:
+    """한 시장의 기준 성장률 = 그 시장 **유니버스 전체**의 YoY 성장률 중앙값.
+
+    테마 소속 기업만 표본으로 쓰면 안 된다(2026-09-21 수정). 소속 기업이 곧 표본이면 절반이
+    자동으로 기준 위에 놓여 개선 비율이 0.5 근처로 쏠리고, 테마가 몰린 업종의 성장이 기준선에
+    그대로 섞인다. 미국은 S&P500, 한국은 스크리닝 유니버스 전체를 넘겨받는다.
+
+    market은 로그·확장을 위한 이름표일 뿐 계산에는 쓰지 않는다 - 미국과 한국을 한 덩어리로
+    섞지 않는 것은 호출부가 시장별로 따로 넘기는 것으로 보장한다.
+    """
+    return market_median_growth(universe_revenue, min_sample)
+
+
 def classify_company_earnings(quarterly_revenue: pd.Series | None,
                                reference_growth: float = 0.0) -> tuple[str, str | None]:
     """분기별 매출 Series(index=기간, 최신이 0번째, NaN 제거됨)를 받아

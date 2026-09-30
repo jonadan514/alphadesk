@@ -32,7 +32,8 @@ from src.db.data_store import get_db
 from src.db.fundamentals_cache import ensure_schema as ensure_fundamentals_schema, get_cached_financials_bulk
 from src.db.theme_signals import (ensure_schema, get_approved_theme_members, get_surprises,
                                    upsert_earn_signal)
-from analyzers.theme_earnings import compute_earn_signal, market_median_growth
+from analyzers.theme_earnings import compute_earn_signal, reference_growth_for_market
+from collectors.watchlist_collector import get_kr_universe, get_us_universe
 from collectors.earnings_surprise_collector import summarize_theme
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
@@ -101,7 +102,23 @@ def main() -> None:
     _log(f"대상 (테마,시장) {len(members_by_theme_market)}개, "
          f"소속 기업(중복제거) {len(all_tickers)}개, 기준 주 {week_start}")
 
-    financials = get_cached_financials_bulk(conn, sorted(all_tickers))
+    # 기준 성장률의 표본은 테마 소속이 아니라 **시장 유니버스 전체**다(2026-09-21 수정).
+    # 소속 기업이 곧 표본이면 절반이 자동으로 기준 위에 놓여 개선 비율이 0.5 근처로 쏠린다.
+    universe_by_market: dict[str, list[str]] = {}
+    for market, getter in (("US", get_us_universe), ("KR", get_kr_universe)):
+        if not any(mk == market for _, mk in members_by_theme_market):
+            continue
+        try:
+            universe_by_market[market] = [it["symbol"] for it in getter()]
+        except Exception as e:  # noqa: BLE001 - 유니버스를 못 읽으면 소속 기업만으로 폴백한다
+            _log(f"{market} 유니버스 로드 실패 {type(e).__name__}: {str(e)[:80]} - 소속 기업만으로 기준선 계산")
+            universe_by_market[market] = []
+
+    needed = set(all_tickers)
+    for tickers in universe_by_market.values():
+        needed.update(tickers)
+
+    financials = get_cached_financials_bulk(conn, sorted(needed))
     revenue_by_ticker = {}
     for ticker, data in financials.items():
         if data is None:
@@ -118,17 +135,18 @@ def main() -> None:
     # 쏠린다(주가 축에서 시장별 지수를 쓰는 것과 같은 이유).
     reference_by_market: dict[str, float | None] = {}
     for market in {m for _, m in members_by_theme_market}:
-        market_tickers = {
+        sample = universe_by_market.get(market) or sorted({
             m["ticker"] for (tid, mk), members in members_by_theme_market.items()
-            if mk == market for m in members
-        }
-        ref = market_median_growth({t: revenue_by_ticker.get(t) for t in market_tickers})
+            if mk == market for m in members})   # 유니버스를 못 읽었을 때만 소속 기업으로 폴백
+        ref = reference_growth_for_market({t: revenue_by_ticker.get(t) for t in sample}, market)
         reference_by_market[market] = ref
+        usable = sum(1 for t in sample if revenue_by_ticker.get(t) is not None)
         if ref is None:
-            _log(f"{market}: 표본 부족으로 중앙값 산출 불가 - 절대 기준(0%)으로 폴백")
+            _log(f"{market}: 표본 부족으로 중앙값 산출 불가 - 절대 기준(0%)으로 폴백 "
+                 f"(유니버스 {len(sample)}개 중 매출 확보 {usable}개)")
         else:
-            _log(f"{market}: 기준 성장률(중앙값) {ref*100:.1f}% "
-                 f"(표본 {len(market_tickers)}개)")
+            _log(f"{market}: 기준 성장률(시장 유니버스 중앙값) {ref*100:.1f}% "
+                 f"(유니버스 {len(sample)}개 중 매출 확보 {usable}개)")
 
     # 실적 발표 서프라이즈(참고 수치). scripts/collect_earnings_surprise.py가 쌓아둔 값만
     # 읽는다 - 여기서 새로 조회하지 않는다(종목별 호출이라 수집은 따로 예산제로 돈다).

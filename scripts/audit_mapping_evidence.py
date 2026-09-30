@@ -48,7 +48,6 @@ import time
 from collections import Counter
 from pathlib import Path
 
-import requests
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,7 +56,13 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db  # noqa: E402
 
-MODEL = "gpt-4o-mini"
+from src.llm import openai_json as oj  # noqa: E402
+
+# 감사·재질의 모델은 config/models.yaml(또는 환경변수 MODEL_MAPPING_AUDIT / MODEL_MAPPING_REQUOTE)에서
+# 읽는다. 매핑 모델과 독립적으로 바꿀 수 있다 - 같은 모델이 만들고 같은 모델이 검증하면 같은
+# 실수를 공유할 위험이 있어서다.
+MODEL = oj.model_for("mapping_audit")
+REQUOTE_MODEL = oj.model_for("mapping_requote")
 
 
 def _log(msg: str) -> None:
@@ -148,24 +153,10 @@ def judge(theme: dict, members: list[dict], names: dict, profiles: dict, api_key
 
 반드시 아래 JSON으로만 답하시오. 목록의 모든 기업을 빠짐없이 포함하시오:
 {{"verdicts": [{{"ticker": "...", "evidence": "consistent|contradicts|unverifiable", "fit": "fits|not_fits|unclear", "support": "사업정보 원문 그대로", "reason": "짧은 한국어 이유"}}]}}"""
-    # 분당 토큰 한도(429)·일시 오류는 기다렸다 다시 부른다. 실패하면 이 테마 전체가
-    # "판정 호출 실패"로 남아 사람 검토 목록을 불필요하게 불린다.
-    for attempt in range(6):
-        r = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={"model": MODEL,
-                  "messages": [{"role": "system", "content": "당신은 사실관계와 산업 분류를 엄격히 대조하는 검증자입니다."},
-                               {"role": "user", "content": prompt}],
-                  "temperature": 0.0, "max_tokens": 4000,
-                  "response_format": {"type": "json_object"}},
-            timeout=180,
-        )
-        if r.status_code != 429 and r.status_code < 500:
-            break
-        time.sleep(min(2 ** (attempt + 1), 32))
-    r.raise_for_status()
-    parsed = json.loads(r.json()["choices"][0]["message"]["content"])
+    # 429·5xx·타임아웃 재시도는 공통 모듈이 처리한다. 끝내 실패하면 OpenAICallError가 올라가
+    # 호출부(main)가 이 테마를 "판정 호출 실패"로 표시한다 - 예전 동작 그대로다.
+    parsed = oj.call_json(MODEL, "당신은 사실관계와 산업 분류를 엄격히 대조하는 검증자입니다.", prompt,
+                          api_key=api_key, max_output_tokens=4000, temperature=0.0, timeout=180)
     return {str(v.get("ticker")): v for v in parsed.get("verdicts", [])}
 
 
@@ -197,18 +188,10 @@ def requote(theme: dict, items: list[tuple[dict, dict]], profiles: dict, api_key
 
 반드시 아래 JSON으로만 답하시오:
 {{"quotes": [{{"ticker": "...", "support": "원문 그대로"}}]}}"""
-    r = requests.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        json={"model": MODEL,
-              "messages": [{"role": "system", "content": "당신은 원문에서 근거 문구를 찾아 그대로 옮기는 검증자입니다."},
-                           {"role": "user", "content": prompt}],
-              "temperature": 0.0, "max_tokens": 2000,
-              "response_format": {"type": "json_object"}},
-        timeout=180,
-    )
-    r.raise_for_status()
-    parsed = json.loads(r.json()["choices"][0]["message"]["content"])
+    # 예전에는 이 호출만 재시도가 없어서 일시 오류가 나면 "1차 판정 유지"로 떨어졌다 -
+    # 멀쩡한 편입이 인용 실패로 남던 문제. 이제 공통 모듈의 재시도를 받는다.
+    parsed = oj.call_json(REQUOTE_MODEL, "당신은 원문에서 근거 문구를 찾아 그대로 옮기는 검증자입니다.",
+                          prompt, api_key=api_key, max_output_tokens=2000, temperature=0.0, timeout=180)
     return {str(q.get("ticker")): str(q.get("support", "")) for q in parsed.get("quotes", [])}
 
 

@@ -1,0 +1,25 @@
+{
+ "_about": "판정 원장(mapping_decisions.json)이 읽을 검토 파일 목록. 시간 순서대로 - 뒤의 판정이 앞을 덮는다. 새 검토를 마치면 여기에 항목을 추가하고 scripts/build_decision_ledger.py를 다시 돌린다(Python 코드를 고칠 필요 없음). 자동 탐색은 하지 않는다 - data/eval에는 정답지·진단 결과 같은 다른 JSON도 있어서 검토 파일처럼 생긴 것을 무조건 읽으면 위험하다.",
+ "files": [
+  {
+   "path": "evidence_audit_labels_20260915.json",
+   "decided_at": "2026-09-15"
+  },
+  {
+   "path": "v5_1_manual_review_20260915.json",
+   "decided_at": "2026-09-15"
+  },
+  {
+   "path": "v6_manual_review_20260915.json",
+   "decided_at": "2026-09-15"
+  },
+  {
+   "path": "us_v6_manual_review_20260915.json",
+   "decided_at": "2026-09-15"
+  },
+  {
+   "path": "us_v7_manual_review_20260915.json",
+   "decided_at": "2026-09-15"
+  }
+ ]
+}

@@ -8,8 +8,8 @@ US 70%·KR 47%는 이미 사람이 판정한 (테마, 종목)이었다. 같은 �
 하지 않도록 판정을 원장에 쌓아 다음 run에 자동 적용한다(apply_decision_ledger.py).
 
 입력은 검토 파일(data/eval/*review*.json)이다. 검토 파일이 곧 판정 기록이고, 원장은
-거기서 다시 만들 수 있는 파생물이다. 새 검토를 마치면 REVIEW_FILES 끝에 추가하고
-이 스크립트를 다시 돌린다. 나중 판정이 앞 판정을 덮는다(순서가 곧 시간 순서).
+거기서 다시 만들 수 있는 파생물이다. 새 검토를 마치면 data/eval/review_manifest.json 끝에
+항목을 추가하고 이 스크립트를 다시 돌린다. 나중 판정이 앞 판정을 덮는다(순서가 곧 시간 순서).
 
 판정 종류:
   exclude  틀린 편입 - 다음 run에 나오면 자동 제외
@@ -26,14 +26,33 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "eval" / "mapping_decisions.json"
 
-# (파일, 판정일). 시간 순서대로 - 뒤의 판정이 앞을 덮는다.
-REVIEW_FILES = [
-    ("data/eval/evidence_audit_labels_20260915.json", "2026-09-15"),
-    ("data/eval/v5_1_manual_review_20260915.json", "2026-09-15"),
-    ("data/eval/v6_manual_review_20260915.json", "2026-09-15"),
-    ("data/eval/us_v6_manual_review_20260915.json", "2026-09-15"),
-    ("data/eval/us_v7_manual_review_20260915.json", "2026-09-15"),
-]
+EVAL_DIR = ROOT / "data" / "eval"
+MANIFEST = EVAL_DIR / "review_manifest.json"
+# 검토 파일 이름 규칙. manifest에서 빠진 것을 찾는 경고에만 쓴다(읽을 파일을 정하는 데는 쓰지 않는다).
+_REVIEW_NAME_RE = re.compile(r"(manual_review|mapping_review|audit_labels)")
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def load_manifest(manifest: Path = MANIFEST) -> list[tuple[str, str]]:
+    """[(파일 이름, 판정일)] - manifest에 적힌 순서 그대로(시간 순서, 뒤가 앞을 덮는다)."""
+    if not manifest.exists():
+        raise FileNotFoundError(f"review_manifest.json이 없다: {manifest}")
+    entries = json.loads(manifest.read_text(encoding="utf-8")).get("files", [])
+    out = []
+    for i, e in enumerate(entries, 1):
+        path, decided = e.get("path"), e.get("decided_at")
+        if not path or not decided or not _DATE_RE.match(str(decided)):
+            raise ValueError(f"manifest 항목 {i}가 잘못됐다(path와 YYYY-MM-DD decided_at이 필요): {e}")
+        out.append((str(path), str(decided)))
+    return out
+
+
+def unlisted_review_files(manifest: Path = MANIFEST) -> list[str]:
+    """data/eval에 있는 검토 파일처럼 생긴 것 중 manifest에 없는 것. 조용한 누락을 막는 경고용이다."""
+    listed = {p for p, _ in load_manifest(manifest)}
+    return sorted(f.name for f in manifest.parent.glob("*.json")
+                  if _REVIEW_NAME_RE.search(f.name) and f.name not in listed)
+
 
 EXCLUDE_KEYS = {"exclude", "unapprove"}
 KEEP_KEYS = {"keep", "restore", "approve", "items"}
@@ -70,11 +89,13 @@ def _walk(node: dict, path: str, date: str, out: list[dict]) -> None:
                         "decision": decision, "reason": reason, "decided_at": date, "source": here})
 
 
-def collect() -> list[dict]:
+def collect(manifest: Path = MANIFEST) -> list[dict]:
     events: list[dict] = []
-    for rel, date in REVIEW_FILES:
-        data = json.loads((ROOT / rel).read_text(encoding="utf-8"))
-        name = Path(rel).name
+    for name, date in load_manifest(manifest):
+        path = manifest.parent / name
+        if not path.exists():
+            raise FileNotFoundError(f"manifest에 적힌 검토 파일이 없다: {path}")
+        data = json.loads(path.read_text(encoding="utf-8"))
         if "labels" in data:  # 감사 정답지 형식
             # 정답지의 '오류 아님'은 감사 정확도 측정용 라벨이지 편입 검토 결론이 아니다
             # ("SK이노베이션 재생에너지는 약한 연결"도 오류 아님으로 붙어 있다). 자동으로
@@ -91,6 +112,12 @@ def collect() -> list[dict]:
 
 
 def main() -> int:
+    missing = unlisted_review_files()
+    if missing:
+        print("경고: data/eval에 있지만 review_manifest.json에 없는 검토 파일 - 원장에 반영되지 않는다:")
+        for name in missing:
+            print(f"  {name}")
+        print("  반영하려면 manifest에 {path, decided_at} 항목을 추가한다.\n")
     events = collect()
     ledger: dict[tuple[str, str, str], dict] = {}
     overridden = 0

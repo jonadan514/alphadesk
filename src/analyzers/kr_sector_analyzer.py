@@ -1,10 +1,13 @@
 """
 한국 섹터 분석기
-- KOSPI 섹터별 대표 ETF/지수 없이 개별 종목 기반으로 섹터 RS 계산
-- KOSPI(^KS11) 대비 각 섹터 수익률 집계
+- KRX 공식 지수(코스피200 섹터지수 + 유틸리티 업종지수)로 섹터 RS 계산.
+  KRX_SECTOR_INDEX_JSON이 없거나 읽기 실패하면 앵커 종목 평균으로 폴백한다
+  (docs/SPEC_kr_sector_index.md - 왜 두 경로가 필요한지, 매핑 근거).
+- KOSPI(^KS11 또는 KRX 1001) 대비 각 섹터 수익률 집계
 - 경기 사이클 판단 (Early / Mid / Late / Recession)
 """
 import json
+import os
 from datetime import datetime
 
 import numpy as np
@@ -29,7 +32,10 @@ CYCLE_LABELS = {
     "recession": "Recession",
 }
 
-# KOSPI 섹터별 대표 종목 (섹터 RS 계산용 앵커 티커)
+# KOSPI 섹터별 대표 종목 (KRX 지수를 못 받을 때만 쓰는 폴백 앵커 티커).
+# 키 집합은 scripts/fetch_krx_sector_index.py의 SECTOR_TICKERS와 정확히 같아야
+# 한다 - 하나라도 어긋나면 그 섹터가 CYCLE_SECTORS 판정에서 조용히 빠진다
+# (tests/test_kr_sector_index.py가 두 키 집합의 일치를 고정한다).
 SECTOR_ANCHORS = {
     "Technology":             ["005930.KS", "000660.KS", "006400.KS"],   # 삼성전자, SK하이닉스, 삼성SDI
     "Consumer Cyclical":      ["005380.KS", "000270.KS", "004170.KS"],   # 현대차, 기아, 신세계
@@ -44,8 +50,43 @@ SECTOR_ANCHORS = {
 }
 
 
-def _fetch_sector_data(period: str = "4mo") -> dict[str, pd.Series]:
-    """섹터별 앵커 종목 평균 수익률 시리즈 반환"""
+def _load_krx_index_series() -> dict[str, pd.Series]:
+    """환경변수 KRX_SECTOR_INDEX_JSON이 가리키는 파일에서 KRX 공식 지수(코스피200
+    섹터지수 + 유틸리티 업종지수) 시계열을 읽는다. scripts/fetch_krx_sector_index.py가
+    격리 venv에서 미리 만들어 둔 파일이다 - 이 함수는 pykrx를 직접 부르지 않는다
+    (본 환경 pandas 3.x와 pykrx 1.2.8이 요구하는 pandas<3.0이 충돌한다).
+
+    미설정·파일 없음·파싱 실패는 전부 빈 dict를 돌려줘 앵커 경로로 조용히
+    폴백하게 한다(원칙 4와 같은 정신 - 계산 불가를 실패로 끝내지 않고 다른
+    경로로 넘긴다). 지수 일부만 실패해 JSON에 없는 경우에도 있는 것만으로
+    그대로 쓴다 - fetch_krx_sector_index.py가 실패한 지수만 빼고 저장하기
+    때문에 여기서 다시 걸러낼 필요가 없다.
+    """
+    path = os.getenv("KRX_SECTOR_INDEX_JSON")
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        series_raw = payload.get("series") or {}
+    except Exception:
+        return {}
+
+    sector_series: dict[str, pd.Series] = {}
+    for key, entry in series_raw.items():
+        try:
+            dates = pd.to_datetime(entry["dates"])
+            closes = [float(c) for c in entry["closes"]]
+            if len(dates) != len(closes) or len(closes) == 0:
+                continue
+            sector_series[key] = pd.Series(closes, index=dates).sort_index()
+        except Exception:
+            continue   # 이 지수 하나만 건너뛰고 나머지는 그대로 쓴다
+    return sector_series
+
+
+def _fetch_sector_data_yfinance(period: str = "4mo") -> dict[str, pd.Series]:
+    """섹터별 앵커 종목 평균 수익률 시리즈 반환 (KRX 지수를 못 받을 때의 폴백)."""
     all_tickers = ["^KS11"]
     for tickers in SECTOR_ANCHORS.values():
         all_tickers.extend(tickers)
@@ -74,6 +115,24 @@ def _fetch_sector_data(period: str = "4mo") -> dict[str, pd.Series]:
         sector_series[sector] = normed.mean(axis=1)
 
     return sector_series
+
+
+def _fetch_sector_data_with_source(period: str = "4mo") -> tuple[dict[str, pd.Series], str]:
+    """KRX 공식 지수를 우선 쓰고, 없으면 앵커 종목 평균으로 폴백한다.
+    어느 경로를 탔는지(payload의 sector_source)까지 필요할 때는 이 함수를,
+    시리즈만 필요할 때는 아래 _fetch_sector_data를 쓴다."""
+    series = _load_krx_index_series()
+    if series:
+        return series, "krx"
+    return _fetch_sector_data_yfinance(period), "anchors"
+
+
+def _fetch_sector_data(period: str = "4mo") -> dict[str, pd.Series]:
+    """섹터별 수익률 시리즈. 반환 타입은 그대로 dict[str, pd.Series]이고
+    "KOSPI" 키를 포함한다 - 소스가 KRX든 앵커든 하위 계산(_ret, _weekly_ret,
+    analyze)은 이 모양만 보고 동작해 손댈 필요가 없다."""
+    series, _ = _fetch_sector_data_with_source(period)
+    return series
 
 
 def _ret(series: pd.Series, days: int) -> float | None:
@@ -125,7 +184,7 @@ def _get_sector_stocks() -> dict[str, list[dict]]:
 
 def analyze() -> dict:
     today = datetime.today().strftime("%Y-%m-%d")
-    sector_series = _fetch_sector_data("4mo")
+    sector_series, sector_source = _fetch_sector_data_with_source("4mo")
 
     kospi_series = sector_series.get("KOSPI")
 
@@ -200,6 +259,10 @@ def analyze() -> dict:
         "rs_history":    rs_history,
         "sector_stocks": sector_stocks,
         "kospi_ret":     kospi_ret_dict,
+        # "krx"(코스피200 섹터지수 + 유틸리티 업종지수) | "anchors"(대표 종목 평균 폴백).
+        # 화면에서 어느 쪽으로 계산된 값인지 구분할 수 있어야 한다 -
+        # docs/SPEC_kr_sector_index.md 4-2.
+        "sector_source": sector_source,
     }
 
     _save(result)

@@ -70,6 +70,26 @@ LATE_COLUMNS = [("price_volume_ratio", "REAL"),
                 ("earn_surprise_median", "REAL")]
 
 
+# 분기 재설계(docs/REDESIGN_SPEC.md 6장)용 주간 기사 수 이력.
+# theme_signals.news_count와 따로 두는 이유: (1) 기존 주간 파이프라인 행을 덮어쓰지 않는다
+# (원칙 5), (2) 백필은 기사 원문을 저장하지 않고 집계만 남긴다 - 62주치 기사 원문은 100만 건이
+# 넘어 저장 부담이 크고, 분기 비교에 필요한 것은 건수뿐이다.
+# saturated_keywords > 0 이면 그 주 건수는 실제보다 작다(구글 100건 상한).
+THEME_NEWS_WEEKLY_DDL = """
+CREATE TABLE IF NOT EXISTS theme_news_weekly (
+  theme_id           TEXT NOT NULL,
+  market             TEXT NOT NULL,
+  week_start         TEXT NOT NULL,
+  article_count      INTEGER,
+  raw_total          INTEGER,
+  saturated_keywords INTEGER DEFAULT 0,
+  expanded_keywords  INTEGER DEFAULT 0,
+  failed_keywords    INTEGER DEFAULT 0,
+  collected_at       TEXT,
+  PRIMARY KEY (theme_id, market, week_start)
+)
+"""
+
 EARNINGS_SURPRISE_DDL = """
 CREATE TABLE IF NOT EXISTS earnings_surprise (
   ticker       TEXT PRIMARY KEY,
@@ -87,6 +107,7 @@ def ensure_schema(conn) -> None:
     conn.execute(THEME_NEWS_DDL)
     conn.execute(THEME_SIGNALS_DDL)
     conn.execute(EARNINGS_SURPRISE_DDL)
+    conn.execute(THEME_NEWS_WEEKLY_DDL)
     for name, coltype in LATE_COLUMNS:
         try:
             conn.execute(f"ALTER TABLE theme_signals ADD COLUMN {name} {coltype}")
@@ -338,3 +359,69 @@ def upsert_surprise(conn, ticker: str, market: str, report_date: str | None,
         """,
         (ticker, market, report_date, surprise_pct, eps_estimate, eps_reported, fetched_at),
     )
+
+
+def upsert_news_weekly(conn, theme_id: str, market: str, week_start: str, article_count: int,
+                       raw_total: int, saturated: int, expanded: int, failed: int,
+                       collected_at: str) -> None:
+    """주간 기사 수 이력(분기 집계용). 같은 주를 다시 수집하면 최신 값으로 갱신한다."""
+    conn.execute(
+        """
+        INSERT INTO theme_news_weekly
+          (theme_id, market, week_start, article_count, raw_total,
+           saturated_keywords, expanded_keywords, failed_keywords, collected_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(theme_id, market, week_start) DO UPDATE SET
+          article_count = excluded.article_count,
+          raw_total = excluded.raw_total,
+          saturated_keywords = excluded.saturated_keywords,
+          expanded_keywords = excluded.expanded_keywords,
+          failed_keywords = excluded.failed_keywords,
+          collected_at = excluded.collected_at
+        """,
+        (theme_id, market, week_start, article_count, raw_total,
+         saturated, expanded, failed, collected_at),
+    )
+
+
+def get_collected_news_weeks(conn, market: str) -> set[tuple[str, str]]:
+    """이미 수집한 (theme_id, week_start) 집합 - 백필 재실행 때 건너뛰기용."""
+    rows = conn.execute(
+        "SELECT theme_id, week_start FROM theme_news_weekly WHERE market = ?", (market,)
+    ).fetchall()
+    return {(r[0], r[1]) for r in rows}
+
+
+def get_weekly_news_counts(conn, theme_id: str, market: str,
+                           since: str | None = None) -> dict[str, int]:
+    """주간 기사 수를 두 표에서 합쳐 읽는다 (분기 집계용, REDESIGN_SPEC 6-3).
+
+    같은 주간 건수가 두 곳에 나뉘어 있다.
+      - theme_news_weekly: 과거를 채운 백필 결과
+      - theme_signals.news_count: 매주 도는 수집이 남기는 값
+    둘 다 collect_theme_news()로 같은 주를 조회해 중복 제거 후 센 값이라 이어 붙일 수 있다.
+    같은 주가 양쪽에 있으면 백필 표를 쓴다(포화 키워드 정보가 함께 있는 쪽).
+
+    since(주 월요일)를 주면 그 주 이전은 빼고 읽는다 - 키워드가 바뀐 테마는 바뀌기 전
+    건수와 잇지 않는다(themes.yaml 유지보수 규칙 2).
+
+    Turso HTTP 클라이언트는 정수 컬럼을 문자열로 돌려주므로 int()로 맞춘다.
+    """
+    floor = since or "0000-00-00"
+    out: dict[str, int] = {}
+    rows = conn.execute(
+        "SELECT week_start, news_count FROM theme_signals "
+        "WHERE theme_id = ? AND market = ? AND week_start >= ? AND news_count IS NOT NULL",
+        (theme_id, market, floor),
+    ).fetchall()
+    for week_start, count in rows:
+        out[week_start] = int(count)
+
+    rows = conn.execute(
+        "SELECT week_start, article_count FROM theme_news_weekly "
+        "WHERE theme_id = ? AND market = ? AND week_start >= ? AND article_count IS NOT NULL",
+        (theme_id, market, floor),
+    ).fetchall()
+    for week_start, count in rows:
+        out[week_start] = int(count)      # 백필 표가 이긴다
+    return out

@@ -27,3 +27,9 @@ jobs:
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
           PYTHONUNBUFFERED: "1"
         run: python scripts/probe_growth_fcf_data.py
+      - name: Probe growth distribution
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/probe_growth_distribution.py
