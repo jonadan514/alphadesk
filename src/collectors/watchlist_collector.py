@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SP500_CSV = REPO_ROOT / "data" / "sp500_list.csv"
+SP400_CSV = REPO_ROOT / "data" / "sp400_list.csv"   # 중형주 (SPEC_us_universe_sp400.md)
 
 US_MIN_CAP = 2_000_000_000        # $2B
 KR_MIN_CAP = 200_000_000_000      # 2000억원
@@ -54,23 +55,52 @@ KR_SCREEN_MIN_CAP = 500_000_000_000
 KRX_LISTED_INFO_URL = "https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo"
 
 
+def _read_universe_csv(path) -> list[str]:
+    """유니버스 CSV에서 티커 열만 뽑는다. 파일이 없으면 빈 목록."""
+    if not path.exists():
+        return []
+    df = pd.read_csv(path)
+    col = next((c for c in df.columns if "symbol" in c.lower() or "ticker" in c.lower()), df.columns[0])
+    return df[col].astype(str).str.replace(".", "-", regex=False).dropna().tolist()
+
+
 def get_us_universe() -> list[dict]:
-    """S&P 500 기반 미국 유니버스."""
-    tickers: list[str] = []
+    """S&P 500 + S&P 400(중형주) 기반 미국 유니버스.
 
-    if SP500_CSV.exists():
-        df = pd.read_csv(SP500_CSV)
-        col = next((c for c in df.columns if "symbol" in c.lower() or "ticker" in c.lower()), df.columns[0])
-        tickers = df[col].str.replace(".", "-", regex=False).dropna().tolist()
-    else:
-        try:
-            df = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")[0]
-            tickers = df["Symbol"].str.replace(".", "-", regex=False).tolist()
-        except Exception as e:
-            logger.error("S&P 500 목록 수집 실패: %s", e)
-            return []
+    중형주를 넣은 이유는 테마가 얇아서다 - 미국 테마 32개 중 20개가 소속 기업
+    5개 미만이었고(중앙값 3개), 원인은 매핑이 아니라 유니버스였다. 희토류(MP)·
+    SMR(BWXT)·태양광 트래커(NXT) 같은 순수 플레이가 전부 S&P 400에 있다
+    (docs/SPEC_us_universe_sp400.md).
 
-    return [{"market": "US", "symbol": t, "yf_symbol": t} for t in tickers]
+    각 종목에 universe_source를 붙인다. 이건 나중에 소급해서 넣을 수 없는
+    값이라 지금 심는다(원칙 3) - 태그가 없으면 "중형주를 넣은 게 도움이
+    됐나"를 영원히 물을 수 없다.
+
+    sp400_list.csv가 없으면 sp500만으로 동작한다(점진 배포 안전).
+    """
+    items: list[dict] = []
+    seen: set[str] = set()
+
+    for path, source in ((SP500_CSV, "sp500"), (SP400_CSV, "sp400")):
+        for t in _read_universe_csv(path):
+            if t in seen:
+                continue          # 두 지수에 동시에 있을 수는 없지만 방어
+            seen.add(t)
+            items.append({"market": "US", "symbol": t, "yf_symbol": t,
+                          "universe_source": source})
+
+    if items:
+        return items
+
+    # CSV가 둘 다 없을 때만 네트워크 폴백 (예전 동작 유지)
+    try:
+        df = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")[0]
+        tickers = df["Symbol"].str.replace(".", "-", regex=False).tolist()
+    except Exception as e:
+        logger.error("S&P 500 목록 수집 실패: %s", e)
+        return []
+    return [{"market": "US", "symbol": t, "yf_symbol": t, "universe_source": "sp500"}
+            for t in tickers]
 
 
 def _recent_business_day() -> str:

@@ -30,6 +30,10 @@ interface Candidate {
   revenue_yoy?: number | null;
   op_margin_direction?: "개선" | "악화" | null;
   growth_tier?: string | null;   // 성장 / 정체 / 역성장
+  // 유니버스 출처. 미국만 값이 있고("sp500"/"sp400") 한국은 null이다.
+  // 표에는 넣지 않는다 - 종목을 고를 때 쓰는 정보가 아니라 "이 후보가 어디서
+  // 왔나"를 나중에 검증하려고 남기는 태그다(SPEC_us_universe_sp400.md 3장).
+  universe_source?: string | null;
   data_notes?: { interest?: string; debt?: string };
   // 직전 스크리닝 회차에 없던 종목(= 이번에 새로 필터를 통과). 직전 회차 자체가
   // 없으면(첫 스크리닝) true가 아니라 null - 모르는 걸 "신규"로 단정하지 않는다.
@@ -695,6 +699,15 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                    "뚜렷한 성장·배당 특성 없음"}
                 </span>
               </div>
+              {/* 유니버스 출처 — 종목 선택 기준이 아니라 "이 후보가 어디서 왔나"를
+                  밝히는 한 줄. 중형주(S&P 400)는 2026-09-30에 편입했다. */}
+              {c.universe_source && (
+                <p className="text-[10px] mt-2" style={{ color: TEXT_MUTED }}>
+                  유니버스: {c.universe_source === "sp400"
+                    ? "S&P 400 (중형주) — 2026-09-30 편입"
+                    : "S&P 500 (대형주)"}
+                </p>
+              )}
             </div>
           </div>
 

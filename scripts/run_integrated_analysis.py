@@ -12,11 +12,13 @@ ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.collectors.fetch_sp500_list import save_sp500_list
+from src.collectors.fetch_sp400_list import save_sp400_list
 from src.collectors.fetch_sp500_prices import fetch_sp500_prices
 from src.db.data_store import get_db, init_db, upsert_costs
 from src.analyzers.sector_analyzer import analyze as analyze_sectors
 
 SP500_CSV    = ROOT / "data" / "sp500_list.csv"
+SP400_CSV    = ROOT / "data" / "sp400_list.csv"
 PRICES_CSV   = ROOT / "data" / "us_daily_prices.csv"
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -44,6 +46,17 @@ def phase0_refresh_data(t0: float) -> tuple:
         import pandas as pd
         sp500_df = pd.read_csv(SP500_CSV)
         _log("Phase0", f"sp500_list.csv 캐시 사용 ({len(sp500_df)}종목)", t0)
+
+    # S&P 400 중형주도 같은 주기로 갱신한다(2026-09-30 편입,
+    # docs/SPEC_us_universe_sp400.md). 실패해도 미국 분석 전체를 막지 않는다 -
+    # 파일이 없거나 오래돼도 get_us_universe()가 sp500만으로 동작한다.
+    if _mtime_days(SP400_CSV) > 7:
+        _log("Phase0", "sp400_list.csv 재수집 중…")
+        try:
+            sp400_df = save_sp400_list()
+            _log("Phase0", f"sp400_list.csv 갱신 완료 ({len(sp400_df)}종목)", t0)
+        except Exception as e:
+            _log("Phase0", f"sp400_list.csv 재수집 실패(기존 파일 유지): {type(e).__name__}: {e}")
 
     if _mtime_days(PRICES_CSV) > 1:
         _log("Phase0", "가격 데이터 재다운로드 중 (시간 소요)…")

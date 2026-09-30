@@ -35,7 +35,12 @@ DB_PATH = ROOT / "output" / "data.db"
 # 250 근거(2026-09-14 실측): 유니버스가 KR 487 + US 503 = 990종목이 되면서
 # 60으로는 전체를 한 바퀴 도는 데 17주가 걸린다. 종목당 라이브 갱신이 약 9초라
 # 250이면 15-37분이고(잡 타임아웃 90분), 4주면 전체를 커버한다.
-REFRESH_BUDGET = int(os.getenv("REFRESH_BUDGET") or "250")
+#
+# 350으로 올림(2026-09-30): S&P 400 중형주를 편입해 유니버스가 1,167 -> 1,567종목이
+# 됐다. 250을 그대로 두면 한 바퀴가 4.7주 -> 6.3주로 늘어 재무 데이터가 그만큼
+# 오래된 상태로 남는다. 350이면 4.5주로 오히려 전보다 짧고, 라이브 갱신 추정
+# 시간은 약 52분이라 잡 타임아웃 90분 안이다(SPEC_us_universe_sp400.md 2-1).
+REFRESH_BUDGET = int(os.getenv("REFRESH_BUDGET") or "350")
 
 # SPEC §6.3 — 이번 주 갱신 대상 중 (라이브 성공 + 캐시 폴백)/전체 시도 비율이
 # 이 아래로 떨어지면 텔레그램 경고. job은 실패 처리하지 않는다.
@@ -60,6 +65,7 @@ CREATE_TABLE_SQL = """CREATE TABLE IF NOT EXISTS watchlist_candidates (
   rel_6m              REAL,
   fit_score           REAL,
   data_notes          TEXT,
+  universe_source     TEXT,
   screened_at         TEXT NOT NULL,
   UNIQUE(market, symbol)
 )"""
@@ -115,12 +121,29 @@ SCREENING_RESULTS_SQL = """CREATE TABLE IF NOT EXISTS watchlist_screening_result
 )"""
 
 
+# 이미 운영에 있는 표에는 CREATE TABLE IF NOT EXISTS가 새 컬럼을 붙여주지 않는다.
+# ALTER TABLE을 try/except로 감싸 뒤늦게 더한다(compute_watchlist_valuation.py의
+# LATE_COLUMNS와 같은 방식).
+LATE_COLUMNS = [("universe_source", "TEXT")]
+
+
+def _add_late_columns(execute) -> None:
+    """execute(sql)를 받아 컬럼을 하나씩 더한다. 이미 있으면 조용히 넘어간다.
+    로컬 sqlite와 Turso 양쪽에서 같은 코드를 쓰려고 호출 가능 객체로 받는다."""
+    for name, coltype in LATE_COLUMNS:
+        try:
+            execute(f"ALTER TABLE watchlist_candidates ADD COLUMN {name} {coltype}")
+        except Exception:
+            pass   # 이미 있는 컬럼 - 정상
+
+
 def ensure_schema(conn: sqlite3.Connection, markets: list[str] | None = None) -> None:
     """테이블을 만들고, 이번에 스크리닝하는 시장의 기존 행만 비운다.
     markets가 None이면 아무것도 지우지 않는다(스키마만 보장)."""
     conn.executescript(SCHEMA)
     conn.execute(HISTORY_TABLE_SQL)
     conn.execute(SCREENING_RESULTS_SQL)
+    _add_late_columns(conn.execute)
     for mkt in markets or []:
         conn.execute("DELETE FROM watchlist_candidates WHERE market = ?", (mkt,))
         conn.execute("DELETE FROM watchlist_screening_results WHERE market = ?", (mkt,))
@@ -148,6 +171,7 @@ def save_candidates(conn: sqlite3.Connection, candidates: list[dict]) -> None:
             c.get("rel_6m"),
             c.get("fit_score"),
             json.dumps(c.get("data_notes") or {}, ensure_ascii=False),
+            c.get("universe_source"),
             now,
         )
         for c in candidates
@@ -157,8 +181,9 @@ def save_candidates(conn: sqlite3.Connection, candidates: list[dict]) -> None:
         INSERT INTO watchlist_candidates
           (market, symbol, name, market_cap, sector, piotroski,
            debt_ratio, interest_coverage, cfo_positive_count,
-           red_flags, regime_fit, roe, current_price, rel_3m, rel_6m, fit_score, data_notes, screened_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+           red_flags, regime_fit, roe, current_price, rel_3m, rel_6m, fit_score, data_notes,
+           universe_source, screened_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """,
         rows,
     )
@@ -201,8 +226,9 @@ def push_to_turso(candidates: list[dict], screening_rows: list[tuple[str, dict]]
         "INSERT INTO watchlist_candidates "
         "(market, symbol, name, market_cap, sector, piotroski, "
         " debt_ratio, interest_coverage, cfo_positive_count, "
-        " red_flags, regime_fit, roe, current_price, rel_3m, rel_6m, fit_score, data_notes, screened_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        " red_flags, regime_fit, roe, current_price, rel_3m, rel_6m, fit_score, data_notes, "
+        " universe_source, screened_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     history_insert_sql = (
         "INSERT OR REPLACE INTO watchlist_candidate_history "
@@ -227,6 +253,9 @@ def push_to_turso(candidates: list[dict], screening_rows: list[tuple[str, dict]]
         (HISTORY_TABLE_SQL, None),
         (SCREENING_RESULTS_SQL, None),
     ]
+    # 뒤늦게 붙인 컬럼. execute_many는 한 문이라도 실패하면 배치 전체가 죽으므로,
+    # "이미 있으면 에러"인 ALTER는 아래 init_statements 배치에 섞지 않고 한 문씩 보낸다.
+    _add_late_columns(lambda sql: execute_many([(sql, None)]))
     for mkt in screened_markets:
         init_statements.append(("DELETE FROM watchlist_candidates WHERE market = ?", [mkt]))
         init_statements.append(("DELETE FROM watchlist_screening_results WHERE market = ?", [mkt]))
@@ -254,6 +283,7 @@ def push_to_turso(candidates: list[dict], screening_rows: list[tuple[str, dict]]
                 c.get("rel_6m"),
                 c.get("fit_score"),
                 json.dumps(c.get("data_notes") or {}, ensure_ascii=False),
+                c.get("universe_source"),
                 now,
             ]))
             statements.append((history_insert_sql, [

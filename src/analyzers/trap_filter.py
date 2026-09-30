@@ -314,6 +314,11 @@ def run_screen(items: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
             "roe":         result["roe"],
             "current_price": info.get("currentPrice"),
             "data_notes":  result["data_notes"],
+            # 유니버스 출처(sp500/sp400). 나중에 소급해서 넣을 수 없는 값이라
+            # 스크리닝 시점에 같이 흘려보낸다(원칙 3, SPEC_us_universe_sp400.md 3장) -
+            # 중형주 편입이 실제로 도움이 됐는지 성적표에서 갈라 보려면 필요하다.
+            # 한국은 이 개념이 없어 None으로 남는다.
+            "universe_source": item.get("universe_source"),
         }
         if result["status"] == "insufficient_data":
             insufficient.append(entry)

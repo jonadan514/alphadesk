@@ -10,6 +10,11 @@ const BASE_COLS = `
          roe, current_price, data_notes, screened_at`;
 const VALUE_COLS = `${BASE_COLS}, psr, per, valuation_tier`;
 const GROWTH_COLS = `${VALUE_COLS}, revenue_cagr_3y, revenue_yoy, op_margin_direction, growth_tier`;
+// universe_source는 성장 컬럼보다도 나중에 붙었다(S&P 400 편입,
+// docs/SPEC_us_universe_sp400.md). 주간 스크리닝이 한 번 돌기 전까지는 운영 표에
+// 없으므로 반드시 가장 바깥 계층이어야 한다 - 아래쪽 계층에 넣으면 폴백이
+// 전부 실패해서 후보가 통째로 0개로 보인다(폴백이 막으려던 바로 그 사고).
+const FULL_COLS = `${GROWTH_COLS}, universe_source`;
 
 export async function GET(request: Request) {
   try {
@@ -35,8 +40,10 @@ export async function GET(request: Request) {
     // 추가됨, docs/SPEC_watchlist_growth.md). 이 화면이 그 스크립트보다 먼저
     // 배포되면 SELECT나 WHERE(필터)가 "no such column"으로 죽는데, 기존 catch가
     // 그걸 **빈 목록**으로 바꿔 버려서 후보 275종목이 0종목으로 보인다. 컬럼
-    // 계층(성장 -> 밸류 -> 기본)을 하나씩 낮춰가며 재시도해 목록 자체는 항상 뜨게 한다.
-    const res = await client.execute({ sql: GROWTH_COLS + tail, args })
+    // 계층(전체 -> 성장 -> 밸류 -> 기본)을 하나씩 낮춰가며 재시도해 목록 자체는
+    // 항상 뜨게 한다.
+    const res = await client.execute({ sql: FULL_COLS + tail, args })
+      .catch(async () => await client.execute({ sql: GROWTH_COLS + tail, args })
       .catch(async () => {
         if (growth) return { rows: [], columns: [] };   // 성장 필터인데 컬럼이 없으면 결과 없음이 맞다
         return await client.execute({ sql: VALUE_COLS + tail, args })
@@ -45,7 +52,7 @@ export async function GET(request: Request) {
             return await client.execute({ sql: BASE_COLS + tail, args })
               .catch(() => ({ rows: [], columns: [] }));
           });
-      });
+      }));
 
     const candidates = res.rows.map((r: any) => {
       const obj: Record<string, unknown> = {};
