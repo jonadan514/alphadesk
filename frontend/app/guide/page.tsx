@@ -5,9 +5,10 @@ import Link from "next/link";
 const GUIDE_SECTIONS = [
   { href: "/",           icon: "⊡", label: "개요",        desc: "이번 주 워치리스트 후보 수 요약. 접속 시작점." },
   { href: "/briefing",   icon: "📋", label: "주간 브리핑", desc: "매주 월요일 아침 자동 생성 — 지난주 지수 흐름·워치리스트 변동·관심도 흐름·다가오는 촉매·GPT 총평." },
-  { href: "/sector",     icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭." },
+  { href: "/sector",     icon: "⊞", label: "섹터 분석",   desc: "경기 사이클 단계와 지금 강한 업종 확인. 어느 분야 종목을 살지 방향을 잡는 탭. 한국은 코스피200 섹터지수, 미국은 SPDR 11개 ETF 기준." },
   { href: "/radar",      icon: "📡", label: "테마 레이더", desc: "미국·한국 산업 테마를 뉴스·실적·주가 세 축으로 매주 관찰. 종합 점수 없이, 정해진 조합에만 라벨을 붙임. 상단 탭으로 시장 전환." },
-  { href: "/watchlist",  icon: "🔖", label: "워치리스트",  desc: "재무 건전성 필터(Piotroski 등)를 통과한 후보를 순위 없이 리스트업(주간 갱신). 종목 클릭 시 재무 지표 + 뉴스 기반 네러티브 브리프 + 정성 체크리스트 + 메모까지 한 팝업에서." },
+  { href: "/quarterly",  icon: "🔍", label: "분기 리서치", desc: "테마 레이더보다 한 단계 더 들어가, 분기 재무가 실제로 움직였는지와 뉴스 반응을 나눠서 본다. \"재무는 이미 움직였는데 뉴스는 조용한\" 테마를 찾는 화면." },
+  { href: "/watchlist",  icon: "🔖", label: "워치리스트",  desc: "재무 건전성 필터를 통과한 후보를 순위 없이 리스트업(주간 갱신). 밸류(싼가)·성장(자라는가) 축, 검색창까지 지원. 종목 클릭 시 재무 지표 + 뉴스 기반 네러티브 브리프 + 정성 체크리스트 + 메모까지 한 팝업에서." },
   { href: "/scorecard",  icon: "📈", label: "성적표",      desc: "과거 워치리스트 후보에 실제 주가를 대조한 사후 검증 — 지수 단순 보유 대비 필터가 값을 더했는지 확인." },
 ];
 
@@ -41,7 +42,7 @@ export default function GuidePage() {
           <Badge text="GUIDE" color="#ffb020" />
         </div>
         <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-          미국(S&amp;P 500) · 한국(KOSPI) 개인 투자자용 AI 주식 분석 대시보드
+          미국(S&amp;P 500) · 한국(KOSPI) 개인 투자자용 테마·재무 리서치 대시보드
         </p>
         <Link
           href="/guide/detail"
@@ -55,27 +56,33 @@ export default function GuidePage() {
 
       {/* ── 완전 초보자 시작 가이드 ── */}
       <Card>
-        <SectionTitle>📌 처음이라면 — 3분 안에 이해하기</SectionTitle>
+        <SectionTitle>📌 처음이라면 — 4단계로 좁혀가기</SectionTitle>
         <p className="text-[12px] mb-4 leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          AlphaDesk는 <span className="text-white font-semibold">"지금 주식을 사도 되는가?"</span>를 단계별로 판단해주는 도구입니다.
-          주식을 처음 시작하는 분도 아래 3단계만 따라하면 됩니다.
+          AlphaDesk는 <span className="text-white font-semibold">"매수하라"고 말해주는 도구가 아닙니다.</span> 대신
+          "지금 뭘 눈여겨봐야 하는가"를 시장 전체 → 업종 → 테마 → 개별 종목 순서로 좁혀가도록 만들어졌습니다.
+          투자가 처음이라면 아래 4단계를 순서대로 따라가 보세요. 각 단계는 서로 다른 화면(탭)입니다.
         </p>
         <div className="space-y-2 mb-5">
           {[
             {
               step: "STEP 1", color: "#ffb020",
-              title: "이번 주 후보가 몇 개인가? → 개요",
-              body: "홈 화면에 이번 주 재무 필터를 통과한 워치리스트 후보 수가 뜹니다. 매수·매도 신호가 아니라 \"검토해볼 만한 후보 목록\"이라는 뜻입니다.",
+              title: "어느 업종이 지금 강한가? → 섹터 분석",
+              body: "경기 사이클(회복기·성장기·과열기·침체기)과 업종별 상대강도를 보여줍니다. \"지금 산업재가 강하고 유틸리티가 약하다\"처럼 큰 방향을 잡는 화면입니다. 특정 종목을 고르는 단계가 아니라 어디를 들여다볼지 범위를 좁히는 단계예요.",
             },
             {
               step: "STEP 2", color: "#facc15",
-              title: "어떤 종목을 살까? → 워치리스트",
-              body: "워치리스트 탭에는 재무 건전성 필터(Piotroski F-Score·ROE·부채비율·이자보상배율·현금흐름)를 통과한 후보가 순위 없이 나열됩니다 — 점수로 줄 세우지 않고, 통과한 종목 전부를 보여줍니다. 종목을 클릭하면 재무 지표와 함께 네러티브 브리프(시장이 왜 이 종목에 관심을 갖는지, 다가오는 촉매, 스토리가 깨지는 조건)가 표시돼요. 1~3년 보유를 전제로 한 도구이니 최종 종목 선택은 순위가 아니라 본인의 판단으로 하세요.",
+              title: "그 안에서 어떤 테마가 움직이나? → 테마 레이더",
+              body: "AI 반도체·데이터센터 전력 같은 세부 산업 테마를 뉴스·실적·주가 세 축으로 봅니다. 특히 \"Quiet Strength\"(펀더멘털이 먼저 - 시장이 아직 안 움직임) 라벨이 붙은 테마를 눈여겨보세요. 뉴스만 봐서는 절대 찾을 수 없는, 이 도구가 존재하는 이유입니다.",
             },
             {
               step: "STEP 3", color: "#6fb3b8",
-              title: "정말 사도 되나? → 워치리스트 팝업에서 직접 판단",
-              body: "워치리스트에서 종목을 클릭하면 재무 지표·네러티브 브리프와 함께 정성 체크리스트(스토리·촉매 점검)와 메모를 그 자리에서 남길 수 있습니다. 매수 여부·수량·타이밍은 이 도구가 판정해주지 않습니다 — 재무가 건전한 후보 중 무엇을 살지는 항상 본인의 판단입니다.",
+              title: "정말 재무로 뒷받침되나? → 분기 리서치",
+              body: "테마 레이더가 큰 그림이라면, 분기 리서치는 그 테마 소속 기업들의 분기 재무가 실제로 개선됐는지를 확인합니다. \"조용한 변화\"(재무는 움직였는데 뉴스는 아직 조용함)에 있는 테마가 가장 먼저 볼 가치가 있는 자리입니다.",
+            },
+            {
+              step: "STEP 4", color: "#4ade80",
+              title: "그 안에서 어떤 종목을 살까? → 워치리스트",
+              body: "재무 건전성 필터를 통과한 후보 중에서 밸류(싼가)와 성장(자라는가)을 같이 봅니다. 종목을 클릭하면 뉴스 기반 요약과 정성 체크리스트·메모까지 그 자리에서 남길 수 있어요. 1~3년 보유를 전제로 한 도구이니 최종 선택은 항상 본인의 판단입니다.",
             },
           ].map(({ step, color, title, body }) => (
             <div key={step} className="rounded-xl p-4" style={{ background: "var(--bg-inset)", border: `1px solid ${color}33` }}>
@@ -86,6 +93,15 @@ export default function GuidePage() {
               <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{body}</p>
             </div>
           ))}
+        </div>
+
+        <div className="rounded-xl p-4 mb-3" style={{ background: "#6fb3b808", border: "1px solid #6fb3b822" }}>
+          <p className="text-[12px] font-bold" style={{ color: "#6fb3b8" }}>💡 4단계를 다 거칠 필요는 없습니다</p>
+          <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            시간이 없다면 워치리스트만 봐도 됩니다 — 재무 건전성 필터를 이미 통과한 종목만 모아둔 화면이라
+            그 자체로 완결된 출발점입니다. 섹터 분석·테마 레이더·분기 리서치는 "왜 지금 이 종목인가"에 대한
+            맥락을 더 깊이 알고 싶을 때 순서대로 참고하면 됩니다.
+          </p>
         </div>
 
         <div className="rounded-xl p-4" style={{ background: "#ffb02008", border: "1px solid #ffb02022" }}>
@@ -104,9 +120,11 @@ export default function GuidePage() {
         <SectionTitle>데이터 업데이트 방식</SectionTitle>
         <div className="space-y-2 mb-4">
           {[
-            { label: "워치리스트 스크리닝 (주 1회)", color: "#6fb3b8", desc: "매주 일요일 밤 자동 실행 — 재무 건전성 필터(트랩 필터) 통과 종목 전부를 순위 없이 리스트업", tag: "자동" },
+            { label: "워치리스트 스크리닝 (주 1회)", color: "#6fb3b8", desc: "매주 일요일 밤 자동 실행 — 재무 건전성 필터(트랩 필터) 통과 종목 전부를 순위 없이 리스트업하고, 곧바로 밸류(PSR/PER)·성장(매출 CAGR) 지표까지 계산", tag: "자동" },
             { label: "네러티브 브리프 (주 1회)", color: "#f87171", desc: "워치리스트 스크리닝 직후 후보·내 워치리스트 종목별 최근 1주 뉴스를 수집해 GPT가 장기 스토리·촉매·리스크·시장 단기 관심도(HOT/WARM/COLD)를 생성", tag: "자동" },
-            { label: "시장 분석 (주 1회)", color: "#ffb020", desc: "GitHub Actions가 매주 월요일 자동 실행 — 섹터 분석 갱신", tag: "자동" },
+            { label: "시장 분석 (주 1회)", color: "#ffb020", desc: "매주 월요일 자동 실행 — 섹터 분석 갱신(한국은 KRX 코스피200 섹터지수, 미국은 SPDR ETF)", tag: "자동" },
+            { label: "테마 레이더 (주 1회)", color: "#a78bfa", desc: "뉴스 수집 → 실적·주가 대조 → 6개 라벨 판정까지 매주 자동 갱신", tag: "자동" },
+            { label: "분기 리서치 (분기 1회)", color: "#facc15", desc: "실제 분기 재무 발표(미국 10-Q, 한국 분기보고서) 시점마다 DART·yfinance에서 재수집해 4칸 분류를 다시 계산 — 주간 화면들과 달리 갱신 주기가 분기 단위입니다", tag: "분기 자동" },
             { label: "텔레그램 요약 (자동)", color: "#6fb3b8", desc: "주간 시장 분석 완료 후 워치리스트 교차 히트·관심도 상승을 폰으로 발송", tag: "자동" },
             { label: "정성 체크리스트", color: "#a39c88", desc: "종목별 체크리스트·메모는 내가 직접 입력", tag: "수동" },
           ].map(({ label, color, desc, tag }) => (
@@ -143,10 +161,11 @@ export default function GuidePage() {
         <SectionTitle>이 툴이 하는 것</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {[
-            ["워치리스트",      "재무 건전성 필터(Piotroski·ROE·부채비율·이자보상배율·현금흐름)를 통과한 종목을 주 1회, 순위 없이 리스트업"],
+            ["워치리스트",      "재무 건전성 필터(Piotroski·ROE·부채비율·이자보상배율·현금흐름)를 통과한 종목을 주 1회, 순위 없이 리스트업. 여기에 밸류(PSR/PER, 같은 시장 후보 중 싼 편/중간/비싼 편)와 성장(매출 3년 CAGR, 성장/정체/역성장) 축을 더해 보여줌. 티커·종목명 검색 지원"],
             ["네러티브 브리프",  "후보 종목별 최근 뉴스를 GPT가 요약 — 장기 투자 스토리·촉매·리스크·시장 단기 관심도(HOT/WARM/COLD)"],
-            ["섹터 분석",       "경기 사이클 단계 판단 + 섹터별 KOSPI/SPY 대비 상대강도"],
-            ["테마 레이더",     "미국·한국 산업 테마를 뉴스·실적·주가 세 축으로 주 1회 관찰, 정해진 조합에만 라벨 부여"],
+            ["섹터 분석",       "경기 사이클 단계 판단 + 섹터별 지수 대비 상대강도. 한국은 코스피200 공식 섹터지수, 미국은 SPDR 11개 ETF 기준"],
+            ["테마 레이더",     "미국·한국 산업 테마를 뉴스·실적·주가 세 축으로 주 1회 관찰, 정해진 조합에만 라벨 부여. Quiet(펀더멘털이 먼저)·Buzz(뉴스가 먼저)·Full(삼박자 동반) 3단계로 묶어서 표시"],
+            ["분기 리서치",     "테마 소속 기업들의 분기 재무 신호(매출 전환·매출 흐름·이익 전환)와 뉴스 비율을 따로 봐서, 재무는 움직였는데 뉴스는 조용한 \"조용한 변화\" 테마를 찾아줌. 회사별 PSR/PER까지 표시"],
             ["텔레그램 알림",   "주간 분석 후 워치리스트 교차 히트·관심도 상승 신호를 요약해 폰으로 발송"],
             ["성적표",          "과거 후보에 실제 주가를 대조한 사후 검증 — 지수 단순 보유 대비 필터가 값을 더했는지"],
             ["정성 체크리스트", "워치리스트 팝업에 내장된 종목별 스토리·촉매 체크 + 메모"],
@@ -168,9 +187,10 @@ export default function GuidePage() {
         <div className="space-y-2 mb-4">
           {[
             { n: "①", tab: "텔레그램 요약", action: "주간 분석 완료 후 요약 메시지 확인 — 별다른 신호 없으면 이번 주는 끝", href: "/" },
-            { n: "②", tab: "개요",          action: "신호가 있으면 접속 — 이번 주 후보 수 + 테마 레이더 라벨 요약 확인", href: "/" },
+            { n: "②", tab: "섹터 분석",     action: "경기 사이클이 지난주와 달라졌는지, 선행 섹터가 바뀌었는지 훑어보기", href: "/sector" },
             { n: "③", tab: "테마 레이더",   action: "라벨 붙은 테마가 있으면 훑어보기 — 특히 \"Quiet Strength\"는 뉴스만 봐서는 못 찾는 신호", href: "/radar" },
-            { n: "④", tab: "워치리스트",    action: "관심도 상승 배너 확인 → 눈에 띄는 후보 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
+            { n: "④", tab: "분기 리서치",   action: "관심 가는 테마가 \"조용한 변화\"에 있는지, 소속 기업 재무 신호가 실제로 통과했는지 확인", href: "/quarterly" },
+            { n: "⑤", tab: "워치리스트",    action: "관심도 상승 배너 확인 → 밸류·성장 필터로 후보를 좁힌 뒤 → 종목 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <span className="text-sm font-black shrink-0 w-5 text-center" style={{ color: "#ffb020" }}>{n}</span>
@@ -221,8 +241,36 @@ export default function GuidePage() {
         <SectionTitle>알아두면 유용한 해석법</SectionTitle>
         <div className="space-y-3">
 
-          {/* 시장 단기 관심도 */}
+          {/* 밸류 vs 성장 */}
           <div>
+            <p className="text-[12px] font-bold text-white mb-1">워치리스트의 &quot;밸류&quot;와 &quot;성장&quot;은 기준이 다릅니다</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              둘 다 3단계 등급이지만 나누는 방식이 다릅니다. <span className="text-white">밸류(싼 편/중간/비싼 편)</span>는
+              지금 화면에 뜬 후보들을 PSR 기준으로 순서대로 줄 세워 3등분한 <span className="text-white">상대 등급</span>입니다 —
+              절대적으로 싸다는 뜻이 아니라 &quot;이 후보들 중에서&quot; 싼 쪽이라는 뜻입니다.
+              <span className="text-white"> 성장(성장/정체/역성장)</span>은 반대로 매출 3년 성장률이 0%·10%를 넘는지 보는
+              <span className="text-white"> 절대 기준</span>입니다 — 후보 대부분이 이미 성장 중이라 상대 등급으로 나누면
+              실제로 성장 중인 기업에도 &quot;역성장&quot; 라벨이 붙어버리기 때문입니다.
+            </p>
+            <p className="text-[12px] mt-1.5" style={{ color: "#726b58" }}>
+              ※ 두 등급을 곱하거나 더해서 하나의 점수로 만들지 않습니다 — &quot;싼 편&quot;이면서 &quot;역성장&quot;인 종목은
+              재무는 건전한데 매출이 줄면서 시장이 싸게 평가해 둔 <span className="text-white">가치 함정</span>일 수 있다는
+              신호이지, 무시해도 되는 오류가 아닙니다. 반대로 &quot;성장&quot;이면서 &quot;비싼 편&quot;이면 이미 기대가 반영된
+              값이라는 뜻입니다.
+            </p>
+          </div>
+
+          <div style={{ borderTop: "1px solid #262112", paddingTop: "1rem" }}>
+            <p className="text-[12px] font-bold text-white mb-1">분기 리서치와 워치리스트의 PSR 등급이 다르게 나오는 건 오류가 아닙니다</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              같은 종목의 PSR 수치 자체는 두 화면이 동일한 계산식을 씁니다. 다만 등급을 매기는
+              <span className="text-white"> 비교 대상이 다릅니다</span> — 분기 리서치는 같은 테마 소속 기업들 안에서,
+              워치리스트는 같은 시장의 후보 전체 안에서 3등분합니다. 비교 집단이 다르니 등급도 다르게 나오는 게 맞습니다.
+            </p>
+          </div>
+
+          {/* 시장 단기 관심도 */}
+          <div style={{ borderTop: "1px solid #262112", paddingTop: "1rem" }}>
             <p className="text-[12px] font-bold text-white mb-1">네러티브 브리프의 &quot;시장 단기 관심도&quot;란?</p>
             <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
               최근 1주일 뉴스량을 기준으로 GPT가 매기는 HOT/WARM/COLD 표시입니다.
@@ -250,7 +298,7 @@ export default function GuidePage() {
               예전 버전은 재무 필터 통과 종목을 다시 모멘텀·품질 점수로 줄 세워 상위 50개만 보여줬습니다.
               하지만 1~3년 보유가 전제라면 스크리닝 시점의 순위가 실제 투자 성과와 크게 상관없다고 판단해 랭킹 자체를 없앴습니다.
               지금은 재무 필터를 통과한 종목 <span className="text-white">전부</span>가 후보이고, 그 안에서 무엇을 살지는
-              섹터 분산·네러티브·본인의 확신을 기준으로 직접 고르는 게 맞는 방향이라고 봤습니다.
+              밸류·성장·섹터 분산·네러티브·본인의 확신을 기준으로 직접 고르는 게 맞는 방향이라고 봤습니다.
             </p>
           </div>
 
@@ -277,16 +325,28 @@ export default function GuidePage() {
         <div className="space-y-3">
           {[
             {
+              q: "워치리스트의 밸류·성장 지표가 '-'로 떠요.",
+              a: "PSR은 최근 4분기 매출을, 성장은 최근 4개 회계연도 매출을 정확히 연속·간격대로 구해야 계산됩니다. 신규 상장이라 재무 이력이 짧거나 공시 공백이 있으면 계산하지 않고 '-'로 남깁니다 — 이는 계산 오류가 아니라 데이터부족이며, '탈락'과는 다른 상태입니다.",
+            },
+            {
               q: "네러티브 브리프가 없는 종목이 있어요.",
               a: "내 워치리스트 종목과 이번 주 후보는 모두 대상이지만, 후보 수가 많으면 오래된(또는 아직 없는) 종목부터 순서대로 매주 나눠서 갱신됩니다(회차당 최대 400종목). 며칠~몇 주 걸릴 수 있으니 조금 기다리거나 GitHub → Actions에서 Weekly Watchlist Screen을 수동 실행하세요.",
             },
             {
               q: "워치리스트 후보는 어떻게 뽑히나요?",
-              a: "주 1회 자동 스크리닝 — 함정 필터(Piotroski≥6, ROE≥12%(한국 8%), 이자보상배율≥3, 부채비율≤150%, 영업현금흐름 2년 연속 마이너스 아님, 매출+순이익 3년 연속 감소 아님)를 통과한 종목 전부가 후보입니다. 더 이상 점수로 순위를 매겨 상위 N개만 자르지 않습니다. ROE만 시장별로 다른데, 한국 유니버스의 ROE 중앙값이 6%라 미국 기준 12%를 그대로 쓰면 삼성전자·KB금융 같은 대표 우량주까지 탈락해서 2026-09에 8%로 낮췄습니다(한국 중앙값은 넘는 수준). 한국은 유니버스가 KOSPI 대형주 중심이라 후보 수 자체는 여전히 적습니다.",
+              a: "주 1회 자동 스크리닝 — 함정 필터(Piotroski≥6, ROE≥12%(한국 8%), 이자보상배율≥3, 부채비율≤150%, 영업현금흐름 2년 연속 마이너스 아님, 매출+순이익 3년 연속 감소 아님)를 통과한 종목 전부가 후보입니다. 더 이상 점수로 순위를 매겨 상위 N개만 자르지 않습니다. 스크리닝 직후 밸류(PSR/PER)와 성장(매출 CAGR) 지표도 같이 계산됩니다.",
             },
             {
-              q: "네러티브 브리프가 안 뜨는 종목이 있어요.",
-              a: "브리프는 주간 워치리스트 스크리닝 직후 파이프라인이 생성합니다. 이번 주에 새로 후보에 오른 종목은 다음 주간 스크리닝 후에 표시돼요. '최근 뉴스 없음'으로 뜨는 건 정상 — 시장 관심 밖이라는 그 자체가 신호입니다.",
+              q: "분기 리서치 화면에 '데이터부족'이 유독 많이 보여요.",
+              a: "분기 재무는 분기 1회만 갱신됩니다. 미국 10-Q, 한국 분기보고서가 실제로 공시되는 시점(대략 분기 말 후 4~6주)에만 그 분기 데이터가 들어오므로, 공시 발표 직후에는 최신 분기 판정이 아직 없어 데이터부족이 많이 보일 수 있습니다 — 다음 분기 재무가 들어오면 자동으로 갱신됩니다.",
+            },
+            {
+              q: "테마 레이더의 발견 단계(Quiet/Buzz/Full) 섹션이 접혀 있어요.",
+              a: "기본적으로 접힌 채로 시작합니다 — 세 단계 모두 해당 테마가 없는 주에는 빈 안내만 세 번 반복돼 화면을 다 차지하는 문제가 있었습니다. 제목을 클릭하면 펼쳐지고, 한 번 펼친 상태는 다음 방문 때도 브라우저에 기억됩니다.",
+            },
+            {
+              q: "섹터 분석에 'KRX 공식 지수' 또는 '대표 종목 기준 (폴백)' 배지가 떠요.",
+              a: "한국 섹터 분석은 KRX가 직접 산출하는 코스피200 섹터지수를 우선 씁니다. 지수를 받아오지 못하면(일시적 장애 등) 대표 종목 몇 개의 평균으로 대체 계산하고 그 사실을 배지로 알려줍니다 — 두 경우 다 계산 자체는 정상입니다.",
             },
             {
               q: "부채비율·이자보상배율이 숫자 대신 '무차입'·'자본잠식'으로 떠요.",
