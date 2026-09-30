@@ -84,6 +84,12 @@ interface WatchItem {
   name: string | null;
   note: string | null;
   added_at: string;
+  // 보유 기록. 전부 선택 입력이고, 안 적으면 그냥 관심 목록으로 쓰면 된다.
+  // 수익률·순위는 만들지 않는다 - 분기 점검 때 "적어둔 조건이 현실이 됐나"만
+  // 묻는 용도다(투자 실행 가이드 4단계).
+  bought_at?: string | null;
+  buy_price?: number | null;
+  thesis_breaks?: string | null;
 }
 interface NarrativeBrief {
   story: string;
@@ -829,6 +835,35 @@ export default function WatchlistPage() {
     load();
   };
 
+  // 보유 기록(매수일·매수가·깨지는 조건) 편집. 메모와 따로 두는 이유는, 메모는
+  // 수시로 고치는 글이고 이건 한 번 적고 분기마다 들여다보는 기록이라서다.
+  const [editingHolding, setEditingHolding] = useState<number | null>(null);
+  const [holdDraft, setHoldDraft] = useState({ bought_at: "", buy_price: "", thesis_breaks: "" });
+  const startEditHolding = (item: WatchItem) => {
+    setEditingHolding(item.id);
+    setHoldDraft({
+      bought_at: item.bought_at ?? "",
+      buy_price: item.buy_price != null ? String(item.buy_price) : "",
+      thesis_breaks: item.thesis_breaks ?? "",
+    });
+  };
+  const saveHolding = async (item: WatchItem) => {
+    const price = holdDraft.buy_price.trim();
+    await fetch("/api/watchlist/my", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        market: item.market, symbol: item.symbol, name: item.name,
+        bought_at: holdDraft.bought_at.trim() || null,
+        // 숫자로 못 읽히면 저장하지 않는다 - 쓰레기 값이 들어가면 나중에 못 믿는다.
+        buy_price: price && Number.isFinite(Number(price)) ? Number(price) : null,
+        thesis_breaks: holdDraft.thesis_breaks.trim() || null,
+      }),
+    });
+    setEditingHolding(null);
+    load();
+  };
+
   // 상세 팝업에서의 메모 저장 (종목 클릭 → 팝업 내 메모)
   const saveNoteFromModal = async (c: Candidate, note: string) => {
     await fetch("/api/watchlist/my", {
@@ -1179,6 +1214,66 @@ export default function WatchlistPage() {
                       <span style={{ color: item.note ? TEXT_SECONDARY : TEXT_FAINT, fontSize: 12 }}>
                         {item.note || "메모 추가 — 왜 담았는지 기록해두세요"}
                       </span>
+                    </button>
+                  )}
+                </div>
+
+                {/* 보유 기록 — 실제로 산 종목만 적으면 된다. 안 적으면 그냥 관심 목록.
+                    분기 점검 때 "적어둔 깨지는 조건이 현실이 됐나"를 묻는 게 목적이라
+                    수익률·순위는 계산하지 않는다(투자 실행 가이드 4단계). */}
+                <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px solid ${BORDER}` }}>
+                  {editingHolding === item.id ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <input
+                          value={holdDraft.bought_at}
+                          onChange={(e) => setHoldDraft((d) => ({ ...d, bought_at: e.target.value }))}
+                          placeholder="매수일 2026-10-02"
+                          style={{ width: 150, background: INPUT_BG, color: TEXT_PRIMARY, border: `1px solid ${BORDER_CTRL}`, padding: "5px 8px", fontSize: 12, outline: "none", fontFamily: MONO }}
+                        />
+                        <input
+                          value={holdDraft.buy_price}
+                          onChange={(e) => setHoldDraft((d) => ({ ...d, buy_price: e.target.value }))}
+                          placeholder={item.market === "KR" ? "매수가 12300" : "매수가 45.20"}
+                          inputMode="decimal"
+                          style={{ width: 150, background: INPUT_BG, color: TEXT_PRIMARY, border: `1px solid ${BORDER_CTRL}`, padding: "5px 8px", fontSize: 12, outline: "none", fontFamily: MONO }}
+                        />
+                      </div>
+                      <input
+                        value={holdDraft.thesis_breaks}
+                        onChange={(e) => setHoldDraft((d) => ({ ...d, thesis_breaks: e.target.value }))}
+                        onKeyDown={(e) => { if (e.key === "Enter") saveHolding(item); if (e.key === "Escape") setEditingHolding(null); }}
+                        placeholder="깨지는 조건 — 이게 사실이 되면 내 판단이 틀린 것 (예: 주 고객사 설비투자 축소 / 영업이익률 2분기 연속 하락)"
+                        style={{ width: "100%", boxSizing: "border-box", background: INPUT_BG, color: TEXT_PRIMARY, border: `1px solid ${BORDER_CTRL}`, padding: "5px 8px", fontSize: 12, outline: "none" }}
+                      />
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => saveHolding(item)} style={{ background: ACCENT + "18", color: ACCENT, border: `1px solid ${ACCENT}33`, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>저장</button>
+                        <button onClick={() => setEditingHolding(null)} style={{ background: PANEL_BG, color: TEXT_MUTED, border: `1px solid ${BORDER_CTRL}`, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}>취소</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => startEditHolding(item)}
+                      style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", cursor: "pointer", padding: 0, textAlign: "left", flexWrap: "wrap" }}
+                    >
+                      {item.bought_at || item.buy_price != null || item.thesis_breaks ? (
+                        <>
+                          <span style={{ fontSize: 11, color: GOOD, border: `1px solid ${GOOD}44`, background: GOOD + "18", padding: "1px 6px" }}>보유</span>
+                          <span style={{ fontSize: 12, color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                            {item.bought_at ?? "-"} · {item.buy_price != null ? formatPrice(item.market, item.buy_price) : "-"}
+                          </span>
+                          {item.thesis_breaks && (
+                            <span style={{ fontSize: 12, color: CAUTION }}>깨지는 조건: {item.thesis_breaks}</span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Pencil size={11} style={{ color: TEXT_FAINT, flexShrink: 0 }} />
+                          <span style={{ color: TEXT_FAINT, fontSize: 12 }}>
+                            보유 기록 추가 — 실제로 샀다면 매수일·매수가·깨지는 조건
+                          </span>
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
