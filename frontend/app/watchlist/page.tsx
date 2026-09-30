@@ -24,6 +24,12 @@ interface Candidate {
   psr?: number | null;
   per?: number | null;
   valuation_tier?: string | null;   // 싼 편 / 중간 / 비싼 편. 같은 시장 후보 안에서 3등분
+  // 성장 지표. 밸류와 달리 절대 기준(0%, 10%)으로 나눈다 - 후보 대부분이 이미
+  // 성장 중이라 순위로 나누면 +3% 성장 기업에 "역성장" 라벨이 붙는다(SPEC_watchlist_growth.md).
+  revenue_cagr_3y?: number | null;
+  revenue_yoy?: number | null;
+  op_margin_direction?: "개선" | "악화" | null;
+  growth_tier?: string | null;   // 성장 / 정체 / 역성장
   data_notes?: { interest?: string; debt?: string };
   // 직전 스크리닝 회차에 없던 종목(= 이번에 새로 필터를 통과). 직전 회차 자체가
   // 없으면(첫 스크리닝) true가 아니라 null - 모르는 걸 "신규"로 단정하지 않는다.
@@ -135,6 +141,20 @@ const INDICATOR_INFO = {
       { range: "-", color: TEXT_FAINT, label: "분기 재무가 모자라 계산 불가" },
     ],
   },
+  growth: {
+    title: "성장 위치 (매출 3년 CAGR 기준)",
+    desc: "연차 재무제표의 최근 4개 회계연도(정확히 3년 간격)로 매출 연평균성장률(CAGR)을 구합니다. "
+        + "밸류(PSR)는 후보들 중 상대적인 순위지만, 성장은 절대 기준입니다 - 후보 대부분이 "
+        + "이미 성장 중이라 순위로 나누면 +3% 성장 기업에 '역성장' 라벨이 붙기 때문입니다. "
+        + "역성장이 재무 부실을 뜻하지는 않습니다 - 무차입 흑자 기업도 매출이 줄 수 있고, "
+        + "함정 필터가 걸러내지 못하는 부분을 보여주는 것이 이 지표의 목적입니다.",
+    levels: [
+      { range: "성장", color: GOOD, label: "3년 CAGR 10% 이상" },
+      { range: "정체", color: WARN, label: "0% ~ 10%" },
+      { range: "역성장", color: CAUTION, label: "0% 미만 - 매출이 3년간 줄었다" },
+      { range: "-", color: TEXT_FAINT, label: "회계기간 부족 등으로 계산 불가" },
+    ],
+  },
   regime: {
     title: "시장 체제 적합도",
     desc: "현재 시장 흐름(성장장/배당장)에서 이 종목이 어느 전략에 더 어울리는지를 나타냅니다.",
@@ -213,6 +233,38 @@ function ValuationNumbers({ psr, per }: { psr?: number | null; per?: number | nu
       <span style={{ color: psr == null ? TEXT_FAINT : NUM }}>{fmtPsr(psr)}</span>
       <span style={{ color: TEXT_FAINT }}> / </span>
       <span style={{ color: per == null ? TEXT_FAINT : NUM }}>{fmtPer(per)}</span>
+    </span>
+  );
+}
+
+// 성장 등급은 밸류와 달리 절대 기준(0%, 10%)이다 - "역성장"을 BAD(빨강)로 칠하지
+// 않는다. 빨강은 F-Score 탈락 같은 재무 부실에 쓰는 색이고, 역성장은 재무 부실이
+// 아니다(밸류의 "비싼 편"에 CAUTION까지만 쓴 것과 같은 규칙).
+const GROWTH_TIER_COLOR: Record<string, string> = {
+  "성장": GOOD,
+  "정체": WARN,
+  "역성장": CAUTION,
+};
+function GrowthBadge({ tier }: { tier?: string | null }) {
+  if (!tier) return <span style={{ color: TEXT_FAINT }}>-</span>;
+  const color = GROWTH_TIER_COLOR[tier] ?? TEXT_SECONDARY;
+  return (
+    <span style={{ background: color + "20", color, border: `1px solid ${color}40`, padding: "1px 6px", fontSize: 11, whiteSpace: "nowrap" }}>
+      {tier}
+    </span>
+  );
+}
+
+// 성장률은 음수도 흔해 부호를 항상 보여준다(밸류처럼 항상 양수인 배수와 다르다).
+const fmtGrowthPct = (v?: number | null) =>
+  v == null ? "-" : `${v >= 0 ? "+" : ""}${(v * 100).toFixed(1)}%`;
+
+function GrowthNumbers({ cagr3y, yoy }: { cagr3y?: number | null; yoy?: number | null }) {
+  return (
+    <span style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+      <span style={{ color: cagr3y == null ? TEXT_FAINT : cagr3y >= 0 ? NUM : CAUTION }}>{fmtGrowthPct(cagr3y)}</span>
+      <span style={{ color: TEXT_FAINT }}> / </span>
+      <span style={{ color: yoy == null ? TEXT_FAINT : yoy >= 0 ? NUM : CAUTION }}>{fmtGrowthPct(yoy)}</span>
     </span>
   );
 }
@@ -601,6 +653,31 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
               </p>
             </div>
 
+            {/* 성장 위치 — 밸류와 나란히 두되 기준이 다르다는 걸 문구로 밝힌다.
+                밸류는 후보들 중 상대 순위, 성장은 절대 기준(0%/10%) -
+                무차입 흑자인데 매출이 줄어드는 가치 함정을 밸류만으로는 못 본다. */}
+            <div className="p-3 mt-3" style={insetCard}>
+              <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>성장 위치 (매출 3년 CAGR, 절대 기준)</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <GrowthBadge tier={c.growth_tier} />
+                <span className="text-[12px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                  3년 {fmtGrowthPct(c.revenue_cagr_3y)}
+                  <span style={{ color: TEXT_FAINT }}> · </span>
+                  1년 {fmtGrowthPct(c.revenue_yoy)}
+                </span>
+                {c.op_margin_direction && (
+                  <span className="text-[12px]" style={{ color: c.op_margin_direction === "개선" ? GOOD : CAUTION }}>
+                    영업이익률 {c.op_margin_direction}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                {c.growth_tier
+                  ? "연차 재무제표 최근 4개 회계연도(정확히 3년 간격) 기준. 후보들 중 순위가 아니라 절대 기준입니다."
+                  : "회계기간이 부족하거나 간격이 맞지 않아 계산할 수 없습니다."}
+              </p>
+            </div>
+
             {/* 체제 적합도 */}
             <div className="p-3 mt-3" style={insetCard}>
               <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>시장 체제 적합도</p>
@@ -689,6 +766,7 @@ export default function WatchlistPage() {
   const [regimeFilter, setRegimeFilter] = useState<"ALL" | "growth" | "dividend" | "neutral">("ALL");
   const [newOnly, setNewOnly] = useState(false);
   const [cheapOnly, setCheapOnly] = useState(false);
+  const [growingOnly, setGrowingOnly] = useState(false);
   // 275종목 중 아는 티커/이름을 바로 찾는 용도 - "새 아이디어 탐색"인 다른 필터들과
   // 달리 "이미 아는 종목이 후보에 있는지"를 확인하는 반대 방향 쓰임새다.
   const [searchQuery, setSearchQuery] = useState("");
@@ -766,6 +844,7 @@ export default function WatchlistPage() {
     if (regimeFilter !== "ALL" && c.regime_fit !== regimeFilter) return false;
     if (newOnly && c.is_new !== true) return false;
     if (cheapOnly && c.valuation_tier !== "싼 편") return false;
+    if (growingOnly && c.growth_tier !== "성장") return false;
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       const haystack = `${c.symbol} ${c.name ?? ""}`.toLowerCase();
@@ -784,6 +863,11 @@ export default function WatchlistPage() {
   // 밸류 컬럼이 아직 채워지지 않았으면(스크립트 미실행) 버튼을 아예 숨긴다.
   const cheapCount = candidates.filter((c) => c.valuation_tier === "싼 편").length;
   const tierKnown = candidates.some((c) => c.valuation_tier != null);
+
+  // 함정 필터가 못 거르는 것 - 무차입 흑자인데 매출이 3년째 주는 기업. "싼 편만"과
+  // 나란히 둬야 그 조합(싸면서 안 자라는 것)이 눈에 보인다(SPEC_watchlist_growth.md).
+  const growingCount = candidates.filter((c) => c.growth_tier === "성장").length;
+  const growthKnown = candidates.some((c) => c.growth_tier != null);
 
   const statStyle: React.CSSProperties = {
     background: INSET_BG, border: `1px solid ${BORDER}`,
@@ -929,6 +1013,17 @@ export default function WatchlistPage() {
                 }}>싼 편만 ({cheapCount})</button>
               </>
             )}
+            {growthKnown && (
+              <>
+                <div style={{ width: 1, background: BORDER_CTRL, margin: "0 4px" }} />
+                <button onClick={() => setGrowingOnly((v) => !v)} style={{
+                  background: growingOnly ? GOOD + "20" : "transparent",
+                  color: growingOnly ? GOOD : TEXT_MUTED,
+                  border: `1px solid ${growingOnly ? GOOD + "40" : BORDER_CTRL}`,
+                  padding: "4px 12px", fontSize: 12, cursor: "pointer",
+                }}>성장만 ({growingCount})</button>
+              </>
+            )}
             <div style={{ width: 1, background: BORDER_CTRL, margin: "0 4px" }} />
             {(["ALL", "growth", "dividend", "neutral"] as const).map((r) => (
               <button key={r} onClick={() => setRegimeFilter(r)} style={{
@@ -967,6 +1062,8 @@ export default function WatchlistPage() {
                     <ColHeader label="이자보상" infoKey="interest" onInfo={setInfoKey} />
                     <ColHeader label="밸류" infoKey="valuation" onInfo={setInfoKey} />
                     <ColHeader label="PSR / PER" infoKey="valuation" onInfo={setInfoKey} />
+                    <ColHeader label="성장" infoKey="growth" onInfo={setInfoKey} />
+                    <ColHeader label="3년 / 1년" infoKey="growth" onInfo={setInfoKey} />
                     <ColHeader label="체제" infoKey="regime" onInfo={setInfoKey} />
                     <th style={{ padding: "8px 10px" }} />
                   </tr>
@@ -1016,6 +1113,8 @@ export default function WatchlistPage() {
                         </td>
                         <td style={{ padding: "8px 10px" }}><ValuationBadge tier={c.valuation_tier} /></td>
                         <td style={{ padding: "8px 10px" }}><ValuationNumbers psr={c.psr} per={c.per} /></td>
+                        <td style={{ padding: "8px 10px" }}><GrowthBadge tier={c.growth_tier} /></td>
+                        <td style={{ padding: "8px 10px" }}><GrowthNumbers cagr3y={c.revenue_cagr_3y} yoy={c.revenue_yoy} /></td>
                         <td style={{ padding: "8px 10px" }}><RegimeBadge fit={c.regime_fit} /></td>
                         <td style={{ padding: "8px 10px" }} onClick={(e) => e.stopPropagation()}>
                           <button
