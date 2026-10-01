@@ -20,6 +20,10 @@
   {
    "path": "us_v7_manual_review_20260915.json",
    "decided_at": "2026-09-15"
+  },
+  {
+   "path": "us_v8_review_20261001.json",
+   "decided_at": "2026-10-01"
   }
  ]
 }
