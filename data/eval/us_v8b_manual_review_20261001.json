@@ -1,0 +1,24 @@
+{
+ "_about": "US v8b: 대표 태양광 트래커 NXT를 직접 추가. AI가 파일럿 2회+전체 1회에서 모두 고르지 않았으나 재생에너지 정의 (1) 태양광 설비 제조에 해당(us_profiles.json: industry=Solar, utility-scale tracker). 근거 문장은 프로필을 보고 사람이 작성.",
+ "run_id": "20261001044703-merge",
+ "market": "US",
+ "exclude": [],
+ "restore": [],
+ "unapprove": [],
+ "add": [
+  [
+   "renewable_energy",
+   "NXT",
+   "태양광 설비(트래커)",
+   "Nextpower(구 Nextracker)는 대규모 태양광 발전소용 태양광 트래커(NX Horizon)와 기초 구조물, 발전량 관리 소프트웨어를 제조·공급한다.",
+   "direct"
+  ]
+ ],
+ "keep": [
+  [
+   "renewable_energy",
+   "NXT",
+   "재생에너지 정의 (1) 태양광 설비 제조 - 대표 트래커 제조사, 직접 추가(2026-10-01)"
+  ]
+ ]
+}

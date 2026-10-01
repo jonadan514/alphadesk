@@ -9,6 +9,8 @@ LLM 매핑은 실행마다 결과가 흔들린다. 프롬프트 v5.1은 지어�
 섞어 승인할 수 없다. 그래서 다음을 합친 새 run을 만든다:
   기준 run의 행 - 검토에서 제외(exclude)하기로 한 행
   + 현재 화면에 표시 중인 승인분에서 되살리기(restore)로 한 행 (원래 근거 그대로 복사)
+  + 사람이 직접 추가(add)한 행 - AI가 어느 run에서도 고르지 않았지만 테마 정의에 맞는 종목.
+    근거 문장은 사업정보를 보고 사람이 쓴다(숫자는 넣지 않는다). 아래 add 형식 참고.
 
 기존 행은 절대 수정·삭제하지 않는다(CLAUDE.md 원칙 5). 새 run의 행은 approved=0으로
 들어가며, 승인은 approve_theme_mapping.py로 따로 한다. 예외는 unapprove 목록뿐이다 -
@@ -84,6 +86,31 @@ def find_source_row(conn, theme_id: str, ticker: str, market: str, before: str) 
     ).fetchone()
 
 
+ADD_LINKAGES = ("direct", "partial", "peripheral")
+MIN_ADD_EVIDENCE_LEN = 15  # map_theme_companies.MIN_EVIDENCE_LEN과 같은 기준
+
+
+def build_added_rows(add: list, market: str, run_id: str, existing: set[tuple[str, str]]) -> list[dict]:
+    """검토 파일의 add 항목 [theme_id, ticker, stage, evidence, linkage]을 행으로 바꾼다.
+
+    이미 병합 대상에 있는 (theme, ticker)는 건너뛴다. 근거가 짧거나 linkage가 틀리면
+    예외 - 조용히 빈약한 행을 넣지 않는다. confidence는 normal, flagged는 0으로 둔다
+    (AI 판정이 아니라 사람 판정이라 비판 패스 대상이 아니다)."""
+    rows: list[dict] = []
+    for item in add:
+        tid, code, stage, evidence, linkage = item[:5]
+        if (tid, code) in existing:
+            continue
+        if len(evidence or "") < MIN_ADD_EVIDENCE_LEN:
+            raise ValueError(f"add 근거가 너무 짧다: {tid} {code}")
+        if linkage not in ADD_LINKAGES:
+            raise ValueError(f"add linkage가 잘못됐다: {tid} {code} {linkage!r}")
+        rows.append({"theme_id": tid, "ticker": code, "market": market, "stage": stage,
+                     "evidence": evidence, "linkage": linkage, "confidence": "normal",
+                     "flagged": 0, "run_id": run_id})
+    return rows
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--review", required=True)
@@ -96,6 +123,7 @@ def main() -> int:
     exclude = {(t, c) for t, c, *_ in review.get("exclude", [])}
     restore = [(t, c) for t, c, *_ in review.get("restore", [])]
     unapprove = [(t, c) for t, c, *_ in review.get("unapprove", [])]
+    add = review.get("add", [])
 
     conn = get_db()
     ensure_schema(conn)
@@ -136,7 +164,10 @@ def main() -> int:
         _log(f"경고: 되살릴 원본을 어느 run에서도 못 찾음 {len(not_found)}건 {not_found} - 병합에서 빠진다")
     _log(f"되살리기 {len(restored)}행")
 
-    final = kept + restored
+    added = build_added_rows(add, args.market, base, kept_keys | {(r["theme_id"], r["ticker"]) for r in restored})
+    for r in added:
+        _log(f"  직접 추가: {r['theme_id']} {r['ticker']}")
+    final = kept + restored + added
     by_theme: dict[str, int] = defaultdict(int)
     for r in final:
         by_theme[r["theme_id"]] += 1
@@ -154,7 +185,7 @@ def main() -> int:
 
     run_id = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-merge"
     stats = {"base_run": base, "base_rows": len(base_rows), "excluded": len(base_rows) - len(kept),
-             "restored": len(restored), "restore_not_found": not_found, "final_rows": len(final),
+             "restored": len(restored), "added": len(added), "restore_not_found": not_found, "final_rows": len(final),
              "review_file": args.review, "unapprove": unapprove, "fallback_themes": fallback}
     if args.dry_run:
         _log(f"[dry-run] 새 run {run_id} 에 {len(final)}행을 쓸 예정 - 쓰지 않음")
