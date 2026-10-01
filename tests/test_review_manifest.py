@@ -99,8 +99,9 @@ def test_모두_등록돼_있으면_경고가_없다(tmp_path):
 
 # ── 실제 저장소 파일 ──────────────────────────────────────────
 
-def test_실제_manifest가_기존_하드코딩_목록과_같다():
-    """이번 작업은 목록의 위치만 옮기는 것이지 내용을 바꾸는 게 아니다."""
+def test_실제_manifest의_기존_항목은_그대로이고_뒤에만_추가된다():
+    """처음 옮겨 온 5개는 순서까지 그대로여야 한다(나중 판정이 앞 판정을 덮으므로 순서가 곧
+    시간 순서다). 새 검토는 manifest 끝에 추가하는 것이 설계라 그 뒤는 자유롭다."""
     expected = [
         ("evidence_audit_labels_20260915.json", "2026-09-15"),
         ("v5_1_manual_review_20260915.json", "2026-09-15"),
@@ -108,7 +109,7 @@ def test_실제_manifest가_기존_하드코딩_목록과_같다():
         ("us_v6_manual_review_20260915.json", "2026-09-15"),
         ("us_v7_manual_review_20260915.json", "2026-09-15"),
     ]
-    assert bdl.load_manifest() == expected
+    assert bdl.load_manifest()[:len(expected)] == expected
 
 
 def test_실제_data_eval에_manifest에서_빠진_검토_파일이_없다():

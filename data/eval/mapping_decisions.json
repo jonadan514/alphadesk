@@ -3595,6 +3595,15 @@
   {
    "market": "US",
    "theme_id": "renewable_energy",
+   "ticker": "NXT",
+   "decision": "keep",
+   "reason": "재생에너지 정의 (1) 태양광 설비 제조 - 대표 트래커 제조사, 직접 추가(2026-10-01)",
+   "decided_at": "2026-10-01",
+   "source": "us_v8b_manual_review_20261001.json.keep"
+  },
+  {
+   "market": "US",
+   "theme_id": "renewable_energy",
    "ticker": "TSLA",
    "decision": "exclude",
    "reason": "이전 판정(2026-09-15): 태양광 발전 사업은 미미 - ESS는 에너지저장 테마로",
