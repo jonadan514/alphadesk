@@ -111,3 +111,23 @@ def test_실제_저장된_sp400_파일이_기대한_모양이다():
     symbols = {r["Symbol"] for r in rows}
     for expected in ("MP", "BWXT"):
         assert expected in symbols, f"{expected}가 S&P 400에 없다 - 지수 구성이 바뀌었는지 확인"
+
+
+def test_미국_유니버스_거의_전부에_사업정보가_있다():
+    """매핑 프롬프트는 후보 옆에 산업분류·사업요약을 붙인다. 중형주 400개를 유니버스에
+    넣고도 프로필을 안 받으면 이름만 보고 판단돼 BWXT·NXT·ORA 같은 순수 플레이가
+    후보에서 빠진다(2026-10-01 파일럿: 커버리지 500/903에서 실제로 빠졌다)."""
+    import csv
+    import json
+    from pathlib import Path
+
+    data = Path(__file__).resolve().parent.parent / "data"
+    profiles = json.loads((data / "us_profiles.json").read_text(encoding="utf-8"))
+    symbols = []
+    for name in ("sp500_list.csv", "sp400_list.csv"):
+        with (data / name).open(encoding="utf-8") as f:
+            symbols += [r["Symbol"].replace(".", "-") for r in csv.DictReader(f)]
+    covered = sum(1 for s in symbols if (profiles.get(s) or {}).get("industry"))
+    assert covered / len(symbols) >= 0.98, f"사업정보 커버리지 {covered}/{len(symbols)}"
+    for t in ("MP", "BWXT", "NXT", "ORA"):
+        assert profiles.get(t, {}).get("summary_long"), f"{t} 사업요약 없음"

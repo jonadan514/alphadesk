@@ -1,4 +1,4 @@
-"""S&P500 종목의 산업분류·사업요약을 yfinance에서 받아 data/us_profiles.json 으로 저장한다.
+"""S&P500 + S&P400 종목의 산업분류·사업요약을 yfinance에서 받아 data/us_profiles.json 으로 저장한다.
 
 용도: 근거 감사(audit_mapping_evidence.py)가 미국 매핑도 실제 사업정보와 대조할 수 있게.
 2026-09-15 신규 테마 US 감사에서 26건 중 21건이 "사업정보 없음"으로 확인 불가였다 -
@@ -33,8 +33,18 @@ def main() -> int:
 
     import yfinance as yf
 
-    df = pd.read_csv(ROOT / "data" / "sp500_list.csv")
-    tickers = [str(s).replace(".", "-") for s in df["Symbol"]]
+    # 미국 유니버스는 S&P 500 + 400이다(watchlist_collector.get_us_universe와 같은 범위).
+    # 400 쪽을 빼면 중형주 약 400개가 사업정보 없이 이름만으로 매핑돼, 이름만으로 사업을
+    # 알기 어려운 순수 플레이(BWXT·NXT·ORA 등)가 후보에서 빠진다(2026-10-01 파일럿 실측).
+    tickers: list[str] = []
+    for name in ("sp500_list.csv", "sp400_list.csv"):
+        path = ROOT / "data" / name
+        if not path.exists():
+            continue
+        for s in pd.read_csv(path)["Symbol"]:
+            t = str(s).replace(".", "-")
+            if t not in tickers:
+                tickers.append(t)
     out: dict[str, dict] = {}
     if args.only_missing and OUT.exists():
         out = json.loads(OUT.read_text(encoding="utf-8"))
