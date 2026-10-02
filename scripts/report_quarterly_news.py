@@ -31,7 +31,7 @@ from src.analyzers import quarterly_thresholds as qt
 from src.analyzers.theme_news_quarterly import (MIN_WEEK_COVERAGE, aggregate_quarters, news_ratio,
                                                 prior_quarters, quarter_of)
 from src.db.data_store import get_db
-from src.db.theme_signals import get_weekly_news_counts
+from src.db.theme_signals import get_weekly_news_counts, news_history_since
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 KEYWORD_FIELD = {"US": "keywords_en", "KR": "keywords_ko"}
@@ -82,11 +82,7 @@ def main() -> int:
         for theme in themes:
             if market not in theme.get("markets", []) or not theme.get(KEYWORD_FIELD[market]):
                 continue
-            kw_changed = theme.get("keywords_changed_at")
-            since = None
-            if kw_changed:
-                kc = kw_changed if isinstance(kw_changed, date) else date.fromisoformat(str(kw_changed))
-                since = week_monday(kc).isoformat()
+            since = news_history_since(theme, market)
 
             weekly = get_weekly_news_counts(conn, theme["id"], market, since=since)
             quarters = aggregate_quarters(weekly)

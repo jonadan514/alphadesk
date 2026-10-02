@@ -55,7 +55,8 @@ from src.db.quarterly_company_signals import (ensure_schema as ensure_company_si
 from src.db.quarterly_financials import (ensure_schema as ensure_financials_schema,
                                          select_quarters_bulk)
 from src.db.theme_signals import (ensure_schema as ensure_signals_schema,
-                                  get_approved_theme_members, get_weekly_news_counts)
+                                  get_approved_theme_members, get_weekly_news_counts,
+                                  news_history_since)
 from collectors.watchlist_collector import get_kr_universe, get_us_universe
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
@@ -91,13 +92,10 @@ def week_monday(day: date) -> date:
     return day - timedelta(days=day.weekday())
 
 
-def news_since(theme: dict) -> str | None:
-    """키워드가 바뀐 테마는 바뀌기 전 이력과 잇지 않는다(themes.yaml 유지보수 규칙 2)."""
-    kw_changed = theme.get("keywords_changed_at")
-    if not kw_changed:
-        return None
-    kc = kw_changed if isinstance(kw_changed, date) else date.fromisoformat(str(kw_changed))
-    return week_monday(kc).isoformat()
+def news_since(theme: dict, market: str) -> str | None:
+    """키워드가 바뀐 테마, 수집원이 바뀐 시장은 바뀌기 전 이력과 잇지 않는다
+    (themes.yaml 유지보수 규칙 2, theme_signals.NEWS_SOURCE_SWITCH_WEEK)."""
+    return news_history_since(theme, market)
 
 
 def compute_market_reference(quarters_by_ticker: dict[str, list[dict]],
@@ -152,7 +150,7 @@ def compute_theme(theme: dict, market: str, members: list[dict],
             per=calc_per(market_caps.get(ticker), quarters),
             tier=tiers[ticker], computed_at=computed_at)
 
-    weekly = get_weekly_news_counts(conn, theme["id"], market, since=news_since(theme))
+    weekly = get_weekly_news_counts(conn, theme["id"], market, since=news_since(theme, market))
     quarters = aggregate_quarters(weekly)
     news = news_ratio(quarters, target)
     news_high = qt.is_news_high(news["ratio"], market, config)

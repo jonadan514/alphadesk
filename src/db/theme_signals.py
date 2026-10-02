@@ -156,6 +156,30 @@ def insert_theme_news_bulk(conn, theme_id: str, market: str, week_start: str,
         )
 
 
+# 수집원이 바뀐 주(월요일). 이 주 이전 이력은 같은 시장이라도 규모가 달라 기준선에 잇지 않는다.
+# KR: 구글 뉴스 RSS가 Actions IP에서 막혀(2026-09-28) 네이버 뉴스 API로 바꿨다. 같은 주제라도
+# 네이버 건수가 구글보다 2-3배 많아서(AI 반도체 334 -> 721), 이어 붙이면 34개 테마 중 33개가
+# 가짜 "급증"으로 나왔다(2026-10-01 실측). 네이버 이력이 BASELINE_MIN_WEEKS 쌓일 때까지 뉴스 축은
+# na(데이터부족)로 남는다 - 탈락이 아니다.
+NEWS_SOURCE_SWITCH_WEEK = {"KR": "2026-09-28"}
+
+
+def news_history_since(theme: dict, market: str) -> str | None:
+    """뉴스 기준선·분기 집계에 쓸 수 있는 가장 이른 주(월요일 ISO 날짜), 제한이 없으면 None.
+
+    두 가지 중 더 늦은 것이다: (1) 테마 키워드가 바뀐 주(themes.yaml 유지보수 규칙 2),
+    (2) 그 시장의 수집원이 바뀐 주(NEWS_SOURCE_SWITCH_WEEK)."""
+    from datetime import date, timedelta
+    candidates: list[str] = []
+    kw_changed = theme.get("keywords_changed_at")
+    if kw_changed:
+        kc = kw_changed if isinstance(kw_changed, date) else date.fromisoformat(str(kw_changed))
+        candidates.append((kc - timedelta(days=kc.weekday())).isoformat())
+    if market in NEWS_SOURCE_SWITCH_WEEK:
+        candidates.append(NEWS_SOURCE_SWITCH_WEEK[market])
+    return max(candidates) if candidates else None
+
+
 def get_prior_news_counts(conn, theme_id: str, market: str, week_start: str, weeks: int = 4,
                           since: str | None = None) -> list[int]:
     """week_start 이전 주들의 news_count를 최대 weeks개 가져온다 (baseline 계산용).

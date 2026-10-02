@@ -33,7 +33,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
-from src.db.theme_signals import ensure_schema, insert_theme_news_bulk, get_prior_news_counts, upsert_news_signal
+from src.db.theme_signals import (ensure_schema, insert_theme_news_bulk, get_prior_news_counts,
+                                  upsert_news_signal, news_history_since)
 from collectors.theme_news_collector import collect_theme_news
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
@@ -189,11 +190,8 @@ def main() -> None:
                 min_articles = theme.get("min_articles", default_min_articles)
                 # 키워드가 바뀐 테마는 바뀐 주 이전 건수를 기준선에 쓰지 않는다(유지보수 규칙 2).
                 # 기준선 최소 4주가 쌓일 때까지 뉴스 축은 na(데이터부족)로 남는다 - 탈락이 아니다.
-                kw_changed = theme.get("keywords_changed_at")
-                since = None
-                if kw_changed:
-                    kc = kw_changed if isinstance(kw_changed, date) else date.fromisoformat(str(kw_changed))
-                    since = _current_week_monday(kc).isoformat()
+                # 수집원이 바뀐 시장도 같다(KR: 구글 -> 네이버, theme_signals.NEWS_SOURCE_SWITCH_WEEK).
+                since = news_history_since(theme, market)
 
                 prior_counts = get_prior_news_counts(conn, theme_id, market, week_start.isoformat(),
                                                      weeks=BASELINE_WEEKS, since=since)
@@ -211,7 +209,7 @@ def main() -> None:
                 _log(f"  -> {theme_id} baseline={baseline_str} ratio={ratio_str} arrow={arrow} "
                      f"(count={'NULL(수집실패)' if news_count is None else news_count}, "
                      f"backfilled={backfilled}, 직전주 {len(prior_counts)}개 확보"
-                     f"{', 키워드 변경 ' + since + ' 이후만' if since else ''})")
+                     f"{', 키워드·수집원 변경 ' + since + ' 이후만' if since else ''})")
 
                 upsert_news_signal(
                     conn, theme_id, market, week_start.isoformat(), news_count, baseline,
