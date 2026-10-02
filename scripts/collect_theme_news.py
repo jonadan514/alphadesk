@@ -129,6 +129,9 @@ def main() -> None:
     parser.add_argument("--weeks-back", type=int, default=1,
                          help="처리할 주 수 (1=이번 주만, 8=콜드스타트 백필)")
     parser.add_argument("--theme-id", nargs="*", default=None, help="특정 테마만 (비우면 전체)")
+    parser.add_argument("--market", choices=["US", "KR"], default=None,
+                         help="한 시장만 (비우면 둘 다). 한쪽만 다시 돌릴 때 쓴다 - 둘 다 돌리면 "
+                              "Actions에서 70-90분이 걸린다")
     args = parser.parse_args()
 
     themes, config = load_active_themes(args.theme_id)
@@ -149,6 +152,8 @@ def main() -> None:
     failed_runs: list[str] = []
 
     for market, keyword_field in KEYWORD_FIELD.items():
+        if args.market and market != args.market:
+            continue
         market_themes = [t for t in themes if market in t.get("markets", [])]
         collectible = []
         for theme in market_themes:

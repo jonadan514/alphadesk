@@ -13,13 +13,19 @@ on:
         description: "테마 ID 공백 구분 (비우면 전체)"
         required: false
         default: ""
+      market:
+        description: "US 또는 KR (비우면 둘 다)"
+        required: false
+        default: ""
 
 jobs:
   collect:
     name: Collect theme news
     runs-on: ubuntu-latest
     # 백필(weeks_back=8)은 테마당 키워드별로 요청 사이 1초씩 쉬므로 시간이 걸림
-    timeout-minutes: 90
+    # 두 시장 전체가 69분(2026-10-01)에서 90분 초과(2026-10-02)까지 걸렸다. 90분에 걸려 취소되면
+    # 저장 단계까지 못 가서 그 주 데이터가 통째로 사라진다 - 여유를 크게 둔다.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
 
@@ -44,7 +50,9 @@ jobs:
           # 전 테마 0건이면 텔레그램 경고를 보낸다(조용히 깨지는 것을 막는다).
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MARKET: ${{ inputs.market }}
         run: >
           python scripts/collect_theme_news.py
           --weeks-back "${{ inputs.weeks_back || '1' }}"
+          ${MARKET:+--market "$MARKET"}
           --theme-id ${{ inputs.theme_id }}
