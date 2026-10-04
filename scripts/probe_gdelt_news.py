@@ -26,14 +26,25 @@ ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc"
 SLEEP_SEC = 5.5
 
 
-def weekly_counts(keyword: str, start: date, end: date) -> tuple[dict[str, int], str]:
-    q = f'"{keyword}" sourcelang:english sourcecountry:US'
-    url = (f"{ENDPOINT}?query={quote(q)}&mode=timelinevolraw&format=json"
+def _or_query(keywords: list[str]) -> str:
+    """테마 키워드를 OR로 묶어 한 번에 조회 - 요율 제한 때문에 호출 수를 줄인다."""
+    terms = " OR ".join(f'"{k}"' for k in keywords)
+    return f"({terms}) sourcelang:english sourcecountry:US" if len(keywords) > 1 else f"{terms} sourcelang:english sourcecountry:US"
+
+
+def weekly_counts(keyword: str | list[str], start: date, end: date, mode: str = "timelinevolraw",
+                  retries: int = 4) -> tuple[dict[str, float], str]:
+    q = _or_query(keyword if isinstance(keyword, list) else [keyword])
+    url = (f"{ENDPOINT}?query={quote(q)}&mode={mode}&format=json"
            f"&startdatetime={start:%Y%m%d}000000&enddatetime={end:%Y%m%d}000000")
-    r = requests.get(url, timeout=60)
-    status = f"HTTP {r.status_code}, {len(r.content)}B"
+    for attempt in range(retries + 1):
+        r = requests.get(url, timeout=60)
+        if r.status_code != 429:
+            break
+        time.sleep(15 * (attempt + 1))   # 공유 IP라 429가 잦다 - 점점 길게 기다린다
+    status = f"HTTP {r.status_code}, {len(r.content)}B, 시도 {attempt + 1}"
     if r.status_code != 200:
-        return {}, status + " " + r.text[:200].replace("\n", " ")
+        return {}, status + " " + r.text[:120].replace("\n", " ")
     try:
         data = r.json()
     except ValueError:
@@ -43,7 +54,7 @@ def weekly_counts(keyword: str, start: date, end: date) -> tuple[dict[str, int],
         for pt in series.get("data", []):
             d = date(int(pt["date"][:4]), int(pt["date"][4:6]), int(pt["date"][6:8]))
             monday = d - timedelta(days=d.weekday())
-            weeks[monday.isoformat()] = weeks.get(monday.isoformat(), 0) + int(pt.get("value", 0))
+            weeks[monday.isoformat()] = round(weeks.get(monday.isoformat(), 0) + float(pt.get("value", 0)), 4)
     return weeks, status
 
 
@@ -57,12 +68,14 @@ def main() -> int:
     end = today - timedelta(days=today.weekday())          # 이번 주 월요일(배타)
     start = end - timedelta(weeks=args.weeks)
     t0 = time.time(); calls = 0; fails = 0
+    # 테마당 키워드 OR 묶음 1회씩, 원건수(raw)와 전체 대비 비중(vol) 두 가지.
+    # 비중은 GDELT 자체 수집이 빠진 주(2026-09-14 첫 실측에서 전 키워드 급감)에 덜 흔들리는지 보려는 것.
     for tid in args.themes:
-        print(f"== {tid}")
-        for kw in themes[tid].get("keywords_en", []):
-            w, status = weekly_counts(kw, start, end)
+        kws = themes[tid].get("keywords_en", [])
+        for mode in ("timelinevolraw", "timelinevol"):
+            w, status = weekly_counts(kws, start, end, mode)
             calls += 1; fails += 0 if w else 1
-            print(f"  {kw!r}: {status} {json.dumps(w, ensure_ascii=False)}")
+            print(f"[{tid}] {mode}: {status} {json.dumps(w, ensure_ascii=False)}")
             time.sleep(SLEEP_SEC)
     el = time.time() - t0
     print(f"호출 {calls}회, 실패 {fails}회, {el:.0f}초 (호출당 {el / max(calls, 1):.1f}초)")

@@ -7,7 +7,7 @@ on:
       themes:
         description: "테마 ID 공백 구분"
         required: false
-        default: "ai_semiconductor nuclear_smr power_grid"
+        default: "ai_semiconductor nuclear_smr power_grid glp1_obesity defense"
       weeks:
         description: "몇 주"
         required: false
@@ -16,7 +16,7 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
