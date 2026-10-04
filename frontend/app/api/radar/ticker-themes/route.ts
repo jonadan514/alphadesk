@@ -26,18 +26,22 @@ export async function GET(request: Request) {
           WHERE market = ? AND approved = 1
           GROUP BY theme_id
         )
-        SELECT tm.theme_id, ts.label
+        SELECT tm.theme_id, ts.label, tm.linkage
         FROM theme_members tm
         JOIN latest_runs lr ON lr.theme_id = tm.theme_id AND lr.run_id = tm.run_id
         LEFT JOIN theme_signals ts ON ts.theme_id = tm.theme_id AND ts.market = ?
           AND ts.week_start = (SELECT MAX(week_start) FROM theme_signals WHERE market = ?)
         WHERE tm.ticker = ? AND tm.market = ? AND tm.approved = 1
-        ORDER BY tm.theme_id
+        ORDER BY CASE tm.linkage WHEN 'direct' THEN 0 WHEN 'partial' THEN 1 WHEN 'peripheral' THEN 2 ELSE 3 END, tm.theme_id
       `,
       args: [market, market, market, symbol, market],
     });
 
-    const themes = res.rows.map((r) => ({ theme_id: r[0] as string, label: r[1] as string | null }));
+    // linkage를 같이 준다 - 간접(peripheral)·시장 인식(perceived)은 테마 신호 계산에 들어가지 않으므로
+    // 화면이 사업 소속(direct·partial)과 구분해 보여줘야 한다(2026-10-04).
+    const themes = res.rows.map((r) => ({
+      theme_id: r[0] as string, label: r[1] as string | null, linkage: (r[2] as string | null) ?? "direct",
+    }));
     return NextResponse.json({ themes });
   } catch (err) {
     console.error("[api/radar/ticker-themes] error:", err);

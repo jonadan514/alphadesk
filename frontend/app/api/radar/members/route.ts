@@ -42,21 +42,31 @@ export async function GET(request: Request) {
     }) as { ticker: string; stage: string | null; evidence: string | null; linkage: string; confidence: string; flagged: number }[];
 
     const tickers = members.map((m) => m.ticker);
+    // 동시 소속은 각 테마의 "최신 승인 run"만 본다(이 테마 목록과 같은 기준). 예전에는
+    // approved=1 전체를 봐서, 재매핑으로 빠진 소속이 과거 승인분 때문에 계속 "~에도 소속"으로 떴다.
+    // 시장 인식(perceived)은 사업 소속이 아니라서 따로 돌려준다 - 화면에서 구분해 표시한다.
     const crossByTicker: Record<string, string[]> = {};
+    const perceivedByTicker: Record<string, string[]> = {};
     if (tickers.length > 0) {
       const placeholders = tickers.map(() => "?").join(",");
       const crossRes = await client.execute({
         sql: `
-          SELECT ticker, theme_id FROM theme_members
-          WHERE ticker IN (${placeholders}) AND market = ? AND approved = 1 AND theme_id != ?
+          WITH latest_runs AS (
+            SELECT theme_id, MAX(run_id) AS run_id FROM theme_members
+            WHERE market = ? AND approved = 1 GROUP BY theme_id
+          )
+          SELECT tm.ticker, tm.theme_id, tm.linkage FROM theme_members tm
+          JOIN latest_runs lr ON lr.theme_id = tm.theme_id AND lr.run_id = tm.run_id
+          WHERE tm.ticker IN (${placeholders}) AND tm.market = ? AND tm.approved = 1 AND tm.theme_id != ?
         `,
-        args: [...tickers, market, themeId],
+        args: [market, ...tickers, market, themeId],
       });
       crossRes.rows.forEach((r) => {
         const ticker = r[0] as string;
         const otherTheme = r[1] as string;
-        if (!crossByTicker[ticker]) crossByTicker[ticker] = [];
-        if (!crossByTicker[ticker].includes(otherTheme)) crossByTicker[ticker].push(otherTheme);
+        const target = (r[2] as string) === "perceived" ? perceivedByTicker : crossByTicker;
+        if (!target[ticker]) target[ticker] = [];
+        if (!target[ticker].includes(otherTheme)) target[ticker].push(otherTheme);
       });
     }
 
@@ -95,6 +105,7 @@ export async function GET(request: Request) {
     const enriched = members.map((m) => ({
       ...m,
       other_themes: crossByTicker[m.ticker] ?? [],
+      other_perceived: perceivedByTicker[m.ticker] ?? [],
       finance: financeByTicker[m.ticker]
         ? {
             status: financeByTicker[m.ticker].status,

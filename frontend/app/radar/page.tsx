@@ -53,6 +53,7 @@ interface Member {
   confidence: string;
   flagged: number;
   other_themes: string[];
+  other_perceived?: string[];  // 다른 테마에 "시장 인식"으로만 걸린 것 - 사업 소속과 구분해 표시
   finance: { status: string; piotroski: number | null; reasons?: string[] };
 }
 
@@ -297,6 +298,13 @@ function MembersTable({ members, loading, market }: { members: Member[]; loading
                   {m.other_themes.map((t) => (
                     <span key={t} className="whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: ACCENT_SOFT, color: ACCENT }}>
                       {themeName(t).ko}에도 소속
+                    </span>
+                  ))}
+                  {(m.other_perceived ?? []).map((t) => (
+                    <span key={`p-${t}`} className="whitespace-nowrap rounded-full px-2 py-0.5 text-[11px]"
+                      style={{ color: LINKAGE_STYLE.perceived.fg, border: "1px dashed var(--border)" }}
+                      title="사업 소속이 아니라 테마 ETF 편입 근거 - 테마 신호 계산에는 들어가지 않는다">
+                      {themeName(t).ko} 시장 인식
                     </span>
                   ))}
                 </div>

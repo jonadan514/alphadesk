@@ -47,6 +47,8 @@ interface Candidate {
 // "테마 흐름과 겹침"의 기준: 펀더멘털이 먼저 움직인 테마. 레이더 Quiet 단계 라벨이거나
 // 분기 분류가 "조용한 변화". Buzz·Full은 이미 알려졌거나 기대만 앞선 구간이라 넣지 않는다.
 const FLOW_LABELS = new Set(["Quiet Strength", "Quiet Recovery"]);
+// 시장 인식 소속 표시색 - 테마 레이더의 LINKAGE_STYLE.perceived와 같은 색
+const PERCEIVED_FG = "#d4a95a";
 const isFlowTheme = (t: { label: string | null; quarterly: string | null }) =>
   (t.label != null && FLOW_LABELS.has(t.label)) || t.quarterly === "조용한 변화";
 
@@ -511,7 +513,7 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
 }) {
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState(note ?? "");
-  const [relatedThemes, setRelatedThemes] = useState<{ theme_id: string; label: string | null }[]>([]);
+  const [relatedThemes, setRelatedThemes] = useState<{ theme_id: string; label: string | null; linkage?: string }[]>([]);
 
   // 이 종목이 어느 테마 레이더 테마에 속하는지 (Phase B에서 한국도 지원).
   useEffect(() => {
@@ -581,17 +583,37 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
             <div className="p-3" style={insetCard}>
               <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_SECONDARY }}>테마 레이더 소속</p>
               <div className="flex flex-wrap gap-1.5">
-                {relatedThemes.map((t) => (
-                  <a
-                    key={t.theme_id}
-                    href="/radar"
-                    className="text-[12px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80"
-                    style={{ background: ACCENT + "18", color: ACCENT, border: `1px solid ${ACCENT}33` }}
-                  >
-                    {themeName(t.theme_id).ko}{t.label ? ` · ${t.label}` : ""}
-                  </a>
-                ))}
+                {relatedThemes.map((t) => {
+                  // 간접·시장 인식은 테마 신호(라벨) 계산에 들어가지 않는다 - 라벨을 붙이면
+                  // 그 신호가 이 종목에도 해당하는 것처럼 읽히므로 소속 종류만 적는다.
+                  const side = t.linkage === "perceived" ? "시장 인식" : t.linkage === "peripheral" ? "간접" : null;
+                  return side ? (
+                    <a
+                      key={t.theme_id}
+                      href="/radar"
+                      className="text-[12px] px-2.5 py-1 rounded-full transition-opacity hover:opacity-80"
+                      style={{ color: side === "시장 인식" ? PERCEIVED_FG : TEXT_MUTED, border: "1px dashed var(--border)" }}
+                    >
+                      {themeName(t.theme_id).ko} · {side}
+                    </a>
+                  ) : (
+                    <a
+                      key={t.theme_id}
+                      href="/radar"
+                      className="text-[12px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80"
+                      style={{ background: ACCENT + "18", color: ACCENT, border: `1px solid ${ACCENT}33` }}
+                    >
+                      {themeName(t.theme_id).ko}{t.label ? ` · ${t.label}` : ""}
+                    </a>
+                  );
+                })}
               </div>
+              {relatedThemes.some((t) => t.linkage === "perceived" || t.linkage === "peripheral") && (
+                <p className="mt-1.5 text-[11px]" style={{ color: TEXT_MUTED }}>
+                  점선 표시는 사업 소속이 아닙니다. 시장 인식은 테마 ETF 편입, 간접은 사업 비중이 작은 경우이며,
+                  둘 다 테마 신호 계산에는 들어가지 않습니다.
+                </p>
+              )}
             </div>
           )}
 
