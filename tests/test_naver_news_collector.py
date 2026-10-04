@@ -9,7 +9,8 @@
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
+from email.utils import format_datetime
 
 import pytest
 
@@ -113,3 +114,55 @@ def test_키가_있으면_한국_수집이_네이버로_간다(naver_env, monkey
     monkeypatch.delenv("NAVER_CLIENT_ID")
     tnc.collect_theme_news(["조선업"], date(2026, 9, 21), date(2026, 9, 28), market="KR")
     assert called["source"] == "google"
+
+
+def _feed(per_day: int, days: int, newest: datetime) -> list[dict]:
+    """newest부터 과거로 하루 per_day건씩 고르게 깔린 최신순 기사."""
+    step = timedelta(days=1) / per_day
+    return [_item(f"t{i}", f"https://x.com/{i}", format_datetime(newest - step * (i + 1)))
+            for i in range(per_day * days)]
+
+
+def _paged_get(feed: list[dict]):
+    def get(url, params, headers, timeout):
+        start = params["start"]
+        return _FakeResp({"items": feed[start - 1:start - 1 + params["display"]]})
+    return get
+
+
+@pytest.mark.parametrize("per_day", [150, 300, 500])
+def test_기사가_많을수록_적게_세지_않는다(naver_env, monkeypatch, per_day):
+    """2026-10-04 회귀: 하루씩 나눠 다시 세던 때는 하루 500건 키워드가 주 200건으로
+    세어졌다(start 상한 때문에 앞쪽 날짜에 못 닿음). 상한에 걸려도 최소 800건은 세고
+    상한으로 표시돼야 한다."""
+    monday_7am = datetime(2026, 10, 5, 7, 0, tzinfo=timezone(timedelta(hours=9)))
+    monkeypatch.setattr(tnc.requests, "get", _paged_get(_feed(per_day, 14, monday_7am)))
+    monkeypatch.setattr(tnc, "KEYWORD_SLEEP_SEC", 0)
+    monkeypatch.setattr(tnc.time, "sleep", lambda s: None)
+
+    _, stats = tnc.collect_theme_news(["kw"], date(2026, 9, 28), date(2026, 10, 5), market="KR")
+
+    assert stats["per_keyword"]["kw"] >= 800
+    assert stats["saturated_keywords"] == ["kw"]
+    assert stats["expanded_keywords"] == []   # 네이버는 하루 단위로 나누지 않는다
+
+
+def test_상한_아래면_전부_세고_상한_표시가_없다(naver_env, monkeypatch):
+    monday_7am = datetime(2026, 10, 5, 7, 0, tzinfo=timezone(timedelta(hours=9)))
+    monkeypatch.setattr(tnc.requests, "get", _paged_get(_feed(50, 14, monday_7am)))
+    monkeypatch.setattr(tnc, "KEYWORD_SLEEP_SEC", 0)
+    monkeypatch.setattr(tnc.time, "sleep", lambda s: None)
+
+    _, stats = tnc.collect_theme_news(["kw"], date(2026, 9, 28), date(2026, 10, 5), market="KR")
+
+    assert stats["per_keyword"]["kw"] == 350
+    assert stats["saturated_keywords"] == []
+
+
+def test_결과_끝까지_읽으면_truncated가_아니다(naver_env, monkeypatch):
+    items = [_item("창 안", "https://b.com/2", "Sat, 26 Sep 2026 09:00:00 +0900")]
+    monkeypatch.setattr(tnc.requests, "get", lambda *a, **k: _FakeResp({"items": items}))
+
+    got = tnc.search_naver_news_kr("조선업", date(2026, 9, 21), date(2026, 9, 28))
+
+    assert len(got) == 1 and got.truncated is False

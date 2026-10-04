@@ -141,9 +141,24 @@ def search_google_news_kr(keyword: str, after: date, before: date, limit: int = 
 #   2. **절대 건수가 구글과 다르다.** 뉴스 축은 "직전 8주 중앙값 대비 몇 배"라
 #      상대 지표지만, 소스를 바꾸면 기준선이 새 소스 기준으로 8주 쌓일 때까지
 #      비율을 믿으면 안 된다.
+#
+# 2026-10-04 수정: 처음에는 구글처럼 키워드당 100건에서 멈추고 상한에 닿으면 하루씩
+# 나눠 다시 셌다. 그런데 네이버는 날짜 검색이 없어서 하루씩 나눠도 매번 최신 기사부터
+# 다시 넘겨야 하고, start 상한(1000)에 막혀 앞쪽 날짜에 닿지 못한다. 그 결과 기사가
+# 많은 키워드일수록 오히려 적게 세어졌다(하루 300건 키워드가 주 313건, 500건이면 200건 -
+# 실제 신호와 반대 방향). 그래서 네이버는 하루 단위로 나누지 않고, 최신순으로 넘길 수
+# 있는 데까지(최대 약 1000건) 한 번에 받아 창 안의 기사를 센다. 창 시작일까지 닿지
+# 못하면 truncated로 표시해 상한(saturated)으로 기록한다 - 이 경우에도 건수는 실제보다
+# 작을 뿐 기사가 많을수록 작아지지는 않는다.
 NAVER_ENDPOINT = "https://openapi.naver.com/v1/search/news.json"
 NAVER_DISPLAY = 100      # 한 번에 받을 수 있는 최대
 NAVER_MAX_START = 1000   # start 파라미터 상한 (API 제약)
+NAVER_RESULT_LIMIT = NAVER_MAX_START + NAVER_DISPLAY  # 넘길 수 있는 데까지 전부
+
+
+class NewsResults(list):
+    """기사 목록 + 끝까지 못 읽었는지(truncated). 네이버 경로만 truncated를 채운다."""
+    truncated: bool = False
 _TAG_RE = re.compile(r"<[^>]+>")
 
 
@@ -164,11 +179,12 @@ def _clean_naver_title(raw: str) -> str:
 
 
 def search_naver_news_kr(keyword: str, after: date, before: date,
-                          limit: int = RESULT_LIMIT) -> list[dict]:
+                          limit: int = NAVER_RESULT_LIMIT) -> NewsResults:
     """네이버 뉴스 검색 API로 after~before(before 배타적) 기사를 모은다.
 
     반환 필드는 구글 경로와 동일하다: title, url, published_at, source.
     source는 네이버가 매체명을 따로 주지 않아 원문 링크의 도메인을 쓴다.
+    after까지 닿기 전에 start 상한이나 limit에 막히면 반환값의 truncated가 True다.
     """
     creds = naver_credentials()
     if creds is None:
@@ -176,7 +192,8 @@ def search_naver_news_kr(keyword: str, after: date, before: date,
     client_id, client_secret = creds
     headers = {"X-Naver-Client-Id": client_id, "X-Naver-Client-Secret": client_secret}
 
-    results: list[dict] = []
+    results = NewsResults()
+    reached_after = False
     start = 1
     while start <= NAVER_MAX_START and len(results) < limit:
         params = {"query": keyword, "display": NAVER_DISPLAY, "start": start, "sort": "date"}
@@ -199,6 +216,7 @@ def search_naver_news_kr(keyword: str, after: date, before: date,
 
         items = payload.get("items") or []
         if not items:
+            reached_after = True   # 검색 결과 끝 - 더 오래된 기사가 없다
             break
 
         older_than_window = False
@@ -226,10 +244,12 @@ def search_naver_news_kr(keyword: str, after: date, before: date,
                 break
 
         if older_than_window or len(items) < NAVER_DISPLAY:
+            reached_after = True
             break
         start += NAVER_DISPLAY
         time.sleep(0.2)   # 네이버 요율제한 여유
 
+    results.truncated = not reached_after
     return results
 
 
@@ -273,6 +293,8 @@ def collect_theme_news(keywords: list[str], after: date, before: date, market: s
         search_fn = search_naver_news_kr if naver_credentials() else search_google_news_kr
     else:
         search_fn = search_google_news_en
+    # 네이버는 하루씩 나눠 다시 세면 오히려 줄어든다(위 네이버 설명 참고) - 한 번에 받는다.
+    split_by_day = expand_saturated and search_fn is not search_naver_news_kr
     raw: list[dict] = []
     per_keyword_counts: dict[str, int] = {}
     saturated: list[str] = []
@@ -288,7 +310,9 @@ def collect_theme_news(keywords: list[str], after: date, before: date, market: s
             time.sleep(KEYWORD_SLEEP_SEC)
             continue
 
-        if expand_saturated and len(articles) >= RESULT_LIMIT and (before - after).days > 1:
+        if getattr(articles, "truncated", False):
+            saturated.append(kw)
+        elif split_by_day and len(articles) >= RESULT_LIMIT and (before - after).days > 1:
             day_articles, day_saturated, day_failed = _collect_by_day(search_fn, kw, after, before)
             if day_failed:
                 failed.extend(day_failed)
@@ -298,7 +322,7 @@ def collect_theme_news(keywords: list[str], after: date, before: date, market: s
                 expanded.append(kw)
             if day_saturated:
                 saturated.append(kw)
-        elif len(articles) >= RESULT_LIMIT:
+        elif search_fn is not search_naver_news_kr and len(articles) >= RESULT_LIMIT:
             saturated.append(kw)
 
         per_keyword_counts[kw] = len(articles)
