@@ -62,7 +62,8 @@ export default function HomePage() {
   useEffect(() => {
     fetch("/api/data/macro")
       .then(r => r.json())
-      .then(setMacro)
+      // API가 { error }를 돌려주면(DB 오류 등) items가 없어 화면 전체가 깨졌다 - 모양이 맞을 때만 쓴다(2026-10-04).
+      .then(d => setMacro(d && d.items ? d : null))
       .catch(() => setMacro(null));
   }, []);
 

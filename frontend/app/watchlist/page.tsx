@@ -56,8 +56,8 @@ const BORDER_CTRL = "#453b1f"; // 체크박스·인풋 등 조작 요소 테두�
 const TEXT_PRIMARY   = "#ece7d8";
 const TEXT_BODY      = "#d6d0c0";
 const TEXT_SECONDARY = "#a39c88";
-const TEXT_MUTED     = "#726b58";
-const TEXT_FAINT     = "#423e33";
+const TEXT_MUTED     = "#8b8271"; // 공용 --text-muted와 같게(2026-10-04, 이전 #726b58)
+const TEXT_FAINT     = "#736b57"; // 공용 --text-faint와 같게(2026-10-04, 이전 #423e33 - 대비 1.9:1)
 
 const ACCENT  = "#ffb020"; // 브랜드 액센트 (오늘픽 배지·활성 탭·추가 버튼) — 시맨틱과 분리
 const GOOD    = "#4ade80"; // 실제 신호색: 우수/안정/배당
@@ -829,7 +829,9 @@ export default function WatchlistPage() {
         fetch("/api/watchlist/my"),
       ]);
       const cData = await cRes.json();
-      const mData: WatchItem[] = await mRes.json();
+      // API 오류면 { error } 객체가 와서 .map에서 터졌다 - 배열일 때만 쓴다(2026-10-04).
+      const mJson = await mRes.json();
+      const mData: WatchItem[] = Array.isArray(mJson) ? mJson : [];
       setCandidates(cData.candidates ?? []);
       setScreenedAt(cData.screened_at ?? null);
       setMyList(mData);
@@ -988,7 +990,7 @@ export default function WatchlistPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 16px", color: TEXT_PRIMARY, background: PAGE_BG, minHeight: "100vh", fontFamily: MONO }}>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 0 24px", color: TEXT_PRIMARY, background: PAGE_BG, minHeight: "100vh", fontFamily: MONO }}>
       {/* 팝업들 */}
       {selected && (
         <DetailModal
@@ -1033,7 +1035,7 @@ export default function WatchlistPage() {
       )}
 
       {/* 통계 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginBottom: 24 }}>
         {[
           { label: "후보 종목", value: candidates.length, highlight: false },
           // 이번 회차 신규는 275개 중 먼저 볼 것을 고르는 유일한 단서라 강조한다.

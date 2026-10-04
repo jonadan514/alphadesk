@@ -69,7 +69,7 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
         <div className="px-4 pb-4 space-y-4" style={{ borderTop: "1px solid var(--border)" }}>
           {/* 시장 궤적 */}
           <div className="pt-3 space-y-1.5">
-            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>지난주 시장</p>
+            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>지난주 시장</p>
             <MarketRow label="🇺🇸 S&P 500" m={b.us} />
             <MarketRow label="🇰🇷 KOSPI" m={b.kr} />
           </div>
@@ -78,7 +78,7 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
               끝날 수 있어서, "이번 주"라 단정하지 않고 실제 기준 주를 그대로 보여준다. */}
           {b.theme_labels && (b.theme_labels.new_labels.length > 0 || b.theme_labels.dropped_labels.length > 0) && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] font-bold mb-1.5" style={{ color: "var(--text-muted)" }}>
                 📡 테마 레이더 라벨 변동 <span style={{ color: "var(--text-faint)" }}>({b.theme_labels.week_start} 기준)</span>
               </p>
               <div className="rounded-xl p-3 space-y-2" style={{ background: "#ffb02008", border: "1px solid #ffb02022" }}>
@@ -110,14 +110,14 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
           {/* GPT 총평 */}
           {b.gpt_comment && (
             <div className="rounded-xl p-3" style={{ background: "#ffb02008", border: "1px solid #ffb02022" }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#ffb020" }}>주간 총평</p>
+              <p className="text-[12px] font-bold mb-1.5" style={{ color: "#ffb020" }}>주간 총평</p>
               <p className="text-[12px] leading-relaxed whitespace-pre-line" style={{ color: "#a39c88" }}>{b.gpt_comment}</p>
             </div>
           )}
 
           {/* 워치리스트 변동 */}
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px] font-bold mb-1.5" style={{ color: "var(--text-muted)" }}>
               워치리스트 변동 <span style={{ color: "var(--text-faint)" }}>(후보 {wl.total}개)</span>
             </p>
             {!wl.has_prev ? (
@@ -150,7 +150,7 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
           {/* 관심도 상승 */}
           {b.sentiment_heating?.length > 0 && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>이번 주 달아오른 종목</p>
+              <p className="text-[12px] font-bold mb-1.5" style={{ color: "var(--text-muted)" }}>이번 주 달아오른 종목</p>
               <div className="flex flex-wrap gap-2">
                 {b.sentiment_heating.map((s) => (
                   <span key={`${s.market}:${s.symbol}`} className="text-[12px] px-2 py-1 rounded-lg"
@@ -165,7 +165,7 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
           {/* 다가오는 촉매 */}
           {b.catalysts?.length > 0 && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] font-bold mb-1.5" style={{ color: "var(--text-muted)" }}>
                 내 워치리스트 — 다가오는 촉매
               </p>
               <div className="space-y-1.5">
