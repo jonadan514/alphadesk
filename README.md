@@ -34,7 +34,7 @@ Turso (libSQL, HTTP/Hrana v2)
 Next.js 15 (App Router) ── frontend/app/**/page.tsx
         │
         ▼
-사용자 (브라우저) — https://alphadesk-eta.vercel.app, Vercel에 GitHub 연동 자동배포
+사용자 (브라우저) — https://u-sonar.vercel.app (예전 alphadesk-eta.vercel.app도 당분간 유지), Vercel에 GitHub 연동 자동배포
 ```
 
 - **프론트엔드**: Next.js 15 (App Router, React 19) + TypeScript + Tailwind. 페이지는

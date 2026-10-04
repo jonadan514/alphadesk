@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from src.db.data_store import get_db
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
-RADAR_URL = "https://alphadesk-eta.vercel.app/radar"
+RADAR_URL = "https://u-sonar.vercel.app/radar"
 
 # SPEC §6.2 순서 그대로 - 순위가 아니라 편집 방침.
 LABEL_ORDER = ["Quiet Strength", "Quiet Recovery", "Early Buzz", "Full Alignment", "Overheated Buzz", "Full Decline"]

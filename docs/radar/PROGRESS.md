@@ -2712,4 +2712,4 @@ Q2 기준 데이터라 이른 상태로 보일 수 있지만 틀린 값은 아�
   localStorage 키(alphaDesk_market)는 저장된 선택이 초기화되지 않게 유지.
 - GitHub 저장소: jonadan514/alphadesk -> jonadan514/undercurrent-sonar(예전 주소는 301로 넘어간다). 진행 중 문서(마스터플랜·SPEC 3종)의
   저장소 표기 갱신, 2026-08 문서는 역사 기록이라 그대로.
-- Vercel 주소: 사용자가 변경. 새 주소를 받으면 send_radar_digest.py의 RADAR_URL과 README를 바꾼다.
+- Vercel 주소: https://u-sonar.vercel.app (사용자 변경). send_radar_digest.py의 RADAR_URL·README 반영. 예전 alphadesk-eta.vercel.app은 당분간 같이 둔다.
