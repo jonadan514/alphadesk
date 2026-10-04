@@ -1,6 +1,6 @@
 # 작업 명세: 재무제표 Turso 캐시 도입
 
-**대상 저장소**: `jonadan514/alphadesk`
+**대상 저장소**: `jonadan514/undercurrent-sonar` (2026-10-04 alphadesk에서 이름 변경)
 **작성일**: 2026-08-27
 **목적**: yfinance 호출량을 10분의 1 수준으로 줄여 rate limit 실패를 없애고, 이후 유니버스 확장의 여력을 확보한다.
 

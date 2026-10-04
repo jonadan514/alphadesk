@@ -2704,3 +2704,12 @@ Q2 기준 데이터라 이른 상태로 보일 수 있지만 틀린 값은 아�
 `docs/radar/REVIEW_2026-10-04.md`에 오늘 수정·결정·검증·알려진 한계·다음 일정을 모았다.
 리뷰 중 발견해 고친 것: 미국 뉴스에서 소속 일부만 조회 실패해도 건수를 저장하던 것 -> 하나라도 실패하면 NULL
 (`member_news_count`, 테스트 1개). 일부만 센 건수는 기준선 대비 가짜 '감소'로 보인다.
+
+## 2026-10-04 - 이름 변경: AlphaDesk -> Undercurrent Sonar (마크 U-Sonar)
+
+- 이유: "알파(초과수익)"가 매수 신호처럼 읽힌다. 테마의 물밑 흐름을 세 축으로 따로 보는 리서치 도구라는 성격에 맞춤.
+- 화면: 로고·아이콘·PWA 단축 이름 U-Sonar, 페이지 제목·매니페스트·가이드·텔레그램 요약 Undercurrent Sonar. 설명 문구 갱신.
+  localStorage 키(alphaDesk_market)는 저장된 선택이 초기화되지 않게 유지.
+- GitHub 저장소: jonadan514/alphadesk -> jonadan514/undercurrent-sonar(예전 주소는 301로 넘어간다). 진행 중 문서(마스터플랜·SPEC 3종)의
+  저장소 표기 갱신, 2026-08 문서는 역사 기록이라 그대로.
+- Vercel 주소: 사용자가 변경. 새 주소를 받으면 send_radar_digest.py의 RADAR_URL과 README를 바꾼다.

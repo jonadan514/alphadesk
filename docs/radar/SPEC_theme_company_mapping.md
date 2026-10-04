@@ -1,6 +1,6 @@
 # 작업 명세: 테마 → 기업 매핑
 
-**대상 저장소**: `jonadan514/alphadesk`
+**대상 저장소**: `jonadan514/undercurrent-sonar` (2026-10-04 alphadesk에서 이름 변경)
 **작성일**: 2026-08-27
 **선행 조건**: `themes.yaml` (테마 34개), `fundamentals_cache` (재무 캐시)
 **후행 작업**: 뉴스 축 / 실적 축 / 주가 축 계산 — 전부 이 매핑 위에 올라감
