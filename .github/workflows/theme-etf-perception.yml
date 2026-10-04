@@ -1,0 +1,59 @@
+name: Theme ETF Perception Candidates
+
+# 국내 테마 ETF 구성종목을 받아 "시장 인식(perceived)" 소속 후보를 낸다 - SPEC_theme_company_mapping.md 11장.
+# DB를 읽기만 한다. 편입은 후보를 검토 파일 add에 옮긴 뒤 Build Merged Mapping Run -> Approve Theme Mapping으로.
+# 분기 매핑 검토 때 같이 돌린다(Quarterly Theme Mapping 직후).
+on:
+  workflow_dispatch:
+
+jobs:
+  perception:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore KR universe cache
+        uses: actions/cache@v4
+        with:
+          path: data/kr_universe.json
+          key: kr-universe-perception-${{ github.run_id }}
+          restore-keys: |
+            kr-universe-quarterly-
+            kr-universe-
+
+      # pykrx는 pandas<3.0이 필요해 격리 환경에서 돈다(fetch_kr_universe_pykrx.py와 같은 이유).
+      - name: Fetch theme ETF holdings (isolated pykrx)
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python -c "import yaml,json; json.dump(yaml.safe_load(open('config/perception_etf_keywords.yaml'))['KR'], open('/tmp/etf_kw.json','w'), ensure_ascii=False)"
+          python -m venv /tmp/krxenv
+          /tmp/krxenv/bin/pip install --quiet "pandas<3.0" "pykrx==1.2.8"
+          mkdir -p out
+          /tmp/krxenv/bin/python scripts/fetch_kr_theme_etf_holdings.py --keywords /tmp/etf_kw.json --out out/kr_theme_etf_holdings.json
+
+      - name: Report candidates
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/report_perception_candidates.py --holdings out/kr_theme_etf_holdings.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: theme-etf-perception
+          path: |
+            out/kr_theme_etf_holdings.json
+            out/perception_candidates_*
+          if-no-files-found: warn

@@ -31,7 +31,7 @@ export async function GET(request: Request) {
         SELECT ticker, stage, evidence, linkage, confidence, flagged
         FROM theme_members
         WHERE theme_id = ? AND market = ? AND run_id = ? AND approved = 1
-        ORDER BY CASE linkage WHEN 'direct' THEN 0 WHEN 'partial' THEN 1 ELSE 2 END, ticker
+        ORDER BY CASE linkage WHEN 'direct' THEN 0 WHEN 'partial' THEN 1 WHEN 'peripheral' THEN 2 ELSE 3 END, ticker
       `,
       args: [themeId, market, runId],
     });

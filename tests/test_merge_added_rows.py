@@ -39,3 +39,15 @@ def test_빈약한_근거는_예외():
 def test_잘못된_linkage는_예외():
     with pytest.raises(ValueError, match="linkage"):
         build_added_rows([_item(linkage="strong")], "US", "r", set())
+
+
+def test_시장인식은_출처_근거로_들어간다():
+    ev = "ETF 편입: KODEX 테스트(000000) 4.2% (20261002 기준)"
+    rows = build_added_rows([_item(code="X", evidence=ev, linkage="perceived")], "KR", "r", set())
+    assert rows[0]["linkage"] == "perceived"
+
+
+def test_시장인식인데_출처가_없으면_예외():
+    """perceived는 사업 근거가 아니라 확인 가능한 외부 출처가 근거다 - SPEC 11장."""
+    with pytest.raises(ValueError, match="perceived"):
+        build_added_rows([_item(linkage="perceived")], "KR", "r", set())

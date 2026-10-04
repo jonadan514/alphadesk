@@ -1,0 +1,43 @@
+# 시장 인식(perceived) 소속의 근거로 쓰는 국내 테마 ETF를 찾는 이름 키워드.
+# SPEC_theme_company_mapping.md 11장. scripts/fetch_kr_theme_etf_holdings.py가 읽는다.
+#
+# ETF 이름(공백 제거)에 키워드가 하나라도 들어 있으면 그 테마의 근거 ETF로 본다.
+# 넓게 잡아도 안전하다 - 결과는 후보 보고서일 뿐이고 편입은 사람이 검토 파일로 한다.
+# 해외·레버리지·인버스 ETF는 스크립트가 이름으로 거른다(EXCLUDE_NAME_WORDS).
+# 미국은 아직 출처가 없다(11.4) - 여기에는 KR만 둔다.
+KR:
+  ai_semiconductor: [AI반도체, HBM]
+  datacenter_power: [AI전력, 데이터센터]
+  datacenter_cooling: [냉각]
+  semi_equipment: [반도체소부장, 소부장, 반도체장비, 반도체소재]
+  power_grid: [전력, 송배전, 변압기]
+  nuclear_smr: [원자력, 원전, SMR]
+  renewable_energy: [태양광, 풍력, 신재생, 재생에너지]
+  energy_storage: [ESS]
+  lng_gas: [LNG, 가스]
+  cable_wire: [전선, 케이블]
+  shipbuilding: [조선]
+  defense: [방산, 방위]
+  aerospace_space: [우주, 항공, 위성]
+  construction_machinery: [건설기계]
+  infra_construction: [건설, 인프라]
+  factory_automation: [자동화, 로봇]
+  glp1_obesity: [비만]
+  biosimilar: [바이오시밀러]
+  cdmo: [CDMO, 위탁]
+  medical_device: [의료기기]
+  neuro_alzheimer: [치매, 신경]
+  k_beauty: [화장품, 뷰티]
+  k_food: [푸드, 식품, 음식료, 라면]
+  k_content: [엔터, 미디어, 콘텐츠, 컨텐츠]
+  game: [게임]
+  travel_airline: [여행, 레저, 카지노, 면세]
+  battery: [2차전지, 이차전지, 배터리]
+  ev_value_chain: [전기차, 미래차, 자동차]
+  autonomous_driving: [자율주행]
+  physical_ai: [피지컬AI, 로봇]
+  humanoid_robot: [휴머노이드]
+  rare_earth: [희토류, 핵심광물]
+  copper_metals: [구리, 비철]
+  specialty_gas: [특수가스]
+  petrochemical: [석유화학, 화학]

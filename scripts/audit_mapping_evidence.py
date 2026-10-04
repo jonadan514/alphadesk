@@ -70,6 +70,13 @@ def _log(msg: str) -> None:
 
 
 def load_rows(conn, market: str, run_id: str | None) -> list[dict]:
+    return [r for r in _load_rows(conn, market, run_id) if r["linkage"] != "perceived"]
+
+
+# perceived(시장 인식)는 근거가 사업 설명이 아니라 ETF 편입 같은 외부 출처라서, 사업정보와
+# 대조하는 이 감사에 넣으면 전부 "근거 모순"으로 걸린다. 출처 대조는 사람 검토 때 한다
+# (SPEC_theme_company_mapping.md 11장).
+def _load_rows(conn, market: str, run_id: str | None) -> list[dict]:
     cols = ("theme_id", "ticker", "linkage", "evidence")
     if run_id:
         rows = conn.execute(

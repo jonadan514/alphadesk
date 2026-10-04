@@ -2597,3 +2597,21 @@ Q2 기준 데이터라 이른 상태로 보일 수 있지만 틀린 값은 아�
 - US는 같은 날 run 20261001010402-fee050으로 검토·승인을 마쳐 이번 run에서는 승인하지 않는다
   (RUNBOOK 5단계대로 only_market=KR).
 - 이름맵 누락 발견: 010820(퍼스텍), 425040(티이엠씨)이 `krStockNames.ts`에 없다 - RUNBOOK 10단계.
+
+## 2026-10-04(2) - 시장 인식 소속(`perceived`) 신설 (사용자 결정)
+
+- 사용자 문제 제기: "매핑에서 중요한 건 시장이 그 기업을 어떻게 보느냐 아닌가". 논의 결과 두 선택지
+  (이번 3건만 처리 / 규칙으로 정식화) 중 **정식화**를 선택.
+- 결정 내용(SPEC_theme_company_mapping.md 11장): `linkage = perceived`(시장 인식)를 새로 둔다.
+  기존 `peripheral`(사업 근거는 있으나 비중이 작음)과 뜻이 달라 섞지 않았다.
+  - 근거는 외부 출처만 - 현재 국내 테마 ETF 편입(비중 2% 이상). 병합 도구가 `ETF 편입:` 접두어를 검사.
+  - 사람이 넣는다. LLM 매핑 프롬프트는 그대로(LLM이 "시장 인식"을 판단하면 검증 불가).
+  - 3축 계산에서 전부 제외(기존 `linkage IN (direct, partial)` 필터로 자동). 주가 축 포함 여부는 데이터가 쌓인 뒤.
+  - 레이더에 "시장 인식" 배지, 근거 감사는 perceived 행을 건너뜀.
+- 추가한 것: `config/perception_etf_keywords.yaml`(테마별 ETF 이름 키워드), `scripts/fetch_kr_theme_etf_holdings.py`
+  (격리 pykrx), `scripts/report_perception_candidates.py`(후보·근거 소멸 보고), 워크플로
+  `theme-etf-perception.yml`(수동 실행), 테스트 6개. **아직 Actions에서 한 번도 안 돌렸다** - pykrx의 ETF
+  구성종목 API(`get_etf_portfolio_deposit_file`) 응답 형식은 첫 실행으로 확인해야 한다.
+- KR 검토 초안의 확인 요청 3건 정리: LS마린솔루션 유지(해저케이블 프로젝트 매출, 감사도 fit=fits),
+  삼성중공업 방산 제외(ETF 근거가 나오면 perceived 검토), 에스피지 전기차 제외.
+- 미국은 ETF 보유종목 출처가 없어 perceived를 넣지 않는다(11.4).

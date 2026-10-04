@@ -86,8 +86,11 @@ def find_source_row(conn, theme_id: str, ticker: str, market: str, before: str) 
     ).fetchone()
 
 
-ADD_LINKAGES = ("direct", "partial", "peripheral")
+ADD_LINKAGES = ("direct", "partial", "peripheral", "perceived")
 MIN_ADD_EVIDENCE_LEN = 15  # map_theme_companies.MIN_EVIDENCE_LEN과 같은 기준
+# perceived(시장 인식, 2026-10-04 신설)는 사업 근거가 아니라 외부에서 확인 가능한 출처가
+# 근거다 - SPEC_theme_company_mapping.md 11장. 근거는 출처 접두어로 시작해야 한다.
+PERCEIVED_EVIDENCE_PREFIXES = ("ETF 편입:",)
 
 
 def build_added_rows(add: list, market: str, run_id: str, existing: set[tuple[str, str]]) -> list[dict]:
@@ -105,6 +108,8 @@ def build_added_rows(add: list, market: str, run_id: str, existing: set[tuple[st
             raise ValueError(f"add 근거가 너무 짧다: {tid} {code}")
         if linkage not in ADD_LINKAGES:
             raise ValueError(f"add linkage가 잘못됐다: {tid} {code} {linkage!r}")
+        if linkage == "perceived" and not evidence.startswith(PERCEIVED_EVIDENCE_PREFIXES):
+            raise ValueError(f"perceived 근거는 출처로 시작해야 한다({PERCEIVED_EVIDENCE_PREFIXES}): {tid} {code}")
         rows.append({"theme_id": tid, "ticker": code, "market": market, "stage": stage,
                      "evidence": evidence, "linkage": linkage, "confidence": "normal",
                      "flagged": 0, "run_id": run_id})

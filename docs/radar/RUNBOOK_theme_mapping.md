@@ -35,6 +35,8 @@ LLM 매핑에는 도구로 다 걸러지지 않는 오류가 남는다(2026-09-1
      (OXY의 OxyChem 매각, Viatris 바이오시밀러 매각, GM Cruise 중단 같은 사례)
    - `unapprove`: 병합 run에 행이 없는 테마에서 오류로 확정한 예전 행
    - 판정마다 이유를 남긴다. 코드는 반드시 이름맵과 대조(기억으로 적은 코드는 틀린다)
+   - **시장 인식(perceived) 후보**: `Theme ETF Perception Candidates` 워크플로 결과에서 넣을 것만 `add`에,
+     근거가 사라진 것(`stale`)은 `exclude`에 - SPEC_theme_company_mapping.md 11장
 3. **현재 승인분과 테마별 비교** - 정당한 소속을 잃는 테마가 있는지 확인 후 restore에 반영
 4. **병합** - `Build Merged Mapping Run` dry_run=true 로 행 수·누락 확인 → dry_run=false
    - 되살릴 근거 문장은 승인된 최신 행에서 가져오고, 없으면 과거 아무 run에서나 찾는다.

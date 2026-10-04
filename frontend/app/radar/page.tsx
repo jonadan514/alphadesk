@@ -189,6 +189,7 @@ const LINKAGE_STYLE: Record<string, { label: string; fg: string; bg: string }> =
   direct: { label: "주력", fg: "#4ade80", bg: "rgba(74,222,128,0.14)" },
   partial: { label: "일부", fg: "#6fb3b8", bg: "rgba(111,179,184,0.14)" },
   peripheral: { label: "간접", fg: FAINT, bg: "transparent" },
+  perceived: { label: "시장 인식", fg: "#d4a95a", bg: "transparent" },
 };
 function LinkageBadge({ linkage }: { linkage: string }) {
   const s = LINKAGE_STYLE[linkage] ?? { label: linkage, fg: MUTED, bg: "transparent" };
