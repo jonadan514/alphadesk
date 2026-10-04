@@ -2660,3 +2660,12 @@ Q2 기준 데이터라 이른 상태로 보일 수 있지만 틀린 값은 아�
     LNG 보냉재, 두산에너빌리티 등)는 인용 검증 실패 또는 감사 오판.
 - 9단계: Backfill Quarterly Financials(36분) -> Compute Theme Earnings -> Compute Theme Price -> Compute Theme Labels 전부 성공.
 - 10단계: Refresh Universe Data(KR 687종목, main에 자동 커밋) 후 이름맵 재생성 678 -> 713종목(퍼스텍·티이엠씨 포함).
+
+## 2026-10-04(6) - 게이트 감사 후속: 오류 7건 승인 해제 + 2건 시장 인식 이동
+
+- 검토 파일 `data/eval/kr_v7c_gate_review_20261004.json`(사용자 결정): 제외 엑시콘(k_beauty)·기가비스(specialty_gas)·
+  세미파이브(semi_equipment)·대한유화(specialty_gas)·두산퓨얼셀(energy_storage)·SK오션플랜트(infra_construction)·
+  녹십자(biosimilar), 스피어(aerospace_space)·펌텍코리아(k_beauty)는 사업 소속 -> perceived(ETF 근거).
+- Build Merged(dry-run 480행 확인 -> 실제) run `20261004041431-merge` 480행, Approve only_market=KR 480건.
+  원장 KR exclude 200 / keep 176 / hold 27. 감사 오판으로 본 나머지 19건은 그대로 유지.
+- 오늘 낮에 돌린 실적·주가·라벨은 7건이 들어간 상태로 계산됐다. 오늘 밤 정기 실행(22:15·22:30·22:45 UTC)이 새 소속으로 다시 계산한다.
