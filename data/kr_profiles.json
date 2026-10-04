@@ -6109,5 +6109,185 @@
   "industry_source": "dart",
   "summary_source": "dart",
   "summary_long_source": "dart"
+ },
+ "005720": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Nexen Corporation manufactures and sells rubber products in South Korea. The company offers tubes and flaps, solid tires, golf balls, and bl",
+  "summary_long": "Nexen Corporation manufactures and sells rubber products in South Korea. The company offers tubes and flaps, solid tires, golf balls, and bladders for tires, and carbon masterbatch related products. It provides logistics services comprising of sea, bulk, air, inland transport and distribution, warehouse, and knock down. The company exports and distributes its products to approximately 140 countries. Nexen Corporation was founded in 1968 and is headquartered in Gimhae-si, South Korea."
+ },
+ "010820": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "FIRSTEC Co., Ltd engages in the design, manufacture, and sale of various products for defense industry worldwide. It offers guided weapon pr",
+  "summary_long": "FIRSTEC Co., Ltd engages in the design, manufacture, and sale of various products for defense industry worldwide. It offers guided weapon products, including drive, guidance control, launch control, and wiring devices; electric battlefields, cooling systems, and automatic fire extinguishing systems for mobility and firepower systems; avionics, driving device, propulsion/fuel, environmental control, and structural test devices for aerospace industry; mechanical devices and cooling systems for submarines, ships, and minelayers; and aerial and ground drones, and maritime unmanned aerial vehicles. The company was founded in 1975 and is headquartered in Changwon-Si, South Korea."
+ },
+ "005430": {
+  "industry": "Airports & Air Services",
+  "sector": "Industrials",
+  "summary": "Korea Airport Service Co.,Ltd. provides aircraft ground handling services in South Korea. It offers aircraft ground handling equipment renta",
+  "summary_long": "Korea Airport Service Co.,Ltd. provides aircraft ground handling services in South Korea. It offers aircraft ground handling equipment rental and air cargo unloading services. The company also manufactures and sells drinking spring water; and provides livestock farming services. The company was founded in 1968 and is headquartered in Seoul, South Korea. Korea Airport Service Co.,Ltd. operates as a subsidiary of Korean Airlines Co.,Ltd."
+ },
+ "200880": {
+  "industry": "Auto Parts",
+  "sector": "Consumer Cyclical",
+  "summary": "Seoyon E-Hwa Co., Ltd. develops, manufactures, and sells automobile-interior and exterior parts in South Korea and internationally. It provi",
+  "summary_long": "Seoyon E-Hwa Co., Ltd. develops, manufactures, and sells automobile-interior and exterior parts in South Korea and internationally. It provides door panels, bumpers, seats, headliners, rear parcel shelves, package trays, screen assemblies, and pillar posts. Seoyon E-Hwa Co., Ltd. is based in Anyang-si, South Korea."
+ },
+ "005950": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "ISU Chemical Co., Ltd. produces and sells petrochemicals and green bio chemicals in South Korea. Its products include linear alkyl benzene, ",
+  "summary_long": "ISU Chemical Co., Ltd. produces and sells petrochemicals and green bio chemicals in South Korea. Its products include linear alkyl benzene, NP, parasol, D-Sol, TAB, IPA, TDM, NOM, and NDM products. The company was founded in 1969 and is headquartered in Seoul, South Korea."
+ },
+ "084010": {
+  "industry": "Steel",
+  "sector": "Basic Materials",
+  "summary": "Daehan Steel Co., Ltd. engages in the manufacture and sale of steel products in South Korea and internationally. It offers square billets; d",
+  "summary_long": "Daehan Steel Co., Ltd. engages in the manufacture and sale of steel products in South Korea and internationally. It offers square billets; deformed bars used as construction material for building concrete structures; processed rebars; and bars in coils for reducing the loss of rebar and enhancing productivity. The company was founded in 1954 and is headquartered in Busan, South Korea."
+ },
+ "200470": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "APACT Co., Ltd. manufactures and sells semiconductor testing equipment in South Korea. It offers package test and inspection equipment. The ",
+  "summary_long": "APACT Co., Ltd. manufactures and sells semiconductor testing equipment in South Korea. It offers package test and inspection equipment. The company was formerly known as Hisem Co., Ltd. and changed its name to APACT Co., Ltd. in March 2020. APACT Co., Ltd. was founded in 2007 and is based in Anseong-si, South Korea. As of April 6, 2026, APACT Co., Ltd. operates as a subsidiary of Dynamic Growth Co., Ltd."
+ },
+ "159010": {
+  "industry": "Tools & Accessories",
+  "sector": "Industrials",
+  "summary": "ASFLOW Co., LTD. provides filters, piping module, and semiconductor equipment in South Korea. Its products include tubes and pipes, fittings",
+  "summary_long": "ASFLOW Co., LTD. provides filters, piping module, and semiconductor equipment in South Korea. Its products include tubes and pipes, fittings, valve and pressure regulators, and filter diffusers, as well as vacuum components. The company offers bio-industrial tubing and fittings. ASFLOW Co., LTD. was founded in 2000 and is based in Hwaseong-si, South Korea."
+ },
+ "039440": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "STI Co., Ltd. operates in the semiconductor equipment industry in Korea. Its products include central chemical supply systems, slurry mixing",
+  "summary_long": "STI Co., Ltd. operates in the semiconductor equipment industry in Korea. Its products include central chemical supply systems, slurry mixing and systems, and chemical mixing / dilution system for mixing or dilution, and supply of TMAH, KOH, HF, NH4OH, and SC-1. The company offers wet station products, including initial, pre-depo, pre photo, and ITO; cassette cleaners, developers, glass slimming systems, strippers, etchers, after glass grinding cleaners, and photo mask developers; and fine metal, screen mask, and back side glass cleaners. In addition, it provides inkjet printing system; and reflow and wet blast systems. STI Co., Ltd. was founded in 1997 and is headquartered in Anseong-si, South Korea."
+ },
+ "330860": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "Nepes Ark Corporation engages in the semiconductor manufacturing-related testing and engineering services in South Korea. It is also involve",
+  "summary_long": "Nepes Ark Corporation engages in the semiconductor manufacturing-related testing and engineering services in South Korea. It is also involved in semiconductor test production, and semiconductor product wholesale and retail businesses. The company was founded in 2019 and is headquartered in Goesan-eup, South Korea."
+ },
+ "468670": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "BRILS Corp. engages in the design, development, engineering, manufacturing, integration, and deployment of robotic systems and customized au",
+  "summary_long": "BRILS Corp. engages in the design, development, engineering, manufacturing, integration, and deployment of robotic systems and customized automation solutions in South Korea and the United States. The company provides robot manufacturing, modular robot platform solutions, automotive inspection and assembly lines, inspection and measurement equipment, food logistics, smart factory and smart farm solutions, assembly conveyor line design and supply, structural analysis and mold design, MDAPST training and process consulting, robot safety and foolproof systems, and RaaS robot automation rental business services. It also offers industrial bots, cobots, mobile robots, under-ride AMRs, forklift AMRs, CTUs, and AMMRs. It serves the automotive, semiconductor, display, secondary battery, manufacturing, and logistics industries. The company was formerly known as 416 Automation Korea Co., Ltd. The company was founded in 2015 and is based in Incheon, South Korea."
+ },
+ "110990": {
+  "industry": "Electronic Components",
+  "sector": "Technology",
+  "summary": "DIT Corp. provides image processing and optical solutions in South Korea. The company offers deep learning defect inspection/classification ",
+  "summary_long": "DIT Corp. provides image processing and optical solutions in South Korea. The company offers deep learning defect inspection/classification solution; and AOI solutions, including display automated optical inspection, secondary battery and automobile surface inspector, and semiconductor measurement/inspector solutions. It also provides laser solutions, such as laser cutting and repair systems, and laser annealing system. The company was formerly known as Digital Imaging Technology, INC. and changed its name to DIT Corp. in March 2024. DIT Corp. was founded in 2005 and is headquartered in Hwaseong-si, South Korea."
+ },
+ "456010": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "ICTK Co., Ltd. researches, develops, manufactures, and sells semiconductor products through physically unclonable function and quantum techn",
+  "summary_long": "ICTK Co., Ltd. researches, develops, manufactures, and sells semiconductor products through physically unclonable function and quantum technology in South Korea. The company offers security IP, hardware root of trust (HRoT), security chips, security modules and solutions, and post-quantum cryptography (PQC) services. It also provides quantum-resilient system architecture and security solutions. The company was founded in 2001 and is headquartered in Seoul, South Korea. ICTK Co., Ltd. operates as a subsidiary of Bureau Veritas SA."
+ },
+ "168360": {
+  "industry": "Specialty Industrial Machinery",
+  "sector": "Industrials",
+  "summary": "PEMTRON Corporation develops, manufactures, and supplies electronic product parts and semiconductor inspection equipment. It supplies solder",
+  "summary_long": "PEMTRON Corporation develops, manufactures, and supplies electronic product parts and semiconductor inspection equipment. It supplies soldering inspection equipment (3D SPI), 3D mounting inspection equipment (3D AOI, MOI), wafer bump 3D inspection equipment, wire bonding 3D inspection equipment, and lead tab process/inspection equipment. The company offers SATURN, a 3D inline solder paste inspection system; ATHENA Series, a 3D automated optical inspection (AOI) system; EAGLE 3D 8800TH, a through hole 3D AOI system bottom side head 3D AOI; and EAGLE 3D 8800TWIN, 3D automated optical inspection system top/bottom double sided simultaneous inspection. It also provides TROI 8800 CI Series, a conformal coating inspection system with inline coating thickness measure (option); ZEUS, a wafer bump and wire bonding 3D AOI; 8800WI, a wafer bump 3D vision inspection system; MERCURY, an automated X-ray SMD counter; and HAWK7300, a lead tab inspection system. In addition, the company is releasing new equipment needed by the market, such as coating inspection machines (CI), pin inspection machines, and bottom inspection machines, as well as expanding its business to new applications, such as nano and bio based on electron microscope (SEM) technology. It offers products used in various fields, such as SMT, Automotive Field, Lead Tab, and Semiconductor. The company sells its products to wholesalers or final consumers. PEMTRON Corporation was founded in 2002 and is headquartered in Seoul, South Korea."
+ },
+ "117730": {
+  "industry": "Computer Hardware",
+  "sector": "Technology",
+  "summary": "T-Robotics.Co., Ltd. engages in the development, production, and sale of robots in South Korea, China, the United States, and internationall",
+  "summary_long": "T-Robotics.Co., Ltd. engages in the development, production, and sale of robots in South Korea, China, the United States, and internationally. It offers vacuum transport robots, autonomous driving robots, and human support robots. The company was founded in 2004 and is headquartered in Osan-si, South Korea."
+ },
+ "482630": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "NC Chem Corporation produces and sells fine chemical materials for semiconductors in South Korea. It offers materials for photo process and ",
+  "summary_long": "NC Chem Corporation produces and sells fine chemical materials for semiconductors in South Korea. It offers materials for photo process and semiconductor wet process. The company was founded in 2008 and is based in Hwaseong-si, South Korea. NC Chem Corporation is a subsidiary of Samyang Holdings Corporation."
+ },
+ "061970": {
+  "industry": "Semiconductors",
+  "sector": "Technology",
+  "summary": "LB Semicon Inc. provides flip-chip wafer bumping technology solutions in South Korea. It offers wafer-level packaging technology for packagi",
+  "summary_long": "LB Semicon Inc. provides flip-chip wafer bumping technology solutions in South Korea. It offers wafer-level packaging technology for packaging and testing integrated circuits; gold bumped wafers, which are applied on various packages, such as chip on glass, chip on film, and chip on plastic; solder bumps for various flip chip packages; Cu pillar bumps; Au RDL, which is used to reposition the layout of the I/O pad; and thick Cu products. The company also provides chip probe test; and back-end services, such as laminating, back grinding, laser marking and grooving, SAW, plasma, post AVI, UV irradiation, pick and place, AVI, visual inspection and packing services, as well as back side coating, foil mount, and tape and reel. LB Semicon Inc. was founded in 2000 and is based in Pyeongtaek-Si, South Korea."
+ },
+ "047920": {
+  "industry": "Drug Manufacturers - Specialty & Generic",
+  "sector": "Healthcare",
+  "summary": "HLB Pharmaceutical Co., Ltd. researches and develops peptide drugs in South Korea. The company offers skeletal muscle relaxant, tranquilizer",
+  "summary_long": "HLB Pharmaceutical Co., Ltd. researches and develops peptide drugs in South Korea. The company offers skeletal muscle relaxant, tranquilizers, antihistamines, antihypertensive agents, pain relief, antipruritics, astringents, anti-inflammatories, alimentary system drugs, metabolic drugs, ophthalmic agents, local anesthetics, antiarteriosclerotic agents, expectorants, antipyretics, analgesics, antidiabetic drug, chemotherapeutics, peptic ulcer agents, central nervous system drug, antibiotics, digestives, antacids, dental drugs, multivitamins, parasistic skin disese drugs, dermatlogicals, agents for urogenital organ, amino acid agent, antitussive, mucolytic agents, anthelmintics, antidiarrheals, circulatory system drug, vitamins, skin softeners, anti-hemorrhoid drugs, and agents for liver disease. It is also developing CTT-004 for the treatment of ataxia induced by spinocerebellar degeneration; and offers CMO services. The company was formerly known as Mediforum Pharmaceutical Incorporation and changed its name to HLB Pharmaceutical Co., Ltd in October 2020. HLB Pharmaceutical Co., Ltd. was founded in 1998 and is headquartered in Namyangju-si, South Korea."
+ },
+ "425040": {
+  "industry": "Specialty Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Temc Co., Ltd., a specialized material company, manufactures and sells special gases and medical gases for use in semiconductor and display ",
+  "summary_long": "Temc Co., Ltd., a specialized material company, manufactures and sells special gases and medical gases for use in semiconductor and display processes. It also offers various semiconductor gases related equipment. The company was founded in 2015 and is headquartered in Boeun-Gun, South Korea."
+ },
+ "017890": {
+  "industry": "Chemicals",
+  "sector": "Basic Materials",
+  "summary": "Korea Alcohol Industrial Co., Ltd. engages in the manufacture and sale of chemical products in South Korea and internationally. It offers in",
+  "summary_long": "Korea Alcohol Industrial Co., Ltd. engages in the manufacture and sale of chemical products in South Korea and internationally. It offers industrial, refined, and edible ethanol; petrochemical products, including ethyl and butyl acetate; color pastes; and electronic grade normal butyl acetate and absolute ethanol. The company was founded in 1984 and is headquartered in Yongin-si, South Korea."
+ },
+ "0035S0": {
+  "industry": "Software - Infrastructure",
+  "sector": "Technology",
+  "summary": "Bigwave Robotics Corp. develops robot automation platform. The company offers products, such as Marosol, a robot automation platform that al",
+  "summary_long": "Bigwave Robotics Corp. develops robot automation platform. The company offers products, such as Marosol, a robot automation platform that allows customers to compare and review industrial robots and automation cases, and supports the entire process from consultation and quotation to solution proposal and implementation and SOLlink, a multi-robot AI agent that orchestrates heterogeneous robots. It serves manufacturing, logistics, and services industry. The company was founded in 2020 and is based in Seoul, South Korea."
+ },
+ "446540": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Magatouch Co.,Ltd. provides semiconductor probe, ICT, WLCSP, and battery pins in South Korea, the United States, and China. The company also",
+  "summary_long": "Magatouch Co.,Ltd. provides semiconductor probe, ICT, WLCSP, and battery pins in South Korea, the United States, and China. The company also offers battery clips and interposers. Its products are used in various applications, including PCB test, display, camera module, medical, probe card, glass panel, etc. The company was founded in 2010 and is based in Cheonan-si, South Korea."
+ },
+ "160980": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "CYMECHS Inc., a tool automation company, engages in the provision of core system components for semiconductor manufacturing in South Korea. ",
+  "summary_long": "CYMECHS Inc., a tool automation company, engages in the provision of core system components for semiconductor manufacturing in South Korea. The company offers transfer-equipment, such as transfer modules, EFEM, aligners, LPM, ATM robot for EFEM, and vacuum robot with transfer chambers. It is also involved in the provision of intelligent robot solutions. The company was incorporated in 2005 and is headquartered in Hwaseong-si, South Korea."
+ },
+ "484590": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Samyang Comtech Co.,Ltd. produces and sells ground equipment and personal protection products, and aviation parts in ballistic protection fi",
+  "summary_long": "Samyang Comtech Co.,Ltd. produces and sells ground equipment and personal protection products, and aviation parts in ballistic protection field. It offers ballistic protection products, such as armors, add-on armors, ceramic armors, bulletproof panels, add-on armor kits, armored cases, protection panels for naval vessel, ballistic helmets, helmet interior parts, multi-purpose body armors, multi-functional body armor, and plate inserts for multi-functional and multi-purpose body armors. The company also provides aircraft parts, including soundproof panel and protection panel assemblies, gunner and troop seats, protection panel for FCS, exhaust stack for helicopter, fuel tank for fixed-wing aircraft, and fuel tank for helicopter; ceramic tiles; and composite components comprising protection covers, IFF system for military vehicles, poles and spreaders, fuel tanks, steel ball filings, detonator and fuse parts, smoke grenade parts, and antenna reflector panels. It also engages in research and development activities. Samyang Comtech Co.,Ltd. was formerly known as Oriental Industry. Samyang Comtech Co.,Ltd. was incorporated in 1962 and is based in Seoul, South Korea with Factories in Anseong-si, Gyeonggi-do; Gwangju-si, Gyeonggi-do; and Gumi-si, Gyeongsangbuk-do."
+ },
+ "199800": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "ToolGen Incorporated, a biotechnology company, focuses on the development of genome editing technology in South Korea. The company develops ",
+  "summary_long": "ToolGen Incorporated, a biotechnology company, focuses on the development of genome editing technology in South Korea. The company develops clustered regularly interspaced short palindromic repeats (CRISPR)-Cas9 gene scissors for gene editing in eukaryotic cells. It is involved in patent monetization, treatment, and seed businesses. ToolGen Incorporated was founded in 1999 and is based in Seoul, South Korea."
+ },
+ "265520": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Advanced Process Systems Corporation develops and sells semiconductors and display manufacturing equipment primarily in South Korea, China, ",
+  "summary_long": "Advanced Process Systems Corporation develops and sells semiconductors and display manufacturing equipment primarily in South Korea, China, and Vietnam. It offers semiconductor, such as rapid thermal process, sputter system, descum system, laser dicing, laser de-bonder, wafer dicing, and laser and laser ablation. The company also provides displays excimer laser annealing, laser lift-off, glass encapsulation, ALD, film laser cutting, and PECVD for front end process; and module lamination, dispenser, and OCR inkjet for back end process. In addition, it offers EV batteries, including NG sorter, tray washer, cell taping, and cell packing; and solar cells, comprising laser edge isolation, laser doped selective emitters, and laser contact openings. The company was formerly known as Kornic Systems Corporation and changed its name to Advanced Process Systems Corporation in 2009. Advanced Process Systems Corporation was founded in 1994 and is headquartered in Hwaseong-si, South Korea."
+ },
+ "266690": {
+  "industry": "Aerospace & Defense",
+  "sector": "Industrials",
+  "summary": "Duksan Navcours Co.,Ltd. develops and manufactures global navigation satellite system (GNSS) and inertial navigation system (INS). The compa",
+  "summary_long": "Duksan Navcours Co.,Ltd. develops and manufactures global navigation satellite system (GNSS) and inertial navigation system (INS). The company's products include multi-mode GNSS chipsets, custom made GNSS/INS Integrated navigation systems, special purpose multi GNSS antennas, and smart anti jamming solutions (nulling antenna, jamming control equipment, CRPA based anti-jamming system, pseudo lite, anti-jamming testing equipment) for ground weapons systems, precision guided weapons, air weapons systems, and space launch vehicles. Duksan Navcours Co.,Ltd. was incorporated in 2012 and is headquartered in Daejeon, South Korea. As of March 10, 2021, Duksan Navcours Co.,Ltd. operates as a subsidiary of Duksan Hi Metal Co.,Ltd."
+ },
+ "228760": {
+  "industry": "Biotechnology",
+  "sector": "Healthcare",
+  "summary": "Genomictree Inc., a biomarker-based molecular diagnostics company, develops and commercializes molecular diagnostic products for the detecti",
+  "summary_long": "Genomictree Inc., a biomarker-based molecular diagnostics company, develops and commercializes molecular diagnostic products for the detection of cancer and various infectious diseases. The company offers EarlyTect C, a screening method for early diagnosis of colorectal cancer; EarlyTect L for detection of epigenetic markers associated with lung cancer in pulmonary nodule patients; and EarlyTect B for detection of genetic and epigenetic markers associated with bladder cancer in hematuria patients. It also provides AccuraDTect SARS-CoV-2 RT-qPCR kits, test providers, and nucleic acid transport medium products. The company was founded in 2000 and is headquartered in Daejeon, South Korea."
+ },
+ "042520": {
+  "industry": "Medical Devices",
+  "sector": "Healthcare",
+  "summary": "HansBiomed Corporation, together with its subsidiaries, engages in the research and development, production, and sale of medical materials f",
+  "summary_long": "HansBiomed Corporation, together with its subsidiaries, engages in the research and development, production, and sale of medical materials for the procedure and the raw materials for medical supplies. The company provides ExFuse, a demineralized bone matrix with cancellous bone gel/putty; BellaFuse, a demineralized bone matrix; Genesis, a cancellous sponge block/filler; Pedi-Stick, a demineralized cortical bone stick; SureChip, a cancellous bone chip; OsteoGrow, a demineralized bone matrix inserter; BellaCell HD, an allograft dermal product that transplanted in a patient whose skin has been lost due to breast cancer; and SureDerm, an acellular dermal matrix. It also offers BELLAGEL, a breast prosthesis, internal, and gel-filled solution; MINT Lift, a PDO thread; EZ-Tcon solution; Lion HT/HN, a hair transplanter body/needle; and Scar Clinic, a scar management solution. The company was formerly known as Hans Medical Corp. and changed its name to HansBiomed Corporation in June 2000. The company was founded in 1990 and is headquartered in Seoul, South Korea."
+ },
+ "486510": {
+  "industry": "Semiconductor Equipment & Materials",
+  "sector": "Technology",
+  "summary": "Global Technologies Co., Ltd. manufactures display technologies and advanced electronic modules. The company's products include display driv",
+  "summary_long": "Global Technologies Co., Ltd. manufactures display technologies and advanced electronic modules. The company's products include display driver; analog and hybrid LED light intensity control integrated circuits applied to premium display products, including mini LED TVs and monitors; digital signage, such as transparent displays for commercial advertising and automotive interiors; Automotive Displays, including CID (Central Information Display) and SAL (Smart Ambient Light); and semiconductor manufacturing, such as core semiconductor and components and various solutions for IT and automotive electronics. Global Technologies Co., Ltd. was incorporated in 2013 and is headquartered in Hwaseong-si, South Korea."
  }
 }
