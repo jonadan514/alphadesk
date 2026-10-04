@@ -75,6 +75,7 @@ export async function GET(request: Request) {
     // 직전 회차가 아예 없으면(첫 스크리닝) is_new를 true가 아니라 **null**로 둔다 -
     // 모르는 것을 "신규"로 단정하면 첫 주에 275종목이 전부 새것처럼 보인다.
     await attachNewFlags(client, candidates, market);
+    await attachThemes(client, candidates, market);
 
     const lastScreened = (candidates[0] as any)?.screened_at ?? null;
     return NextResponse.json({ candidates, screened_at: lastScreened });
@@ -133,5 +134,60 @@ async function attachNewFlags(
   } catch {
     // 이력 조회가 실패해도 후보 목록 자체는 그대로 보여준다.
     candidates.forEach((c) => { if (c.is_new === undefined) c.is_new = null; });
+  }
+}
+
+
+// 후보마다 소속 테마(사업 소속 direct/partial만)와 그 테마의 이번 주 레이더 라벨·최근 분기 분류를 붙인다.
+// 워치리스트에서 "지금 흐름 안에 있는 종목"만 걸러 보려는 용도(2026-10-04). 시장 인식(perceived)은
+// 3축 계산에서 빼는 것과 같은 이유로 넣지 않는다. 시장별로 쿼리 1-2번 - 종목마다 조회하지 않는다.
+// 실패해도 목록은 그대로 뜬다(themes만 빈 배열).
+async function attachThemes(
+  client: ReturnType<typeof getClient>,
+  candidates: Record<string, unknown>[],
+  market: string | null,
+): Promise<void> {
+  candidates.forEach((c) => { c.themes = []; });
+  if (candidates.length === 0) return;
+  const markets = market ? [market] : Array.from(new Set(candidates.map((c) => c.market as string)));
+  for (const mkt of markets) {
+    try {
+      const res = await client.execute({
+        sql: `
+          WITH latest_runs AS (
+            SELECT theme_id, MAX(run_id) AS run_id FROM theme_members
+            WHERE market = ? AND approved = 1 GROUP BY theme_id
+          )
+          SELECT tm.ticker, tm.theme_id, ts.label
+          FROM theme_members tm
+          JOIN latest_runs lr ON lr.theme_id = tm.theme_id AND lr.run_id = tm.run_id
+          LEFT JOIN theme_signals ts ON ts.theme_id = tm.theme_id AND ts.market = ?
+            AND ts.week_start = (SELECT MAX(week_start) FROM theme_signals WHERE market = ?)
+          WHERE tm.market = ? AND tm.approved = 1 AND tm.linkage IN ('direct', 'partial')
+        `,
+        args: [mkt, mkt, mkt, mkt],
+      });
+      // 최근 분기 분류(없으면 비워 둔다 - 분기 표가 아직 없어도 목록은 떠야 한다)
+      const quarterly: Record<string, string | null> = {};
+      try {
+        const q = await client.execute({
+          sql: `
+            SELECT theme_id, classification FROM quarterly_theme_classification
+            WHERE market = ? AND (fiscal_year * 10 + fiscal_quarter) = (
+              SELECT MAX(fiscal_year * 10 + fiscal_quarter) FROM quarterly_theme_classification WHERE market = ?
+            )
+          `,
+          args: [mkt, mkt],
+        });
+        q.rows.forEach((r) => { quarterly[r[0] as string] = (r[1] as string | null) ?? null; });
+      } catch { /* 분기 표 없음 */ }
+
+      const byTicker: Record<string, { theme_id: string; label: string | null; quarterly: string | null }[]> = {};
+      res.rows.forEach((r) => {
+        const t = r[0] as string, tid = r[1] as string;
+        (byTicker[t] ??= []).push({ theme_id: tid, label: (r[2] as string | null) ?? null, quarterly: quarterly[tid] ?? null });
+      });
+      candidates.filter((c) => c.market === mkt).forEach((c) => { c.themes = byTicker[c.symbol as string] ?? []; });
+    } catch { /* 테마 표 조회 실패 - 빈 배열 유지 */ }
   }
 }
