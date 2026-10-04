@@ -177,7 +177,7 @@ def main() -> None:
     if not should_send(signature):
         return
 
-    lines = [f"<b>📊 AlphaDesk 주간 요약 — {today}</b>", ""]
+    lines = [f"<b>📊 Undercurrent Sonar 주간 요약 — {today}</b>", ""]
 
     if cross_hits:
         lines += ["", "<b>⭐ 워치리스트 ↔ 상위 종목 교차</b>"] + cross_hits

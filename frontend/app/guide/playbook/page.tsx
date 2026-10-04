@@ -390,7 +390,7 @@ export default function PlaybookPage() {
       </Card>
 
       <p className="text-[12px] text-center pb-4" style={{ color: "#423e33" }}>
-        AlphaDesk는 투자 참고 도구입니다. 최종 투자 판단과 책임은 항상 본인에게 있습니다.
+        Undercurrent Sonar는 투자 참고 도구입니다. 최종 투자 판단과 책임은 항상 본인에게 있습니다.
       </p>
     </div>
   );

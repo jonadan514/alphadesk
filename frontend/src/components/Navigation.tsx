@@ -70,8 +70,13 @@ function SidebarInner({
         className="flex h-20 shrink-0 items-center border-b px-5"
         style={{ borderColor: "var(--border)" }}
       >
-        <span className="text-2xl font-black tracking-tight" style={{ color: "#ffb020" }}>
-          Alpha<span style={{ color: "#ece7d8" }}>Desk</span>
+        <span className="flex flex-col leading-none" title="Undercurrent Sonar">
+          <span className="text-2xl font-black tracking-tight" style={{ color: "#ffb020" }}>
+            U-<span style={{ color: "#ece7d8" }}>Sonar</span>
+          </span>
+          <span className="mt-1 text-[10px] font-semibold tracking-[0.18em]" style={{ color: "#726b58" }}>
+            UNDERCURRENT SONAR
+          </span>
         </span>
         {onClose && (
           <button

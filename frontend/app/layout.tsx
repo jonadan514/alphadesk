@@ -10,13 +10,13 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 const notoKr = Noto_Sans_KR({ subsets: ["latin"], variable: "--font-noto-kr", weight: ["400", "500", "700", "900"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "AlphaDesk",
-  description: "S&P 500 스마트머니 분석 대시보드",
+  title: "Undercurrent Sonar",
+  description: "테마별 물밑 흐름(뉴스·실적·주가)을 따로 보는 주간 리서치 도구",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "AlphaDesk",
+    title: "U-Sonar",
   },
   icons: {
     apple: "/icon-192.png",

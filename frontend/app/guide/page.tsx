@@ -38,7 +38,7 @@ export default function GuidePage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <h1 className="text-base font-bold text-white">AlphaDesk 사용 설명서</h1>
+          <h1 className="text-base font-bold text-white">Undercurrent Sonar 사용 설명서</h1>
           <Badge text="GUIDE" color="#ffb020" />
         </div>
         <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
@@ -67,7 +67,7 @@ export default function GuidePage() {
       <Card>
         <SectionTitle>📌 처음이라면 — 4단계로 좁혀가기</SectionTitle>
         <p className="text-[12px] mb-4 leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          AlphaDesk는 <span className="text-white font-semibold">"매수하라"고 말해주는 도구가 아닙니다.</span> 대신
+          Undercurrent Sonar는 <span className="text-white font-semibold">"매수하라"고 말해주는 도구가 아닙니다.</span> 대신
           "지금 뭘 눈여겨봐야 하는가"를 시장 전체 → 업종 → 테마 → 개별 종목 순서로 좁혀가도록 만들어졌습니다.
           투자가 처음이라면 아래 4단계를 순서대로 따라가 보세요. 각 단계는 서로 다른 화면(탭)입니다.
         </p>
@@ -117,7 +117,7 @@ export default function GuidePage() {
           <p className="text-[12px] font-bold" style={{ color: "#ffb020" }}>💡 가장 중요한 규칙 하나만 기억한다면</p>
           <p className="text-[13px] font-bold text-white mt-1">보유 이유가 사라졌는지 정기적으로 점검하고, 그렇다면 매도한다</p>
           <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-            AlphaDesk는 1~3년 펀더멘털 보유를 기본 전제로 합니다 — 단기 가격 변동에 따른 자동 손절은 없고,
+            Undercurrent Sonar는 1~3년 펀더멘털 보유를 기본 전제로 합니다 — 단기 가격 변동에 따른 자동 손절은 없고,
             매수·매도 실행이나 보유 종목 추적 기능도 제공하지 않습니다. 재무 건전성 필터를 통과한 후보를
             정기적으로 다시 훑어보고, 애초에 보유 이유였던 스토리·촉매가 사라졌는지 본인이 직접 점검하세요.
           </p>
@@ -379,7 +379,7 @@ export default function GuidePage() {
       </Card>
 
       <p className="text-[12px] text-center pb-4" style={{ color: "#423e33" }}>
-        AlphaDesk는 투자 참고 도구입니다. 최종 투자 판단과 책임은 항상 본인에게 있습니다.
+        Undercurrent Sonar는 투자 참고 도구입니다. 최종 투자 판단과 책임은 항상 본인에게 있습니다.
       </p>
     </div>
   );

@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AlphaDesk",
-    short_name: "AlphaDesk",
-    description: "S&P 500 스마트머니 분석 대시보드",
+    name: "Undercurrent Sonar",
+    short_name: "U-Sonar",
+    description: "테마별 물밑 흐름(뉴스·실적·주가)을 따로 보는 주간 리서치 도구",
     start_url: "/",
     display: "standalone",
     background_color: "#0a0a0a",
