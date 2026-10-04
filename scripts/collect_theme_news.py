@@ -84,6 +84,13 @@ def _current_week_monday(today: date) -> date:
     return today - timedelta(days=today.weekday())
 
 
+def member_news_count(articles: list[dict], stats: dict) -> int | None:
+    """미국(Finnhub 소속 기업 뉴스) 주간 건수. 소속 중 하나라도 조회에 실패했으면 None.
+
+    일부만 빠진 건수를 저장하면 기준선 대비 가짜 '감소'가 된다 - 계산 불가는 데이터부족이다(원칙 4)."""
+    return None if stats.get("failed_members") else len(articles)
+
+
 BASELINE_WEEKS = 8      # 기준선을 만들 때 참고하는 직전 주 수
 BASELINE_MIN_WEEKS = 4  # 이만큼도 없으면 판정 보류
 
@@ -199,8 +206,9 @@ def main() -> None:
                          f"(종목별 {stats['per_member']}"
                          f"{', 조회실패 ' + str(stats['failed_members']) if stats['failed_members'] else ''}"
                          f"{', 상한 ' + str(stats['saturated_members']) if stats['saturated_members'] else ''})")
-                    # 소속 전부 조회 실패면 건수를 모르는 것 - None으로 넘겨 NULL 저장
-                    count = None if len(stats["failed_members"]) == stats["members"] else len(articles)
+                    # 소속 중 하나라도 조회에 실패하면 그 주 건수는 실제보다 작게 세어진 것이라 비율이
+                    # 가짜 '감소'로 나온다 - 원칙 4(계산 불가는 데이터부족)대로 None -> NULL 저장.
+                    count = member_news_count(articles, stats)
                     fetched.append((theme, count))
                     continue
                 articles, stats = collect_theme_news(

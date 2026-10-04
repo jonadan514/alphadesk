@@ -461,7 +461,7 @@ def collect_member_news(members_by_theme: dict[str, list[str]], after: date, bef
     """테마별 소속 기업 뉴스를 모아 기사 단위로 중복 제거한다.
 
     여러 테마에 같은 종목이 있으면 한 번만 조회한다. 반환: {theme_id: (기사 목록, 통계)}.
-    통계의 failed_members가 소속 전부이면 그 테마 건수는 모르는 것이다(쓰는 쪽이 NULL 처리)."""
+    통계의 failed_members가 비어 있지 않으면 그 테마 건수는 불완전하다(쓰는 쪽이 NULL 처리)."""
     cache: dict[str, list[dict] | Exception] = {}
     for tickers in members_by_theme.values():
         for t in tickers:

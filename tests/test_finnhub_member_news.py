@@ -107,3 +107,11 @@ def test_클래스_주식_표기_변환(env, monkeypatch):
     monkeypatch.setattr(tnc.requests, "get", _fake({"MOG.A": []}, calls))
     tnc.collect_member_news({"defense": ["MOG-A"]}, AFTER, BEFORE)
     assert calls == ["MOG.A"]
+
+
+def test_소속_일부만_실패해도_건수는_NULL():
+    """일부만 센 건수를 저장하면 기준선 대비 가짜 '감소'가 된다 - 원칙 4(계산 불가는 데이터부족)."""
+    from scripts.collect_theme_news import member_news_count
+    arts = [{"url": "u1"}, {"url": "u2"}]
+    assert member_news_count(arts, {"failed_members": []}) == 2
+    assert member_news_count(arts, {"failed_members": ["NVDA: RuntimeError"]}) is None
