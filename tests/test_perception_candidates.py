@@ -14,9 +14,10 @@ HOLDINGS = {"date": "20261002", "etfs": [
         {"ticker": "001440", "weight": 9.0},   # 이미 소속 -> 제외
         {"ticker": "999999", "weight": 5.0},   # 유니버스 밖 -> 제외
         {"ticker": "222222", "weight": 0.5},   # 비중 하한 미만 -> 제외
+        {"ticker": "444444", "weight": 3.0},   # ETF 1개·5% 미만 -> 후보 기준 미달
     ]},
 ]}
-NAMES = {"060370": "LS마린솔루션", "001440": "대한전선", "222222": "꼬리종목", "333333": "옛인식"}
+NAMES = {"444444": "약한근거", "060370": "LS마린솔루션", "001440": "대한전선", "222222": "꼬리종목", "333333": "옛인식"}
 
 
 def test_후보는_비중_하한_이상_유니버스_안_비소속만():
@@ -54,3 +55,11 @@ def test_혼합_ETF만_근거면_참고_목록으로_뺀다():
     res = build_candidates(holdings, {}, NAMES)
     assert res["add"] == []
     assert sorted(r[0] for r in res["add_mixed_only"]) == ["k_content", "travel_airline"]
+
+
+def test_ETF_2개면_비중이_작아도_후보다():
+    holdings = {"date": "20261002", "etfs": [
+        {"etf": "111111", "name": "KODEX 해저케이블", "themes": ["cable_wire"], "holdings": [{"ticker": "444444", "weight": 3.0}]},
+        {"etf": "222222", "name": "TIGER 전선", "themes": ["cable_wire"], "holdings": [{"ticker": "444444", "weight": 2.5}]},
+    ]}
+    assert [r[1] for r in build_candidates(holdings, {}, NAMES)["add"]] == ["444444"]

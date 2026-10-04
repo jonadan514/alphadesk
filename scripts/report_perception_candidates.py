@@ -23,6 +23,10 @@ sys.path.insert(0, str(ROOT))
 # ETF 안 비중 하한(%). 임의로 정한 숫자 - ETF는 수십 종목을 담아 꼬리 쪽 1% 미만은
 # "시장이 그 테마로 본다"기보다 지수 채우기에 가깝다. 몇 분기 결과를 보고 조정한다.
 MIN_WEIGHT = 2.0
+# 후보가 되려면 MIN_WEIGHT 이상인 테마 ETF가 MIN_ETFS개 이상이거나, 한 곳이라도 STRONG_WEIGHT 이상.
+# 2026-10-04 첫 실행에서 ETF 하나·비중 2%만으로는 후보 213건이라 검토가 안 됐다(사용자 결정으로 상향, 130건).
+MIN_ETFS = 2
+STRONG_WEIGHT = 5.0
 
 
 def build_candidates(holdings: dict, members: dict[str, dict[str, str]],
@@ -49,6 +53,8 @@ def build_candidates(holdings: dict, members: dict[str, dict[str, str]],
     add, add_mixed_only = [], []
     for (tid, code), srcs in sorted(seen.items()):
         if code not in universe_names or code in members.get(tid, {}):
+            continue
+        if len(srcs) < MIN_ETFS and max(s[2] for s in srcs) < STRONG_WEIGHT:
             continue
         srcs.sort(key=lambda s: (s[3], -s[2]))   # 단일 테마 ETF를 먼저 인용
         cited = ", ".join(f"{n}({c}) {w:.1f}%" for n, c, w, _ in srcs[:3])
