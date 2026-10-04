@@ -163,7 +163,7 @@ function TriChip({ label, value }: { label: string; value: boolean | null }) {
       : { color: MUTED };
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <span className="text-[10px]" style={{ color: FAINT }}>{label}</span>
+      <span className="text-[11px]" style={{ color: MUTED }}>{label}</span>
       <span className="text-[13px]" style={{ fontFamily: MONO, ...style }}>
         {value === null ? "–" : value ? "O" : "X"}
       </span>
@@ -197,7 +197,7 @@ function ValuationTierBadge({ tier }: { tier: string | null }) {
     tier === "비싼 편" ? { background: DANGER_SOFT, color: DANGER } :
     { background: MUTED_SOFT, color: MUTED };
   return (
-    <span className="whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-semibold" style={style}>
+    <span className="self-start whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold" style={style}>
       {tier}
     </span>
   );
@@ -262,16 +262,16 @@ function ClassificationGrid({ counts, filter, onToggle }: {
   counts: Record<Classification, number>; filter: Classification | null; onToggle: (c: Classification) => void;
 }) {
   return (
-    <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: "64px 1fr 1fr" }}>
+    <div className="mt-4 grid max-w-2xl gap-2" style={{ gridTemplateColumns: "64px 1fr 1fr" }}>
       <div />
-      <div className="pb-1 text-center text-[11px]" style={{ color: FAINT }}>뉴스 적음</div>
-      <div className="pb-1 text-center text-[11px]" style={{ color: FAINT }}>뉴스 많음</div>
+      <div className="pb-1 text-center text-[12px]" style={{ color: MUTED }}>뉴스 적음</div>
+      <div className="pb-1 text-center text-[12px]" style={{ color: MUTED }}>뉴스 많음</div>
 
-      <div className="flex items-center justify-end pr-2 text-[11px]" style={{ color: FAINT }}>재무 켜짐</div>
+      <div className="flex items-center justify-end pr-2 text-[12px]" style={{ color: MUTED }}>재무 켜짐</div>
       <GridCell label="조용한 변화" count={counts["조용한 변화"]} active={filter === "조용한 변화"} emphasis onClick={() => onToggle("조용한 변화")} />
       <GridCell label="확인된 변화" count={counts["확인된 변화"]} active={filter === "확인된 변화"} onClick={() => onToggle("확인된 변화")} />
 
-      <div className="flex items-center justify-end pr-2 text-[11px]" style={{ color: FAINT }}>재무 꺼짐</div>
+      <div className="flex items-center justify-end pr-2 text-[12px]" style={{ color: MUTED }}>재무 꺼짐</div>
       <GridCell label="관심 밖" count={counts["관심 밖"]} active={filter === "관심 밖"} onClick={() => onToggle("관심 밖")} />
       <GridCell label="기대 선행" count={counts["기대 선행"]} active={filter === "기대 선행"} onClick={() => onToggle("기대 선행")} />
     </div>
@@ -317,7 +317,7 @@ function MembersTable({ members, loading, market }: { members: CompanySignal[]; 
           <thead>
             <tr style={{ background: "var(--bg-inset)" }}>
               {[market === "KR" ? "종목" : "티커", "변화 신호", "변화 기업", "매출(1년전→최근)", "밸류", "재무"].map((h) => (
-                <th key={h} className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide" style={{ color: FAINT, borderBottom: "1px solid var(--border)" }}>
+                <th key={h} className="whitespace-nowrap px-3 py-2 text-left text-[12px] font-bold" style={{ color: MUTED, borderBottom: "1px solid var(--border)" }}>
                   {h}
                 </th>
               ))}
@@ -330,7 +330,7 @@ function MembersTable({ members, loading, market }: { members: CompanySignal[]; 
                   {market === "KR" ? (
                     <div className="flex flex-col">
                       <span className="whitespace-nowrap font-bold" style={{ color: "var(--text-primary)" }}>{krStockName(m.ticker)}</span>
-                      <span className="text-[11px]" style={{ fontFamily: MONO, color: FAINT }}>{m.ticker}</span>
+                      <span className="text-[12px]" style={{ fontFamily: MONO, color: MUTED }}>{m.ticker}</span>
                     </div>
                   ) : (
                     <span className="font-bold" style={{ fontFamily: MONO, color: "var(--num)" }}>{m.ticker}</span>
@@ -490,8 +490,9 @@ export default function QuarterlyPage() {
   const toggleFilter = (c: Classification) => setFilter((f) => (f === c ? null : c));
   const visibleClassifications = filter ? [filter] : CLASSIFICATIONS;
 
+  // 폭: 896px(max-w-4xl)이라 소속 기업 표가 좁고 줄바꿈이 많았다 - 워치리스트와 같은 1280px(2026-10-04)
   return (
-    <div className="mx-auto max-w-4xl" style={{ color: "var(--text-primary)" }}>
+    <div className="mx-auto max-w-[1280px]" style={{ color: "var(--text-primary)" }}>
       <div className="mb-2">
         <h1 className="text-[22px] font-bold" style={{ letterSpacing: "-0.01em" }}>이번 분기 테마 4칸 분류</h1>
         <p className="mt-1 max-w-[62ch] text-[14px]" style={{ color: MUTED }}>
