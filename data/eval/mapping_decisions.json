@@ -6,9 +6,18 @@
    "theme_id": "aerospace_space",
    "ticker": "003570",
    "decision": "exclude",
-   "reason": "SNT다이내믹스 지상 방산. 항공우주 아님",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): SNT다이내믹스 지상 방산. 항공우주 아님",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "aerospace_space",
+   "ticker": "010820",
+   "decision": "hold",
+   "reason": "판단보류 - 퍼스텍 유도무기 구성품 외 항공기 부품·우주 사업, 정의 (1) 경계 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
   },
   {
    "market": "KR",
@@ -51,9 +60,9 @@
    "theme_id": "ai_semiconductor",
    "ticker": "003160",
    "decision": "keep",
-   "reason": "디아이 HBM 번인 테스터 - 사용자 결정(동시 소속)",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 디아이 HBM 번인 테스터 - 사용자 결정(동시 소속)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -96,18 +105,18 @@
    "theme_id": "ai_semiconductor",
    "ticker": "009150",
    "decision": "keep",
-   "reason": "삼성전기 FC-BGA 기판 - 정의 (4), 인용 오탐",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 삼성전기 FC-BGA 기판 - 정의 (4), 인용 오탐",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
    "theme_id": "ai_semiconductor",
    "ticker": "011070",
    "decision": "keep",
-   "reason": "LG이노텍 FC-BGA 기판 - 정의 (4)",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: LG이노텍 FC-BGA 기판 - 정의 (4)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -141,9 +150,9 @@
    "theme_id": "ai_semiconductor",
    "ticker": "036930",
    "decision": "hold",
-   "reason": "주성엔지니어링 사업정보 없음 - 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: 주성엔지니어링 사업정보 없음 - 판단보류",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -168,9 +177,9 @@
    "theme_id": "ai_semiconductor",
    "ticker": "171090",
    "decision": "exclude",
-   "reason": "선익시스템 OLED 증착장비",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): 선익시스템 OLED 증착장비",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -186,9 +195,18 @@
    "theme_id": "ai_semiconductor",
    "ticker": "195870",
    "decision": "hold",
-   "reason": "해성디에스 패키지 기판 - 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: 해성디에스 패키지 기판 - 판단보류",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "ai_semiconductor",
+   "ticker": "200710",
+   "decision": "hold",
+   "reason": "판단보류 - 에이디테크놀로지 ASIC 디자인하우스(AI 칩 설계 지원), 인용은 엉뚱한 문장 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
   },
   {
    "market": "KR",
@@ -231,9 +249,9 @@
    "theme_id": "ai_semiconductor",
    "ticker": "425420",
    "decision": "exclude",
-   "reason": "티에프이 테스트 소켓. 반도체장비 테마 쪽",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): 티에프이 테스트 소켓. 반도체장비 테마 쪽",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -274,11 +292,20 @@
   {
    "market": "KR",
    "theme_id": "autonomous_driving",
+   "ticker": "056080",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 유진로봇은 자율주행 물류로봇을 개발하고 있어 테마와 무관하다.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "autonomous_driving",
    "ticker": "108490",
-   "decision": "hold",
-   "reason": "로보티즈 자율주행 배송로봇 - 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.round3_gate.keep"
+   "decision": "exclude",
+   "reason": "예전 판정 정정: 로보티즈 배송로봇 - 2026-09-15 결정(차량만)으로 정의상 제외(피지컬 AI로) (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -302,10 +329,10 @@
    "market": "KR",
    "theme_id": "autonomous_driving",
    "ticker": "466100",
-   "decision": "hold",
-   "reason": "클로봇 자율로봇 SW - 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.round3_gate.keep"
+   "decision": "exclude",
+   "reason": "예전 판정 정정: 클로봇 자율로봇 SW - 위와 같음 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -324,6 +351,15 @@
    "reason": "현대해상 보험",
    "decided_at": "2026-09-15",
    "source": "v5_1_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "battery",
+   "ticker": "004490",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 납산 배터리 제조로 2차전지 테마와 무관함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -357,18 +393,18 @@
    "theme_id": "battery",
    "ticker": "086520",
    "decision": "keep",
-   "reason": "에코프로 양극재 그룹 지주",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 에코프로 양극재 그룹 지주",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
    "theme_id": "battery",
    "ticker": "096770",
    "decision": "hold",
-   "reason": "자회사 SK온이 배터리 대기업",
-   "decided_at": "2026-09-15",
-   "source": "evidence_audit_labels_20260915.json.labels"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: 자회사 SK온이 배터리 대기업",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -384,9 +420,9 @@
    "theme_id": "battery",
    "ticker": "336370",
    "decision": "keep",
-   "reason": "솔루스첨단소재 배터리 동박 - 감사 오탐",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 솔루스첨단소재 배터리 동박 - 감사 오탐",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -402,9 +438,9 @@
    "theme_id": "biosimilar",
    "ticker": "000250",
    "decision": "keep",
-   "reason": "삼천당제약 아일리아 바이오시밀러(SCD411)",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 삼천당제약 아일리아 바이오시밀러(SCD411)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -427,6 +463,51 @@
   {
    "market": "KR",
    "theme_id": "biosimilar",
+   "ticker": "078160",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 바이오시밀러 관련 사업이 없음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "086900",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 보툴리눔 톡신 제품을 제공하는 회사임.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "174900",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 항체 의약품 연구 및 개발 전문 회사임.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "206650",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 백신 및 바이오 의약품 개발 회사임.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "228760",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 바이오마커 기반 분자 진단 제품 개발 회사임.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
    "ticker": "290650",
    "decision": "exclude",
    "reason": "엘앤씨바이오는 조직재생. 바이오시밀러 아님",
@@ -438,9 +519,45 @@
    "theme_id": "biosimilar",
    "ticker": "326030",
    "decision": "exclude",
-   "reason": "SK바이오팜 신약(CNS). 바이오시밀러 아님",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): SK바이오팜 신약(CNS). 바이오시밀러 아님",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "372320",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 바이오시밀러 관련 연구개발이 명시되지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "397030",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 바이오베터 및 항체 생물학적 제제 개발 회사임.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "424870",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 면역항암제 개발 회사임.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "456160",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 바이오시밀러 관련 연구가 명시되지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -481,6 +598,15 @@
   {
    "market": "KR",
    "theme_id": "cable_wire",
+   "ticker": "006910",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 전선·케이블 제조와 관련된 사업이 아님.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "cable_wire",
    "ticker": "010120",
    "decision": "exclude",
    "reason": "LS ELECTRIC은 전력기기. 전선은 LS전선(LS 자회사). 전력망 소속은 유지",
@@ -508,6 +634,15 @@
   {
    "market": "KR",
    "theme_id": "cable_wire",
+   "ticker": "060370",
+   "decision": "keep",
+   "reason": "LS마린솔루션 해저케이블 포설·유지보수 - 매출이 해저케이블 프로젝트에서 나와 같은 수요로 실적이 움직임. 감사도 fit=fits(인용 검증만 실패) (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "cable_wire",
    "ticker": "062040",
    "decision": "exclude",
    "reason": "산일전기 특수변압기 - 전선 아님",
@@ -528,9 +663,9 @@
    "theme_id": "cdmo",
    "ticker": "068270",
    "decision": "hold",
-   "reason": "셀트리온 CDMO 자회사(2024) - 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.round3_gate.keep"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: 셀트리온 CDMO 자회사(2024) - 판단보류",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -552,6 +687,15 @@
   },
   {
    "market": "KR",
+   "theme_id": "cdmo",
+   "ticker": "302440",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 백신 및 바이오의약품 연구개발, 생산 및 유통에 집중함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
    "theme_id": "construction_machinery",
    "ticker": "000100",
    "decision": "exclude",
@@ -563,10 +707,10 @@
    "market": "KR",
    "theme_id": "construction_machinery",
    "ticker": "000720",
-   "decision": "keep",
-   "reason": "현대건설 - 테마가 건설기계·인프라, 키워드 건설 수주",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "decision": "exclude",
+   "reason": "예전 판정 정정: 현대건설 - 2026-09-15 건설기계/인프라 건설 분리 후 정의상 건설사 제외(인프라 건설 테마로) (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -581,19 +725,19 @@
    "market": "KR",
    "theme_id": "construction_machinery",
    "ticker": "009410",
-   "decision": "keep",
-   "reason": "태영건설 - 동일 기준",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "decision": "exclude",
+   "reason": "예전 판정 정정: 태영건설 - 위와 같음 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
    "theme_id": "construction_machinery",
    "ticker": "028260",
-   "decision": "keep",
-   "reason": "삼성물산 건설부문 - 건설사 기준과 동일, 인용 오탐",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.round2_after_merge.keep"
+   "decision": "exclude",
+   "reason": "예전 판정 정정: 삼성물산 - 위와 같음 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -617,10 +761,10 @@
    "market": "KR",
    "theme_id": "construction_machinery",
    "ticker": "097230",
-   "decision": "keep",
-   "reason": "HJ중공업 건설 부문 - 동일 기준",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "decision": "exclude",
+   "reason": "예전 판정 정정: HJ중공업 건설 부문 - 위와 같음 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -717,9 +861,18 @@
    "theme_id": "copper_metals",
    "ticker": "295310",
    "decision": "keep",
-   "reason": "에이치브이엠 니켈합금 - 키워드에 니켈 가격",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.round3_gate.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 에이치브이엠 니켈합금 - 키워드에 니켈 가격",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "copper_metals",
+   "ticker": "448900",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 구리 및 알루미늄을 원자재로 사용하지만 비철금속 제련·가공이 아님.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -734,10 +887,19 @@
    "market": "KR",
    "theme_id": "defense",
    "ticker": "005810",
-   "decision": "hold",
-   "reason": "풍산홀딩스는 풍산의 지주사",
-   "decided_at": "2026-09-15",
-   "source": "evidence_audit_labels_20260915.json.labels"
+   "decision": "exclude",
+   "reason": "예전 판정 정정: 풍산홀딩스 지주사 - 상장 자회사 풍산(103140)이 있음 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "defense",
+   "ticker": "010140",
+   "decision": "exclude",
+   "reason": "삼성중공업 - 함정 건조 매출 미확인. 함정 MRO 기대로 시장이 방산으로 묶는다면 ETF 근거로 perceived 편입 검토(SPEC 11장) (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -753,9 +915,9 @@
    "theme_id": "defense",
    "ticker": "103140",
    "decision": "keep",
-   "reason": "풍산 탄약",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 풍산 탄약",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -780,36 +942,45 @@
    "theme_id": "energy_storage",
    "ticker": "009830",
    "decision": "keep",
-   "reason": "한화솔루션 Qcells ESS",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 한화솔루션 Qcells ESS",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
    "theme_id": "energy_storage",
    "ticker": "066970",
    "decision": "keep",
-   "reason": "엘앤에프 ESS용 LFP 양극재",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 엘앤에프 ESS용 LFP 양극재",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
    "theme_id": "energy_storage",
    "ticker": "096770",
    "decision": "hold",
-   "reason": "SK온 ESS용 배터리",
-   "decided_at": "2026-09-15",
-   "source": "evidence_audit_labels_20260915.json.labels"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: SK온 ESS용 배터리",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "energy_storage",
+   "ticker": "126340",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: ESS와 관련된 사업이 없음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
    "theme_id": "energy_storage",
    "ticker": "222080",
    "decision": "exclude",
-   "reason": "SFA넥셀 배터리 제조장비 - ESS 아님",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.round2_after_merge.unapprove"
+   "reason": "이전 판정(2026-09-15): SFA넥셀 배터리 제조장비 - ESS 아님",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -825,9 +996,9 @@
    "theme_id": "energy_storage",
    "ticker": "336370",
    "decision": "keep",
-   "reason": "솔루스첨단소재 - 감사 오탐",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 솔루스첨단소재 - 감사 오탐",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -859,11 +1030,29 @@
   {
    "market": "KR",
    "theme_id": "ev_value_chain",
+   "ticker": "043260",
+   "decision": "hold",
+   "reason": "판단보류 - 성호전자 전원공급장치, EV 충전장치용 매출 비중 미확인 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "ev_value_chain",
    "ticker": "051910",
    "decision": "keep",
-   "reason": "LG화학 양극재·LG에너지솔루션 모회사",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: LG화학 양극재·LG에너지솔루션 모회사",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "ev_value_chain",
+   "ticker": "058610",
+   "decision": "exclude",
+   "reason": "에스피지 - 산업용 기어드모터·감속기, 전기차 매출 미확인. 시장도 로봇 감속기 종목으로 봄 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -879,18 +1068,54 @@
    "theme_id": "ev_value_chain",
    "ticker": "066970",
    "decision": "keep",
-   "reason": "엘앤에프 EV 양극재",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 엘앤에프 EV 양극재",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "ev_value_chain",
+   "ticker": "082920",
+   "decision": "exclude",
+   "reason": "비츠로셀 - 1차전지(리튬일차전지, 스마트미터·군수용) 제조, 전기차 매출 미확인 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
    "theme_id": "ev_value_chain",
    "ticker": "096770",
    "decision": "keep",
-   "reason": "SK이노베이션 자회사 SK온 EV 배터리",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: SK이노베이션 자회사 SK온 EV 배터리",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "ev_value_chain",
+   "ticker": "247540",
+   "decision": "keep",
+   "reason": "에코프로비엠 EV 양극재 - 정의 (5) 동시 소속 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "ev_value_chain",
+   "ticker": "271940",
+   "decision": "hold",
+   "reason": "판단보류 - 일진하이솔루스 수소차(FCEV) 수소탱크, 전기차 범위 경계 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "ev_value_chain",
+   "ticker": "365340",
+   "decision": "hold",
+   "reason": "판단보류 - 성일하이텍 배터리 재활용(전구체 원료), 정의 (5) 경계 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
   },
   {
    "market": "KR",
@@ -900,6 +1125,15 @@
    "reason": "LG에너지솔루션 - 인용 오탐",
    "decided_at": "2026-09-15",
    "source": "v5_1_manual_review_20260915.json.round2_after_merge.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "ev_value_chain",
+   "ticker": "450080",
+   "decision": "keep",
+   "reason": "에코프로머티 EV 전구체 - 정의 (5) 동시 소속 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
   },
   {
    "market": "KR",
@@ -913,11 +1147,20 @@
   {
    "market": "KR",
    "theme_id": "factory_automation",
+   "ticker": "090710",
+   "decision": "keep",
+   "reason": "휴림로봇 산업용 로봇 - 인용 검증 실패(한글 인용)는 감사 오탐 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "factory_automation",
    "ticker": "098460",
    "decision": "keep",
-   "reason": "고영 3D 자동검사장비",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 고영 3D 자동검사장비",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -930,12 +1173,30 @@
   },
   {
    "market": "KR",
+   "theme_id": "factory_automation",
+   "ticker": "454910",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 자동화 설비 관련 정보가 없음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "factory_automation",
+   "ticker": "488900",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 비츠로넥스텍의 사업은 산업자동화와 관련이 없다.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
    "theme_id": "game",
    "ticker": "005690",
    "decision": "exclude",
-   "reason": "파미셀 바이오",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): 파미셀 바이오",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -949,11 +1210,20 @@
   {
    "market": "KR",
    "theme_id": "game",
+   "ticker": "069080",
+   "decision": "keep",
+   "reason": "웹젠 게임 개발·퍼블리싱 - 감사 오탐 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "game",
    "ticker": "112040",
    "decision": "keep",
-   "reason": "위메이드 게임사 - 사업정보 없어 감사 판단 불가",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 위메이드 게임사 - 사업정보 없어 감사 판단 불가",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -987,9 +1257,9 @@
    "theme_id": "glp1_obesity",
    "ticker": "195940",
    "decision": "keep",
-   "reason": "HK이노엔 GLP-1 신약 개발 중 - 요약에 없어 인용 실패, 편입은 맞음",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: HK이노엔 GLP-1 신약 개발 중 - 요약에 없어 인용 실패, 편입은 맞음",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1003,20 +1273,38 @@
   {
    "market": "KR",
    "theme_id": "infra_construction",
+   "ticker": "005090",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 전력 생산에 집중하는 기업으로 인프라 건설과는 무관합니다.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "infra_construction",
+   "ticker": "009900",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 자동차 부품 제조업체로 인프라 건설과는 무관합니다.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "infra_construction",
    "ticker": "012630",
    "decision": "exclude",
-   "reason": "HDC 지주사 - 주택 중심, 상장 자회사 HDC현산 기준",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): HDC 지주사 - 주택 중심, 상장 자회사 HDC현산 기준",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
    "theme_id": "infra_construction",
    "ticker": "051600",
    "decision": "exclude",
-   "reason": "한전KPS 발전설비 정비 - 시공사 아님",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): 한전KPS 발전설비 정비 - 시공사 아님",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1041,18 +1329,27 @@
    "theme_id": "infra_construction",
    "ticker": "294870",
    "decision": "exclude",
-   "reason": "IPARK현대산업개발 주택 분양 중심 - 정의상 제외",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): IPARK현대산업개발 주택 분양 중심 - 정의상 제외",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "k_beauty",
+   "ticker": "092190",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 서울바이오시스는 화장품 관련 제품이 포함되지만 주 사업이 아님.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
    "theme_id": "k_content",
    "ticker": "001040",
    "decision": "keep",
-   "reason": "CJ - 요약에 entertainment and media 부문 명시",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: CJ - 요약에 entertainment and media 부문 명시",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1104,9 +1401,9 @@
    "theme_id": "k_content",
    "ticker": "079160",
    "decision": "exclude",
-   "reason": "CJ CGV 극장 운영 - 정의상 제외",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): CJ CGV 극장 운영 - 정의상 제외",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1138,11 +1435,29 @@
   {
    "market": "KR",
    "theme_id": "k_food",
+   "ticker": "003550",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 식품 사업부가 없고 전자 및 화학 분야에 집중함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "k_food",
    "ticker": "004370",
    "decision": "keep",
-   "reason": "농심 - 감사 오탐",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 농심 - 감사 오탐",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "k_food",
+   "ticker": "004800",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 냉동식품 제조와 관련된 정보가 없음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1156,11 +1471,29 @@
   {
    "market": "KR",
    "theme_id": "k_food",
+   "ticker": "005810",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 식품 제조와 관련된 정보가 없음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "k_food",
+   "ticker": "005930",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 식품 사업부가 없고 전자 및 IT 분야에 집중함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "k_food",
    "ticker": "006040",
    "decision": "keep",
-   "reason": "동원산업 수산·식품(동원F&B 흡수) - 인용 오탐",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.round2_after_merge.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 동원산업 수산·식품(동원F&B 흡수) - 인용 오탐",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1174,11 +1507,29 @@
   {
    "market": "KR",
    "theme_id": "k_food",
+   "ticker": "271560",
+   "decision": "keep",
+   "reason": "오리온 제과 - 정의 (2) 음료·주류·제과에 명시, 규칙 자동 제외는 감사 오판 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "k_food",
    "ticker": "280360",
    "decision": "keep",
-   "reason": "롯데웰푸드 제과",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 롯데웰푸드 제과",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "lng_gas",
+   "ticker": "004710",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 가스 공급 사업이 아닌 전자 부품 제조업체임.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1212,9 +1563,9 @@
    "theme_id": "lng_gas",
    "ticker": "018670",
    "decision": "hold",
-   "reason": "SK가스 주력은 LPG지만 LNG 터미널 사업 확장 중",
-   "decided_at": "2026-09-15",
-   "source": "evidence_audit_labels_20260915.json.labels"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: SK가스 주력은 LPG지만 LNG 터미널 사업 확장 중",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1239,18 +1590,63 @@
    "theme_id": "lng_gas",
    "ticker": "267250",
    "decision": "hold",
-   "reason": "HD현대 조선 자회사 LNG선 - 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.round3_gate.keep"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: HD현대 조선 자회사 LNG선 - 판단보류",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "medical_device",
+   "ticker": "0120G0",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 의료기기 관련 사업이 명시되어 있지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
    "theme_id": "medical_device",
    "ticker": "041830",
    "decision": "keep",
-   "reason": "인바디 체성분분석기 - 사업정보 없어 감사 판단 불가",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 인바디 체성분분석기 - 사업정보 없어 감사 판단 불가",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "medical_device",
+   "ticker": "078160",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 의료기기 관련 사업이 명시되어 있지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "medical_device",
+   "ticker": "099190",
+   "decision": "keep",
+   "reason": "아이센스 혈당측정기(체외진단) - 감사 오탐 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "medical_device",
+   "ticker": "214450",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 의료기기 관련 사업이 명시되어 있지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "medical_device",
+   "ticker": "228760",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 의료기기 관련 사업이 명시되어 있지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1273,11 +1669,29 @@
   {
    "market": "KR",
    "theme_id": "neuro_alzheimer",
+   "ticker": "001060",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 알츠하이머 및 파킨슨병 치료제 개발 정보가 없음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "neuro_alzheimer",
    "ticker": "003850",
    "decision": "exclude",
    "reason": "보령 순환기·항암",
    "decided_at": "2026-09-15",
    "source": "v5_1_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "neuro_alzheimer",
+   "ticker": "006280",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 알츠하이머 및 파킨슨병 관련 치료제 개발 정보가 없음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1353,6 +1767,15 @@
   },
   {
    "market": "KR",
+   "theme_id": "nuclear_smr",
+   "ticker": "126560",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 원전 관련 사업이 명시되어 있지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
    "theme_id": "petrochemical",
    "ticker": "001450",
    "decision": "exclude",
@@ -1399,6 +1822,15 @@
   {
    "market": "KR",
    "theme_id": "petrochemical",
+   "ticker": "005380",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 자동차 제조업체로 석유화학과 무관함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "petrochemical",
    "ticker": "009830",
    "decision": "keep",
    "reason": "한화솔루션 합성수지(PE·PVC)",
@@ -1437,9 +1869,9 @@
    "theme_id": "petrochemical",
    "ticker": "285130",
    "decision": "keep",
-   "reason": "SK케미칼 코폴리에스터",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: SK케미칼 코폴리에스터",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1455,18 +1887,18 @@
    "theme_id": "petrochemical",
    "ticker": "456040",
    "decision": "hold",
-   "reason": "OCI 카본블랙은 석유계 원료지만 석유화학사로 보긴 애매",
-   "decided_at": "2026-09-15",
-   "source": "evidence_audit_labels_20260915.json.labels"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: OCI 카본블랙은 석유계 원료지만 석유화학사로 보긴 애매",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
    "theme_id": "physical_ai",
    "ticker": "005930",
    "decision": "hold",
-   "reason": "삼성전자 로봇 - 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: 삼성전자 로봇 - 판단보류",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1482,9 +1914,9 @@
    "theme_id": "physical_ai",
    "ticker": "006400",
    "decision": "hold",
-   "reason": "삼성SDI 로봇 구동 배터리 - 가치사슬 기준 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: 삼성SDI 로봇 구동 배터리 - 가치사슬 기준 판단보류",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1500,9 +1932,9 @@
    "theme_id": "physical_ai",
    "ticker": "267250",
    "decision": "hold",
-   "reason": "HD현대 자회사 HD현대로보틱스",
-   "decided_at": "2026-09-15",
-   "source": "evidence_audit_labels_20260915.json.labels"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: HD현대 자회사 HD현대로보틱스",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1512,6 +1944,15 @@
    "reason": "클로봇 로봇 제어 SW - 사용자 결정(로봇은 피지컬 AI)",
    "decided_at": "2026-09-15",
    "source": "v6_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "power_grid",
+   "ticker": "001440",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 전선 및 케이블 제조업체로 송배전망에 직접 기여하지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1552,6 +1993,15 @@
   {
    "market": "KR",
    "theme_id": "power_grid",
+   "ticker": "267250",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 주요 사업이 송배전망과 관련이 없음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "power_grid",
    "ticker": "267260",
    "decision": "keep",
    "reason": "HD현대일렉트릭 변압기·송배전",
@@ -1572,9 +2022,9 @@
    "theme_id": "power_grid",
    "ticker": "336260",
    "decision": "exclude",
-   "reason": "두산퓨얼셀 발전. 송배전 아님",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): 두산퓨얼셀 발전. 송배전 아님",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1599,9 +2049,9 @@
    "theme_id": "renewable_energy",
    "ticker": "009540",
    "decision": "hold",
-   "reason": "HD한국조선해양 해상풍력 관련 사업 일부",
-   "decided_at": "2026-09-15",
-   "source": "evidence_audit_labels_20260915.json.labels"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: HD한국조선해양 해상풍력 관련 사업 일부",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1615,20 +2065,29 @@
   {
    "market": "KR",
    "theme_id": "renewable_energy",
+   "ticker": "032820",
+   "decision": "hold",
+   "reason": "판단보류 - 우리기술 주력은 원전 제어계측, 해상풍력은 일부 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "renewable_energy",
    "ticker": "034020",
    "decision": "keep",
-   "reason": "두산에너빌리티 풍력터빈",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 두산에너빌리티 풍력터빈",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
    "theme_id": "renewable_energy",
    "ticker": "096770",
-   "decision": "hold",
-   "reason": "SK이노베이션 재생에너지는 약한 연결",
-   "decided_at": "2026-09-15",
-   "source": "evidence_audit_labels_20260915.json.labels"
+   "decision": "exclude",
+   "reason": "예전 판정 정정: SK이노베이션 - 정유사, 재생에너지 매출 미확인(정의 제외) (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1638,6 +2097,15 @@
    "reason": "SK하이닉스 칩 제조사 - 장비·소재의 구매자이지 공급자가 아님",
    "decided_at": "2026-09-15",
    "source": "v6_manual_review_20260915.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "semi_equipment",
+   "ticker": "000990",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: DB하이텍은 반도체 제조업체로, 장비 및 소재를 제공하지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1653,9 +2121,9 @@
    "theme_id": "semi_equipment",
    "ticker": "005290",
    "decision": "keep",
-   "reason": "동진쎄미켐 포토레지스트",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 동진쎄미켐 포토레지스트",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1671,9 +2139,9 @@
    "theme_id": "semi_equipment",
    "ticker": "006400",
    "decision": "keep",
-   "reason": "삼성SDI 전자재료 부문",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 삼성SDI 전자재료 부문",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1689,9 +2157,9 @@
    "theme_id": "semi_equipment",
    "ticker": "009150",
    "decision": "hold",
-   "reason": "삼성전기 패키지 기판 - 판단보류",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.keep"
+   "reason": "이전 판정(2026-09-15) 판단보류였음인데 이번 run에서 빠짐: 삼성전기 패키지 기판 - 판단보류",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1716,9 +2184,9 @@
    "theme_id": "semi_equipment",
    "ticker": "053610",
    "decision": "keep",
-   "reason": "프로텍 후공정 장비",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 프로텍 후공정 장비",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1752,18 +2220,36 @@
    "theme_id": "semi_equipment",
    "ticker": "095340",
    "decision": "keep",
-   "reason": "ISC 테스트 소켓",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: ISC 테스트 소켓",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "semi_equipment",
+   "ticker": "100790",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 금융업으로 반도체 장비·소재와 무관함",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "semi_equipment",
+   "ticker": "108320",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 반도체 장비가 아닌 다양한 전자제품 솔루션 제공 기업임",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
    "theme_id": "semi_equipment",
    "ticker": "140860",
    "decision": "keep",
-   "reason": "파크시스템스 인라인 계측",
-   "decided_at": "2026-09-15",
-   "source": "v6_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 파크시스템스 인라인 계측",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1777,6 +2263,15 @@
   {
    "market": "KR",
    "theme_id": "semi_equipment",
+   "ticker": "200710",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 에이디테크놀로지는 반도체 설계 및 개발 전문 기업으로, 장비를 제공하지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "semi_equipment",
    "ticker": "248070",
    "decision": "exclude",
    "reason": "솔루엠은 전원모듈·전자가격표시기",
@@ -1786,11 +2281,20 @@
   {
    "market": "KR",
    "theme_id": "semi_equipment",
+   "ticker": "330860",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 네패스아크는 테스트 및 엔지니어링 서비스 제공 기업으로, 장비를 제조하지 않음.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "semi_equipment",
    "ticker": "357780",
    "decision": "keep",
-   "reason": "솔브레인 반도체 소재",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.restore"
+   "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 솔브레인 반도체 소재",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.restore"
   },
   {
    "market": "KR",
@@ -1818,6 +2322,15 @@
    "reason": "기가비스 기판 검사 장비",
    "decided_at": "2026-09-15",
    "source": "v6_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "semi_equipment",
+   "ticker": "425040",
+   "decision": "keep",
+   "reason": "티이엠씨 반도체용 특수가스 - 정의 (3) 반도체 소재, 감사 사유가 자기모순(특수가스 동시 소속) (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
   },
   {
    "market": "KR",
@@ -1867,6 +2380,15 @@
   {
    "market": "KR",
    "theme_id": "shipbuilding",
+   "ticker": "082740",
+   "decision": "keep",
+   "reason": "한화엔진 선박 엔진 - 정의 (2), 감사 무응답 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "shipbuilding",
    "ticker": "100090",
    "decision": "keep",
    "reason": "SK오션플랜트 선체블록 - 조선 가치사슬",
@@ -1878,9 +2400,9 @@
    "theme_id": "shipbuilding",
    "ticker": "100840",
    "decision": "exclude",
-   "reason": "SNT에너지 열교환기",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): SNT에너지 열교환기",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1893,12 +2415,30 @@
   },
   {
    "market": "KR",
+   "theme_id": "shipbuilding",
+   "ticker": "439260",
+   "decision": "keep",
+   "reason": "대한조선 조선소 - 정의 (1), 감사 무응답 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
+   "theme_id": "shipbuilding",
+   "ticker": "460930",
+   "decision": "keep",
+   "reason": "현대힘스 선체블록·기자재 - 정의 (2), 감사 무응답 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.keep"
+  },
+  {
+   "market": "KR",
    "theme_id": "specialty_gas",
    "ticker": "003160",
    "decision": "exclude",
-   "reason": "디아이 검사장비",
-   "decided_at": "2026-09-15",
-   "source": "v5_1_manual_review_20260915.json.exclude"
+   "reason": "이전 판정(2026-09-15): 디아이 검사장비",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1912,11 +2452,65 @@
   {
    "market": "KR",
    "theme_id": "specialty_gas",
+   "ticker": "036540",
+   "decision": "exclude",
+   "reason": "SFA반도체 - 반도체 패키징·테스트 외주(OSAT), 특수가스·전자재료 아님 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "specialty_gas",
+   "ticker": "036930",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 반도체 및 태양전지 제조장비를 영위하여 테마와 무관함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "specialty_gas",
+   "ticker": "042660",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 해양 및 방산 분야에서 활동하여 테마와 무관함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "specialty_gas",
+   "ticker": "200470",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 반도체 테스트 장비를 제조하여 테마와 무관함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "specialty_gas",
+   "ticker": "399720",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: SoC 솔루션 및 반도체 설계 서비스 제공으로 테마와 무관함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "specialty_gas",
    "ticker": "456040",
    "decision": "hold",
    "reason": "정정(2026-09-15): 테마가 '특수가스·소재'이고 키워드에 전자재료 포함. OCI는 반도체 precursor 등 전자재료를 생산 - 최초 라벨 '특수가스 매각'은 테마를 너무 좁게 본 것",
    "decided_at": "2026-09-15",
    "source": "evidence_audit_labels_20260915.json.labels"
+  },
+  {
+   "market": "KR",
+   "theme_id": "specialty_gas",
+   "ticker": "468530",
+   "decision": "exclude",
+   "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: 바이오 기술 관련 기업으로 테마와 무관함.",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1926,6 +2520,15 @@
    "reason": "대한항공",
    "decided_at": "2026-09-15",
    "source": "v5_1_manual_review_20260915.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "travel_airline",
+   "ticker": "180640",
+   "decision": "exclude",
+   "reason": "한진칼 - 대한항공 지주사, 정의 '여행 매출이 확인되지 않는 지주사' 제외 + 상장 자회사(대한항공) 있음 (KR v7 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7_review_20261004.json.exclude"
   },
   {
    "market": "US",
