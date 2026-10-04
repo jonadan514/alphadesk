@@ -2681,3 +2681,13 @@ Q2 기준 데이터라 이른 상태로 보일 수 있지만 틀린 값은 아�
     전체 대비 비중(timelinevol)도 같이 떨어져 정규화로 보정되지 않는다 - GDELT 쪽 수집 공백.
   - 'SMR'처럼 짧은 단어는 "phrase too short"로 거부된다.
 - 결론: GDELT DOC API를 Actions에서 주간 수집원으로 쓰는 건 안 된다(요율 + 공백). 다른 출처는 사용자 결정 필요.
+
+## 2026-10-04(8) - 미국 뉴스 수집원 교체: Finnhub 소속 기업 뉴스 (사용자 결정 A)
+
+- Finnhub 실측(run 37179548056, 원전·전력망·방산 8주): 27회 호출 실패 0, 36초. 한 응답 약 250건 상한
+  (BA 240·GE 246·LMT 245) -> 주 단위로만 조회. 방산은 기사 2447건 중 541건이 여러 종목에 겹침 -> URL 기준 중복 제거.
+  MOG-A는 0건 -> MOG.A로 변환.
+- 구현: theme_news_collector.collect_member_news / fetch_finnhub_company_news, collect_theme_news.py의 US 경로
+  (FINNHUB_API_KEY 있으면 소속 기업 모드), 워크플로에 키 전달, NEWS_SOURCE_SWITCH_WEEK["US"]="2026-09-28",
+  SPEC_phase_a_signals.md 2.5. 테스트 4개 추가, 기존 테스트 2개를 새 규칙으로 갱신(US도 전환 주부터).
+- 오늘 밤 정기 수집(22:00 UTC)부터 적용. 미국 뉴스 축은 기준선 4주가 쌓일 때까지 na.

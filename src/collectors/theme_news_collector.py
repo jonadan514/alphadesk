@@ -361,3 +361,107 @@ def collect_theme_news(keywords: list[str], after: date, before: date, market: s
         "failed_keywords": failed,         # 조회 자체가 실패한 키워드(0건과 구별)
     }
     return deduped, stats
+
+
+# ── 미국: Finnhub 기업 뉴스 (소속 기업 뉴스 건수) ─────────────────────────────
+#
+# 2026-10-04 사용자 결정. 구글 뉴스 RSS가 2026-09-28부터 Actions IP를 막았고, GDELT는 Actions의
+# 공유 IP 요율 제한(10회 중 6회 실패)과 수집 공백(2026-09-14 주 전 테마 5% 수준)으로 쓸 수 없었다.
+# 그래서 미국 뉴스 축은 **키워드 기사 수가 아니라 "테마 소속 기업들의 기업 뉴스 건수"**로 잰다
+# (같은 기사가 여러 소속 기업에 걸리면 한 번만 센다). 한국(키워드 기사 수)과 정의가 다르다 -
+# 두 시장의 비율을 서로 비교하지 않는다. SPEC_phase_a_signals.md 2.5.
+#
+# 실측(2026-10-04, 8주 조회): 27회 호출 실패 0, 36초. 한 응답이 약 250건에서 잘려(BA 240, GE 246)
+# 주 단위로만 조회한다 - 대형주도 한 주에 30-60건이라 상한에 닿지 않는다. 닿으면 saturated로 표시.
+FINNHUB_ENDPOINT = "https://finnhub.io/api/v1/company-news"
+FINNHUB_SLEEP_SEC = 1.1        # 무료 등급 분당 60회
+FINNHUB_CAP = 240              # 한 응답이 이 이상이면 잘렸을 수 있다(실측 최대 246)
+
+
+def finnhub_key() -> str | None:
+    key = os.environ.get("FINNHUB_API_KEY", "").strip()
+    return key or None
+
+
+def _finnhub_symbol(ticker: str) -> str:
+    """클래스 주식 표기(MOG-A)를 Finnhub 표기(MOG.A)로. 실측에서 MOG-A는 0건이었다."""
+    return ticker.replace("-", ".")
+
+
+def fetch_finnhub_company_news(ticker: str, after: date, before: date) -> list[dict]:
+    """after~before(before 배타적) 기업 뉴스. 조회 실패는 예외 - 0건으로 둔갑시키지 않는다."""
+    from datetime import datetime, timezone
+    key = finnhub_key()
+    if not key:
+        raise RuntimeError("FINNHUB_API_KEY 미설정")
+    params = {"symbol": _finnhub_symbol(ticker), "from": after.isoformat(),
+              "to": (before - timedelta(days=1)).isoformat(), "token": key}
+    last_err: Exception | None = None
+    for attempt in range(FETCH_ATTEMPTS):
+        try:
+            resp = requests.get(FINNHUB_ENDPOINT, params=params, timeout=30)
+            if resp.status_code == 429:
+                raise RuntimeError("HTTP 429")
+            resp.raise_for_status()
+            data = resp.json()
+            break
+        except Exception as e:  # noqa: BLE001
+            last_err = e
+            if attempt < len(FETCH_BACKOFF_SEC):
+                time.sleep(FETCH_BACKOFF_SEC[attempt])
+    else:
+        raise RuntimeError(f"Finnhub 조회 실패({ticker} {after}~{before}): {type(last_err).__name__}")
+    out = []
+    for it in data if isinstance(data, list) else []:
+        url = it.get("url") or ""
+        ts = it.get("datetime")
+        if not url or not ts:
+            continue
+        d = datetime.fromtimestamp(int(ts), tz=timezone.utc).date()
+        if not (after <= d < before):
+            continue
+        out.append({"id": it.get("id"), "title": it.get("headline", ""), "url": url,
+                    "published_at": d.isoformat(), "source": it.get("source", "")})
+    return out
+
+
+def collect_member_news(members_by_theme: dict[str, list[str]], after: date, before: date
+                        ) -> dict[str, tuple[list[dict], dict]]:
+    """테마별 소속 기업 뉴스를 모아 기사 단위로 중복 제거한다.
+
+    여러 테마에 같은 종목이 있으면 한 번만 조회한다. 반환: {theme_id: (기사 목록, 통계)}.
+    통계의 failed_members가 소속 전부이면 그 테마 건수는 모르는 것이다(쓰는 쪽이 NULL 처리)."""
+    cache: dict[str, list[dict] | Exception] = {}
+    for tickers in members_by_theme.values():
+        for t in tickers:
+            if t in cache:
+                continue
+            try:
+                cache[t] = fetch_finnhub_company_news(t, after, before)
+            except Exception as e:  # noqa: BLE001
+                cache[t] = e
+            time.sleep(FINNHUB_SLEEP_SEC)
+
+    result = {}
+    for tid, tickers in members_by_theme.items():
+        seen: set[str] = set()
+        articles: list[dict] = []
+        per_member, failed, saturated = {}, [], []
+        for t in tickers:
+            got = cache[t]
+            if isinstance(got, Exception):
+                failed.append(f"{t}: {type(got).__name__}")
+                continue
+            per_member[t] = len(got)
+            if len(got) >= FINNHUB_CAP:
+                saturated.append(t)
+            for a in got:
+                h = hash_url(a["url"])
+                if h in seen:
+                    continue
+                seen.add(h)
+                articles.append({**a, "_url_hash": h})
+        result[tid] = (articles, {"per_member": per_member, "raw_total": sum(per_member.values()),
+                                  "after_dedup": len(articles), "failed_members": failed,
+                                  "saturated_members": saturated, "members": len(tickers)})
+    return result

@@ -34,8 +34,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
 from src.db.theme_signals import (ensure_schema, insert_theme_news_bulk, get_prior_news_counts,
-                                  upsert_news_signal, news_history_since)
-from collectors.theme_news_collector import collect_theme_news
+                                  upsert_news_signal, news_history_since, get_approved_theme_members)
+from collectors.theme_news_collector import collect_theme_news, collect_member_news, finnhub_key
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 
@@ -155,12 +155,26 @@ def main() -> None:
         if args.market and market != args.market:
             continue
         market_themes = [t for t in themes if market in t.get("markets", [])]
+        # 미국은 Finnhub 키가 있으면 소속 기업 뉴스 건수로 잰다(2026-10-04, theme_news_collector 설명).
+        # 소속은 다른 축과 같은 direct+partial - perceived(시장 인식)는 넣지 않는다.
+        member_mode = market == "US" and finnhub_key() is not None
+        members_by_theme: dict[str, list[str]] = {}
         collectible = []
         for theme in market_themes:
-            if theme.get(keyword_field):
+            if member_mode:
+                tickers = [m["ticker"] for m in get_approved_theme_members(conn, theme["id"], market)]
+                if tickers:
+                    members_by_theme[theme["id"]] = tickers
+                    collectible.append(theme)
+                else:
+                    _log(f"{theme['id']}({market}): 승인된 소속 없음 - 건너뜀")
+            elif theme.get(keyword_field):
                 collectible.append(theme)
             else:
                 _log(f"{theme['id']}({market}): {keyword_field} 없음 - 건너뜀")
+        if member_mode:
+            _log(f"{market}: Finnhub 소속 기업 뉴스 모드, 종목 "
+                 f"{len({t for v in members_by_theme.values() for t in v})}개")
         _log(f"대상 테마 {len(collectible)}개({market}), 처리 주 {len(weeks)}개 "
              f"({weeks[0].isoformat()} ~ {weeks[-1].isoformat()})")
 
@@ -173,8 +187,22 @@ def main() -> None:
             backfilled = week_start != current_week
 
             fetched = []
+            member_results = (collect_member_news(members_by_theme, week_start, week_end)
+                              if member_mode else {})
             for theme in collectible:
                 theme_id = theme["id"]
+                if member_mode:
+                    articles, stats = member_results[theme_id]
+                    insert_theme_news_bulk(conn, theme_id, market, week_start.isoformat(), articles)
+                    _log(f"{theme_id}({market}) {week_start.isoformat()}: 소속 {stats['members']}종목 "
+                         f"원본 {stats['raw_total']}건 -> 중복제거후 {len(articles)}건 "
+                         f"(종목별 {stats['per_member']}"
+                         f"{', 조회실패 ' + str(stats['failed_members']) if stats['failed_members'] else ''}"
+                         f"{', 상한 ' + str(stats['saturated_members']) if stats['saturated_members'] else ''})")
+                    # 소속 전부 조회 실패면 건수를 모르는 것 - None으로 넘겨 NULL 저장
+                    count = None if len(stats["failed_members"]) == stats["members"] else len(articles)
+                    fetched.append((theme, count))
+                    continue
                 articles, stats = collect_theme_news(
                     theme[keyword_field], week_start, week_end, market=market)
                 insert_theme_news_bulk(conn, theme_id, market, week_start.isoformat(), articles)
@@ -183,7 +211,7 @@ def main() -> None:
                      f"(키워드별 {stats['per_keyword']})")
                 fetched.append((theme, len(articles)))
 
-            collection_failed = is_collection_failure([c for _, c in fetched])
+            collection_failed = is_collection_failure([c or 0 for _, c in fetched])
             if collection_failed:
                 msg = (f"{market} {week_start.isoformat()}: 테마 {len(fetched)}개가 전부 0건 - "
                        f"수집 실패로 보고 건수를 NULL로 저장한다(0으로 저장하면 기준선이 오염된다)")
@@ -200,7 +228,7 @@ def main() -> None:
 
                 prior_counts = get_prior_news_counts(conn, theme_id, market, week_start.isoformat(),
                                                      weeks=BASELINE_WEEKS, since=since)
-                if collection_failed:
+                if collection_failed or article_count is None:
                     # 건수를 모르는 것이지 0인 게 아니다 - NULL로 남겨 기준선 계산에서 빠지게 한다.
                     news_count = None
                     baseline, ratio, arrow = None, None, "na"

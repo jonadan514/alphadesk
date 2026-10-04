@@ -17,8 +17,9 @@ def test_KR은_수집원_전환_주부터():
     assert news_history_since({}, "KR") == "2026-09-28"
 
 
-def test_US는_제한이_없다():
-    assert news_history_since({}, "US") is None
+def test_US도_수집원_전환_주부터():
+    """2026-10-04 미국도 구글 -> Finnhub 소속 기업 뉴스로 바뀌었다(정의 자체가 다름)."""
+    assert news_history_since({}, "US") == "2026-09-28"
 
 
 def test_키워드_변경이_더_늦으면_그쪽을_따른다():
@@ -31,9 +32,9 @@ def test_키워드_변경이_더_이르면_수집원_전환이_이긴다():
     assert news_history_since(theme, "KR") == "2026-09-28"
 
 
-def test_US는_키워드_변경만_따른다():
+def test_US도_더_늦은_쪽을_따른다():
     theme = {"keywords_changed_at": date(2026, 9, 15)}
-    assert news_history_since(theme, "US") == "2026-09-14"
+    assert news_history_since(theme, "US") == "2026-09-28"
 
 
 def _seed(conn, market, weeks_counts):

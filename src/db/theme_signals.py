@@ -161,7 +161,9 @@ def insert_theme_news_bulk(conn, theme_id: str, market: str, week_start: str,
 # 네이버 건수가 구글보다 2-3배 많아서(AI 반도체 334 -> 721), 이어 붙이면 34개 테마 중 33개가
 # 가짜 "급증"으로 나왔다(2026-10-01 실측). 네이버 이력이 BASELINE_MIN_WEEKS 쌓일 때까지 뉴스 축은
 # na(데이터부족)로 남는다 - 탈락이 아니다.
-NEWS_SOURCE_SWITCH_WEEK = {"KR": "2026-09-28"}
+# US: 같은 날 구글이 막혔고, 2026-10-04부터 Finnhub 기업 뉴스(소속 기업 뉴스 건수)로 바꿨다 - 정의 자체가
+# 키워드 기사 수와 달라서 이전 이력과 잇지 않는다.
+NEWS_SOURCE_SWITCH_WEEK = {"KR": "2026-09-28", "US": "2026-09-28"}
 
 
 def news_history_since(theme: dict, market: str) -> str | None:
