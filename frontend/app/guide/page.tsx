@@ -168,7 +168,7 @@ export default function GuidePage() {
       {/* What this tool does */}
       <Card>
         <SectionTitle>이 툴이 하는 것</SectionTitle>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {[
             ["워치리스트",      "재무 건전성 필터(Piotroski·ROE·부채비율·이자보상배율·현금흐름)를 통과한 종목을 주 1회, 순위 없이 리스트업. 여기에 밸류(PSR/PER, 같은 시장 후보 중 싼 편/중간/비싼 편)와 성장(매출 3년 CAGR, 성장/정체/역성장) 축을 더해 보여줌. 티커·종목명 검색 지원"],
             ["네러티브 브리프",  "후보 종목별 최근 뉴스를 GPT가 요약 — 장기 투자 스토리·촉매·리스크·시장 단기 관심도(HOT/WARM/COLD)"],
@@ -228,8 +228,8 @@ export default function GuidePage() {
             ["매출 + 순이익", "3년 연속 동시 감소면 탈락 (매출만 2년 연속 감소도 별도 감점 사유)"],
             ["ROE", "미국 12% · 한국 8% 미만이면 탈락 (시장별 기준)"],
           ].map(([f, tip]) => (
-            <div key={f} className="flex items-center gap-2 text-[12px] py-1.5" style={{ borderBottom: "1px solid #262112" }}>
-              <span className="w-48 shrink-0 font-semibold" style={{ color: "var(--text-secondary)" }}>{f}</span>
+            <div key={f} className="flex flex-col gap-0.5 py-1.5 text-[12px] sm:flex-row sm:items-center sm:gap-2" style={{ borderBottom: "1px solid #262112" }}>
+              <span className="font-semibold sm:w-48 sm:shrink-0" style={{ color: "var(--text-secondary)" }}>{f}</span>
               <span className="flex-1" style={{ color: "#726b58" }}>{tip}</span>
             </div>
           ))}

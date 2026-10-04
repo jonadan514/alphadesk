@@ -60,12 +60,12 @@ function Note({ children }: { children: React.ReactNode }) {
 }
 function Table({ headers, rows }: { headers: string[]; rows: (string | React.ReactNode)[][] }) {
   return (
-    <div className="rounded-xl overflow-hidden mt-3" style={{ border: "1px solid var(--border)" }}>
+    <div className="rounded-xl overflow-x-auto mt-3" style={{ border: "1px solid var(--border)" }}>
       <table className="w-full text-[13px]">
         <thead>
           <tr style={{ background: "var(--bg-inset)", borderBottom: "1px solid var(--border)" }}>
             {headers.map((h) => (
-              <th key={h} className="px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{h}</th>
+              <th key={h} className="whitespace-nowrap px-3 py-2 text-left text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -73,7 +73,7 @@ function Table({ headers, rows }: { headers: string[]; rows: (string | React.Rea
           {rows.map((row, i) => (
             <tr key={i} style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--border-dim)" : "none" }}>
               {row.map((cell, j) => (
-                <td key={j} className="px-3 py-2.5 text-[12px]" style={{ color: j === 0 ? "var(--text-primary)" : "var(--text-secondary)" }}>{cell}</td>
+                <td key={j} className={`px-3 py-2.5 text-[12px] ${j === 0 ? "whitespace-nowrap" : ""}`} style={{ color: j === 0 ? "var(--text-primary)" : "var(--text-secondary)" }}>{cell}</td>
               ))}
             </tr>
           ))}
