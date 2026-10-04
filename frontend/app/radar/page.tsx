@@ -146,7 +146,7 @@ function ArrowChip({ axis, arrow }: { axis: string; arrow: Arrow }) {
   const { fg, bg } = arrowColors(arrow);
   return (
     <div className="flex w-14 shrink-0 flex-col items-center gap-0.5 rounded-lg py-1.5" style={{ background: bg }}>
-      <span className="text-[10px]" style={{ color: FAINT }}>{axis}</span>
+      <span className="text-[11px]" style={{ color: MUTED }}>{axis}</span>
       <span className="text-[17px] font-bold" style={{ color: fg, fontFamily: MONO }}>{arrowGlyph(arrow)}</span>
     </div>
   );
@@ -264,7 +264,7 @@ function MembersTable({ members, loading, market }: { members: Member[]; loading
         <thead>
           <tr style={{ background: "var(--bg-inset)" }}>
             {[market === "KR" ? "종목" : "티커", "가치사슬 단계", "근거", "구분", "재무"].map((h) => (
-              <th key={h} className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide" style={{ color: FAINT, borderBottom: "1px solid var(--border)" }}>
+              <th key={h} className="whitespace-nowrap px-3 py-2 text-left text-[12px] font-bold" style={{ color: MUTED, borderBottom: "1px solid var(--border)" }}>
                 {h}
               </th>
             ))}
@@ -301,7 +301,7 @@ function MembersTable({ members, loading, market }: { members: Member[]; loading
                   ))}
                 </div>
               </td>
-              <td className="max-w-[360px] px-3 py-2 align-top text-[12.5px]" style={{ color: MUTED }}>{m.evidence ?? "-"}</td>
+              <td className="max-w-[560px] px-3 py-2 align-top text-[12.5px]" style={{ color: MUTED }}>{m.evidence ?? "-"}</td>
               <td className="px-3 py-2 align-top">
                 <LinkageBadge linkage={m.linkage} />
               </td>
@@ -557,8 +557,9 @@ export default function RadarPage() {
     ),
   }));
 
+  // 폭: 896px(max-w-4xl)에서 다른 화면과 같은 1280px로(2026-10-04). 설명 문단은 읽기 좋게 ch 단위 폭을 유지한다.
   return (
-    <div className="mx-auto max-w-4xl" style={{ color: "var(--text-primary)" }}>
+    <div className="mx-auto max-w-[1280px]" style={{ color: "var(--text-primary)" }}>
       <div className="mb-2">
         <h1 className="text-[22px] font-bold" style={{ letterSpacing: "-0.01em" }}>이번 주 움직인 테마</h1>
         <p className="mt-1 max-w-[62ch] text-[14px]" style={{ color: MUTED }}>
