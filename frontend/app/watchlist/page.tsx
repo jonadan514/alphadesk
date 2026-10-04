@@ -343,13 +343,13 @@ function NarrativeSection({ c }: { c: Candidate }) {
   return (
     <div>
       <div className="p-3 space-y-2.5" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
-        <p className="text-[10px] uppercase tracking-widest" style={{ color: TEXT_FAINT }}>네러티브 브리프 — 투자 논리</p>
+        <p className="text-[12px] font-semibold" style={{ color: TEXT_SECONDARY }}>네러티브 브리프 — 투자 논리</p>
 
         {loading && (
-          <p className="text-[12px] animate-pulse" style={{ color: TEXT_MUTED }}>불러오는 중...</p>
+          <p className="text-[12px] animate-pulse" style={{ color: TEXT_SECONDARY }}>불러오는 중...</p>
         )}
         {pending && !loading && (
-          <p className="text-[12px]" style={{ color: TEXT_MUTED }}>
+          <p className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
             아직 네러티브가 생성되지 않았어요. 다음 주간 워치리스트 스크리닝(주 1회 자동 실행) 후 표시돼요.
           </p>
         )}
@@ -361,21 +361,21 @@ function NarrativeSection({ c }: { c: Candidate }) {
           <>
             {sent && (
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold px-2 py-0.5" style={{ background: sent.color + "20", color: sent.color, border: `1px solid ${sent.color}40` }}>
+                <span className="text-[12px] font-bold px-2 py-0.5" style={{ background: sent.color + "20", color: sent.color, border: `1px solid ${sent.color}40` }}>
                   {sent.emoji} {sent.label}
                 </span>
                 {brief.trend === "up" && brief.prev_sentiment && (
-                  <span className="text-[11px] font-bold px-2 py-0.5" style={{ background: BAD + "20", color: BAD, border: `1px solid ${BAD}40` }}>
+                  <span className="text-[12px] font-bold px-2 py-0.5" style={{ background: BAD + "20", color: BAD, border: `1px solid ${BAD}40` }}>
                     ▲ 관심도 상승 ({brief.prev_sentiment}→{brief.sentiment})
                   </span>
                 )}
                 {brief.trend === "down" && brief.prev_sentiment && (
-                  <span className="text-[11px] font-bold px-2 py-0.5" style={{ background: INFO + "20", color: INFO, border: `1px solid ${INFO}40` }}>
+                  <span className="text-[12px] font-bold px-2 py-0.5" style={{ background: INFO + "20", color: INFO, border: `1px solid ${INFO}40` }}>
                     ▼ 관심도 하락 ({brief.prev_sentiment}→{brief.sentiment})
                   </span>
                 )}
                 {brief.sentiment_reason && (
-                  <span className="text-[11px]" style={{ color: TEXT_MUTED }}>{brief.sentiment_reason}</span>
+                  <span className="text-[12px]" style={{ color: TEXT_SECONDARY }}>{brief.sentiment_reason}</span>
                 )}
               </div>
             )}
@@ -384,29 +384,29 @@ function NarrativeSection({ c }: { c: Candidate }) {
 
             {brief.catalysts.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold mb-1" style={{ color: GOOD }}>▲ 다가오는 촉매</p>
+                <p className="text-[12px] font-bold mb-1" style={{ color: GOOD }}>▲ 다가오는 촉매</p>
                 {brief.catalysts.map((t, i) => (
-                  <p key={i} className="text-[11px] leading-relaxed pl-2" style={{ color: TEXT_SECONDARY }}>· {t}</p>
+                  <p key={i} className="text-[12px] leading-relaxed pl-2" style={{ color: TEXT_SECONDARY }}>· {t}</p>
                 ))}
               </div>
             )}
             {brief.risks.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold mb-1" style={{ color: BAD }}>▼ 스토리가 깨지는 경우</p>
+                <p className="text-[12px] font-bold mb-1" style={{ color: BAD }}>▼ 스토리가 깨지는 경우</p>
                 {brief.risks.map((t, i) => (
-                  <p key={i} className="text-[11px] leading-relaxed pl-2" style={{ color: TEXT_SECONDARY }}>· {t}</p>
+                  <p key={i} className="text-[12px] leading-relaxed pl-2" style={{ color: TEXT_SECONDARY }}>· {t}</p>
                 ))}
               </div>
             )}
 
             <div className="flex items-center justify-between pt-1" style={{ borderTop: `1px solid ${BORDER}` }}>
-              <span className="text-[10px]" style={{ color: TEXT_FAINT }}>
+              <span className="text-[12px]" style={{ color: TEXT_MUTED }}>
                 최근 1주 뉴스 기반 GPT 분석 · 참고용 · {brief.cached_at.slice(0, 10)} 갱신
               </span>
               {brief.sources.length > 0 && (
                 <span className="flex gap-1.5">
                   {brief.sources.slice(0, 3).map((url, i) => (
-                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-[10px] underline" style={{ color: TEXT_FAINT }}>
+                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-[12px] underline" style={{ color: TEXT_MUTED }}>
                       출처{i + 1}
                     </a>
                   ))}
@@ -455,8 +455,8 @@ function ChecklistSection({ c }: { c: Candidate }) {
   return (
     <div className="p-3 space-y-1.5" style={{ background: INSET_BG, border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between mb-0.5">
-        <p className="text-[10px] uppercase tracking-widest" style={{ color: TEXT_FAINT }}>정성 체크</p>
-        <span className="text-[11px]" style={{ color: checkedCount === items.length && items.length > 0 ? GOOD : TEXT_FAINT }}>
+        <p className="text-[12px] font-semibold" style={{ color: TEXT_SECONDARY }}>정성 체크</p>
+        <span className="text-[12px]" style={{ color: checkedCount === items.length && items.length > 0 ? GOOD : TEXT_MUTED }}>
           {checkedCount}/{items.length}
         </span>
       </div>
@@ -519,7 +519,8 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
   conclParts.push(c.regime_fit === "growth" ? "성장주 성격" : c.regime_fit === "dividend" ? "배당주 성격" : "중립 성격");
   const conclusion = conclParts.join(" · ");
 
-  const eyebrow = "text-[10px] uppercase tracking-widest";
+  // 칸 제목. 예전엔 10px·대문자·넓은 자간이라 한글이 흩어져 보이고 거의 안 보였다(2026-10-04 사용자 지적).
+  const eyebrow = "text-[12px] font-semibold";
   const insetCard = { background: INSET_BG, border: `1px solid ${BORDER}` };
 
   return (
@@ -534,32 +535,32 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
           style={{ background: PANEL_BG, borderBottom: `1px solid ${BORDER}` }}>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-bold px-2 py-0.5" style={{ background: c.market === "US" ? INFO + "20" : BAD + "20", color: c.market === "US" ? INFO : BAD }}>{c.market}</span>
+              <span className="text-[12px] font-bold px-2 py-0.5" style={{ background: c.market === "US" ? INFO + "20" : BAD + "20", color: c.market === "US" ? INFO : BAD }}>{c.market}</span>
               <RegimeBadge fit={c.regime_fit} />
             </div>
             <div className="flex items-baseline gap-2">
               <h2 className="text-2xl font-black" style={{ color: NUM, letterSpacing: "-0.01em" }}>{c.symbol}</h2>
               {c.current_price != null && (
-                <span className="text-[13px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>{formatPrice(c.market, c.current_price)} <span style={{ color: TEXT_FAINT }}>(스크리닝 시점가)</span></span>
+                <span className="text-[13px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>{formatPrice(c.market, c.current_price)} <span style={{ color: TEXT_MUTED }}>(스크리닝 시점가)</span></span>
               )}
             </div>
             {c.name && <p className="text-[13px] mt-0.5" style={{ color: TEXT_SECONDARY }}>{c.name}</p>}
-            {c.sector && <p className="text-[11px] mt-0.5" style={{ color: TEXT_MUTED }}>{c.sector} · {formatCap(c.market, c.market_cap)}</p>}
+            {c.sector && <p className="text-[12px] mt-0.5" style={{ color: TEXT_SECONDARY }}>{c.sector} · {formatCap(c.market, c.market_cap)}</p>}
           </div>
-          <button onClick={onClose} className="p-1" style={{ color: TEXT_MUTED }}><X size={18} /></button>
+          <button onClick={onClose} className="p-1" style={{ color: TEXT_SECONDARY }}><X size={18} /></button>
         </div>
 
         <div className="p-5 space-y-4">
           {/* 한 줄 결론 */}
           <div className="p-3" style={insetCard}>
-            <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>한 줄 결론</p>
+            <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>한 줄 결론</p>
             <p className="text-[14px] font-semibold" style={{ color: TEXT_PRIMARY }}>{conclusion}</p>
           </div>
 
           {/* 소속 테마 — 테마 레이더와의 연결 다리 (미국만) */}
           {relatedThemes.length > 0 && (
             <div className="p-3" style={insetCard}>
-              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>테마 레이더 소속</p>
+              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_SECONDARY }}>테마 레이더 소속</p>
               <div className="flex flex-wrap gap-1.5">
                 {relatedThemes.map((t) => (
                   <a
@@ -579,64 +580,64 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             <NarrativeSection c={c} />
             <div>
-              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>기술적 타이밍</p>
+              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_SECONDARY }}>기술적 타이밍</p>
               <StockTechPanel market={c.market} symbol={c.symbol} />
             </div>
           </div>
 
           {/* 핵심 재무·체제 지표 — 이 종목이 왜 후보인지에 대한 근거 (순위 아님) */}
           <div>
-            <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>핵심 재무 · 체제 지표</p>
+            <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_SECONDARY }}>핵심 재무 · 체제 지표</p>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {/* F-Score */}
               <div className="p-3" style={insetCard}>
-                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>Piotroski F-Score</p>
-                <p className="text-2xl font-black" style={{ color: c.piotroski != null ? (c.piotroski >= 7 ? GOOD : c.piotroski >= 5 ? WARN : BAD) : TEXT_FAINT, fontVariantNumeric: "tabular-nums" }}>
-                  {c.piotroski ?? "-"}<span className="text-sm font-normal" style={{ color: TEXT_FAINT }}>/9</span>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>Piotroski F-Score</p>
+                <p className="text-2xl font-black" style={{ color: c.piotroski != null ? (c.piotroski >= 7 ? GOOD : c.piotroski >= 5 ? WARN : BAD) : TEXT_MUTED, fontVariantNumeric: "tabular-nums" }}>
+                  {c.piotroski ?? "-"}<span className="text-sm font-normal" style={{ color: TEXT_MUTED }}>/9</span>
                 </p>
-                <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>
                   {c.piotroski != null ? (c.piotroski >= 7 ? "재무 우수" : c.piotroski >= 5 ? "보통 수준" : "취약") : "데이터 없음"}
                 </p>
               </div>
 
               {/* 부채비율 */}
               <div className="p-3" style={insetCard}>
-                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>부채비율</p>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>부채비율</p>
                 {c.debt_ratio != null ? (
                   <p className="text-2xl font-black" style={{ color: debtColor(c.debt_ratio), fontVariantNumeric: "tabular-nums" }}>{c.debt_ratio}%</p>
                 ) : (
-                  <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.debt ?? ""] ?? TEXT_FAINT }}>
+                  <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.debt ?? ""] ?? TEXT_MUTED }}>
                     {c.data_notes?.debt ?? "-"}
                   </p>
                 )}
-                <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>
                   {c.data_notes?.debt === "자본잠식(음수 자본)" ? "자기자본 음수 — 원인 확인 필요" : "총부채 / 자기자본"}
                 </p>
               </div>
 
               {/* 이자보상배율 */}
               <div className="p-3" style={insetCard}>
-                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>이자보상배율</p>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>이자보상배율</p>
                 {c.interest_coverage != null ? (
                   <p className="text-2xl font-black" style={{ color: coverColor(c.interest_coverage), fontVariantNumeric: "tabular-nums" }}>{c.interest_coverage.toFixed(1)}x</p>
                 ) : (
-                  <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.interest ?? ""] ?? TEXT_FAINT }}>
+                  <p className="text-[15px] font-black leading-7" style={{ color: NOTE_COLOR[c.data_notes?.interest ?? ""] ?? TEXT_MUTED }}>
                     {c.data_notes?.interest ?? "-"}
                   </p>
                 )}
-                <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>
                   {c.data_notes?.interest === "무차입" ? "이자비용 없음 — 무차입" : "영업이익 / 이자비용"}
                 </p>
               </div>
 
               {/* 영업현금흐름 */}
               <div className="p-3" style={insetCard}>
-                <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>영업현금흐름</p>
+                <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>영업현금흐름</p>
                 <p className="text-2xl font-black" style={{ color: c.cfo_positive_count >= 2 ? GOOD : c.cfo_positive_count === 1 ? WARN : BAD, fontVariantNumeric: "tabular-nums" }}>
                   {c.cfo_positive_count}/2
                 </p>
-                <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>최근 2년 중 플러스 연도</p>
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>최근 2년 중 플러스 연도</p>
               </div>
             </div>
 
@@ -644,16 +645,16 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                 단독 카드로 두는 이유: 위 격자에 끼워 넣으면 재무 건전성 지표처럼
                 읽히는데 이건 판단 기준이 다르다(같은 시장 후보와의 상대 위치). */}
             <div className="p-3 mt-3" style={insetCard}>
-              <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>밸류 위치 (같은 시장 후보 중)</p>
+              <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>밸류 위치 (같은 시장 후보 중)</p>
               <div className="flex items-center gap-2 flex-wrap">
                 <ValuationBadge tier={c.valuation_tier} />
                 <span className="text-[12px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
                   PSR {fmtPsr(c.psr)}
-                  <span style={{ color: TEXT_FAINT }}> · </span>
+                  <span style={{ color: TEXT_MUTED }}> · </span>
                   PER {fmtPer(c.per)}
                 </span>
               </div>
-              <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+              <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>
                 {c.valuation_tier
                   ? "최근 4분기 매출·순이익 합 기준. 절대적으로 싸다는 뜻이 아니라 후보들 중 위치입니다."
                   : c.psr != null
@@ -667,12 +668,12 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                 밸류는 후보들 중 상대 순위, 성장은 절대 기준(0%/10%) -
                 무차입 흑자인데 매출이 줄어드는 가치 함정을 밸류만으로는 못 본다. */}
             <div className="p-3 mt-3" style={insetCard}>
-              <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>성장 위치 (매출 3년 CAGR, 절대 기준)</p>
+              <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>성장 위치 (매출 3년 CAGR, 절대 기준)</p>
               <div className="flex items-center gap-2 flex-wrap">
                 <GrowthBadge tier={c.growth_tier} />
                 <span className="text-[12px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
                   3년 {fmtGrowthPct(c.revenue_cagr_3y)}
-                  <span style={{ color: TEXT_FAINT }}> · </span>
+                  <span style={{ color: TEXT_MUTED }}> · </span>
                   1년 {fmtGrowthPct(c.revenue_yoy)}
                 </span>
                 {c.op_margin_direction && (
@@ -681,7 +682,7 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                   </span>
                 )}
               </div>
-              <p className="text-[10px] mt-1" style={{ color: TEXT_MUTED }}>
+              <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>
                 {c.growth_tier
                   ? "연차 재무제표 최근 4개 회계연도(정확히 3년 간격) 기준. 후보들 중 순위가 아니라 절대 기준입니다."
                   : "회계기간이 부족하거나 간격이 맞지 않아 계산할 수 없습니다."}
@@ -690,7 +691,7 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
 
             {/* 체제 적합도 */}
             <div className="p-3 mt-3" style={insetCard}>
-              <p className={eyebrow + " mb-1"} style={{ color: TEXT_FAINT }}>시장 체제 적합도</p>
+              <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>시장 체제 적합도</p>
               <div className="flex items-center gap-2">
                 <RegimeBadge fit={c.regime_fit} />
                 <span className="text-[12px]" style={{ color: TEXT_SECONDARY }}>
@@ -702,7 +703,7 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
               {/* 유니버스 출처 — 종목 선택 기준이 아니라 "이 후보가 어디서 왔나"를
                   밝히는 한 줄. 중형주(S&P 400)는 2026-09-30에 편입했다. */}
               {c.universe_source && (
-                <p className="text-[10px] mt-2" style={{ color: TEXT_MUTED }}>
+                <p className="text-[12px] mt-2" style={{ color: TEXT_SECONDARY }}>
                   유니버스: {c.universe_source === "sp400"
                     ? "S&P 400 (중형주) — 2026-09-30 편입"
                     : "S&P 500 (대형주)"}
@@ -717,7 +718,7 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
           {/* 매수 이유 메모 — 워치리스트에 추가된 종목만 */}
           {inList && (
             <div className="p-3" style={insetCard}>
-              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_FAINT }}>매수 이유 메모</p>
+              <p className={eyebrow + " mb-1.5"} style={{ color: TEXT_SECONDARY }}>매수 이유 메모</p>
               {editingNote ? (
                 <div className="flex gap-1.5">
                   <input
@@ -733,7 +734,7 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                     className="px-3 text-[12px] font-bold" style={{ background: ACCENT + "18", color: ACCENT, border: `1px solid ${ACCENT}33` }}>저장</button>
                 </div>
               ) : (
-                <button onClick={() => setEditingNote(true)} className="text-[12px] text-left w-full" style={{ color: note ? TEXT_SECONDARY : TEXT_FAINT, background: "transparent", border: "none", cursor: "pointer" }}>
+                <button onClick={() => setEditingNote(true)} className="text-[12px] text-left w-full" style={{ color: note ? TEXT_SECONDARY : TEXT_MUTED, background: "transparent", border: "none", cursor: "pointer" }}>
                   {note || "+ 메모 추가 — 왜 담았는지 기록해두세요"}
                 </button>
               )}

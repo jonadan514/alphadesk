@@ -47,7 +47,7 @@ export default function StockTechPanel({ market, symbol }: { market: string; sym
   }
   if (state === "error" || !data) {
     return (
-      <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>
+      <p className="text-[12px]" style={{ color: "#a39c88" }}>
         차트 데이터를 불러오지 못했어요 (가격 조회 실패).
       </p>
     );
@@ -87,8 +87,8 @@ export default function StockTechPanel({ market, symbol }: { market: string; sym
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[12px] font-bold uppercase tracking-widest text-[#726b58]">추세 · 모멘텀</p>
-        <p className="text-[11px]" style={{ color: "var(--text-faint)" }}>
+        <p className="text-[12px] font-bold text-[#a39c88]">추세 · 모멘텀</p>
+        <p className="text-[12px]" style={{ color: "#a39c88" }}>
           최근 6개월{chg6m != null && (
             <span className="ml-1 font-bold" style={{ color: chg6m >= 0 ? "#4ade80" : "#f87171" }}>
               {chg6m >= 0 ? "+" : ""}{chg6m.toFixed(1)}%
@@ -117,7 +117,7 @@ export default function StockTechPanel({ market, symbol }: { market: string; sym
             <Line type="monotone" dataKey="sma200" stroke="#6fb3b8" strokeWidth={1} dot={false} strokeDasharray="4 3" connectNulls />
           </LineChart>
         </ResponsiveContainer>
-        <p className="text-[10px] text-center" style={{ color: "var(--text-faint)" }}>
+        <p className="text-[12px] text-center" style={{ color: "#a39c88" }}>
           <span style={{ color: "#ffb020" }}>─ 종가</span>
           <span className="ml-2" style={{ color: "#facc15" }}>┄ 50일선</span>
           <span className="ml-2" style={{ color: "#6fb3b8" }}>┄ 200일선</span>
@@ -128,9 +128,9 @@ export default function StockTechPanel({ market, symbol }: { market: string; sym
       <div className="grid grid-cols-3 gap-2">
         {tiles.map(({ label, value, desc, color }) => (
           <div key={label} className="p-2 text-center" style={{ background: "#0e0d08", border: `1px solid ${color}33` }}>
-            <p className="text-[10px]" style={{ color: "#726b58" }}>{label}</p>
+            <p className="text-[12px]" style={{ color: "#a39c88" }}>{label}</p>
             <p className="text-[13px] font-black leading-tight mt-0.5" style={{ color }}>{value}</p>
-            <p className="text-[10px] mt-0.5 leading-snug" style={{ color: "var(--text-faint)" }}>{desc}</p>
+            <p className="text-[12px] mt-0.5 leading-snug" style={{ color: "#a39c88" }}>{desc}</p>
           </div>
         ))}
       </div>
