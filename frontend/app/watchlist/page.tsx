@@ -756,15 +756,37 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
 }
 
 // ── 컬럼 헤더 (툴팁) ─────────────────────────────────────────────────────────
-function ColHeader({ label, infoKey, onInfo }: {
+type SortKey = "market_cap" | "piotroski" | "debt_ratio" | "interest_coverage" | "psr" | "per" | "revenue_cagr_3y" | "revenue_yoy";
+type SortState = { key: SortKey; dir: "asc" | "desc" } | null;
+const SORT_LABEL: Record<SortKey, string> = {
+  market_cap: "시가총액", piotroski: "F-Score", debt_ratio: "부채비율", interest_coverage: "이자보상",
+  psr: "PSR", per: "PER", revenue_cagr_3y: "매출 3년 성장", revenue_yoy: "매출 1년 성장",
+};
+// 처음 누를 때의 방향 - 그 지표에서 "좋은 쪽"이 위로 오게(부채·PSR·PER은 낮을수록, 나머지는 높을수록).
+// 순위를 매기는 게 아니라 사용자가 고른 한 지표로 줄 세워 보는 보기 기능이다(기본은 정렬 없음).
+const SORT_FIRST_DIR: Record<SortKey, "asc" | "desc"> = {
+  market_cap: "desc", piotroski: "desc", debt_ratio: "asc", interest_coverage: "desc",
+  psr: "asc", per: "asc", revenue_cagr_3y: "desc", revenue_yoy: "desc",
+};
+
+function ColHeader({ label, infoKey, onInfo, sortKey, sort, onSort }: {
   label: string;
   infoKey?: keyof typeof INDICATOR_INFO;
   onInfo?: (key: keyof typeof INDICATOR_INFO) => void;
+  sortKey?: SortKey;
+  sort?: SortState;
+  onSort?: (key: SortKey) => void;
 }) {
+  const active = sortKey && sort?.key === sortKey;
   return (
-    <th style={{ padding: "8px 10px", textAlign: "left", fontWeight: 500, whiteSpace: "nowrap" }}>
-      <span style={{ display: "flex", alignItems: "center", gap: 4, color: TEXT_MUTED, fontSize: 12 }}>
-        {label}
+    <th style={{ padding: "8px 8px", textAlign: "left", fontWeight: 500, whiteSpace: "nowrap" }}>
+      <span style={{ display: "flex", alignItems: "center", gap: 4, color: active ? ACCENT : TEXT_SECONDARY, fontSize: 12 }}>
+        {sortKey && onSort ? (
+          <button onClick={() => onSort(sortKey)} title={`${SORT_LABEL[sortKey]}로 정렬`}
+            style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: "inherit", fontSize: 12, fontFamily: "inherit" }}>
+            {label}{active ? (sort!.dir === "asc" ? " ▲" : " ▼") : " ↕"}
+          </button>
+        ) : label}
         {infoKey && onInfo && (
           <button onClick={(e) => { e.stopPropagation(); onInfo(infoKey); }} style={{ color: TEXT_FAINT, lineHeight: 0 }}>
             <Info size={11} />
@@ -790,6 +812,11 @@ export default function WatchlistPage() {
   // 275종목 중 아는 티커/이름을 바로 찾는 용도 - "새 아이디어 탐색"인 다른 필터들과
   // 달리 "이미 아는 종목이 후보에 있는지"를 확인하는 반대 방향 쓰임새다.
   const [searchQuery, setSearchQuery] = useState("");
+  // 지표별 숫자 필터. 빈칸이면 꺼짐. 값이 없는 종목은 그 필터가 켜져 있을 때만 빠지고,
+  // 몇 개가 "값 없음"으로 빠졌는지 따로 보여준다(계산 불가를 조용히 탈락시키지 않는다 - 원칙 4).
+  const [numFilter, setNumFilter] = useState({ minF: "", maxDebt: "", minInterest: "", maxPsr: "", maxPer: "", minCagr: "" });
+  const [showNumFilter, setShowNumFilter] = useState(false);
+  const [sort, setSort] = useState<SortState>(null);
   const [addedSymbols, setAddedSymbols] = useState<Set<string>>(new Set());
   const [selected, setSelected]     = useState<Candidate | null>(null);
   const [infoKey, setInfoKey]       = useState<keyof typeof INDICATOR_INFO | null>(null);
@@ -902,6 +929,43 @@ export default function WatchlistPage() {
     return true;
   });
 
+  // 숫자 필터: [지표값, 기준, 방향]. 기준이 비어 있으면 그 필터는 꺼진 것.
+  const num = (v: string) => (v.trim() === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+  const numChecks: [(c: Candidate) => number | null | undefined, number | null, "min" | "max"][] = [
+    [(c) => c.piotroski, num(numFilter.minF), "min"],
+    [(c) => c.debt_ratio, num(numFilter.maxDebt), "max"],
+    [(c) => c.interest_coverage, num(numFilter.minInterest), "min"],
+    [(c) => c.psr, num(numFilter.maxPsr), "max"],
+    [(c) => c.per, num(numFilter.maxPer), "max"],
+    [(c) => c.revenue_cagr_3y, num(numFilter.minCagr) == null ? null : num(numFilter.minCagr)! / 100, "min"],
+  ];
+  const activeChecks = numChecks.filter(([, lim]) => lim != null);
+  let missingDropped = 0;
+  const numFiltered = activeChecks.length === 0 ? filtered : filtered.filter((c) => {
+    let missing = false;
+    for (const [get, lim, dir] of activeChecks) {
+      const v = get(c);
+      if (v == null) { missing = true; continue; }
+      if (dir === "min" ? v < lim! : v > lim!) return false;
+    }
+    if (missing) { missingDropped++; return false; }
+    return true;
+  });
+
+  // 정렬: 값 없는 종목은 방향과 관계없이 맨 아래. 시가총액은 통화가 달라 '전체'에서는 시장별로 묶어 정렬.
+  const sorted = sort == null ? numFiltered : [...numFiltered].sort((a, b) => {
+    if (sort.key === "market_cap" && marketFilter === "ALL" && a.market !== b.market) return a.market.localeCompare(b.market);
+    const va = a[sort.key] ?? null, vb = b[sort.key] ?? null;
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    return sort.dir === "asc" ? (va as number) - (vb as number) : (vb as number) - (va as number);
+  });
+  const onSort = (key: SortKey) => setSort((cur) =>
+    cur?.key !== key ? { key, dir: SORT_FIRST_DIR[key] }
+      : cur.dir === SORT_FIRST_DIR[key] ? { key, dir: cur.dir === "asc" ? "desc" : "asc" }
+      : null);   // 세 번째 누르면 정렬 해제(원래 순서)
+
   // 후보가 275종목이라 목록만으로는 이번 주에 뭐가 달라졌는지 안 보인다.
   // 순위를 만들지 않으면서 "먼저 볼 것"을 주는 방법 - 이번 회차 신규만 따로 센다.
   const newCount = candidates.filter((c) => c.is_new === true).length;
@@ -924,7 +988,7 @@ export default function WatchlistPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px", color: TEXT_PRIMARY, background: PAGE_BG, minHeight: "100vh", fontFamily: MONO }}>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 16px", color: TEXT_PRIMARY, background: PAGE_BG, minHeight: "100vh", fontFamily: MONO }}>
       {/* 팝업들 */}
       {selected && (
         <DetailModal
@@ -996,7 +1060,7 @@ export default function WatchlistPage() {
             border: `1px solid ${tab === t ? ACCENT + "40" : BORDER_CTRL}`,
             padding: "6px 16px", fontSize: 13, cursor: "pointer",
           }}>
-            {t === "candidates" ? `스크리닝 후보 (${filtered.length})` : `내 워치리스트 (${myList.length})`}
+            {t === "candidates" ? `스크리닝 후보 (${sorted.length})` : `내 워치리스트 (${myList.length})`}
           </button>
         ))}
       </div>
@@ -1084,9 +1148,58 @@ export default function WatchlistPage() {
             ))}
           </div>
 
+          {/* 지표 숫자 필터 - 접어 두고 필요할 때 연다 */}
+          <div style={{ marginBottom: 16 }}>
+            <button onClick={() => setShowNumFilter((v) => !v)} style={{
+              background: activeChecks.length ? ACCENT + "18" : "transparent",
+              color: activeChecks.length ? ACCENT : TEXT_SECONDARY,
+              border: `1px solid ${activeChecks.length ? ACCENT + "40" : BORDER_CTRL}`,
+              padding: "4px 12px", fontSize: 12, cursor: "pointer",
+            }}>
+              {showNumFilter ? "▾" : "▸"} 지표 필터{activeChecks.length ? ` (${activeChecks.length}개 적용)` : ""}
+            </button>
+            {sort && (
+              <span style={{ marginLeft: 10, fontSize: 12, color: TEXT_SECONDARY }}>
+                정렬: {SORT_LABEL[sort.key]} {sort.dir === "asc" ? "낮은 순" : "높은 순"}
+                <button onClick={() => setSort(null)} style={{ marginLeft: 6, background: "transparent", border: "none", color: TEXT_MUTED, cursor: "pointer", fontSize: 12 }}>해제 ✕</button>
+              </span>
+            )}
+            {showNumFilter && (
+              <div style={{ marginTop: 10, padding: "12px 14px", background: INSET_BG, border: `1px solid ${BORDER}`, display: "flex", flexWrap: "wrap", gap: "10px 18px", alignItems: "center" }}>
+                {([
+                  ["minF", "F-Score", "이상", "예: 7"],
+                  ["maxDebt", "부채비율(%)", "이하", "예: 100"],
+                  ["minInterest", "이자보상(배)", "이상", "예: 5"],
+                  ["maxPsr", "PSR", "이하", "예: 2"],
+                  ["maxPer", "PER", "이하", "예: 15"],
+                  ["minCagr", "매출 3년 성장(%)", "이상", "예: 10"],
+                ] as const).map(([k, label, dir, ph]) => (
+                  <label key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: TEXT_SECONDARY }}>
+                    {label}
+                    <input value={numFilter[k]} onChange={(e) => setNumFilter((f) => ({ ...f, [k]: e.target.value }))}
+                      inputMode="decimal" placeholder={ph}
+                      style={{ width: 64, padding: "4px 6px", fontSize: 12, fontFamily: MONO, background: INPUT_BG, color: TEXT_PRIMARY, border: `1px solid ${BORDER_CTRL}`, outline: "none" }} />
+                    <span style={{ color: TEXT_MUTED }}>{dir}</span>
+                  </label>
+                ))}
+                {activeChecks.length > 0 && (
+                  <button onClick={() => setNumFilter({ minF: "", maxDebt: "", minInterest: "", maxPsr: "", maxPer: "", minCagr: "" })}
+                    style={{ background: "transparent", border: `1px solid ${BORDER_CTRL}`, color: TEXT_SECONDARY, padding: "3px 10px", fontSize: 12, cursor: "pointer" }}>
+                    모두 지우기
+                  </button>
+                )}
+                {missingDropped > 0 && (
+                  <span style={{ fontSize: 12, color: TEXT_MUTED, flexBasis: "100%" }}>
+                    값이 없어(계산 불가) 빠진 종목 {missingDropped}개 - 탈락이 아니라 확인할 수 없는 것입니다.
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           {loading ? (
             <div style={{ color: TEXT_MUTED, textAlign: "center", padding: 60 }}>불러오는 중...</div>
-          ) : filtered.length === 0 ? (
+          ) : sorted.length === 0 ? (
             <div style={{ color: TEXT_MUTED, textAlign: "center", padding: 60 }}>
               {candidates.length === 0
                 ? "스크리닝 데이터 없음."
@@ -1096,29 +1209,25 @@ export default function WatchlistPage() {
             </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
-              <p style={{ fontSize: 11, color: TEXT_FAINT, marginBottom: 8 }}>행 클릭 시 상세 정보 · ⓘ 클릭 시 지표 설명</p>
+              <p style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 8 }}>행 클릭 시 상세 정보 · 열 제목 클릭 시 정렬 · ⓘ 클릭 시 지표 설명</p>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: `1px solid ${BORDER}` }}>
-                    <ColHeader label="마켓" />
-                    <ColHeader label="티커" />
-                    <ColHeader label="종목명" />
-                    <ColHeader label="현재가" />
-                    <ColHeader label="시가총액" />
-                    <ColHeader label="섹터" />
-                    <ColHeader label="F-Score" infoKey="fscore" onInfo={setInfoKey} />
-                    <ColHeader label="부채비율" infoKey="debt" onInfo={setInfoKey} />
-                    <ColHeader label="이자보상" infoKey="interest" onInfo={setInfoKey} />
-                    <ColHeader label="밸류" infoKey="valuation" onInfo={setInfoKey} />
-                    <ColHeader label="PSR / PER" infoKey="valuation" onInfo={setInfoKey} />
-                    <ColHeader label="성장" infoKey="growth" onInfo={setInfoKey} />
-                    <ColHeader label="3년 / 1년" infoKey="growth" onInfo={setInfoKey} />
+                    {/* 15열 -> 9열(2026-10-04): 마켓·티커·종목명·섹터를 한 칸에, 밸류 배지+PSR/PER, 성장 배지+3년/1년을
+                        각각 한 칸에 합쳤다. 현재가는 상세 화면에 있다. 가로 스크롤 없이 한 화면에 들어오게. */}
+                    <ColHeader label="종목" />
+                    <ColHeader label="시가총액" sortKey="market_cap" sort={sort} onSort={onSort} />
+                    <ColHeader label="F-Score" infoKey="fscore" onInfo={setInfoKey} sortKey="piotroski" sort={sort} onSort={onSort} />
+                    <ColHeader label="부채비율" infoKey="debt" onInfo={setInfoKey} sortKey="debt_ratio" sort={sort} onSort={onSort} />
+                    <ColHeader label="이자보상" infoKey="interest" onInfo={setInfoKey} sortKey="interest_coverage" sort={sort} onSort={onSort} />
+                    <ColHeader label="밸류 · PSR" infoKey="valuation" onInfo={setInfoKey} sortKey="psr" sort={sort} onSort={onSort} />
+                    <ColHeader label="성장 · 3년" infoKey="growth" onInfo={setInfoKey} sortKey="revenue_cagr_3y" sort={sort} onSort={onSort} />
                     <ColHeader label="체제" infoKey="regime" onInfo={setInfoKey} />
-                    <th style={{ padding: "8px 10px" }} />
+                    <th style={{ padding: "8px 8px" }} />
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((c) => {
+                  {sorted.map((c) => {
                     const key = `${c.market}:${c.symbol}`;
                     const inList = addedSymbols.has(key);
                     return (
@@ -1128,44 +1237,48 @@ export default function WatchlistPage() {
                         onMouseEnter={(e) => (e.currentTarget.style.background = HOVER_BG)}
                         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                       >
-                        <td style={{ padding: "8px 10px" }}>
-                          <span style={{ color: c.market === "US" ? INFO : BAD, fontSize: 11, fontWeight: 600 }}>{c.market}</span>
+                        <td style={{ padding: "8px 8px", minWidth: 150, maxWidth: 220 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                            <span style={{ color: c.market === "US" ? INFO : BAD, fontSize: 11, fontWeight: 600 }}>{c.market}</span>
+                            <span style={{ fontWeight: 700, color: NUM }}>{c.symbol}</span>
+                            {c.is_new === true && (
+                              <span
+                                // first_seen은 이력 기록이 쌓이기 시작한 뒤로만 알 수 있다 - 실제
+                                // 첫 통과일이 그보다 이전일 수 있어 "최초"라고 단정하지 않는다.
+                                title={c.is_reentry
+                                  ? `예전에 후보였다가 빠진 뒤 이번에 다시 통과 (기록상 최초 등장: ${c.first_seen ?? "-"})`
+                                  : "이번 회차에 처음 필터를 통과 (이력 기록 시작 이후 처음)"}
+                                style={{
+                                  marginLeft: 6, fontSize: 10, fontWeight: 700,
+                                  color: GOOD, border: `1px solid ${GOOD}55`,
+                                  padding: "1px 5px", verticalAlign: "middle",
+                                }}>
+                                {c.is_reentry ? "재진입" : "신규"}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ color: TEXT_SECONDARY, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {c.name ?? "-"}{c.sector ? <span style={{ color: TEXT_MUTED }}> · {c.sector}</span> : null}
+                          </div>
                         </td>
-                        <td style={{ padding: "8px 10px", fontWeight: 600, color: NUM, whiteSpace: "nowrap" }}>
-                          {c.symbol}
-                          {c.is_new === true && (
-                            <span
-                              // first_seen은 이력 기록이 쌓이기 시작한 뒤로만 알 수 있다 - 실제
-                              // 첫 통과일이 그보다 이전일 수 있어 "최초"라고 단정하지 않는다.
-                              title={c.is_reentry
-                                ? `예전에 후보였다가 빠진 뒤 이번에 다시 통과 (기록상 최초 등장: ${c.first_seen ?? "-"})`
-                                : "이번 회차에 처음 필터를 통과 (이력 기록 시작 이후 처음)"}
-                              style={{
-                                marginLeft: 6, fontSize: 10, fontWeight: 700,
-                                color: GOOD, border: `1px solid ${GOOD}55`,
-                                padding: "1px 5px", verticalAlign: "middle",
-                              }}>
-                              {c.is_reentry ? "재진입" : "신규"}
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ padding: "8px 10px", color: TEXT_SECONDARY, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name ?? "-"}</td>
-                        <td style={{ padding: "8px 10px", color: NUM, fontVariantNumeric: "tabular-nums" }}>{formatPrice(c.market, c.current_price)}</td>
-                        <td style={{ padding: "8px 10px", color: NUM, fontVariantNumeric: "tabular-nums" }}>{formatCap(c.market, c.market_cap)}</td>
-                        <td style={{ padding: "8px 10px", color: TEXT_MUTED, fontSize: 11 }}>{c.sector ?? "-"}</td>
-                        <td style={{ padding: "8px 10px" }}><PiotroskiBadge score={c.piotroski} /></td>
-                        <td style={{ padding: "8px 10px" }}>
+                        <td style={{ padding: "8px 8px", color: NUM, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{formatCap(c.market, c.market_cap)}</td>
+                        <td style={{ padding: "8px 8px" }}><PiotroskiBadge score={c.piotroski} /></td>
+                        <td style={{ padding: "8px 8px", whiteSpace: "nowrap" }}>
                           <MetricOrNote value={c.debt_ratio} note={c.data_notes?.debt} format={(v) => `${v}%`} />
                         </td>
-                        <td style={{ padding: "8px 10px" }}>
+                        <td style={{ padding: "8px 8px", whiteSpace: "nowrap" }}>
                           <MetricOrNote value={c.interest_coverage} note={c.data_notes?.interest} format={(v) => v.toFixed(1) + "x"} />
                         </td>
-                        <td style={{ padding: "8px 10px" }}><ValuationBadge tier={c.valuation_tier} /></td>
-                        <td style={{ padding: "8px 10px" }}><ValuationNumbers psr={c.psr} per={c.per} /></td>
-                        <td style={{ padding: "8px 10px" }}><GrowthBadge tier={c.growth_tier} /></td>
-                        <td style={{ padding: "8px 10px" }}><GrowthNumbers cagr3y={c.revenue_cagr_3y} yoy={c.revenue_yoy} /></td>
-                        <td style={{ padding: "8px 10px" }}><RegimeBadge fit={c.regime_fit} /></td>
-                        <td style={{ padding: "8px 10px" }} onClick={(e) => e.stopPropagation()}>
+                        <td style={{ padding: "8px 8px" }}>
+                          <div><ValuationBadge tier={c.valuation_tier} /></div>
+                          <div style={{ marginTop: 2 }}><ValuationNumbers psr={c.psr} per={c.per} /></div>
+                        </td>
+                        <td style={{ padding: "8px 8px" }}>
+                          <div><GrowthBadge tier={c.growth_tier} /></div>
+                          <div style={{ marginTop: 2 }}><GrowthNumbers cagr3y={c.revenue_cagr_3y} yoy={c.revenue_yoy} /></div>
+                        </td>
+                        <td style={{ padding: "8px 8px" }}><RegimeBadge fit={c.regime_fit} /></td>
+                        <td style={{ padding: "8px 8px" }} onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => !inList && addToWatchlist(c)}
                             disabled={inList}

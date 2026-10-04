@@ -77,7 +77,7 @@ function SidebarInner({
           <span className="text-2xl font-black tracking-tight" style={{ color: "#ffb020" }}>
             U-<span style={{ color: "#ece7d8" }}>Sonar</span>
           </span>
-          <span className="mt-1 text-[10px] font-semibold tracking-[0.18em]" style={{ color: "#726b58" }}>
+          <span className="mt-1 whitespace-nowrap text-[10px] font-semibold tracking-[0.06em]" style={{ color: "#726b58" }}>
             UNDERCURRENT SONAR
           </span>
         </span>
