@@ -84,10 +84,10 @@ export default function HomePage() {
           <FlagIcon market={isKR ? "KR" : "US"} size={14} />{" "}{indexName}
         </span>
         <h1 className="text-xl font-bold text-white">
-          {isKR ? "한국 주식 마켓 인텔리전스" : "미국 주식 마켓 인텔리전스"}
+          {isKR ? "한국 시장 · 이번 주 물밑 흐름" : "미국 시장 · 이번 주 물밑 흐름"}
         </h1>
         <span className="rounded px-2 py-0.5 text-[13px] font-bold" style={{ background: "#ffb02022", color: "#ffb020", border: "1px solid #ffb02044" }}>
-          LIVE
+          주간 갱신
         </span>
       </div>
 
