@@ -2,14 +2,15 @@
 # SPEC_theme_company_mapping.md 11장. scripts/fetch_kr_theme_etf_holdings.py가 읽는다.
 #
 # ETF 이름(공백 제거)에 키워드가 하나라도 들어 있으면 그 테마의 근거 ETF로 본다.
-# 넓게 잡아도 안전하다 - 결과는 후보 보고서일 뿐이고 편입은 사람이 검토 파일로 한다.
+# 결과는 후보 보고서일 뿐이고 편입은 사람이 검토 파일로 한다. 다만 너무 넓으면 후보가 수백 건이라
+# 검토가 안 된다 - 2026-10-04 첫 실행 422건을 보고 4개 테마 키워드를 좁혔다.
 # 해외·레버리지·인버스 ETF는 스크립트가 이름으로 거른다(EXCLUDE_NAME_WORDS).
 # 미국은 아직 출처가 없다(11.4) - 여기에는 KR만 둔다.
 KR:
   ai_semiconductor: [AI반도체, HBM]
   datacenter_power: [AI전력, 데이터센터]
   datacenter_cooling: [냉각]
-  semi_equipment: [반도체소부장, 소부장, 반도체장비, 반도체소재]
+  semi_equipment: [반도체소부장, 반도체장비, 반도체소재]   # '소부장'만 쓰면 방산·자동차·2차전지 소부장 ETF가 걸린다
   power_grid: [전력, 송배전, 변압기]
   nuclear_smr: [원자력, 원전, SMR]
   renewable_energy: [태양광, 풍력, 신재생, 재생에너지]
@@ -20,8 +21,8 @@ KR:
   defense: [방산, 방위]
   aerospace_space: [우주, 항공, 위성]
   construction_machinery: [건설기계]
-  infra_construction: [건설, 인프라]
-  factory_automation: [자동화, 로봇]
+  infra_construction: [건설]   # '인프라'는 AI·네트워크·전력 인프라 ETF가 걸린다
+  factory_automation: [자동화, 스마트팩토리]   # '로봇'은 휴머노이드·피지컬 AI ETF와 겹친다
   glp1_obesity: [비만]
   biosimilar: [바이오시밀러]
   cdmo: [CDMO, 위탁]
@@ -33,7 +34,7 @@ KR:
   game: [게임]
   travel_airline: [여행, 레저, 카지노, 면세]
   battery: [2차전지, 이차전지, 배터리]
-  ev_value_chain: [전기차, 미래차, 자동차]
+  ev_value_chain: [전기차, 미래차, 친환경차]   # '자동차'는 내연기관 부품 ETF가 걸린다
   autonomous_driving: [자율주행]
   physical_ai: [피지컬AI, 로봇]
   humanoid_robot: [휴머노이드]

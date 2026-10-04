@@ -323,6 +323,8 @@ theme_id, ticker, name, stage, linkage, evidence, flagged
 1. `Theme ETF Perception Candidates` 워크플로 실행 → 아티팩트 `perception_candidates_<date>_KR.json`
    - `add`: 테마 ETF에 2% 이상 들어 있고 유니버스 안이며 그 테마의 현재 소속이 아닌 종목
    - `stale`: perceived로 들어가 있는데 이번 ETF 어디에도 근거가 없는 종목(뺄 후보)
+   - `add_mixed_only`: 근거가 혼합 ETF(이름이 테마 둘 이상에 걸리거나 `&`가 든 것, 예: K엔터&여행레저)뿐인 후보.
+     구성종목이 어느 테마 몫인지 알 수 없어 참고용으로만 본다
 2. 후보를 보고 넣을 것만 검토 파일 `add`에 옮긴다(형식 그대로 `[theme, ticker, stage, evidence, "perceived"]`).
    ETF 이름 매칭이 넓어서(예: "전력"이 들어간 ETF) 엉뚱한 후보가 섞인다 - 사람이 거른다.
 3. `stale`은 검토 파일 `exclude`(병합 run에 행이 있을 때)로 뺀다.

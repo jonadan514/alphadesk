@@ -30,32 +30,38 @@ def build_candidates(holdings: dict, members: dict[str, dict[str, str]],
     """holdings: fetch 스크립트의 JSON. members: {theme_id: {ticker: linkage}} (현재 승인분).
     universe_names: {ticker: 이름} - 유니버스 밖 종목은 후보에서 뺀다(시총 하한 등).
     반환: {"add": [[theme, ticker, stage, evidence, "perceived", name], ...],
-           "stale": [[theme, ticker, name], ...]}"""
+           "add_mixed_only": 같은 형식 - 근거가 혼합 ETF뿐인 후보(참고용),
+           "stale": [[theme, ticker, name], ...]}
+
+    혼합 ETF: 이름이 테마 둘 이상에 걸리거나 '&'가 든 ETF(예: K엔터&여행레저, 반도체&2차전지).
+    구성종목이 어느 쪽 테마 몫인지 알 수 없어서, 그것만 근거인 후보는 따로 보여 준다."""
     # (theme, ticker) -> 근거 ETF 목록 [(이름, 코드, 비중)]
-    seen: dict[tuple[str, str], list[tuple[str, str, float]]] = {}
+    seen: dict[tuple[str, str], list[tuple[str, str, float, bool]]] = {}
     for etf in holdings.get("etfs", []):
+        mixed = len(etf.get("themes", [])) > 1 or "&" in etf["name"]
         for h in etf.get("holdings", []):
             w = h.get("weight")
             if w is None or w < min_weight:
                 continue
             for tid in etf.get("themes", []):
-                seen.setdefault((tid, h["ticker"]), []).append((etf["name"], etf["etf"], w))
+                seen.setdefault((tid, h["ticker"]), []).append((etf["name"], etf["etf"], w, mixed))
 
-    add = []
+    add, add_mixed_only = [], []
     for (tid, code), srcs in sorted(seen.items()):
         if code not in universe_names or code in members.get(tid, {}):
             continue
-        srcs.sort(key=lambda s: -s[2])
-        cited = ", ".join(f"{n}({c}) {w:.1f}%" for n, c, w in srcs[:3])
+        srcs.sort(key=lambda s: (s[3], -s[2]))   # 단일 테마 ETF를 먼저 인용
+        cited = ", ".join(f"{n}({c}) {w:.1f}%" for n, c, w, _ in srcs[:3])
         more = f" 외 {len(srcs) - 3}개" if len(srcs) > 3 else ""
         evidence = f"ETF 편입: {cited}{more} ({holdings.get('date', '')} 기준)"
-        add.append([tid, code, "시장 인식", evidence, "perceived", universe_names[code]])
+        row = [tid, code, "시장 인식", evidence, "perceived", universe_names[code]]
+        (add_mixed_only if all(s[3] for s in srcs) else add).append(row)
 
     stale = [[tid, code, universe_names.get(code, "")]
              for tid, mem in sorted(members.items())
              for code, linkage in sorted(mem.items())
              if linkage == "perceived" and (tid, code) not in seen]
-    return {"add": add, "stale": stale}
+    return {"add": add, "add_mixed_only": add_mixed_only, "stale": stale}
 
 
 def load_members(conn, market: str) -> dict[str, dict[str, str]]:
@@ -87,16 +93,21 @@ def main() -> int:
     res = build_candidates(holdings, members, names, args.min_weight)
 
     print(f"[perception] ETF {len(holdings.get('etfs', []))}개({holdings.get('date')}), 비중 하한 {args.min_weight}%")
-    print(f"[perception] 후보 {len(res['add'])}건 / 근거 소멸 {len(res['stale'])}건")
+    print(f"[perception] 후보 {len(res['add'])}건 / 혼합 ETF만 근거 {len(res['add_mixed_only'])}건 / "
+          f"근거 소멸 {len(res['stale'])}건")
     for tid, code, _stage, ev, _l, name in res["add"]:
         print(f"  + [{tid}] {code} {name}: {ev}")
+    for tid, code, _stage, ev, _l, name in res["add_mixed_only"]:
+        print(f"  ? [{tid}] {code} {name}: {ev}")
     for tid, code, name in res["stale"]:
         print(f"  - [{tid}] {code} {name}: perceived인데 이번 ETF 근거 없음")
 
     out = Path(args.out or ROOT / "out" / f"perception_candidates_{holdings.get('date')}_KR.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     json.dump({"date": holdings.get("date"), "min_weight": args.min_weight,
-               "add": [r[:5] for r in res["add"]], "add_names": {r[1]: r[5] for r in res["add"]},
+               "add": [r[:5] for r in res["add"]],
+               "add_mixed_only": [r[:5] for r in res["add_mixed_only"]],
+               "names": {r[1]: r[5] for r in res["add"] + res["add_mixed_only"]},
                "stale": res["stale"]}, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"[perception] 저장: {out}")
     return 0

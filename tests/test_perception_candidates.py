@@ -44,3 +44,13 @@ def test_ETF_이름_매칭은_해외_레버리지를_거른다():
     assert match_themes("SOL 조선 TOP3플러스", kw) == ["shipbuilding"]
     assert match_themes("TIGER 미국방산", kw) == []
     assert match_themes("KODEX 방산레버리지", kw) == []
+
+
+def test_혼합_ETF만_근거면_참고_목록으로_뺀다():
+    holdings = {"date": "20261002", "etfs": [
+        {"etf": "555555", "name": "RISE K엔터&여행레저", "themes": ["k_content", "travel_airline"],
+         "holdings": [{"ticker": "060370", "weight": 9.0}]},
+    ]}
+    res = build_candidates(holdings, {}, NAMES)
+    assert res["add"] == []
+    assert sorted(r[0] for r in res["add_mixed_only"]) == ["k_content", "travel_airline"]
