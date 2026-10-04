@@ -5,21 +5,23 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMarket } from "@/src/contexts/MarketContext";
 
-// 사이드바 그룹 — 기능별이 아닌 사용자 투자 흐름 순서로 배치
-// 오늘(판단) → 시장 → 종목 → 관리
+// 사이드바 그룹 — 보는 주기와 흐름 순서 (2026-10-04 재구성)
+// 이번 주(월요일 갱신) → 분기(실적 주기) → 종목 → 돌아보기. 가이드는 도움말이라 맨 아래 따로.
+// 예전 구성(오늘/시장/종목/관리)은 주간 도구인데 "오늘"이었고, 핵심인 테마 레이더가 섹터 다음에 묻혀
+// 있었으며, 매주 보는 화면과 분기마다 보는 화면이 한 그룹에 섞여 있었다.
 const NAV_GROUPS = [
   {
-    label: "오늘",
+    label: "이번 주",
     items: [
-      { href: "/",          label: "개요",      emoji: "📊", color: "#ffb020" },
+      { href: "/",          label: "개요",       emoji: "📊", color: "#ffb020" },
+      { href: "/radar",     label: "테마 레이더", emoji: "📡", color: "#ffb020" },
+      { href: "/sector",    label: "섹터 분석",   emoji: "🏭", color: "#ffb020" },
       { href: "/briefing",  label: "주간 브리핑", emoji: "📰", color: "#ffb020" },
     ],
   },
   {
-    label: "시장",
+    label: "분기",
     items: [
-      { href: "/sector",    label: "섹터 분석", emoji: "🏭", color: "#ffb020" },
-      { href: "/radar",     label: "테마 레이더", emoji: "📡", color: "#ffb020" },
       { href: "/quarterly", label: "분기 리서치", emoji: "🗓️", color: "#ffb020" },
     ],
   },
@@ -30,13 +32,14 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "관리",
+    label: "돌아보기",
     items: [
-      { href: "/scorecard", label: "성적표",    emoji: "📈", color: "#ffb020" },
-      { href: "/guide",     label: "가이드",     emoji: "📖", color: "#ffb020" },
+      { href: "/scorecard", label: "성적표",     emoji: "📈", color: "#ffb020" },
     ],
   },
 ] as const;
+
+const HELP_ITEM = { href: "/guide", label: "가이드", emoji: "📖", color: "#ffb020" } as const;
 
 // 주 1회(월요일) 실행 체제 — 7일까지는 정상, 그 이후만 지연으로 표시
 function staleness(dateStr: string | null): { label: string; color: string } {
@@ -95,8 +98,8 @@ function SidebarInner({
         {NAV_GROUPS.map((group, gi) => (
           <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
             <p
-              className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest"
-              style={{ color: "#423e33" }}
+              className="px-3 mb-1 text-[11px] font-semibold"
+              style={{ color: "#726b58" }}
             >
               {group.label}
             </p>
@@ -138,6 +141,24 @@ function SidebarInner({
           </div>
         ))}
       </nav>
+
+      {/* 도움말 - 메뉴 그룹과 분리 */}
+      <div className="shrink-0 px-2 pb-2">
+        <Link
+          href={HELP_ITEM.href}
+          className="flex items-center gap-2.5 px-3 py-1.5 text-[13px] transition-all duration-150"
+          style={{
+            color: pathname.startsWith(HELP_ITEM.href) ? "#ece7d8" : "#726b58",
+            background: pathname.startsWith(HELP_ITEM.href) ? `${HELP_ITEM.color}15` : "transparent",
+            fontWeight: pathname.startsWith(HELP_ITEM.href) ? 600 : 400,
+          }}
+        >
+          <span className="shrink-0 text-base leading-none" style={{ opacity: pathname.startsWith(HELP_ITEM.href) ? 1 : 0.6 }}>
+            {HELP_ITEM.emoji}
+          </span>
+          <span style={{ letterSpacing: "0.01em" }}>{HELP_ITEM.label}</span>
+        </Link>
+      </div>
 
       {/* Bottom: data freshness */}
       <div className="shrink-0 border-t px-3 py-3" style={{ borderColor: "var(--border)" }}>
