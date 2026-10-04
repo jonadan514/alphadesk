@@ -2646,3 +2646,17 @@ Q2 기준 데이터라 이른 상태로 보일 수 있지만 틀린 값은 아�
 - A의 근거 문장은 Claude가 쓴 사업 설명이다(공시 대조 전). 다음 분기 감사(audit_mapping_evidence)가 direct/partial 행을
   사업정보와 대조하므로 그때 걸리는 행은 정상 검토 절차로 본다.
 - 남은 것: RUNBOOK 6단계 게이트 감사, 9단계 후속(분기 재무 백필 -> 실적·주가·라벨 재계산), KR 유니버스 파일 갱신(이름맵).
+
+## 2026-10-04(5) - RUNBOOK 6·9·10단계 실행
+
+- 6단계 게이트 감사(Audit Mapping Evidence, KR 화면 표시분, run 37172505720): 대상 436건(perceived 51건은 규칙대로 제외),
+  걸린 80건 = 이미 사람이 유지 판정 42 / 이번 A 추가 12 / **처음 걸린 26**. 26건은 사람 검토 대기(아래).
+  - 명백한 오류로 보이는 것: 엑시콘(k_beauty - 반도체 테스트 장비사인데 근거가 "화장품 ODM"), 기가비스(specialty_gas -
+    기판 검사장비사), 세미파이브(semi_equipment - 디자인하우스, 정의상 팹리스 제외), 대한유화(specialty_gas - NCC),
+    두산퓨얼셀(energy_storage - 연료전지), SK오션플랜트(infra_construction - 하부구조물 제조), 녹십자(biosimilar)
+  - 감사 오판으로 보이는 것: LS마린솔루션(인프라·전력망 시공), 시프트업(게임 개발사), 일진전기(초고압 케이블),
+    SFA(물류자동화), 금호타이어(EV 타이어), 태영건설·삼성E&A, 우리기술, 에스앤에스텍·삼양엔씨켐 등
+  - A 추가 12건 중 감사 지적이 일리 있는 것: 스피어(항공우주), 펌텍코리아(K뷰티 - 용기 제조). 나머지(한국카본·동성화인텍
+    LNG 보냉재, 두산에너빌리티 등)는 인용 검증 실패 또는 감사 오판.
+- 9단계: Backfill Quarterly Financials(36분) -> Compute Theme Earnings -> Compute Theme Price -> Compute Theme Labels 전부 성공.
+- 10단계: Refresh Universe Data(KR 687종목, main에 자동 커밋) 후 이름맵 재생성 678 -> 713종목(퍼스텍·티이엠씨 포함).
