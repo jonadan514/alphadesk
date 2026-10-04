@@ -69,13 +69,37 @@ def test_조회_실패는_0건이_아니라_failed(env, monkeypatch):
     assert st["per_member"] == {"PWR": 0}
 
 
-def test_창_밖_날짜는_버리고_상한이면_표시(env, monkeypatch):
-    many = [{"id": i, "headline": "h", "url": f"https://x.com/{i}", "datetime": _ts(date(2026, 9, 29))}
-            for i in range(tnc.FINNHUB_CAP)]
+def test_창_밖_날짜는_버린다(env, monkeypatch):
     old = {"id": 999, "headline": "old", "url": "https://x.com/old", "datetime": _ts(date(2026, 9, 20))}
-    monkeypatch.setattr(tnc.requests, "get", _fake({"BA": many + [old]}, []))
-    arts, st = tnc.collect_member_news({"defense": ["BA"]}, AFTER, BEFORE)["defense"]
-    assert len(arts) == tnc.FINNHUB_CAP and st["saturated_members"] == ["BA"]
+    new = {"id": 1, "headline": "new", "url": "https://x.com/new", "datetime": _ts(date(2026, 9, 29))}
+    monkeypatch.setattr(tnc.requests, "get", _fake({"BA": [old, new]}, []))
+    arts, _ = tnc.collect_member_news({"defense": ["BA"]}, AFTER, BEFORE)["defense"]
+    assert [a["title"] for a in arts] == ["new"]
+
+
+def test_URL이_같아도_기사_id가_다르면_다른_기사(env, monkeypatch):
+    """Finnhub URL은 ...api/news?id=N 꼴 - 쿼리를 지우면 전부 같아진다(2026-10-04 첫 실행 '1건' 버그)."""
+    feed = [{"id": i, "headline": f"h{i}", "url": f"https://finnhub.io/api/news?id={i}",
+             "datetime": _ts(date(2026, 9, 29))} for i in range(5)]
+    monkeypatch.setattr(tnc.requests, "get", _fake({"NVDA": feed}, []))
+    arts, _ = tnc.collect_member_news({"ai_semiconductor": ["NVDA"]}, AFTER, BEFORE)["ai_semiconductor"]
+    assert len(arts) == 5
+
+
+def test_상한에_닿으면_하루씩_나눠_다시_받는다(env, monkeypatch):
+    """대형주는 한 주 조회가 245건 안팎에서 잘렸다. 날짜 범위 검색이 되므로 하루씩 나누면 늘어난다."""
+    per_day = 100
+    def get(url, params, timeout):
+        start, end = date.fromisoformat(params["from"]), date.fromisoformat(params["to"])
+        items, d, n = [], start, 0
+        while d <= end:
+            items += [{"id": f"{d}-{i}", "headline": "h", "url": f"https://finnhub.io/api/news?id={d}-{i}",
+                       "datetime": _ts(d)} for i in range(per_day)]
+            d = date.fromordinal(d.toordinal() + 1)
+        return _Resp(items[:tnc.FINNHUB_CAP + 6])   # 응답 상한 흉내
+    monkeypatch.setattr(tnc.requests, "get", get)
+    arts, st = tnc.collect_member_news({"ai_semiconductor": ["NVDA"]}, AFTER, BEFORE)["ai_semiconductor"]
+    assert len(arts) == per_day * 7 and st["saturated_members"] == []
 
 
 def test_클래스_주식_표기_변환(env, monkeypatch):

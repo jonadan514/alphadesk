@@ -388,8 +388,39 @@ def _finnhub_symbol(ticker: str) -> str:
     return ticker.replace("-", ".")
 
 
+def _article_key(a: dict) -> str:
+    """기사 식별 해시. Finnhub URL은 https://finnhub.io/api/news?id=... 꼴이라 hash_url(쿼리 제거)로는
+    모든 기사가 같아진다(2026-10-04 첫 실행에서 테마마다 '중복제거후 1건') - Finnhub 기사 id로 센다."""
+    if a.get("id"):
+        return hashlib.sha256(f"finnhub:{a['id']}".encode()).hexdigest()[:16]
+    return hashlib.sha256(a["url"].encode("utf-8")).hexdigest()[:16]
+
+
 def fetch_finnhub_company_news(ticker: str, after: date, before: date) -> list[dict]:
-    """after~before(before 배타적) 기업 뉴스. 조회 실패는 예외 - 0건으로 둔갑시키지 않는다."""
+    """after~before(before 배타적) 기업 뉴스. 조회 실패는 예외 - 0건으로 둔갑시키지 않는다.
+
+    한 응답이 FINNHUB_CAP 근처면 잘렸을 수 있어 하루씩 나눠 다시 받는다. 대형주(NVDA·TSLA)는
+    한 주 조회도 245건 안팎에서 멈췄다(2026-10-04). Finnhub는 날짜 범위 검색이 되므로 나누면 실제로 늘어난다
+    (네이버와 다르다). 하루로 나눠도 상한이면 그 결과에 _saturated 표시를 남긴다."""
+    items = _fetch_finnhub_range(ticker, after, before)
+    if len(items) < FINNHUB_CAP or (before - after).days <= 1:
+        return items
+    merged: dict[str, dict] = {}
+    day = after
+    while day < before:
+        part = _fetch_finnhub_range(ticker, day, day + timedelta(days=1))
+        if len(part) >= FINNHUB_CAP:
+            for a in part:
+                a["_saturated"] = True
+        for a in part:
+            merged[_article_key(a)] = a
+        day += timedelta(days=1)
+        time.sleep(FINNHUB_SLEEP_SEC)
+    out = list(merged.values())
+    return out if len(out) >= len(items) else items
+
+
+def _fetch_finnhub_range(ticker: str, after: date, before: date) -> list[dict]:
     from datetime import datetime, timezone
     key = finnhub_key()
     if not key:
@@ -453,14 +484,14 @@ def collect_member_news(members_by_theme: dict[str, list[str]], after: date, bef
                 failed.append(f"{t}: {type(got).__name__}")
                 continue
             per_member[t] = len(got)
-            if len(got) >= FINNHUB_CAP:
+            if any(a.get("_saturated") for a in got):
                 saturated.append(t)
             for a in got:
-                h = hash_url(a["url"])
+                h = _article_key(a)
                 if h in seen:
                     continue
                 seen.add(h)
-                articles.append({**a, "_url_hash": h})
+                articles.append({k: v for k, v in a.items() if k != "_saturated"} | {"_url_hash": h})
         result[tid] = (articles, {"per_member": per_member, "raw_total": sum(per_member.values()),
                                   "after_dedup": len(articles), "failed_members": failed,
                                   "saturated_members": saturated, "members": len(tickers)})
