@@ -36,6 +36,10 @@
   {
    "path": "kr_v7b_perception_review_20261004.json",
    "decided_at": "2026-10-04"
+  },
+  {
+   "path": "kr_v7c_gate_review_20261004.json",
+   "decided_at": "2026-10-04"
   }
  ]
 }

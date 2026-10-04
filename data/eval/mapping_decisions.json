@@ -105,9 +105,9 @@
    "theme_id": "aerospace_space",
    "ticker": "347700",
    "decision": "keep",
-   "reason": "스피어 항공우주용 특수소재 공급 - partial - ETF 비교로 찾은 매핑 누락 (KR v7b 시장 인식 검토 2026-10-04)",
+   "reason": "시장 인식(perceived): 스피어 - 사업 근거는 약하나 테마 ETF 편입 (KR v7c 게이트 감사 검토 2026-10-04)",
    "decided_at": "2026-10-04",
-   "source": "kr_v7b_perception_review_20261004.json.keep"
+   "source": "kr_v7c_gate_review_20261004.json.keep"
   },
   {
    "market": "KR",
@@ -711,6 +711,15 @@
    "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 삼천당제약 아일리아 바이오시밀러(SCD411)",
    "decided_at": "2026-10-04",
    "source": "kr_v7_review_20261004.json.restore"
+  },
+  {
+   "market": "KR",
+   "theme_id": "biosimilar",
+   "ticker": "006280",
+   "decision": "exclude",
+   "reason": "녹십자 - 혈액제제·백신, 바이오시밀러 사업 미확인 (KR v7c 게이트 감사 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7c_gate_review_20261004.json.exclude"
   },
   {
    "market": "KR",
@@ -1399,6 +1408,15 @@
   {
    "market": "KR",
    "theme_id": "energy_storage",
+   "ticker": "336260",
+   "decision": "exclude",
+   "reason": "두산퓨얼셀 - 연료전지, ESS 아님 (KR v7c 게이트 감사 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7c_gate_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "energy_storage",
    "ticker": "336370",
    "decision": "keep",
    "reason": "이전 판정(2026-09-15) 정상 편입인데 이번 run에서 빠짐: 솔루스첨단소재 - 감사 오탐",
@@ -1750,6 +1768,15 @@
   {
    "market": "KR",
    "theme_id": "infra_construction",
+   "ticker": "100090",
+   "decision": "exclude",
+   "reason": "SK오션플랜트 - 해상풍력 하부구조물 제조, 시공사 아님 (KR v7c 게이트 감사 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7c_gate_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "infra_construction",
    "ticker": "294870",
    "decision": "exclude",
    "reason": "이전 판정(2026-09-15): IPARK현대산업개발 주택 분양 중심 - 정의상 제외",
@@ -1777,6 +1804,15 @@
   {
    "market": "KR",
    "theme_id": "k_beauty",
+   "ticker": "092870",
+   "decision": "exclude",
+   "reason": "엑시콘 - 반도체 테스트 장비사, 근거의 \"화장품 ODM\"은 사실 아님 (KR v7c 게이트 감사 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7c_gate_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "k_beauty",
    "ticker": "214450",
    "decision": "keep",
    "reason": "시장 인식(perceived): 파마리서치 의료미용(리쥬란) 중심, 화장품 매출 일부 (KR v7b 시장 인식 검토 2026-10-04)",
@@ -1788,9 +1824,9 @@
    "theme_id": "k_beauty",
    "ticker": "251970",
    "decision": "keep",
-   "reason": "펌텍코리아 화장품 용기 제조 - 정의 (2) ODM·OEM 인접, partial - ETF 비교로 찾은 매핑 누락 (KR v7b 시장 인식 검토 2026-10-04)",
+   "reason": "시장 인식(perceived): 펌텍코리아 - 사업 근거는 약하나 테마 ETF 편입 (KR v7c 게이트 감사 검토 2026-10-04)",
    "decided_at": "2026-10-04",
-   "source": "kr_v7b_perception_review_20261004.json.keep"
+   "source": "kr_v7c_gate_review_20261004.json.keep"
   },
   {
    "market": "KR",
@@ -3315,6 +3351,15 @@
   },
   {
    "market": "KR",
+   "theme_id": "semi_equipment",
+   "ticker": "490470",
+   "decision": "exclude",
+   "reason": "세미파이브 - 디자인하우스(칩 설계 대행), 정의상 팹리스 제외 (KR v7c 게이트 감사 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7c_gate_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
    "theme_id": "shipbuilding",
    "ticker": "005880",
    "decision": "keep",
@@ -3478,6 +3523,15 @@
   {
    "market": "KR",
    "theme_id": "specialty_gas",
+   "ticker": "006650",
+   "decision": "exclude",
+   "reason": "대한유화 - NCC 석유화학, 반도체 특수가스·전자재료 아님 (KR v7c 게이트 감사 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7c_gate_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "specialty_gas",
    "ticker": "036540",
    "decision": "exclude",
    "reason": "SFA반도체 - 반도체 패키징·테스트 외주(OSAT), 특수가스·전자재료 아님 (KR v7 검토 2026-10-04)",
@@ -3519,6 +3573,15 @@
    "reason": "감사 두 축 모두 실패(근거 모순 + 테마 부적합) - 자동 제외 규칙: SoC 솔루션 및 반도체 설계 서비스 제공으로 테마와 무관함.",
    "decided_at": "2026-10-04",
    "source": "kr_v7_review_20261004.json.exclude"
+  },
+  {
+   "market": "KR",
+   "theme_id": "specialty_gas",
+   "ticker": "420770",
+   "decision": "exclude",
+   "reason": "기가비스 - 기판 검사장비사, 특수가스 아님 (KR v7c 게이트 감사 검토 2026-10-04)",
+   "decided_at": "2026-10-04",
+   "source": "kr_v7c_gate_review_20261004.json.exclude"
   },
   {
    "market": "KR",
