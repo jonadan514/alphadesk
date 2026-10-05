@@ -28,6 +28,22 @@ interface Briefing {
   catalysts: StockRef[];
   gpt_comment: string;
   theme_labels?: ThemeLabelChanges;
+  // 금리·환율 1주 변화(2026-10-05부터, macro_snapshot 그대로). 예전 브리핑엔 없다.
+  macro?: { as_of?: string; us10y?: MacroItem | null; usdkrw?: MacroItem | null } | null;
+}
+interface MacroItem { value: number | null; chg_1w: number | null }
+
+function MacroRow({ label, m, fmt, chgFmt }: { label: string; m?: MacroItem | null; fmt: (v: number) => string; chgFmt: (v: number) => string }) {
+  if (!m || m.value == null) return null;
+  return (
+    <div className="flex items-center gap-3 flex-wrap rounded-lg px-3 py-2" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
+      <span className="text-[13px] font-bold text-white w-24 shrink-0">{label}</span>
+      <span className="text-[12px] text-white">{fmt(m.value)}</span>
+      {m.chg_1w != null && (
+        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>주간 {chgFmt(m.chg_1w)}</span>
+      )}
+    </div>
+  );
 }
 
 function StockLabel({ s }: { s: StockRef }) {
@@ -73,6 +89,10 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
             <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>지난주 시장</p>
             <MarketRow label="🇺🇸 S&P 500" m={b.us} />
             <MarketRow label="🇰🇷 KOSPI" m={b.kr} />
+            <MacroRow label="미 10년물" m={b.macro?.us10y}
+              fmt={(v) => `${v.toFixed(2)}%`} chgFmt={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%p`} />
+            <MacroRow label="원/달러" m={b.macro?.usdkrw}
+              fmt={(v) => `${Math.round(v).toLocaleString()}원`} chgFmt={(v) => `${v >= 0 ? "+" : ""}${Math.round(v).toLocaleString()}원`} />
           </div>
 
           {/* 테마 레이더 라벨 변동 — 라벨 계산은 별도 워크플로우라 이 브리핑보다 늦게

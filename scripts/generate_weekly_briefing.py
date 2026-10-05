@@ -101,6 +101,22 @@ def get_market_week(market: str) -> dict:
     return {"index_chg_1w": idx_chg}
 
 
+def get_macro_week() -> dict | None:
+    """금리·환율 1주 변화 - 매일 도는 macro_snapshot(src/analyzers/macro_snapshot.py)의 최신 행을 그대로 쓴다.
+    chg_1w는 5거래일 전 대비 차이(금리는 %p, 환율은 원). 표가 없거나 비면 None - 브리핑은 그 줄만 뺀다."""
+    try:
+        rows = _payload(turso_exec("SELECT date, payload FROM macro_snapshot ORDER BY date DESC LIMIT 1"))
+    except Exception:
+        return None
+    if not rows:
+        return None
+    items = rows[0]["_data"].get("items") or {}
+    pick = {k: items.get(k) for k in ("us10y", "usdkrw")}
+    if not any(v and v.get("value") is not None for v in pick.values()):
+        return None
+    return {"as_of": rows[0]["_data"].get("date") or rows[0].get("date"), **pick}
+
+
 def get_watchlist_changes() -> dict:
     """이번 주 후보 vs 지난주 스냅샷 비교 → 신규/탈락. 이번 주 스냅샷 저장."""
     turso_exec(
@@ -300,6 +316,20 @@ def build_telegram_summary(b: dict) -> str:
     if idx:
         lines.append("지난 1주 " + " · ".join(idx))
 
+    # 금리·환율 - 지수 옆에 같이 본다. 값·변화 모두 macro_snapshot에서 온 숫자 그대로.
+    mc = b.get("macro") or {}
+    rates = []
+    r = mc.get("us10y") or {}
+    if r.get("value") is not None:
+        chg = f" ({r['chg_1w']:+.2f}%p)" if r.get("chg_1w") is not None else ""
+        rates.append(f"미 10년물 {r['value']:.2f}%{chg}")
+    fx = mc.get("usdkrw") or {}
+    if fx.get("value") is not None:
+        chg = f" ({fx['chg_1w']:+,.0f}원)" if fx.get("chg_1w") is not None else ""
+        rates.append(f"원/달러 {fx['value']:,.0f}원{chg}")
+    if rates:
+        lines.append("금리·환율 " + " · ".join(rates))
+
     # 테마 레이더 - 이 툴의 중심이라 라벨이 없어도 상태를 한 줄은 쓴다
     tl = b.get("theme_labels") or {}
     counts = tl.get("label_counts") or {}
@@ -377,6 +407,7 @@ def main() -> None:
         "generated_at": now.strftime("%Y-%m-%d %H:%M UTC"),
         "us": get_market_week("US"),
         "kr": get_market_week("KR"),
+        "macro": get_macro_week(),
         "watchlist": get_watchlist_changes(),
         "sentiment_heating": get_sentiment_week(),
         "catalysts": get_upcoming_catalysts(),
