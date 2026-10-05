@@ -22,7 +22,8 @@ interface Briefing {
   generated_at: string;
   us: MarketWeek;
   kr: MarketWeek;
-  watchlist: { total: number; added: StockRef[]; removed: StockRef[]; top: StockRef[]; has_prev: boolean };
+  // added_count/removed_count: 자르기 전 전체 건수(2026-10-05부터). 예전 브리핑에는 없어 목록 길이로 대신한다.
+  watchlist: { total: number; added: StockRef[]; removed: StockRef[]; top: StockRef[]; has_prev: boolean; added_count?: number; removed_count?: number };
   sentiment_heating: StockRef[];
   catalysts: StockRef[];
   gpt_comment: string;
@@ -127,7 +128,7 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #ffb02022" }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color: "#ffb020" }}>+ 신규 진입 ({wl.added.length})</p>
+                  <p className="text-[11px] font-bold mb-1" style={{ color: "#ffb020" }}>+ 신규 진입 ({wl.added_count ?? wl.added.length})</p>
                   {wl.added.map((s) => (
                     <p key={`${s.market}:${s.symbol}`} className="text-[12px] py-0.5">
                       <StockLabel s={s} />
@@ -135,13 +136,15 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
                     </p>
                   ))}
                   {wl.added.length === 0 && <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>없음</p>}
+                  {(wl.added_count ?? 0) > wl.added.length && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>외 {(wl.added_count ?? 0) - wl.added.length}개 - 워치리스트 &quot;이번 회차 신규만&quot;에서 전체 보기</p>}
                 </div>
                 <div className="rounded-lg p-2.5" style={{ background: "var(--bg-inset)", border: "1px solid #f8717122" }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color: "#f87171" }}>− 탈락 ({wl.removed.length})</p>
+                  <p className="text-[11px] font-bold mb-1" style={{ color: "#f87171" }}>− 탈락 ({wl.removed_count ?? wl.removed.length})</p>
                   {wl.removed.map((s) => (
                     <p key={`${s.market}:${s.symbol}`} className="text-[12px] py-0.5"><StockLabel s={s} /></p>
                   ))}
                   {wl.removed.length === 0 && <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>없음</p>}
+                  {(wl.removed_count ?? 0) > wl.removed.length && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>외 {(wl.removed_count ?? 0) - wl.removed.length}개</p>}
                 </div>
               </div>
             )}

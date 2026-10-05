@@ -122,8 +122,12 @@ def get_watchlist_changes() -> dict:
 
     return {
         "total": len(current),
+        # 목록은 10개까지만 담고, 건수는 자르기 전 전체를 따로 둔다 - 예전엔 자른 목록 길이를 세서
+        # 신규가 30개여도 "신규 10"으로 나왔다(2026-10-05 수정).
         "added": added[:10],
         "removed": removed[:10],
+        "added_count": len(added),
+        "removed_count": len(removed),
         "has_prev": bool(prev_map),
     }
 
@@ -290,9 +294,11 @@ def send_telegram_summary(b: dict) -> None:
     wl = b["watchlist"]
     if wl["has_prev"] and (wl["added"] or wl["removed"]):
         lines.append("")
-        lines.append(f"<b>🔖 워치리스트</b> 신규 {len(wl['added'])} · 탈락 {len(wl['removed'])}")
+        lines.append(f"<b>🔖 워치리스트</b> 신규 {wl['added_count']} · 탈락 {wl['removed_count']}")
         for a in wl["added"][:3]:
             lines.append(f"  + {disp(a)}")
+        if wl["added_count"] > 3:
+            lines.append(f"  외 {wl['added_count'] - 3}개")
     if b["sentiment_heating"]:
         lines.append("")
         lines.append("<b>📈 관심도 상승</b>")
@@ -362,7 +368,7 @@ def main() -> None:
         [week, json.dumps(briefing, ensure_ascii=False)],
     )
     logger.info("저장 완료 — 워치리스트 신규 %d·탈락 %d, 관심도 상승 %d, 촉매 %d종목, 테마 라벨 신규 %d·소멸 %d",
-                len(briefing["watchlist"]["added"]), len(briefing["watchlist"]["removed"]),
+                briefing["watchlist"]["added_count"], briefing["watchlist"]["removed_count"],
                 len(briefing["sentiment_heating"]), len(briefing["catalysts"]),
                 len(briefing["theme_labels"]["new_labels"]), len(briefing["theme_labels"]["dropped_labels"]))
 
