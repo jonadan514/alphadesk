@@ -87,9 +87,9 @@ export function ObservationForm({ kind, market, themeId, ticker, title, onClose,
   const [expects, setExpects] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // 한 축에서는 ↑/↓ 중 하나만(다시 누르면 해제). "잘 모르겠음"은 다른 기대와 같이 고를 수 없다.
+  // 한 축에서는 ↑/↓ 중 하나만(다시 누르면 해제). "잘 모르겠음" 칩은 없앴다 - 모르는 축은 고르지 않으면 되고,
+  // 다른 칩을 다 지우는 동작이 리셋처럼 보였다(2026-10-05 사용자 의견). 아무것도 안 고르면 저장할 때 unsure.
   const toggle = (e: string) => setExpects((cur) => {
-    if (e === "unsure") return cur.includes("unsure") ? [] : ["unsure"];
     if (cur.includes(e)) return cur.filter((x) => x !== e);
     const axis = e.split("_")[0];
     return [...cur.filter((x) => x !== "unsure" && !x.startsWith(`${axis}_`)), e];
@@ -100,7 +100,7 @@ export function ObservationForm({ kind, market, themeId, ticker, title, onClose,
     try {
       const res = await fetch("/api/notes", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, market, theme_id: themeId, ticker, hypothesis, expects }),
+        body: JSON.stringify({ kind, market, theme_id: themeId, ticker, hypothesis, expects: expects.length ? expects : ["unsure"] }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { setError(d.error ?? "저장하지 못했습니다"); return; }
@@ -144,16 +144,9 @@ export function ObservationForm({ kind, market, themeId, ticker, title, onClose,
               <span className="text-[11px]" style={{ color: FAINT }}>{hint[kind]}</span>
             </div>
           ))}
-          <div className="flex items-center gap-1.5">
-            <span className="w-16 shrink-0" />
-            <button onClick={() => toggle("unsure")} className="shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-[12px]"
-              style={{ background: expects.includes("unsure") ? "rgba(255,176,32,0.14)" : "transparent",
-                       color: expects.includes("unsure") ? ACCENT : MUTED,
-                       border: `1px solid ${expects.includes("unsure") ? "rgba(255,176,32,0.45)" : "var(--border-ctrl)"}` }}>
-              잘 모르겠음
-            </button>
-            <span className="text-[11px]" style={{ color: FAINT }}>고르지 않은 축은 회고에서 &quot;일어났나&quot;를 따지지 않습니다</span>
-          </div>
+          <p className="pt-0.5 text-[11px]" style={{ color: FAINT }}>
+            고르지 않은 축은 회고에서 &quot;일어났나&quot;를 따지지 않습니다. 아무것도 고르지 않으면 &quot;잘 모르겠음&quot;으로 저장됩니다.
+          </p>
         </div>
 
         <p className="mt-3 text-[12px] leading-relaxed" style={{ color: FAINT }}>
