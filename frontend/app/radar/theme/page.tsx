@@ -54,6 +54,7 @@ interface MemberRow {
   om_change?: number | null;
   om_status?: string | null;
   surprise?: { pct: number; date: string; estimate: number | null; reported: number | null } | null;
+  facts?: { analysts: number | null; from_high: number | null; from_low: number | null; as_of: string | null } | null;
   wl_name: string | null;
   valuation_tier: string | null;
   growth_tier: string | null;
@@ -243,6 +244,8 @@ function ThemeHistory() {
   }, {} as Record<string, number>);
   const hasMargin = members.some((m) => m.om_status != null || m.om_now != null);
   const withSurprise = members.filter((m) => m.surprise);
+  const hasFacts = members.some((m) => m.facts && (m.facts.analysts != null || m.facts.from_high != null));
+  const factsAsOf = members.map((m) => m.facts?.as_of).filter(Boolean).sort().pop();
   const surpriseBeat = withSurprise.filter((m) => (m.surprise?.pct ?? 0) > 0).length;
   const earnCounts = members.reduce((acc, m) => {
     const k = m.earn_status ?? "insufficient";
@@ -398,7 +401,7 @@ function ThemeHistory() {
                   {withSurprise.length > 0 && <> · 최근 100일 실적 발표 {withSurprise.length}개사 중 추정치 상회 {surpriseBeat}</>}
                 </p>
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-[13px]" style={{ minWidth: 560 }}>
+                  <table className="w-full border-collapse text-[13px]" style={{ minWidth: hasFacts ? 900 : 560 }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--border)", color: MUTED }}>
                         <th className="py-2 text-left font-normal">종목</th>
@@ -407,6 +410,8 @@ function ThemeHistory() {
                         <th className="py-2 text-left font-normal pl-4">실적</th>
                         {hasMargin && <th className="py-2 text-right font-normal" title="최근 분기 영업이익률과 1년 전 같은 분기 대비 차이 (±1%p 이상이면 개선/악화)">영업이익률</th>}
                         {withSurprise.length > 0 && <th className="py-2 pl-3 text-right font-normal" title="최근 100일 안에 발표한 실적의 EPS 추정치 대비 차이">서프라이즈</th>}
+                        {hasFacts && <th className="py-2 pl-3 text-right font-normal" title="수집 시점 가격의 52주 고점 대비 거리">52주 고점 대비</th>}
+                        {hasFacts && <th className="py-2 pl-3 text-right font-normal" title="이 종목을 다루는 애널리스트 수 - 적을수록 시장이 덜 보는 종목">애널리스트</th>}
                         <th className="py-2 pl-4 text-left font-normal">워치리스트</th>
                       </tr>
                     </thead>
@@ -456,6 +461,17 @@ function ThemeHistory() {
                                 ) : <span style={{ color: FAINT }}>-</span>}
                               </td>
                             )}
+                            {hasFacts && (
+                              <td className="py-2 pl-3 text-right whitespace-nowrap" style={{ fontFamily: MONO, color: "var(--text-secondary)" }}
+                                title={m.facts?.from_low != null ? `52주 저점 대비 ${pct(m.facts.from_low)}` : undefined}>
+                                {m.facts?.from_high != null ? pct(m.facts.from_high) : <span style={{ color: FAINT }}>-</span>}
+                              </td>
+                            )}
+                            {hasFacts && (
+                              <td className="py-2 pl-3 text-right whitespace-nowrap" style={{ fontFamily: MONO, color: "var(--text-secondary)" }}>
+                                {m.facts?.analysts != null ? `${m.facts.analysts}명` : <span style={{ color: FAINT }}>-</span>}
+                              </td>
+                            )}
                             <td className="py-2 pl-4 text-[12px]" style={{ color: m.in_watchlist ? ACCENT : FAINT }}>
                               {m.in_watchlist ? `후보${m.valuation_tier ? ` · ${m.valuation_tier}` : ""}${m.growth_tier ? ` · ${m.growth_tier}` : ""}` : "-"}
                             </td>
@@ -473,6 +489,7 @@ function ThemeHistory() {
                 <p className="mt-2 text-[12px]" style={{ color: FAINT }}>
                   워치리스트 "후보"는 재무 함정 필터를 통과한 종목입니다. 실적 판정은 테마 실적 축과 같은 기준(시장 유니버스 매출 성장률 중앙값)입니다.
                   {hasMargin && " 영업이익률은 최근 분기를 1년 전 같은 분기와 비교한 참고 값으로, 실적 축 계산에는 들어가지 않습니다."}
+                  {hasFacts && ` 52주 고점 대비·애널리스트 수는 워치리스트 스크리닝 때 받은 기업 정보 기준${factsAsOf ? `(${md(factsAsOf)})` : ""}입니다.`}
                 </p>
               </>
             )}

@@ -36,6 +36,8 @@ interface Candidate {
   op_margin_q_status?: "개선" | "악화" | "유지" | null;
   // 최근 100일 안 실적 발표의 EPS 서프라이즈(2026-10-05, earnings_surprise)
   surprise?: { pct: number; date: string; estimate: number | null; reported: number | null } | null;
+  // yfinance 기업 정보에서 꺼낸 사실 값(수집 시점 기준) - 애널리스트 수, 52주 고점·저점 대비
+  facts?: { analysts: number | null; from_high: number | null; from_low: number | null; as_of: string | null } | null;
   growth_tier?: string | null;   // 성장 / 정체 / 역성장
   // 유니버스 출처. 미국만 값이 있고("sp500"/"sp400") 한국은 null이다.
   // 표에는 넣지 않는다 - 종목을 고를 때 쓰는 정보가 아니라 "이 후보가 어디서
@@ -739,6 +741,14 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                   </span>
                 )}
               </div>
+              {c.facts && (c.facts.from_high != null || c.facts.analysts != null) && (
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                  {c.facts.from_high != null && <>52주 고점 대비 {(c.facts.from_high * 100).toFixed(1)}%</>}
+                  {c.facts.from_low != null && <> · 저점 대비 +{(c.facts.from_low * 100).toFixed(1)}%</>}
+                  {c.facts.analysts != null && <> · 애널리스트 {c.facts.analysts}명</>}
+                  {c.facts.as_of && <span style={{ color: TEXT_MUTED }}> ({Number(c.facts.as_of.slice(5, 7))}/{Number(c.facts.as_of.slice(8, 10))} 기준)</span>}
+                </p>
+              )}
               {c.surprise && (
                 <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
                   최근 실적 발표 {Number(c.surprise.date.slice(5, 7))}/{Number(c.surprise.date.slice(8, 10))}: EPS 추정치 대비{" "}

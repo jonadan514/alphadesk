@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/src/lib/db";
 import { recentSurprises } from "@/src/lib/surprises";
+import { infoFacts } from "@/src/lib/infoFacts";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,9 @@ export async function GET(request: Request) {
       const sp = await recentSurprises(client, mkt, candidates.filter((c) => c.market === mkt).map((c) => c.symbol as string));
       candidates.filter((c) => c.market === mkt).forEach((c) => { c.surprise = sp[c.symbol as string] ?? null; });
     }
+    // 애널리스트 수·52주 위치 (yfinance 기업 정보, 수집 시점 기준)
+    const facts = await infoFacts(client, candidates.map((c) => c.symbol as string));
+    candidates.forEach((c) => { c.facts = facts[c.symbol as string] ?? null; });
 
     const lastScreened = (candidates[0] as any)?.screened_at ?? null;
     return NextResponse.json({ candidates, screened_at: lastScreened });

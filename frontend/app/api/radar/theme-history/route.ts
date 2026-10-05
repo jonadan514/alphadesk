@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/src/lib/db";
 import { recentSurprises } from "@/src/lib/surprises";
+import { infoFacts } from "@/src/lib/infoFacts";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +92,8 @@ export async function GET(request: Request) {
           .map((m) => ({ ...m, linkage: linkageByTicker[m.ticker as string] ?? null }));
         // 종목별 최근 실적 서프라이즈(최근 100일 발표만)
         const sp = await recentSurprises(client, market, members.map((m) => m.ticker as string));
-        members = members.map((m) => ({ ...m, surprise: sp[m.ticker as string] ?? null }));
+        const facts = await infoFacts(client, members.map((m) => m.ticker as string));
+        members = members.map((m) => ({ ...m, surprise: sp[m.ticker as string] ?? null, facts: facts[m.ticker as string] ?? null }));
       }
     } catch {
       // theme_member_signals가 아직 없는 배포 시점 - 세 축 이력은 그대로 보여 준다
