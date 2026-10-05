@@ -1,0 +1,24 @@
+name: Report Data Coverage
+
+# 저장만 하고 안 쓰는 자료의 채움률 점검 (읽기 전용).
+on:
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Report
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/report_data_coverage.py
