@@ -29,7 +29,7 @@ interface Briefing {
   gpt_comment: string;
   theme_labels?: ThemeLabelChanges;
   // 금리·환율 1주 변화(2026-10-05부터, macro_snapshot 그대로). 예전 브리핑엔 없다.
-  macro?: { as_of?: string; us10y?: MacroItem | null; usdkrw?: MacroItem | null } | null;
+  macro?: { as_of?: string; us10y?: MacroItem | null; kr3y?: MacroItem | null; usdkrw?: MacroItem | null } | null;
 }
 interface MacroItem { value: number | null; chg_1w: number | null }
 
@@ -90,6 +90,8 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
             <MarketRow label="🇺🇸 S&P 500" m={b.us} />
             <MarketRow label="🇰🇷 KOSPI" m={b.kr} />
             <MacroRow label="미 10년물" m={b.macro?.us10y}
+              fmt={(v) => `${v.toFixed(2)}%`} chgFmt={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%p`} />
+            <MacroRow label="국고채 3년" m={b.macro?.kr3y}
               fmt={(v) => `${v.toFixed(2)}%`} chgFmt={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%p`} />
             <MacroRow label="원/달러" m={b.macro?.usdkrw}
               fmt={(v) => `${Math.round(v).toLocaleString()}원`} chgFmt={(v) => `${v >= 0 ? "+" : ""}${Math.round(v).toLocaleString()}원`} />

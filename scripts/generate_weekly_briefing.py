@@ -113,9 +113,24 @@ def get_macro_week() -> dict | None:
         return None
     items = rows[0]["_data"].get("items") or {}
     pick = {k: items.get(k) for k in ("us10y", "usdkrw")}
+    pick["kr3y"] = get_kr_rate_week("kr3y")
     if not any(v and v.get("value") is not None for v in pick.values()):
         return None
     return {"as_of": rows[0]["_data"].get("date") or rows[0].get("date"), **pick}
+
+
+def get_kr_rate_week(key: str) -> dict | None:
+    """국고채 금리(kr_rates, scripts/save_kr_treasury.py - pykrx) 최신 값과 5거래일 전 대비 차이(%p).
+    macro_snapshot의 chg_1w와 같은 '5거래일 전' 기준. 표가 없거나 비면 None."""
+    try:
+        rows = turso_exec("SELECT date, value FROM kr_rates WHERE key = ? ORDER BY date DESC LIMIT 6", [key])
+    except Exception:
+        return None
+    vals = [float(r["value"]) for r in rows if r.get("value") is not None]
+    if not vals:
+        return None
+    return {"value": vals[0], "chg_1w": round(vals[0] - vals[5], 4) if len(vals) >= 6 else None,
+            "as_of": rows[0]["date"]}
 
 
 def get_watchlist_changes() -> dict:
@@ -357,6 +372,10 @@ def build_telegram_summary(b: dict) -> str:
     if r.get("value") is not None:
         chg = f" ({r['chg_1w']:+.2f}%p)" if r.get("chg_1w") is not None else ""
         rates.append(f"미 10년물 {r['value']:.2f}%{chg}")
+    kr = mc.get("kr3y") or {}
+    if kr.get("value") is not None:
+        chg = f" ({kr['chg_1w']:+.2f}%p)" if kr.get("chg_1w") is not None else ""
+        rates.append(f"국고채 3년 {kr['value']:.2f}%{chg}")
     fx = mc.get("usdkrw") or {}
     if fx.get("value") is not None:
         chg = f" ({fx['chg_1w']:+,.0f}원)" if fx.get("chg_1w") is not None else ""

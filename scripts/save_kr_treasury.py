@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS kr_rates (
 
 def save(conn, items: dict[str, list[dict]]) -> int:
     conn.execute(KR_RATES_DDL)
-    rows = [(r["date"], key, r["value"]) for key, vals in items.items() for r in vals if r.get("value") is not None]
+    # KRX가 float32 꼴(3.937000036...)로 줘서 소수 셋째 자리로 맞춘다(호가 단위가 0.001%p)
+    rows = [(r["date"], key, round(float(r["value"]), 3)) for key, vals in items.items() for r in vals if r.get("value") is not None]
     for i in range(0, len(rows), 100):
         chunk = rows[i:i + 100]
         conn.execute("INSERT OR REPLACE INTO kr_rates (date, key, value) VALUES " + ", ".join(["(?, ?, ?)"] * len(chunk)),

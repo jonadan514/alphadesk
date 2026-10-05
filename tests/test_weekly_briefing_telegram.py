@@ -55,3 +55,10 @@ def test_observation_reviews_line():
     assert "관찰 노트 회고 도착" in text and "4주 전" in text
     assert "뉴스↑ 일어남" in text and "주가↑ 판단 불가" in text
     assert "관찰 노트" not in g.build_telegram_summary(_briefing())
+
+
+def test_kr_treasury_in_rates_line():
+    m = {"us10y": {"value": 4.12, "chg_1w": 0.08}, "kr3y": {"value": 3.937, "chg_1w": -0.051},
+         "usdkrw": {"value": 1386.4, "chg_1w": -12.3}}
+    text = g.build_telegram_summary(_briefing(macro=m))
+    assert "미 10년물 4.12% (+0.08%p) · 국고채 3년 3.94% (-0.05%p) · 원/달러 1,386원 (-12원)" in text
