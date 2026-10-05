@@ -46,3 +46,12 @@ def test_macro_line_and_no_gpt():
 def test_no_double_blank_lines():
     text = g.build_telegram_summary(_briefing(us={}, kr={}, macro=None))
     assert "\n\n\n" not in text
+
+
+def test_observation_reviews_line():
+    rv = [{"kind": "theme", "market": "KR", "theme_id": "ai_semiconductor", "ticker": None, "checkpoint": 4,
+           "expect_results": {"news_up": True, "price_up": None}}]
+    text = g.build_telegram_summary(_briefing(observation_reviews=rv))
+    assert "관찰 노트 회고 도착" in text and "4주 전" in text
+    assert "뉴스↑ 일어남" in text and "주가↑ 판단 불가" in text
+    assert "관찰 노트" not in g.build_telegram_summary(_briefing())

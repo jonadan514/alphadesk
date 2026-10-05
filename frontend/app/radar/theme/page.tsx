@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { themeName } from "@/src/lib/themeNames";
 import { krStockName } from "@/src/lib/krStockNames";
 import { useMarket } from "@/src/contexts/MarketContext";
+import { ObservationCard, ObservationForm, ObservationT } from "@/src/components/Observation";
 
 const GOOD = "var(--good)";
 const DANGER = "var(--danger)";
@@ -191,6 +192,17 @@ function ThemeHistory() {
   const [data, setData] = useState<History | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [notes, setNotes] = useState<ObservationT[]>([]);
+  const [noteWeek, setNoteWeek] = useState<string | undefined>();
+  const [writing, setWriting] = useState(false);
+  const loadNotes = useMemo(() => () => {
+    if (!themeId) return;
+    fetch(`/api/notes?kind=theme&theme_id=${encodeURIComponent(themeId)}&market=${market}`)
+      .then((r) => r.json())
+      .then((d) => { setNotes(Array.isArray(d.observations) ? d.observations : []); setNoteWeek(d.current_week); })
+      .catch(() => setNotes([]));
+  }, [themeId, market]);
+  useEffect(() => { loadNotes(); }, [loadNotes]);
 
   useEffect(() => {
     if (!themeId) return;
@@ -280,6 +292,7 @@ function ThemeHistory() {
                         style={{ color: i === grid.length - 1 ? "var(--text-primary)" : FAINT,
                                  borderLeft: i === switchIdx ? "1px dashed var(--border-ctrl)" : undefined }}>
                         {md(w)}
+                        {notes.some((n) => n.week_start === w) && <span title="이 주에 남긴 관찰" style={{ color: ACCENT }}> ✎</span>}
                       </th>
                     ))}
                   </tr>
@@ -425,10 +438,28 @@ function ThemeHistory() {
             )}
           </section>
 
-          {/* ⑤ 관찰 노트 자리 */}
-          <section className="rounded-2xl p-4 text-[13px]" style={{ border: "1px dashed var(--border-ctrl)", color: FAINT }}>
-            관찰 노트 - 이 테마에 가설을 남기고 4주·12주 뒤 결과를 대조하는 기능이 다음 단계로 들어올 자리입니다.
+          {/* ⑤ 관찰 노트 */}
+          <section className={box} style={boxStyle}>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <h2 className="text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>관찰 노트</h2>
+              <Link href="/notes" className="text-[12px]" style={{ color: MUTED }}>전체 노트 →</Link>
+              <button onClick={() => setWriting(true)} className="ml-auto rounded-lg px-3 py-1.5 text-[13px] font-bold" style={{ background: ACCENT, color: "#000" }}>
+                관찰 남기기
+              </button>
+            </div>
+            {notes.length === 0 ? (
+              <p className="text-[13px]" style={{ color: FAINT }}>
+                이 테마에 남긴 관찰이 없습니다. 지금 보이는 흐름에 대한 가설을 한 줄 남기면 4주·12주 뒤 그때와 지금이 나란히 붙습니다.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {notes.map((o) => <ObservationCard key={o.id} o={o} currentWeek={noteWeek} onChanged={loadNotes} showTarget={false} />)}
+              </div>
+            )}
           </section>
+          {writing && (
+            <ObservationForm kind="theme" market={market} themeId={themeId} title={ko} onClose={() => setWriting(false)} onSaved={loadNotes} />
+          )}
         </>
       )}
     </div>

@@ -34,6 +34,7 @@ const NAV_GROUPS = [
   {
     label: "돌아보기",
     items: [
+      { href: "/notes",     label: "관찰 노트",  emoji: "📝", color: "#ffb020" },
       { href: "/scorecard", label: "성적표",     emoji: "📈", color: "#ffb020" },
     ],
   },

@@ -225,6 +225,32 @@ def get_theme_label_changes() -> dict:
     return out
 
 
+EXPECT_KO = {
+    "theme": {"news_up": "뉴스↑", "price_up": "주가↑", "earn_hold": "실적↑ 유지"},
+    "stock": {"news_up": "테마 뉴스↑", "price_up": "지수보다 더 오름", "earn_hold": "실적 유지"},
+}
+
+
+def get_observation_reviews() -> list[dict]:
+    """지난 8일 안에 붙은 관찰 노트 회고 (scripts/review_observations.py). 표가 없으면 빈 목록."""
+    try:
+        rows = turso_exec(
+            "SELECT o.kind, o.market, o.theme_id, o.ticker, o.created_at, r.checkpoint, r.expect_results "
+            "FROM observation_reviews r JOIN observations o ON o.id = r.observation_id "
+            "WHERE r.reviewed_at >= datetime('now', '-8 days') ORDER BY r.reviewed_at DESC LIMIT 10"
+        )
+    except Exception:
+        return []
+    out = []
+    for r in rows:
+        try:
+            results = json.loads(r.get("expect_results") or "{}")
+        except Exception:
+            results = {}
+        out.append({**r, "expect_results": results})
+    return out
+
+
 def get_upcoming_catalysts() -> list[dict]:
     """내 워치리스트 종목의 네러티브 촉매 모음."""
     my = turso_exec("SELECT market, symbol, name FROM my_watchlist")
@@ -362,6 +388,22 @@ def build_telegram_summary(b: dict) -> str:
     else:
         lines.append(f"<b>🔖 워치리스트</b> {wl['total']}종목")
 
+    reviews = b.get("observation_reviews") or []
+    if reviews:
+        names = load_theme_names()
+        lines.append("")
+        lines.append(f"<b>🔁 관찰 노트 회고 도착</b> {len(reviews)}건")
+        for rv in reviews[:3]:
+            target = (names.get(rv.get("theme_id") or "", rv.get("theme_id") or "") if rv.get("kind") == "theme"
+                      else rv.get("ticker") or "")
+            res = rv.get("expect_results") or {}
+            facts = ", ".join(
+                f"{EXPECT_KO.get(rv.get('kind'), {}).get(k, k)} "
+                f"{'판단 불가' if v is None else '일어남' if v else '안 일어남'}" for k, v in res.items())
+            lines.append(f"  {MARKET_FLAG.get(rv.get('market'), '')} {html.escape(target)} "
+                         f"{rv.get('checkpoint')}주 전" + (f" · {facts}" if facts else ""))
+        lines.append(f'  <a href="{SITE_URL}/notes">판단 남기기</a>')
+
     if b["sentiment_heating"]:
         lines.append("")
         lines.append("<b>📈 관심도 상승</b>")
@@ -418,6 +460,7 @@ def main() -> None:
         "sentiment_heating": get_sentiment_week(),
         "catalysts": get_upcoming_catalysts(),
         "theme_labels": get_theme_label_changes(),
+        "observation_reviews": get_observation_reviews(),
     }
     briefing["gpt_comment"] = gpt_comment(briefing)
 

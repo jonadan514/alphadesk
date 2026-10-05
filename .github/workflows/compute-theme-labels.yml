@@ -32,3 +32,11 @@ jobs:
           TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
         run: python scripts/compute_theme_labels.py --week-start "${{ inputs.week_start }}"
+
+      # 관찰 노트 회고 - 라벨까지 끝난 같은 주 값으로 4주·12주 회고를 붙인다 (실패해도 라벨은 이미 저장됨)
+      - name: Review observations
+        if: always()
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+        run: python scripts/review_observations.py

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { X, Info, Pencil, Search } from "lucide-react";
 import StockTechPanel from "@/src/components/StockTechPanel";
 import { themeName } from "@/src/lib/themeNames";
+import { ObservationForm } from "@/src/components/Observation";
 
 interface Candidate {
   market: string;
@@ -513,6 +514,8 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
 }) {
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState(note ?? "");
+  const [observing, setObserving] = useState(false);
+  const [observed, setObserved] = useState(false);
   const [relatedThemes, setRelatedThemes] = useState<{ theme_id: string; label: string | null; linkage?: string }[]>([]);
 
   // 이 종목이 어느 테마 레이더 테마에 속하는지 (Phase B에서 한국도 지원).
@@ -780,6 +783,18 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                 </button>
               )}
             </div>
+          )}
+
+          {/* 관찰 노트 - 메모(수시로 고침)와 달리 가설을 고정해 두고 4주·12주 뒤 그때와 지금을 대조 */}
+          <button onClick={() => setObserving(true)}
+            className="w-full py-2 text-[13px]"
+            style={{ background: "transparent", color: observed ? GOOD : TEXT_SECONDARY, border: `1px solid ${BORDER_CTRL}` }}>
+            {observed ? "관찰을 남겼습니다 - 관찰 노트에서 4주·12주 뒤 회고" : "✎ 관찰 남기기 (4주·12주 뒤 회고)"}
+          </button>
+          {observing && (
+            <ObservationForm kind="stock" market={c.market as "US" | "KR"} ticker={c.symbol}
+              title={c.market === "KR" ? `${c.name ?? c.symbol} (${c.symbol})` : `${c.symbol}${c.name ? ` · ${c.name}` : ""}`}
+              onClose={() => setObserving(false)} onSaved={() => setObserved(true)} />
           )}
 
           {/* 버튼 — 워치리스트 추가 (다음 행동 유도) */}
