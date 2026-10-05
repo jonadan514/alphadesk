@@ -105,6 +105,19 @@ def main() -> int:
                         "FROM earnings_surprise GROUP BY 1, 2 ORDER BY 1, 2").fetchall()
     for m, mon, n, s in rows:
         print(f"  {m} {mon}: {n}종목 (서프라이즈 값 {s})")
+    print("== 4. 분기 영업이익률 전년동기 비교 (2026-10-05 추가) ==")
+    for label, sql in [
+        ("테마 소속 기업(theme_member_signals, 최신 주)",
+         "SELECT market, om_status, COUNT(*) FROM theme_member_signals "
+         "WHERE week_start = (SELECT MAX(week_start) FROM theme_member_signals) GROUP BY 1, 2 ORDER BY 1, 2"),
+        ("워치리스트 후보(watchlist_candidates)",
+         "SELECT market, op_margin_q_status, COUNT(*) FROM watchlist_candidates GROUP BY 1, 2 ORDER BY 1, 2"),
+    ]:
+        try:
+            rows = conn.execute(sql).fetchall()
+            print(f"  {label}: " + ", ".join(f"{m} {st or '데이터부족'} {n}" for m, st, n in rows))
+        except Exception as e:
+            print(f"  {label}: 조회 실패 {e}")
     conn.close()
     return 0
 
