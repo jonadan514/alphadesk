@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 
 import yaml
@@ -25,7 +25,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
-from src.db.theme_signals import ensure_schema, get_approved_theme_members, upsert_price_signal
+from src.db.theme_signals import ensure_schema, signal_week_monday, get_approved_theme_members, upsert_price_signal
 from analyzers.theme_price import compute_price_signal
 from collectors.theme_price_collector import compute_price_batch
 from collectors.kr_kospi_list import yf_suffix as kr_yf_suffix
@@ -39,10 +39,6 @@ INDEX_SYMBOL = {"US": "^GSPC", "KR": "^KS11"}
 
 def _log(msg: str) -> None:
     print(f"[price] {msg}")
-
-
-def _current_week_monday(today: date) -> date:
-    return today - timedelta(days=today.weekday())
 
 
 def to_yf_symbol(ticker: str, market: str) -> str:
@@ -85,7 +81,7 @@ def main() -> None:
     conn = get_db()
     ensure_schema(conn)
 
-    week_start = args.week_start or _current_week_monday(date.today()).isoformat()
+    week_start = args.week_start or signal_week_monday(date.today()).isoformat()
 
     members_by_theme_market: dict[tuple[str, str], list[dict]] = {}
     yf_symbols: set[str] = set()

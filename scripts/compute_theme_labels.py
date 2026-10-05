@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -21,16 +21,12 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
-from src.db.theme_signals import ensure_schema, get_week_signals, update_theme_label
+from src.db.theme_signals import ensure_schema, signal_week_monday, get_week_signals, update_theme_label
 from analyzers.theme_labels import compute_label
 
 
 def _log(msg: str) -> None:
     print(f"[label] {msg}")
-
-
-def _current_week_monday(today: date) -> date:
-    return today - timedelta(days=today.weekday())
 
 
 def main() -> None:
@@ -44,7 +40,7 @@ def main() -> None:
     conn = get_db()
     ensure_schema(conn)
 
-    week_start = args.week_start or _current_week_monday(date.today()).isoformat()
+    week_start = args.week_start or signal_week_monday(date.today()).isoformat()
 
     total_rows = 0
     total_labeled = 0

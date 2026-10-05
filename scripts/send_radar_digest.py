@@ -12,7 +12,7 @@ import json
 import os
 import sys
 import urllib.request
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 import yaml
@@ -22,6 +22,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
+from src.db.theme_signals import signal_week_monday
 
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 RADAR_URL = "https://u-sonar.vercel.app/radar"
@@ -37,10 +38,6 @@ ARROW_GLYPH = {"up2": "↑↑", "up1": "↑", "flat": "→", "down": "↓", "na"
 
 def _log(msg: str) -> None:
     print(f"[digest] {msg}")
-
-
-def _current_week_monday(today: date) -> date:
-    return today - timedelta(days=today.weekday())
 
 
 def load_theme_names() -> dict[str, str]:
@@ -76,7 +73,7 @@ def send_telegram(text: str) -> None:
 
 def main() -> None:
     conn = get_db()
-    week_start = _current_week_monday(date.today()).isoformat()
+    week_start = signal_week_monday(date.today()).isoformat()
 
     rows = conn.execute(
         """

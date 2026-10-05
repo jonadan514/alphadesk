@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 
 import yaml
@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
 from src.db.fundamentals_cache import ensure_schema as ensure_fundamentals_schema, get_cached_financials_bulk
-from src.db.theme_signals import (ensure_schema, get_approved_theme_members, get_surprises,
+from src.db.theme_signals import (ensure_schema, signal_week_monday, get_approved_theme_members, get_surprises,
                                    upsert_earn_signal)
 from analyzers.theme_earnings import compute_earn_signal, reference_growth_for_market
 from collectors.watchlist_collector import get_kr_universe, get_us_universe
@@ -41,10 +41,6 @@ THEMES_YAML = ROOT / "config" / "themes.yaml"
 
 def _log(msg: str) -> None:
     print(f"[earn] {msg}")
-
-
-def _current_week_monday(today: date) -> date:
-    return today - timedelta(days=today.weekday())
 
 
 def load_active_themes(theme_ids: list[str] | None) -> tuple[list[dict], dict]:
@@ -80,7 +76,7 @@ def main() -> None:
     ensure_fundamentals_schema(conn)
     ensure_schema(conn)
 
-    week_start = args.week_start or _current_week_monday(date.today()).isoformat()
+    week_start = args.week_start or signal_week_monday(date.today()).isoformat()
 
     # (테마, 시장) 쌍별 소속 기업을 먼저 다 모아서, 필요한 티커 전체(US+KR
     # 합쳐)에 대해 재무 캐시를 한 번만 벌크 조회한다 - 개별 조회하면 겹치는

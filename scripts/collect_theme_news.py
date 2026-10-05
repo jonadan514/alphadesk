@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
-from src.db.theme_signals import (ensure_schema, insert_theme_news_bulk, get_prior_news_counts,
+from src.db.theme_signals import (ensure_schema, signal_week_monday, insert_theme_news_bulk, get_prior_news_counts,
                                   upsert_news_signal, news_history_since, get_approved_theme_members)
 from collectors.theme_news_collector import collect_theme_news, collect_member_news, finnhub_key
 
@@ -77,11 +77,6 @@ def is_collection_failure(counts: list[int]) -> bool:
     테마가 **전부** 동시에 0건일 확률은 사실상 없다 - 그건 소스가 막힌 것이다.
     """
     return bool(counts) and all(c == 0 for c in counts)
-
-
-def _current_week_monday(today: date) -> date:
-    """today가 속한 주(월~일)의 월요일 날짜."""
-    return today - timedelta(days=today.weekday())
 
 
 def member_news_count(articles: list[dict], stats: dict) -> int | None:
@@ -151,7 +146,7 @@ def main() -> None:
     conn = get_db()
     ensure_schema(conn)
 
-    current_week = _current_week_monday(date.today())
+    current_week = signal_week_monday(date.today())
     weeks = [current_week - timedelta(weeks=i) for i in range(args.weeks_back - 1, -1, -1)]
 
     KEYWORD_FIELD = {"US": "keywords_en", "KR": "keywords_ko"}

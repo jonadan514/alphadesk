@@ -4,6 +4,20 @@ SPEC: docs/radar/SPEC_phase_a_signals.md §1
 """
 from __future__ import annotations
 
+from datetime import date, timedelta
+
+
+def signal_week_monday(today: date) -> date:
+    """정기 파이프라인(뉴스·실적·주가·라벨)이 채울 주의 월요일 - **어제**가 속한 주.
+
+    정기 실행은 일요일 22:00-23:00 UTC(SPEC §7)라 '오늘이 속한 주'와 같지만, GitHub 예약 실행은
+    몇 시간씩 밀린다. 2026-09-28·10-05에는 월요일 00시(UTC)를 넘겨 시작해 막 시작된 새 주를 잡았고,
+    미국 뉴스가 전 테마 0건(수집 실패 경고)으로, 한국은 몇 시간치 기사만 그 주에 저장됐다.
+    하루를 빼면 월요일에 밀려 돌아도 방금 끝난 주를 채운다. 수요일 수동 실행 등 주 중간 실행은
+    전과 같이 그 주를 잡는다."""
+    d = today - timedelta(days=1)
+    return d - timedelta(days=d.weekday())
+
 THEME_NEWS_DDL = """
 CREATE TABLE IF NOT EXISTS theme_news (
   theme_id     TEXT NOT NULL,
