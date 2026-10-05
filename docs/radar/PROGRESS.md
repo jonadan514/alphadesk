@@ -2778,3 +2778,4 @@ Q2 기준 데이터라 이른 상태로 보일 수 있지만 틀린 값은 아�
 - 표: `observations`, `observation_reviews` (`src/db/observations.py`, 프론트 `/api/notes`가 같은 DDL로 만든다).
 - 검증: 테스트 5개(회고 시점·기대 결과·한 번만 쓰기·브리핑 줄), tsc, next build, Playwright 목업(작성 POST·판정/배운 점 PATCH·
   목록 갱신, 1440·390 넘침 0, 오류 0).
+- 오후 작업 리뷰(`REVIEW_2026-10-05.md` 8장): 브리핑 회고 줄이 같은 회고를 두 주 연속 알릴 수 있던 것(판단 안 한 것만), ISO 날짜 비교 어긋남 수정.

@@ -232,12 +232,15 @@ EXPECT_KO = {
 
 
 def get_observation_reviews() -> list[dict]:
-    """지난 8일 안에 붙은 관찰 노트 회고 (scripts/review_observations.py). 표가 없으면 빈 목록."""
+    """지난 8일 안에 붙었고 아직 판단하지 않은 관찰 노트 회고 (scripts/review_observations.py). 표가 없으면 빈 목록."""
     try:
         rows = turso_exec(
             "SELECT o.kind, o.market, o.theme_id, o.ticker, o.created_at, r.checkpoint, r.expect_results "
             "FROM observation_reviews r JOIN observations o ON o.id = r.observation_id "
-            "WHERE r.reviewed_at >= datetime('now', '-8 days') ORDER BY r.reviewed_at DESC LIMIT 10"
+            # 아직 판단 안 한 것만 - 브리핑과 회고 작업의 실행 순서에 따라 같은 회고가 두 주 연속 잡힐 수 있어서,
+            # 판단을 남긴 회고는 다시 알리지 않는다. reviewed_at은 ISO('T' 구분)라 공백 형식으로 바꿔 비교한다.
+            "WHERE r.verdict IS NULL AND REPLACE(r.reviewed_at, 'T', ' ') >= datetime('now', '-8 days') "
+            "ORDER BY r.reviewed_at DESC LIMIT 10"
         )
     except Exception:
         return []
