@@ -17,6 +17,7 @@ Usage: python scripts/generate_weekly_briefing.py [--no-telegram]
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import logging
 import os
@@ -304,7 +305,9 @@ def build_telegram_summary(b: dict) -> str:
     def disp(item):
         flag = MARKET_FLAG.get(item["market"], "")
         label = (item.get("name") or item["symbol"]) if item["market"] == "KR" else item["symbol"]
-        return f"{flag} {label}"
+        # parse_mode=HTML이라 이름의 &·<·>를 이스케이프해야 한다 - 안 하면 F&F 같은 종목 하나로
+        # 텔레그램이 "can't parse entities"를 내고 메시지 전체가 안 간다(2026-10-05 리뷰).
+        return f"{flag} {html.escape(label)}"
 
     lines = [f"<b>📋 Undercurrent Sonar 주간 브리핑</b> · {_md(b['week'])}", ""]
 
@@ -335,14 +338,16 @@ def build_telegram_summary(b: dict) -> str:
     counts = tl.get("label_counts") or {}
     lines.append("")
     lines.append(f"<b>📡 테마 레이더</b> ({_md(tl.get('week_start'))} 주)")
-    if counts and not any(counts.values()):
+    if not counts:
+        lines.append("  테마 신호 데이터 없음")
+    elif not any(counts.values()):
         lines.append("  아직 라벨 없음 - 뉴스 기준선(4주)이 쌓이면 붙습니다")
     else:
         lines.append("  라벨 " + " · ".join(f"{MARKET_FLAG[m]} {n}개" for m, n in counts.items()))
         names = load_theme_names()
         for t in tl.get("new_labels", [])[:5]:
             lines.append(f"  + {MARKET_FLAG.get(t.get('market', 'US'), '')} "
-                         f"{names.get(t['theme_id'], t['theme_id'])} — {t['label']}")
+                         f"{html.escape(names.get(t['theme_id'], t['theme_id']))} — {t['label']}")
         if len(tl.get("new_labels", [])) > 5:
             lines.append(f"  외 {len(tl['new_labels']) - 5}개")
 
@@ -364,7 +369,8 @@ def build_telegram_summary(b: dict) -> str:
             lines.append(f"  {disp(h)} {h['path']}")
 
     lines += ["", f'<a href="{SITE_URL}/briefing">전체 브리핑 보기</a>']
-    return "\n".join(lines)
+    # 지수·금리 줄이 다 비면 빈 줄이 겹친다 - 연속 빈 줄은 하나로
+    return "\n".join(l for i, l in enumerate(lines) if l or (i > 0 and lines[i - 1]))
 
 
 def send_telegram_summary(b: dict) -> None:
