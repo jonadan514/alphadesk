@@ -38,3 +38,13 @@ def test_review_written_once():
     row = conn.execute("SELECT reviewed_at, expect_results FROM observation_reviews").fetchone()
     assert row == ("t1", '{"news_up": true}')
     assert load_open_observations(conn)[0]["done"] == {4}
+
+
+def test_down_expects_and_legacy_earn_hold():
+    now = {"news_arrow": "down", "earn_arrow": "flat", "price_arrow": "up2"}
+    r = expect_results("theme", ["news_down", "earn_down", "price_down", "earn_hold"], now)
+    assert r == {"news_down": True, "earn_down": False, "price_down": False, "earn_hold": False}
+    stock = {"ret_since": -0.03, "index_ret_since": 0.01, "earn_status": "not_improved",
+             "themes": [{"news_arrow": "down"}, {"news_arrow": "up1"}]}
+    assert expect_results("stock", ["price_down", "earn_down", "news_down", "earn_up"], stock) == \
+        {"price_down": True, "earn_down": True, "news_down": True, "earn_up": False}

@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS observations (
   theme_id    TEXT,
   ticker      TEXT,
   hypothesis  TEXT NOT NULL,
-  expects     TEXT NOT NULL,          -- JSON 배열: news_up / price_up / earn_hold / unsure
+  expects     TEXT NOT NULL,          -- JSON 배열: {news,earn,price}_{up,down} / unsure (예전 earn_hold = earn_up)
   week_start  TEXT NOT NULL,          -- 작성 시점의 신호 주(월요일)
   snapshot    TEXT NOT NULL           -- JSON: 그때 값
 )
@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS observation_reviews (
 """
 
 CHECKPOINTS = (4, 12)
-EXPECTS = ("news_up", "price_up", "earn_hold", "unsure")
+# 축마다 ↑ 또는 ↓ 하나(2026-10-05 사용자 의견 - 하향 가설도 남길 수 있게). earn_hold는 첫 버전 키로 earn_up과 같다.
+EXPECTS = ("news_up", "news_down", "earn_up", "earn_down", "price_up", "price_down", "unsure", "earn_hold")
 UP = ("up1", "up2")
 
 
@@ -62,37 +63,40 @@ def due_checkpoints(created_week: str, current_week: str, done: set[int]) -> lis
     return [n for n in CHECKPOINTS if n not in done and now >= c + timedelta(weeks=n)]
 
 
-def _up(a: str | None) -> bool | None:
+def _dir(a: str | None, want: str) -> bool | None:
+    """테마 화살표가 기대 방향인지. up = ↑/↑↑, down = ↓. 계산 불가(na·없음)는 None."""
     if a is None or a == "na":
         return None
-    return a in UP
+    return a in UP if want == "up" else a == "down"
 
 
 def expect_results(kind: str, expects: list[str], now: dict) -> dict[str, bool | None]:
     """고른 기대가 회고 시점에 일어났는지. 사실만, 계산 불가는 None.
 
-    테마: news_up/price_up = 그 축이 지금 ↑, earn_hold = 실적 축이 지금도 ↑.
-    종목: price_up = 작성 이후 수익률이 같은 기간 지수 수익률보다 높음,
-          news_up = 사업 소속 테마 중 하나라도 뉴스 ↑ (전부 na면 None),
-          earn_hold = 지금 실적 판정이 '중앙값 초과'."""
+    테마: {축}_up = 그 축이 지금 ↑, {축}_down = 지금 ↓.
+    종목: price_up/down = 작성 이후 수익률이 같은 기간 지수 수익률보다 높음/낮음,
+          news_up/down = 사업 소속 테마 중 하나라도 뉴스 ↑/↓ (전부 na면 None),
+          earn_up/down = 지금 실적 판정이 '중앙값 초과'/'미달'."""
     out: dict[str, bool | None] = {}
     for e in expects:
         if e == "unsure":
             continue
+        key = "earn_up" if e == "earn_hold" else e
+        axis, _, want = key.partition("_")
+        if want not in ("up", "down") or axis not in ("news", "earn", "price"):
+            continue
         if kind == "theme":
-            axis = {"news_up": "news_arrow", "price_up": "price_arrow", "earn_hold": "earn_arrow"}.get(e)
-            out[e] = _up(now.get(axis)) if axis else None
+            out[e] = _dir(now.get(f"{axis}_arrow"), want)
+        elif axis == "price":
+            r, i = now.get("ret_since"), now.get("index_ret_since")
+            out[e] = None if r is None or i is None else (r > i if want == "up" else r < i)
+        elif axis == "news":
+            vals = [_dir(t.get("news_arrow"), want) for t in now.get("themes") or []]
+            known = [v for v in vals if v is not None]
+            out[e] = None if not known else any(known)
         else:
-            if e == "price_up":
-                r, i = now.get("ret_since"), now.get("index_ret_since")
-                out[e] = None if r is None or i is None else r > i
-            elif e == "news_up":
-                vals = [_up(t.get("news_arrow")) for t in now.get("themes") or []]
-                known = [v for v in vals if v is not None]
-                out[e] = None if not known else any(known)
-            elif e == "earn_hold":
-                st = now.get("earn_status")
-                out[e] = None if st in (None, "insufficient") else st == "improved"
+            st = now.get("earn_status")
+            out[e] = None if st in (None, "insufficient") else st == ("improved" if want == "up" else "not_improved")
     return out
 
 

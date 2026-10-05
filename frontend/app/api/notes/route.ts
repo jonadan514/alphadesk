@@ -18,7 +18,8 @@ const DDL = [
     snapshot TEXT NOT NULL, expect_results TEXT NOT NULL, verdict TEXT, lesson TEXT, judged_at TEXT,
     PRIMARY KEY (observation_id, checkpoint))`,
 ];
-const EXPECTS = ["news_up", "price_up", "earn_hold", "unsure"];
+// 축마다 ↑ 또는 ↓ 하나 (earn_hold는 첫 버전 키 - 예전 관찰 읽기용, 새로 받지는 않는다)
+const EXPECTS = ["news_up", "news_down", "earn_up", "earn_down", "price_up", "price_down", "unsure"];
 const VERDICTS = ["right", "wrong", "unclear"];
 const MAX_HYPOTHESIS = 300;
 
@@ -132,7 +133,12 @@ export async function POST(request: Request) {
     const kind = body.kind === "stock" ? "stock" : body.kind === "theme" ? "theme" : null;
     const market = body.market === "KR" ? "KR" : body.market === "US" ? "US" : null;
     const hypothesis = typeof body.hypothesis === "string" ? body.hypothesis.trim().slice(0, MAX_HYPOTHESIS) : "";
-    const expects = Array.isArray(body.expects) ? body.expects.filter((e: unknown) => EXPECTS.includes(e as string)) : [];
+    let expects: string[] = Array.isArray(body.expects) ? body.expects.filter((e: unknown) => EXPECTS.includes(e as string)) : [];
+    // 같은 축의 ↑와 ↓를 동시에 고를 수 없다 - 둘 다 오면 그 축은 버린다
+    for (const ax of ["news", "earn", "price"]) {
+      if (expects.includes(`${ax}_up`) && expects.includes(`${ax}_down`)) expects = expects.filter((e) => !e.startsWith(`${ax}_`));
+    }
+    if (expects.includes("unsure")) expects = ["unsure"];
     const themeId = kind === "theme" && typeof body.theme_id === "string" ? body.theme_id : null;
     const ticker = kind === "stock" && typeof body.ticker === "string" ? body.ticker.trim().toUpperCase() : null;
     if (!kind || !market || !hypothesis || (kind === "theme" && !themeId) || (kind === "stock" && !ticker)) {

@@ -43,10 +43,18 @@ export interface ObservationT {
   reviews: Review[];
 }
 
+// 축마다 ↑ 또는 ↓ 하나(2026-10-05 - 하향 가설도 남길 수 있게). earn_hold는 첫 버전 키라 읽기만 한다.
 export const EXPECT_LABEL: Record<Kind, Record<string, string>> = {
-  theme: { news_up: "뉴스 ↑", price_up: "주가 ↑", earn_hold: "실적 ↑ 유지", unsure: "잘 모르겠음" },
-  stock: { news_up: "소속 테마 뉴스 ↑", price_up: "지수보다 더 오름", earn_hold: "실적 중앙값 초과 유지", unsure: "잘 모르겠음" },
+  theme: { news_up: "뉴스 ↑", news_down: "뉴스 ↓", earn_up: "실적 ↑", earn_down: "실적 ↓",
+           price_up: "주가 ↑", price_down: "주가 ↓", earn_hold: "실적 ↑ 유지", unsure: "잘 모르겠음" },
+  stock: { news_up: "소속 테마 뉴스 ↑", news_down: "소속 테마 뉴스 ↓", earn_up: "실적 중앙값 초과", earn_down: "실적 중앙값 미달",
+           price_up: "지수보다 더 오름", price_down: "지수보다 덜 오름", earn_hold: "실적 중앙값 초과 유지", unsure: "잘 모르겠음" },
 };
+const AXES_FORM: { axis: "news" | "earn" | "price"; label: Record<Kind, string>; hint: Record<Kind, string> }[] = [
+  { axis: "price", label: { theme: "주가", stock: "주가" }, hint: { theme: "소속 중앙값의 지수 대비 4주 흐름", stock: "작성일부터 지수와 비교" } },
+  { axis: "earn", label: { theme: "실적", stock: "실적" }, hint: { theme: "매출 성장률이 시장 중앙값을 넘는 기업 비율", stock: "매출 성장률 시장 중앙값 초과/미달" } },
+  { axis: "news", label: { theme: "뉴스", stock: "테마 뉴스" }, hint: { theme: "기사 수가 8주 기준선보다 많아짐/줄어듦", stock: "소속 테마 중 하나라도" } },
+];
 const VERDICT_LABEL: Record<string, string> = { right: "맞았다", wrong: "틀렸다", unclear: "애매" };
 
 type Arrow = string | null | undefined;
@@ -79,9 +87,13 @@ export function ObservationForm({ kind, market, themeId, ticker, title, onClose,
   const [expects, setExpects] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const toggle = (e: string) => setExpects((cur) =>
-    e === "unsure" ? (cur.includes("unsure") ? [] : ["unsure"])
-      : cur.includes(e) ? cur.filter((x) => x !== e) : [...cur.filter((x) => x !== "unsure"), e]);
+  // 한 축에서는 ↑/↓ 중 하나만(다시 누르면 해제). "잘 모르겠음"은 다른 기대와 같이 고를 수 없다.
+  const toggle = (e: string) => setExpects((cur) => {
+    if (e === "unsure") return cur.includes("unsure") ? [] : ["unsure"];
+    if (cur.includes(e)) return cur.filter((x) => x !== e);
+    const axis = e.split("_")[0];
+    return [...cur.filter((x) => x !== "unsure" && !x.startsWith(`${axis}_`)), e];
+  });
 
   const save = async () => {
     setSaving(true); setError(null);
@@ -114,16 +126,34 @@ export function ObservationForm({ kind, market, themeId, ticker, title, onClose,
           className="w-full resize-none rounded-lg p-2.5 text-[14px] outline-none"
           style={{ background: "var(--bg-inset)", border: "1px solid var(--border-ctrl)", color: "var(--text-primary)" }} />
 
-        <p className="mb-1.5 mt-3 text-[12px]" style={{ color: MUTED }}>다음에 무엇이 따라올 것 같나요? (선택, 여러 개 가능)</p>
-        <div className="flex flex-wrap gap-1.5">
-          {Object.entries(EXPECT_LABEL[kind]).map(([k, label]) => (
-            <button key={k} onClick={() => toggle(k)} className="rounded-lg px-3 py-1.5 text-[12px]"
-              style={{ background: expects.includes(k) ? "rgba(255,176,32,0.14)" : "transparent",
-                       color: expects.includes(k) ? ACCENT : MUTED,
-                       border: `1px solid ${expects.includes(k) ? "rgba(255,176,32,0.45)" : "var(--border-ctrl)"}` }}>
-              {label}
-            </button>
+        <p className="mb-1.5 mt-3 text-[12px]" style={{ color: MUTED }}>4주·12주 뒤 어떻게 될 것 같나요? (선택 - 축마다 ↑ 또는 ↓, 여러 축 가능)</p>
+        <div className="space-y-1.5">
+          {AXES_FORM.map(({ axis, label, hint }) => (
+            <div key={axis} className="flex flex-wrap items-center gap-1.5">
+              <span className="w-16 shrink-0 text-[12px]" style={{ color: "var(--text-secondary)" }} title={hint[kind]}>{label[kind]}</span>
+              {(["up", "down"] as const).map((dir) => {
+                const k = `${axis}_${dir}`, on = expects.includes(k);
+                return (
+                  <button key={k} onClick={() => toggle(k)} className="whitespace-nowrap rounded-lg px-3 py-1.5 text-[12px]"
+                    style={{ background: on ? "rgba(255,176,32,0.14)" : "transparent", color: on ? ACCENT : MUTED,
+                             border: `1px solid ${on ? "rgba(255,176,32,0.45)" : "var(--border-ctrl)"}` }}>
+                    {EXPECT_LABEL[kind][k]}
+                  </button>
+                );
+              })}
+              <span className="text-[11px]" style={{ color: FAINT }}>{hint[kind]}</span>
+            </div>
           ))}
+          <div className="flex items-center gap-1.5">
+            <span className="w-16 shrink-0" />
+            <button onClick={() => toggle("unsure")} className="shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-[12px]"
+              style={{ background: expects.includes("unsure") ? "rgba(255,176,32,0.14)" : "transparent",
+                       color: expects.includes("unsure") ? ACCENT : MUTED,
+                       border: `1px solid ${expects.includes("unsure") ? "rgba(255,176,32,0.45)" : "var(--border-ctrl)"}` }}>
+              잘 모르겠음
+            </button>
+            <span className="text-[11px]" style={{ color: FAINT }}>고르지 않은 축은 회고에서 &quot;일어났나&quot;를 따지지 않습니다</span>
+          </div>
         </div>
 
         <p className="mt-3 text-[12px] leading-relaxed" style={{ color: FAINT }}>

@@ -226,8 +226,10 @@ def get_theme_label_changes() -> dict:
 
 
 EXPECT_KO = {
-    "theme": {"news_up": "뉴스↑", "price_up": "주가↑", "earn_hold": "실적↑ 유지"},
-    "stock": {"news_up": "테마 뉴스↑", "price_up": "지수보다 더 오름", "earn_hold": "실적 유지"},
+    "theme": {"news_up": "뉴스↑", "news_down": "뉴스↓", "earn_up": "실적↑", "earn_down": "실적↓",
+              "price_up": "주가↑", "price_down": "주가↓", "earn_hold": "실적↑ 유지"},
+    "stock": {"news_up": "테마 뉴스↑", "news_down": "테마 뉴스↓", "earn_up": "실적 초과", "earn_down": "실적 미달",
+              "price_up": "지수보다 더 오름", "price_down": "지수보다 덜 오름", "earn_hold": "실적 유지"},
 }
 
 
