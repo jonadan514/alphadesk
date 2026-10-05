@@ -943,8 +943,11 @@ export default function WatchlistPage() {
     }
   }, []);
 
-  // 오늘 관심도 상승(COLD→WARM/HOT 등) 종목
+  // 최근 주간 갱신에서 관심도가 오른(COLD→WARM/HOT 등) 종목 - 목록 배지와 "관심도 오른 종목만" 필터에 쓴다.
+  // 관심도는 뉴스량 기준 보조 정보라 맨 위 배너 대신 목록 안에 둔다(2026-10-05).
   const [shifts, setShifts] = useState<{ market: string; symbol: string; name?: string | null; prev_sentiment: string; sentiment: string }[]>([]);
+  const heating = new Map(shifts.map((s) => [`${s.market}:${s.symbol}`, `${s.prev_sentiment}→${s.sentiment}`]));
+  const [heatingOnly, setHeatingOnly] = useState(false);
   useEffect(() => {
     fetch("/api/watchlist/narrative-shifts")
       .then((r) => r.json())
@@ -1031,12 +1034,14 @@ export default function WatchlistPage() {
   const flowTest = flowMode === "label" ? isFlowTheme : flowMode === "interim" ? isInterimFlow : null;
   const inTheme = (c: Candidate) => flowTest ? (c.themes ?? []).some(flowTest) : (c.themes ?? []).length > 0;
   const themeCount = inMarket.filter(inTheme).length;
+  const heatingCount = inMarket.filter((c) => heating.has(`${c.market}:${c.symbol}`)).length;
   const presetCounts = Object.fromEntries(PRESETS.map((p) => [p.key, inMarket.filter(p.test).length])) as Record<PresetKey, number>;
   const activePreset = PRESETS.find((p) => p.key === preset) ?? null;
 
   const filtered = candidates.filter((c) => {
     if (marketFilter !== "ALL" && c.market !== marketFilter) return false;
     if (themeOnly && !inTheme(c)) return false;
+    if (heatingOnly && !heating.has(`${c.market}:${c.symbol}`)) return false;
     if (activePreset && !activePreset.test(c)) return false;
     if (regimeFilter !== "ALL" && c.regime_fit !== regimeFilter) return false;
     if (newOnly && c.is_new !== true) return false;
@@ -1136,23 +1141,6 @@ export default function WatchlistPage() {
         </p>
       </div>
 
-      {/* 관심도 상승 배너 */}
-      {shifts.length > 0 && (
-        <div style={{ marginBottom: 20, padding: "10px 14px", background: BAD + "12", border: `1px solid ${BAD}33` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: BAD }}>▲ 오늘 관심도 상승</span>
-            {shifts.map((s) => (
-              <span key={`${s.market}:${s.symbol}`} style={{ fontSize: 12, color: TEXT_PRIMARY }}>
-                <span style={{ color: s.market === "US" ? INFO : BAD, fontWeight: 600 }}>
-                  {s.market === "KR" ? (s.name || s.symbol) : s.symbol}
-                </span>
-                <span style={{ color: TEXT_MUTED }}> ({s.prev_sentiment}→{s.sentiment})</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* 통계 */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginBottom: 24 }}>
         {[
@@ -1217,7 +1205,7 @@ export default function WatchlistPage() {
           </div>
 
           {/* 좁혀 보기: 테마 흐름 교집합 + 조합 보기. 숫자는 현재 시장 범위 기준 */}
-          {(themesKnown || tierKnown || growthKnown) && (
+          {(themesKnown || tierKnown || growthKnown || heating.size > 0) && (
             <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
               <span style={{ fontSize: 12, color: TEXT_SECONDARY, marginRight: 2 }}>좁혀 보기</span>
               {themesKnown && (
@@ -1233,6 +1221,16 @@ export default function WatchlistPage() {
                     border: `1px solid ${themeOnly ? ACCENT + "50" : BORDER_CTRL}`,
                     padding: "4px 12px", fontSize: 12, cursor: "pointer",
                   }}>{flowMode === "any" ? "테마 소속만" : flowMode === "interim" ? "실적 먼저 움직인 테마만" : "테마 흐름과 겹치는 종목만"} ({themeCount})</button>
+              )}
+              {heating.size > 0 && (
+                <button onClick={() => setHeatingOnly((v) => !v)}
+                  title="최근 주간 갱신에서 시장 관심도(뉴스량 기준 HOT/WARM/COLD)가 오른 종목. 보조 정보일 뿐 핵심 지표가 아닙니다."
+                  style={{
+                    background: heatingOnly ? ACCENT + "20" : "transparent",
+                    color: heatingOnly ? ACCENT : TEXT_MUTED,
+                    border: `1px solid ${heatingOnly ? ACCENT + "50" : BORDER_CTRL}`,
+                    padding: "4px 12px", fontSize: 12, cursor: "pointer",
+                  }}>관심도 오른 종목만 ({heatingCount})</button>
               )}
               {PRESETS.filter((p) => (p.key === "new_growth" ? newKnown : tierKnown) && growthKnown).map((p) => (
                 <button key={p.key} title={p.note}
@@ -1420,6 +1418,12 @@ export default function WatchlistPage() {
                                 {c.is_reentry ? "재진입" : "신규"}
                               </span>
                             )}
+                            {heating.has(key) && (
+                              <span title={`최근 주간 갱신에서 관심도 상승 (${heating.get(key)}) · 뉴스량 기준 보조 정보`}
+                                style={{ fontSize: 10, fontWeight: 700, color: BAD, border: `1px solid ${BAD}55`, padding: "1px 5px", verticalAlign: "middle" }}>
+                                ▲관심
+                              </span>
+                            )}
                           </div>
                           <div style={{ color: TEXT_SECONDARY, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {c.name ?? "-"}{c.sector ? <span style={{ color: TEXT_MUTED }}> · {c.sector}</span> : null}
@@ -1498,6 +1502,12 @@ export default function WatchlistPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <span style={{ color: item.market === "US" ? INFO : BAD, fontSize: 11, fontWeight: 600, minWidth: 24 }}>{item.market}</span>
                   <span style={{ fontWeight: 700, fontSize: 15, minWidth: 60, color: NUM }}>{item.symbol}</span>
+                  {heating.has(`${item.market}:${item.symbol}`) && (
+                    <span title={`최근 주간 갱신에서 관심도 상승 (${heating.get(`${item.market}:${item.symbol}`)}) · 뉴스량 기준 보조 정보`}
+                      style={{ fontSize: 10, fontWeight: 700, color: BAD, border: `1px solid ${BAD}55`, padding: "1px 5px", verticalAlign: "middle" }}>
+                      ▲관심
+                    </span>
+                  )}
                   <span style={{ color: TEXT_SECONDARY, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name ?? ""}</span>
                   <span style={{ color: TEXT_FAINT, fontSize: 11 }}>{item.added_at.slice(0, 10)}</span>
                   <button onClick={() => removeFromWatchlist(item.id)} style={{ background: "transparent", color: TEXT_MUTED, border: `1px solid ${BORDER_CTRL}`, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>삭제</button>

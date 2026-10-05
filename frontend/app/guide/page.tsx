@@ -199,7 +199,7 @@ export default function GuidePage() {
             { n: "②", tab: "섹터 분석",     action: "경기 사이클이 지난주와 달라졌는지, 선행 섹터가 바뀌었는지 훑어보기", href: "/sector" },
             { n: "③", tab: "테마 레이더",   action: "라벨 붙은 테마가 있으면 훑어보기 — 특히 \"Quiet Strength\"는 뉴스만 봐서는 못 찾는 신호", href: "/radar" },
             { n: "④", tab: "분기 리서치",   action: "관심 가는 테마가 \"조용한 변화\"에 있는지, 소속 기업 재무 신호가 실제로 통과했는지 확인", href: "/quarterly" },
-            { n: "⑤", tab: "워치리스트",    action: "관심도 상승 배너 확인 → 밸류·성장 필터로 후보를 좁힌 뒤 → 종목 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
+            { n: "⑤", tab: "워치리스트",    action: "밸류·성장·테마 필터로 후보를 좁힌 뒤 → 종목 클릭해 네러티브 브리프 읽기 + 정성 체크 + 메모", href: "/watchlist" },
           ].map(({ n, tab, action, href }) => (
             <div key={n} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
               <span className="text-sm font-black shrink-0 w-5 text-center" style={{ color: "#ffb020" }}>{n}</span>

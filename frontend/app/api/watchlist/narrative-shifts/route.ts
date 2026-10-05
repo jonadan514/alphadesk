@@ -3,14 +3,15 @@ import { getClient } from "@/src/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// 오늘 관심도가 상승(COLD→WARM/HOT, WARM→HOT)한 종목 목록.
-// generate_narratives.py가 매일 계산해 저장한 trend 필드를 그대로 읽는다.
+// 최근 주간 갱신에서 관심도가 상승(COLD→WARM/HOT, WARM→HOT)한 종목 목록.
+// generate_narratives.py가 갱신 때 계산해 저장한 trend 필드를 그대로 읽는다.
+// 갱신은 주 1회(월요일 07시 KST)라 창을 8일로 둔다 - 20시간이면 월요일 하루만 보이고 사라졌다.
 export async function GET() {
   try {
     const client = getClient();
     const res = await client.execute(
       "SELECT market, symbol, payload, updated_at FROM narrative_briefs " +
-      "WHERE updated_at > datetime('now', '-20 hours')"
+      "WHERE updated_at > datetime('now', '-8 days')"
     );
 
     const shifts = res.rows
