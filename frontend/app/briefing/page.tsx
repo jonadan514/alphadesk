@@ -150,7 +150,7 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
           {/* 관심도 상승 */}
           {b.sentiment_heating?.length > 0 && (
             <div>
-              <p className="text-[12px] font-bold mb-1.5" style={{ color: "var(--text-muted)" }}>이번 주 달아오른 종목</p>
+              <p className="text-[12px] font-bold mb-1.5" style={{ color: "var(--text-muted)" }}>관심도 상승</p>
               <div className="flex flex-wrap gap-2">
                 {b.sentiment_heating.map((s) => (
                   <span key={`${s.market}:${s.symbol}`} className="text-[12px] px-2 py-1 rounded-lg"

@@ -295,7 +295,7 @@ def send_telegram_summary(b: dict) -> None:
             lines.append(f"  + {disp(a)}")
     if b["sentiment_heating"]:
         lines.append("")
-        lines.append("<b>📈 이번 주 달아오른 종목</b>")
+        lines.append("<b>📈 관심도 상승</b>")
         for h in b["sentiment_heating"][:3]:
             lines.append(f"  {disp(h)} {h['path']}")
 
