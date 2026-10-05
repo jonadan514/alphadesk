@@ -94,7 +94,8 @@ def main() -> None:
 
     # 시장별로 섹션을 나눈다 - 같은 테마(예: 반도체 장비)가 미국/한국에서
     # 서로 다른 라벨을 받을 수 있어, 섞어 놓으면 어느 시장 얘기인지 헷갈린다.
-    lines = [f"📡 <b>이번 주 테마 레이더</b> ({week_start} 기준)", f"{len(rows)}개 테마 라벨 부여\n"]
+    _y, _m, _d = week_start.split("-")
+    lines = [f"📡 <b>U-Sonar 테마 레이더</b> · {int(_m)}/{int(_d)} 주", f"라벨 붙은 테마 {len(rows)}개\n"]
     for market, flag in (("US", "🇺🇸"), ("KR", "🇰🇷")):
         market_rows = [r for r in rows if r[7] == market]
         if not market_rows:

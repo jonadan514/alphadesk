@@ -59,9 +59,9 @@ def main() -> None:
 
     failed = [f"{job} ({result})" for job, result in job_results if result in ("failure", "cancelled")]
 
-    lines = [f"⚠️ <b>{workflow} 실패</b>"]
+    lines = [f"⚠️ <b>U-Sonar 작업 실패</b> · {workflow}"]
     if failed:
-        lines.append("실패/취소된 잡: " + ", ".join(failed))
+        lines.append("실패하거나 취소된 단계: " + ", ".join(failed))
     else:
         # JOB_RESULTS를 못 받았거나 예상 밖 값일 때도 알림 자체는 보낸다
         lines.append("워크플로가 실패로 종료됐습니다 (잡별 상세는 로그 참고).")

@@ -15,7 +15,7 @@ interface StockRef {
 interface MarketWeek {
   index_chg_1w: number | null;
 }
-interface ThemeLabelChange { theme_id: string; label: string }
+interface ThemeLabelChange { theme_id: string; label: string; market?: "US" | "KR" }
 interface ThemeLabelChanges { week_start: string | null; new_labels: ThemeLabelChange[]; dropped_labels: ThemeLabelChange[] }
 interface Briefing {
   week: string;
@@ -87,7 +87,8 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
                   <div>
                     <p className="text-[11px] font-bold mb-1" style={{ color: "#ffb020" }}>+ 신규 라벨 ({b.theme_labels.new_labels.length})</p>
                     {b.theme_labels.new_labels.map((t) => (
-                      <p key={t.theme_id} className="text-[12px] py-0.5">
+                      <p key={`${t.market ?? "US"}:${t.theme_id}`} className="text-[12px] py-0.5">
+                        <span className="mr-1">{t.market === "KR" ? "🇰🇷" : "🇺🇸"}</span>
                         <span className="font-bold text-white">{themeName(t.theme_id).ko}</span>
                         <span className="ml-1.5" style={{ color: "var(--text-muted)" }}>{t.label}</span>
                       </p>
@@ -98,8 +99,8 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
                   <div>
                     <p className="text-[11px] font-bold mb-1" style={{ color: "var(--text-faint)" }}>− 소멸 라벨 ({b.theme_labels.dropped_labels.length})</p>
                     {b.theme_labels.dropped_labels.map((t) => (
-                      <p key={t.theme_id} className="text-[12px] py-0.5" style={{ color: "var(--text-faint)" }}>
-                        {themeName(t.theme_id).ko} <span>({t.label})</span>
+                      <p key={`${t.market ?? "US"}:${t.theme_id}`} className="text-[12px] py-0.5" style={{ color: "var(--text-faint)" }}>
+                        {t.market === "KR" ? "🇰🇷" : "🇺🇸"} {themeName(t.theme_id).ko} <span>({t.label})</span>
                       </p>
                     ))}
                   </div>

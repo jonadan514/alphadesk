@@ -219,7 +219,8 @@ def main() -> None:
                 msg = (f"{market} {week_start.isoformat()}: 테마 {len(fetched)}개가 전부 0건 - "
                        f"수집 실패로 보고 건수를 NULL로 저장한다(0으로 저장하면 기준선이 오염된다)")
                 _log(f"  ** 경고 ** {msg}")
-                failed_runs.append(f"{market} {week_start.isoformat()} ({len(fetched)}개 테마)")
+                failed_runs.append(f"{'미국' if market == 'US' else '한국'} {week_start.month}/{week_start.day} 주 "
+                                   f"- 테마 {len(fetched)}개 모두 기사 0건")
 
             for theme, article_count in fetched:
                 theme_id = theme["id"]
@@ -256,10 +257,10 @@ def main() -> None:
     conn.close()
     if failed_runs:
         send_telegram_warning(
-            "⚠️ <b>테마 뉴스 수집 실패</b>\n"
+            "⚠️ <b>U-Sonar 테마 뉴스 수집 실패</b>\n"
             + "\n".join(f"· {r}" for r in failed_runs)
-            + "\n\n전 테마가 0건입니다. 뉴스 소스가 막혔을 가능성이 높습니다"
-              "(건수는 NULL로 저장해 기준선 오염은 막았습니다)."
+            + "\n\n뉴스 출처가 막혔거나 연결이 끊긴 것으로 보입니다. "
+              "이번 주 뉴스 축은 '데이터 부족'으로 표시되고, 기준선 계산에는 넣지 않습니다."
         )
     _log("완료" + (f" - 수집 실패 {len(failed_runs)}건" if failed_runs else ""))
 

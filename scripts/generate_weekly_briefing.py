@@ -9,7 +9,8 @@
   - 워치리스트 변동 (신규 진입/탈락 — watchlist_weekly_snapshots 비교)
   - 관심도 흐름 (한 주간 sentiment 상승 종목)
   - 다가오는 촉매 (내 워치리스트 종목의 네러티브 촉매 모음)
-  - GPT 총평 · 다음 주 관전 포인트
+  - GPT 총평 · 다음 주 관전 포인트 (웹에만 - 텔레그램은 DB·시세 숫자만, 2026-10-05)
+  - 테마 레이더 라벨 변동 (미국·한국)
 
 Usage: python scripts/generate_weekly_briefing.py [--no-telegram]
 """
@@ -35,6 +36,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 SENTIMENT_RANK = {"COLD": 0, "WARM": 1, "HOT": 2}
+SENTIMENT_KO = {"COLD": "낮음", "WARM": "보통", "HOT": "높음"}
+SITE_URL = "https://u-sonar.vercel.app"
+MARKET_FLAG = {"US": "🇺🇸", "KR": "🇰🇷"}
+
+
+def _md(day: str | None) -> str:
+    """'2026-09-28' -> '9/28'. 텔레그램에서 날짜를 짧게 읽히게."""
+    if not day:
+        return "-"
+    _y, m, d = day.split("-")
+    return f"{int(m)}/{int(d)}"
 THEMES_YAML = ROOT / "config" / "themes.yaml"
 
 
@@ -155,47 +167,45 @@ def get_sentiment_week() -> list[dict]:
             market, symbol = key.split(":", 1)
             heating.append({
                 "market": market, "symbol": symbol, "name": names.get(key),
-                "path": f"{seq[0]}→{seq[-1]}",
+                "path": f"{SENTIMENT_KO.get(seq[0], seq[0])}→{SENTIMENT_KO.get(seq[-1], seq[-1])}",
             })
     return heating[:10]
 
 
 def get_theme_label_changes() -> dict:
-    """테마 레이더 라벨 변동 - 계산된 가장 최근 두 주 비교.
+    """테마 레이더 라벨 변동 - 시장별로 계산된 가장 최근 두 주 비교 (미국·한국).
 
-    라벨 계산(compute-theme-labels.yml)은 이 브리핑과 별도 워크플로우로, 일요일
-    22:45 UTC에 돌아 이 브리핑(22:00~ 시작)보다 늦게 끝날 수 있다. 그래서 "이번 주"라고
-    단정하지 않고 실제로 계산이 끝난 week_start를 그대로 노출한다 - 못 미더운 값을
-    맞다고 우기는 것보다, 실제 기준 주를 정직하게 보여주는 쪽이 낫다.
+    라벨 계산(compute-theme-labels.yml)은 이 브리핑과 별도 워크플로라 "이번 주"라고 단정하지 않고
+    실제로 계산이 끝난 week_start를 그대로 노출한다. 항목마다 market을 붙인다(2026-10-05 한국 추가 -
+    예전엔 미국만 봤다). label_counts는 시장별 이번 주 라벨 수 - 0이면 텔레그램에 "아직 라벨 없음"을 쓴다.
     """
-    weeks = turso_exec(
-        "SELECT DISTINCT week_start FROM theme_signals WHERE market = 'US' "
-        "ORDER BY week_start DESC LIMIT 2"
-    )
-    if not weeks:
-        return {"week_start": None, "new_labels": [], "dropped_labels": []}
-
-    latest = weeks[0]["week_start"]
-    cur_rows = turso_exec(
-        "SELECT theme_id, label FROM theme_signals "
-        "WHERE market = 'US' AND week_start = ? AND label IS NOT NULL",
-        [latest],
-    )
-    cur_map = {r["theme_id"]: r["label"] for r in cur_rows}
-
-    prev_map: dict[str, str] = {}
-    if len(weeks) > 1:
-        prev_rows = turso_exec(
-            "SELECT theme_id, label FROM theme_signals "
-            "WHERE market = 'US' AND week_start = ? AND label IS NOT NULL",
-            [weeks[1]["week_start"]],
+    out = {"week_start": None, "new_labels": [], "dropped_labels": [], "label_counts": {}}
+    for market in ("US", "KR"):
+        weeks = turso_exec(
+            "SELECT DISTINCT week_start FROM theme_signals WHERE market = ? "
+            "ORDER BY week_start DESC LIMIT 2", [market]
         )
-        prev_map = {r["theme_id"]: r["label"] for r in prev_rows}
+        if not weeks:
+            continue
+        latest = weeks[0]["week_start"]
+        out["week_start"] = max(out["week_start"] or latest, latest)
 
-    new_labels     = [{"theme_id": t, "label": l} for t, l in cur_map.items() if t not in prev_map]
-    dropped_labels = [{"theme_id": t, "label": l} for t, l in prev_map.items() if t not in cur_map]
+        def labels(week: str) -> dict[str, str]:
+            rows = turso_exec(
+                "SELECT theme_id, label FROM theme_signals "
+                "WHERE market = ? AND week_start = ? AND label IS NOT NULL",
+                [market, week],
+            )
+            return {r["theme_id"]: r["label"] for r in rows}
 
-    return {"week_start": latest, "new_labels": new_labels, "dropped_labels": dropped_labels}
+        cur_map = labels(latest)
+        prev_map = labels(weeks[1]["week_start"]) if len(weeks) > 1 else {}
+        out["label_counts"][market] = len(cur_map)
+        out["new_labels"] += [{"theme_id": t, "label": l, "market": market}
+                              for t, l in cur_map.items() if prev_map.get(t) != l]
+        out["dropped_labels"] += [{"theme_id": t, "label": l, "market": market}
+                                  for t, l in prev_map.items() if t not in cur_map]
+    return out
 
 
 def get_upcoming_catalysts() -> list[dict]:
@@ -246,7 +256,8 @@ def gpt_comment(briefing: dict) -> str:
 2. 워치리스트·관심도 변화의 의미 — 어떤 종류의 종목이 들어오고 나갔는지, 시장이 어디로 관심을 옮기는지
 3. 다음 주 관전 포인트 — 주의할 것과 지켜볼 것
 
-데이터에 없는 사실(구체적 뉴스·수치)을 지어내지 마세요."""
+데이터에 없는 사실(구체적 뉴스·수치)을 지어내지 마세요.
+숫자(등락률·건수 등)는 쓰지 마세요 - 숫자는 화면에 따로 표시됩니다. "올랐다/내렸다/소폭" 같은 말로만 표현하세요."""
 
     try:
         resp = requests.post(
@@ -272,6 +283,60 @@ def gpt_comment(briefing: dict) -> str:
 
 # ── 텔레그램 요약 ────────────────────────────────────────────────────────────
 
+def build_telegram_summary(b: dict) -> str:
+    """텔레그램 요약 본문. 숫자는 전부 DB·시세에서 온 값만 쓴다 - GPT 총평은 웹에만 둔다(원칙 2)."""
+    def disp(item):
+        flag = MARKET_FLAG.get(item["market"], "")
+        label = (item.get("name") or item["symbol"]) if item["market"] == "KR" else item["symbol"]
+        return f"{flag} {label}"
+
+    lines = [f"<b>📋 Undercurrent Sonar 주간 브리핑</b> · {_md(b['week'])}", ""]
+
+    idx = []
+    if b["us"].get("index_chg_1w") is not None:
+        idx.append(f"🇺🇸 SPY {b['us']['index_chg_1w']:+.1f}%")
+    if b["kr"].get("index_chg_1w") is not None:
+        idx.append(f"🇰🇷 KOSPI {b['kr']['index_chg_1w']:+.1f}%")
+    if idx:
+        lines.append("지난 1주 " + " · ".join(idx))
+
+    # 테마 레이더 - 이 툴의 중심이라 라벨이 없어도 상태를 한 줄은 쓴다
+    tl = b.get("theme_labels") or {}
+    counts = tl.get("label_counts") or {}
+    lines.append("")
+    lines.append(f"<b>📡 테마 레이더</b> ({_md(tl.get('week_start'))} 주)")
+    if counts and not any(counts.values()):
+        lines.append("  아직 라벨 없음 - 뉴스 기준선(4주)이 쌓이면 붙습니다")
+    else:
+        lines.append("  라벨 " + " · ".join(f"{MARKET_FLAG[m]} {n}개" for m, n in counts.items()))
+        names = load_theme_names()
+        for t in tl.get("new_labels", [])[:5]:
+            lines.append(f"  + {MARKET_FLAG.get(t.get('market', 'US'), '')} "
+                         f"{names.get(t['theme_id'], t['theme_id'])} — {t['label']}")
+        if len(tl.get("new_labels", [])) > 5:
+            lines.append(f"  외 {len(tl['new_labels']) - 5}개")
+
+    wl = b["watchlist"]
+    lines.append("")
+    if wl["has_prev"]:
+        lines.append(f"<b>🔖 워치리스트</b> {wl['total']}종목 · 신규 {wl['added_count']} · 탈락 {wl['removed_count']}")
+        for a in wl["added"][:3]:
+            lines.append(f"  + {disp(a)}")
+        if wl["added_count"] > 3:
+            lines.append(f"  외 {wl['added_count'] - 3}개")
+    else:
+        lines.append(f"<b>🔖 워치리스트</b> {wl['total']}종목")
+
+    if b["sentiment_heating"]:
+        lines.append("")
+        lines.append("<b>📈 관심도 상승</b>")
+        for h in b["sentiment_heating"][:3]:
+            lines.append(f"  {disp(h)} {h['path']}")
+
+    lines += ["", f'<a href="{SITE_URL}/briefing">전체 브리핑 보기</a>']
+    return "\n".join(lines)
+
+
 def send_telegram_summary(b: dict) -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
@@ -279,46 +344,8 @@ def send_telegram_summary(b: dict) -> None:
         logger.info("텔레그램 미설정 — 발송 건너뜀")
         return
 
-    def disp(item):
-        flag = "🇰🇷" if item["market"] == "KR" else "🇺🇸"
-        label = (item.get("name") or item["symbol"]) if item["market"] == "KR" else item["symbol"]
-        return f"{flag} {label}"
-
-    lines = [f"<b>📋 주간 브리핑 — {b['week']} 주</b>", ""]
-    us, kr = b["us"], b["kr"]
-    if us.get("index_chg_1w") is not None:
-        lines.append(f"🇺🇸 SPY 주간 {us['index_chg_1w']:+.1f}%")
-    if kr.get("index_chg_1w") is not None:
-        lines.append(f"🇰🇷 KOSPI 주간 {kr['index_chg_1w']:+.1f}%")
-
-    wl = b["watchlist"]
-    if wl["has_prev"] and (wl["added"] or wl["removed"]):
-        lines.append("")
-        lines.append(f"<b>🔖 워치리스트</b> 신규 {wl['added_count']} · 탈락 {wl['removed_count']}")
-        for a in wl["added"][:3]:
-            lines.append(f"  + {disp(a)}")
-        if wl["added_count"] > 3:
-            lines.append(f"  외 {wl['added_count'] - 3}개")
-    if b["sentiment_heating"]:
-        lines.append("")
-        lines.append("<b>📈 관심도 상승</b>")
-        for h in b["sentiment_heating"][:3]:
-            lines.append(f"  {disp(h)} {h['path']}")
-
-    tl = b.get("theme_labels") or {}
-    if tl.get("new_labels"):
-        names = load_theme_names()
-        lines.append("")
-        lines.append(f"<b>📡 테마 레이더 신규 라벨</b> ({tl['week_start']} 기준)")
-        for t in tl["new_labels"][:5]:
-            lines.append(f"  {names.get(t['theme_id'], t['theme_id'])} — {t['label']}")
-
-    if b.get("gpt_comment"):
-        first_para = b["gpt_comment"].split("\n")[0][:200]
-        lines += ["", f"💬 {first_para}"]
-    lines += ["", "전체 브리핑은 웹 '주간 브리핑' 탭에서."]
-
-    body = json.dumps({"chat_id": chat_id, "text": "\n".join(lines), "parse_mode": "HTML"}).encode()
+    body = json.dumps({"chat_id": chat_id, "text": build_telegram_summary(b), "parse_mode": "HTML",
+                       "disable_web_page_preview": True}).encode()
     req = urllib.request.Request(
         f"https://api.telegram.org/bot{token}/sendMessage",
         data=body, headers={"Content-Type": "application/json"}, method="POST",

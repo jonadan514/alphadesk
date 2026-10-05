@@ -416,14 +416,14 @@ def main():
     attempted = run_state["live_ok"] + run_state["cache_fallback"] + run_state["no_data_at_all"]
     coverage_rate = (run_state["live_ok"] + run_state["cache_fallback"]) / attempted if attempted else 1.0
     if run_state["circuit_tripped"] or coverage_rate < CACHE_HIT_RATE_THRESHOLD:
-        lines = [f"⚠️ <b>워치리스트 스크리닝 경고</b> ({datetime.utcnow().strftime('%Y-%m-%d')})"]
+        lines = [f"⚠️ <b>U-Sonar 워치리스트 갱신 경고</b> · {datetime.utcnow().strftime('%-m/%-d')}"]
         if run_state["circuit_tripped"]:
-            lines.append("야후 rate limit으로 회로차단기가 작동해 일부 종목을 캐시로 대체했습니다.")
+            lines.append("야후 접속 제한에 걸려 일부 종목은 지난번에 받아 둔 재무 데이터로 대신했습니다.")
         if coverage_rate < CACHE_HIT_RATE_THRESHOLD:
             lines.append(
-                f"이번 주 갱신 대상 커버리지 {coverage_rate*100:.0f}% "
-                f"(라이브 성공 {run_state['live_ok']} / 캐시 폴백 {run_state['cache_fallback']} / "
-                f"완전 실패 {run_state['no_data_at_all']})"
+                f"데이터를 확보한 종목 비율 {coverage_rate*100:.0f}% "
+                f"(새로 받음 {run_state['live_ok']} / 지난 데이터로 대신 {run_state['cache_fallback']} / "
+                f"못 받음 {run_state['no_data_at_all']})"
             )
         logger.warning("캐시 적중률 낮음 또는 회로차단기 작동 — 텔레그램 경고 발송")
         send_telegram_warning("\n".join(lines))
