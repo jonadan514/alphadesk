@@ -132,6 +132,9 @@ CREATE TABLE IF NOT EXISTS theme_member_signals (
   rev_quarter  TEXT,     -- rev_yoy의 분기 (예: 2026-Q2)
   earn_status  TEXT,     -- improved / not_improved / insufficient (시장 중앙값 기준)
   computed_at  TEXT,
+  om_now       REAL,     -- 최근 분기 영업이익률 (company_growth.quarterly_margin_change)
+  om_change    REAL,     -- 1년 전 같은 분기 대비 차이(소수, 0.02 = +2%p)
+  om_status    TEXT,     -- 개선 / 악화 / 유지 / NULL(데이터부족)
   PRIMARY KEY (theme_id, market, week_start, ticker)
 )
 """
@@ -163,8 +166,13 @@ def upsert_member_prices(conn, rows: list[tuple]) -> None:
 
 
 def upsert_member_earnings(conn, rows: list[tuple]) -> None:
-    """rows: (theme_id, market, week_start, ticker, rev_yoy, rev_quarter, earn_status, computed_at)"""
-    _upsert_member_rows(conn, ("rev_yoy", "rev_quarter", "earn_status"), rows)
+    """rows: (theme_id, market, week_start, ticker, rev_yoy, rev_quarter, earn_status,
+              om_now, om_change, om_status, computed_at)"""
+    _upsert_member_rows(conn, ("rev_yoy", "rev_quarter", "earn_status", "om_now", "om_change", "om_status"), rows)
+
+
+# 처음 만든 뒤 추가된 기업별 열 - CREATE TABLE IF NOT EXISTS는 기존 표에 열을 더하지 않아 ALTER로 붙인다.
+MEMBER_LATE_COLUMNS = [("om_now", "REAL"), ("om_change", "REAL"), ("om_status", "TEXT")]
 
 
 def ensure_schema(conn) -> None:
@@ -173,6 +181,11 @@ def ensure_schema(conn) -> None:
     conn.execute(EARNINGS_SURPRISE_DDL)
     conn.execute(THEME_NEWS_WEEKLY_DDL)
     conn.execute(THEME_MEMBER_SIGNALS_DDL)
+    for name, coltype in MEMBER_LATE_COLUMNS:
+        try:
+            conn.execute(f"ALTER TABLE theme_member_signals ADD COLUMN {name} {coltype}")
+        except Exception:
+            pass  # 이미 있음
     for name, coltype in LATE_COLUMNS:
         try:
             conn.execute(f"ALTER TABLE theme_signals ADD COLUMN {name} {coltype}")

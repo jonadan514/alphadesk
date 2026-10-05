@@ -15,6 +15,8 @@ const GROWTH_COLS = `${VALUE_COLS}, revenue_cagr_3y, revenue_yoy, op_margin_dire
 // 없으므로 반드시 가장 바깥 계층이어야 한다 - 아래쪽 계층에 넣으면 폴백이
 // 전부 실패해서 후보가 통째로 0개로 보인다(폴백이 막으려던 바로 그 사고).
 const FULL_COLS = `${GROWTH_COLS}, universe_source`;
+// 분기 영업이익률 전년동기 비교(2026-10-05) - 가장 늦게 붙은 열이라 가장 바깥 계층. 다음 주간 스크리닝 전까지 운영 표에 없다.
+const MARGIN_COLS = `${FULL_COLS}, op_margin_q_now, op_margin_q_change, op_margin_q_status`;
 
 export async function GET(request: Request) {
   try {
@@ -42,7 +44,8 @@ export async function GET(request: Request) {
     // 그걸 **빈 목록**으로 바꿔 버려서 후보 275종목이 0종목으로 보인다. 컬럼
     // 계층(전체 -> 성장 -> 밸류 -> 기본)을 하나씩 낮춰가며 재시도해 목록 자체는
     // 항상 뜨게 한다.
-    const res = await client.execute({ sql: FULL_COLS + tail, args })
+    const res = await client.execute({ sql: MARGIN_COLS + tail, args })
+      .catch(async () => await client.execute({ sql: FULL_COLS + tail, args }))
       .catch(async () => await client.execute({ sql: GROWTH_COLS + tail, args })
       .catch(async () => {
         if (growth) return { rows: [], columns: [] };   // 성장 필터인데 컬럼이 없으면 결과 없음이 맞다

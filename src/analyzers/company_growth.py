@@ -126,6 +126,50 @@ def operating_margin_direction(periods: list[tuple[str, dict]]) -> str | None:
     return "개선" if (recent_oi / recent_rev) > (base_oi / base_rev) else "악화"
 
 
+# 분기 영업이익률 전년동기 비교 (2026-10-05). 연간 3년 비교(operating_margin_direction)는 느려서,
+# "실적이 먼저 움직였다"를 더 이르게 보려고 최신 분기와 1년 전 같은 분기를 비교한다.
+# 1%p는 임의로 정한 경계 - 분기 이익률은 계절·일회성으로 흔들려 작은 차이를 개선/악화로 부르지 않으려는 것.
+MARGIN_STEP = 0.01
+YEAR_AGO_DAYS = (330, 400)     # "1년 전 같은 분기"로 인정하는 날짜 간격
+
+
+def quarterly_margin_change(q_df) -> dict | None:
+    """분기 손익 DataFrame(열 = 분기말, 최신이 앞)에서 최신 분기와 1년 전 같은 분기 영업이익률을 비교.
+
+    반환: {now, year_ago, change, quarter, status} - status는 "개선"/"악화"/"유지"(±MARGIN_STEP).
+    매출이 0 이하이거나 1년 전 분기가 없으면 None(데이터부족 - 탈락 아님). 적자 폭이 줄어도 이익률이 오르면 개선."""
+    if q_df is None or getattr(q_df, "empty", True):
+        return None
+    cols = list(q_df.columns)
+    if not cols:
+        return None
+
+    def margin(col):
+        data = q_df[col].to_dict()
+        rev = _pick(data, REVENUE_KEYS)
+        oi = _pick(data, OPERATING_INCOME_KEYS)
+        if rev is None or oi is None or rev != rev or oi != oi or rev <= 0:
+            return None
+        return oi / rev
+
+    latest = cols[0]
+    try:
+        import pandas as pd
+        t0 = pd.Timestamp(latest)
+        prior = next((c for c in cols[1:] if YEAR_AGO_DAYS[0] <= (t0 - pd.Timestamp(c)).days <= YEAR_AGO_DAYS[1]), None)
+    except Exception:
+        return None
+    if prior is None:
+        return None
+    now, ago = margin(latest), margin(prior)
+    if now is None or ago is None:
+        return None
+    change = now - ago
+    status = "개선" if change >= MARGIN_STEP else "악화" if change <= -MARGIN_STEP else "유지"
+    q = (t0.month - 1) // 3 + 1
+    return {"now": now, "year_ago": ago, "change": change, "quarter": f"{t0.year}-Q{q}", "status": status}
+
+
 def growth_tier(cagr: float | None) -> str | None:
     """절대 기준 3분류 (SPEC 4-3) - 순위가 아니라 고정된 경계값과 비교한다.
     데이터부족(None)은 그대로 None으로 돌려준다 - "역성장"으로 묶지 않는다(원칙 4).

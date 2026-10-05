@@ -72,17 +72,18 @@ export async function GET(request: Request) {
       });
       membersWeek = (wRes.rows[0]?.[0] as string | null) ?? null;
       if (membersWeek) {
-        const msRes = await client.execute({
-          sql: `
+        // om_*(분기 영업이익률 전년동기 비교)는 2026-10-05에 붙은 열 - 없으면 그 열만 빼고 다시 조회
+        const memberSql = (withMargin: boolean) => `
             SELECT ms.ticker, ms.price_ret, ms.rev_yoy, ms.rev_quarter, ms.earn_status,
+                   ${withMargin ? "ms.om_now, ms.om_change, ms.om_status," : ""}
                    wc.name AS wl_name, wc.valuation_tier, wc.growth_tier,
                    CASE WHEN wc.symbol IS NULL THEN 0 ELSE 1 END AS in_watchlist
             FROM theme_member_signals ms
             LEFT JOIN watchlist_candidates wc ON wc.market = ms.market AND wc.symbol = ms.ticker
             WHERE ms.theme_id = ? AND ms.market = ? AND ms.week_start = ?
-          `,
-          args: [themeId, market, membersWeek],
-        });
+          `;
+        const msRes = await client.execute({ sql: memberSql(true), args: [themeId, market, membersWeek] })
+          .catch(() => client.execute({ sql: memberSql(false), args: [themeId, market, membersWeek] }));
         members = toObjects(msRes as never)
           // 지금 소속이 아닌 기업(그 뒤 재매핑으로 빠짐)은 빼고, 소속 구분을 붙인다
           .filter((m) => !runId || linkageByTicker[m.ticker as string] !== undefined)

@@ -50,6 +50,9 @@ interface MemberRow {
   rev_yoy: number | null;
   rev_quarter: string | null;
   earn_status: string | null;
+  om_now?: number | null;
+  om_change?: number | null;
+  om_status?: string | null;
   wl_name: string | null;
   valuation_tier: string | null;
   growth_tier: string | null;
@@ -233,6 +236,11 @@ function ThemeHistory() {
 
   const members = [...(data?.members ?? [])].sort((a, b) => (b.price_ret ?? -Infinity) - (a.price_ret ?? -Infinity));
   const shown = showAll ? members : members.slice(0, 10);
+  const omCounts = members.reduce((acc, m) => {
+    if (m.om_status) acc[m.om_status] = (acc[m.om_status] ?? 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const hasMargin = members.some((m) => m.om_status != null || m.om_now != null);
   const earnCounts = members.reduce((acc, m) => {
     const k = m.earn_status ?? "insufficient";
     acc[k] = (acc[k] ?? 0) + 1;
@@ -383,6 +391,7 @@ function ThemeHistory() {
                 <p className="mb-3 text-[12px]" style={{ color: FAINT }}>
                   {data.members_week && `${md(data.members_week)} 주 · `}사업 소속(직접·부분) {members.length}개사 · 4주 수익률 높은 순 ·
                   실적 중앙값 초과 {earnCounts.improved ?? 0} / 미달 {earnCounts.not_improved ?? 0} / 데이터부족 {earnCounts.insufficient ?? 0}
+                  {hasMargin && <> · 영업이익률(전년 같은 분기 대비) 개선 {omCounts["개선"] ?? 0} / 유지 {omCounts["유지"] ?? 0} / 악화 {omCounts["악화"] ?? 0}</>}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-[13px]" style={{ minWidth: 560 }}>
@@ -392,7 +401,8 @@ function ThemeHistory() {
                         <th className="py-2 text-right font-normal">4주 수익률</th>
                         <th className="py-2 text-right font-normal">매출 YoY</th>
                         <th className="py-2 text-left font-normal pl-4">실적</th>
-                        <th className="py-2 text-left font-normal">워치리스트</th>
+                        {hasMargin && <th className="py-2 text-right font-normal" title="최근 분기 영업이익률과 1년 전 같은 분기 대비 차이 (±1%p 이상이면 개선/악화)">영업이익률</th>}
+                        <th className="py-2 pl-4 text-left font-normal">워치리스트</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -417,7 +427,18 @@ function ThemeHistory() {
                               {pct(m.rev_yoy)}{m.rev_quarter && <span className="ml-1 text-[10px]" style={{ color: FAINT }}>{m.rev_quarter.replace("-", " ")}</span>}
                             </td>
                             <td className="py-2 pl-4" style={{ color: st.color }}>{st.text}</td>
-                            <td className="py-2 text-[12px]" style={{ color: m.in_watchlist ? ACCENT : FAINT }}>
+                            {hasMargin && (
+                              <td className="py-2 text-right whitespace-nowrap" style={{ fontFamily: MONO }}
+                                title={m.om_status ? `1년 전 같은 분기 대비 ${m.om_status}` : "데이터부족(분기 손익 부족)"}>
+                                {m.om_now != null ? <span style={{ color: "var(--text-secondary)" }}>{(m.om_now * 100).toFixed(1)}%</span> : <span style={{ color: FAINT }}>-</span>}
+                                {m.om_change != null && (
+                                  <span className="ml-1 text-[11px]" style={{ color: m.om_status === "개선" ? GOOD : m.om_status === "악화" ? DANGER : MUTED }}>
+                                    {m.om_change >= 0 ? "+" : ""}{(m.om_change * 100).toFixed(1)}%p
+                                  </span>
+                                )}
+                              </td>
+                            )}
+                            <td className="py-2 pl-4 text-[12px]" style={{ color: m.in_watchlist ? ACCENT : FAINT }}>
                               {m.in_watchlist ? `후보${m.valuation_tier ? ` · ${m.valuation_tier}` : ""}${m.growth_tier ? ` · ${m.growth_tier}` : ""}` : "-"}
                             </td>
                           </tr>
@@ -433,6 +454,7 @@ function ThemeHistory() {
                 )}
                 <p className="mt-2 text-[12px]" style={{ color: FAINT }}>
                   워치리스트 "후보"는 재무 함정 필터를 통과한 종목입니다. 실적 판정은 테마 실적 축과 같은 기준(시장 유니버스 매출 성장률 중앙값)입니다.
+                  {hasMargin && " 영업이익률은 최근 분기를 1년 전 같은 분기와 비교한 참고 값으로, 실적 축 계산에는 들어가지 않습니다."}
                 </p>
               </>
             )}

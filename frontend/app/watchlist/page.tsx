@@ -30,6 +30,10 @@ interface Candidate {
   revenue_cagr_3y?: number | null;
   revenue_yoy?: number | null;
   op_margin_direction?: "개선" | "악화" | null;
+  // 분기 영업이익률 - 최근 분기 vs 1년 전 같은 분기(2026-10-05). 연간 3년 비교보다 이른 신호, ±1%p 경계.
+  op_margin_q_now?: number | null;
+  op_margin_q_change?: number | null;
+  op_margin_q_status?: "개선" | "악화" | "유지" | null;
   growth_tier?: string | null;   // 성장 / 정체 / 역성장
   // 유니버스 출처. 미국만 값이 있고("sp500"/"sp400") 한국은 null이다.
   // 표에는 넣지 않는다 - 종목을 고를 때 쓰는 정보가 아니라 "이 후보가 어디서
@@ -729,10 +733,20 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                 </span>
                 {c.op_margin_direction && (
                   <span className="text-[12px]" style={{ color: c.op_margin_direction === "개선" ? GOOD : CAUTION }}>
-                    영업이익률 {c.op_margin_direction}
+                    영업이익률 3년 {c.op_margin_direction}
                   </span>
                 )}
               </div>
+              {c.op_margin_q_now != null && (
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                  최근 분기 영업이익률 {(c.op_margin_q_now * 100).toFixed(1)}%
+                  {c.op_margin_q_change != null && (
+                    <span style={{ color: c.op_margin_q_status === "개선" ? GOOD : c.op_margin_q_status === "악화" ? CAUTION : TEXT_MUTED }}>
+                      {" "}(1년 전 같은 분기 대비 {c.op_margin_q_change >= 0 ? "+" : ""}{(c.op_margin_q_change * 100).toFixed(1)}%p · {c.op_margin_q_status})
+                    </span>
+                  )}
+                </p>
+              )}
               <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>
                 {c.growth_tier
                   ? "연차 재무제표 최근 4개 회계연도(정확히 3년 간격) 기준. 후보들 중 순위가 아니라 절대 기준입니다."
@@ -1418,6 +1432,12 @@ export default function WatchlistPage() {
                         <td style={{ padding: "8px 8px" }}>
                           <div><GrowthBadge tier={c.growth_tier} /></div>
                           <div style={{ marginTop: 2 }}><GrowthNumbers cagr3y={c.revenue_cagr_3y} yoy={c.revenue_yoy} /></div>
+                          {(c.op_margin_q_status === "개선" || c.op_margin_q_status === "악화") && (
+                            <div style={{ marginTop: 2, fontSize: 11, color: c.op_margin_q_status === "개선" ? GOOD : CAUTION, whiteSpace: "nowrap" }}
+                              title={`최근 분기 영업이익률 ${c.op_margin_q_now != null ? (c.op_margin_q_now * 100).toFixed(1) + "%" : "-"}, 1년 전 같은 분기 대비 ${c.op_margin_q_change != null ? ((c.op_margin_q_change >= 0 ? "+" : "") + (c.op_margin_q_change * 100).toFixed(1)) : "-"}%p`}>
+                              분기 이익률 {c.op_margin_q_status === "개선" ? "↑" : "↓"}
+                            </div>
+                          )}
                         </td>
                         <td style={{ padding: "8px 8px" }}><RegimeBadge fit={c.regime_fit} /></td>
                         <td style={{ padding: "8px 8px" }} onClick={(e) => e.stopPropagation()}>

@@ -34,6 +34,7 @@ from src.db.theme_signals import (ensure_schema, signal_week_monday, get_approve
                                    upsert_earn_signal, upsert_member_earnings)
 from analyzers.theme_earnings import (classify_company_earnings, compute_earn_signal,
                                       reference_growth_for_market, yoy_growth)
+from analyzers.company_growth import quarterly_margin_change
 from collectors.watchlist_collector import get_kr_universe, get_us_universe
 from collectors.earnings_surprise_collector import summarize_theme
 
@@ -117,11 +118,13 @@ def main() -> None:
 
     financials = get_cached_financials_bulk(conn, sorted(needed))
     revenue_by_ticker = {}
+    margin_by_ticker: dict[str, dict | None] = {}   # 분기 영업이익률 전년동기 비교(소속 기업 표시용, 실적 축에는 안 씀)
     for ticker, data in financials.items():
         if data is None:
             revenue_by_ticker[ticker] = None
             continue
         q_df = data.get("financials_quarterly")
+        margin_by_ticker[ticker] = quarterly_margin_change(q_df)
         if q_df is None or q_df.empty or "Total Revenue" not in q_df.index:
             revenue_by_ticker[ticker] = None
             continue
@@ -174,7 +177,9 @@ def main() -> None:
         for m in members:
             rev = revenue_by_ticker.get(m["ticker"])
             status, q_label = classify_company_earnings(rev, 0.0 if ref is None else ref)
-            member_rows.append((theme_id, market, week_start, m["ticker"], yoy_growth(rev), q_label, status, now))
+            om = margin_by_ticker.get(m["ticker"]) or {}
+            member_rows.append((theme_id, market, week_start, m["ticker"], yoy_growth(rev), q_label, status,
+                                om.get("now"), om.get("change"), om.get("status"), now))
         upsert_member_earnings(conn, member_rows)
         conn.commit()
 
