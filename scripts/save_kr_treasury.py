@@ -29,6 +29,13 @@ CREATE TABLE IF NOT EXISTS kr_rates (
 
 def save(conn, items: dict[str, list[dict]]) -> int:
     conn.execute(KR_RATES_DDL)
+    # 수집 쪽에서 휴장일 반복 값을 뺀 날짜 범위 안에 이미 저장된 반복 행(2026-10-05 첫 실행분)을 지운다 -
+    # 이번에 받은 날짜 범위 안에서 이번 결과에 없는 날짜만. 범위 밖 과거 기록은 건드리지 않는다.
+    dates = sorted({r["date"] for v in items.values() for r in v})
+    if dates:
+        keep = ", ".join("?" * len(dates))
+        conn.execute(f"DELETE FROM kr_rates WHERE date BETWEEN ? AND ? AND date NOT IN ({keep})",
+                     (dates[0], dates[-1], *dates))
     # KRX가 float32 꼴(3.937000036...)로 줘서 소수 셋째 자리로 맞춘다(호가 단위가 0.001%p)
     rows = [(r["date"], key, round(float(r["value"]), 3)) for key, vals in items.items() for r in vals if r.get("value") is not None]
     for i in range(0, len(rows), 100):

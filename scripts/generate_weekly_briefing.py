@@ -123,10 +123,12 @@ def get_kr_rate_week(key: str) -> dict | None:
     """국고채 금리(kr_rates, scripts/save_kr_treasury.py - pykrx) 최신 값과 5거래일 전 대비 차이(%p).
     macro_snapshot의 chg_1w와 같은 '5거래일 전' 기준. 표가 없거나 비면 None."""
     try:
-        rows = turso_exec("SELECT date, value FROM kr_rates WHERE key = ? ORDER BY date DESC LIMIT 6", [key])
+        rows = turso_exec("SELECT date, value FROM kr_rates WHERE key = ? ORDER BY date DESC LIMIT 12", [key])
     except Exception:
         return None
     vals = [float(r["value"]) for r in rows if r.get("value") is not None]
+    # 휴장일에 직전 값이 그대로 들어온 행이 섞여 있어도 "5거래일 전"이 밀리지 않게 연속 같은 값은 하나로
+    vals = [v for i, v in enumerate(vals) if i == 0 or v != vals[i - 1]]
     if not vals:
         return None
     return {"value": vals[0], "chg_1w": round(vals[0] - vals[5], 4) if len(vals) >= 6 else None,

@@ -52,8 +52,27 @@ def fetch() -> dict:
                             pass
                 seen += 1
         day -= timedelta(days=1)
-    _log(f"거래일 {seen}일 수신 - " + ", ".join(f"{k} {len(v)}개" for k, v in out.items()))
-    return out
+    _log(f"조회한 평일 {seen}일 - " + ", ".join(f"{k} {len(v)}개" for k, v in out.items()))
+    return drop_holiday_repeats(out)
+
+
+def drop_holiday_repeats(data: dict[str, list[dict]]) -> dict[str, list[dict]]:
+    """휴장일(추석·한글날 등)에 KRX가 직전 거래일 값을 그 날짜로 다시 주는 경우를 걸러낸다.
+    모든 만기 값이 바로 앞(이전 날짜) 거래일과 똑같은 날은 같은 호가의 반복으로 보고 뺀다 - 그대로 두면
+    "5거래일 전 대비"가 하루씩 밀린다(2026-10-05 리뷰: 21일 동안 16일이 들어왔는데 실제 거래일은 약 14일)."""
+    dates = sorted({r["date"] for v in data.values() for r in v})
+    by_key = {k: {r["date"]: r["value"] for r in v} for k, v in data.items()}
+    keep, prev = set(), None
+    for d in dates:
+        cur = tuple(by_key[k].get(d) for k in data)
+        if prev is not None and cur == prev:
+            continue
+        keep.add(d)
+        prev = cur
+    dropped = len(dates) - len(keep)
+    if dropped:
+        _log(f"휴장일 반복 값 {dropped}일 제외")
+    return {k: [r for r in v if r["date"] in keep] for k, v in data.items()}
 
 
 def main() -> int:
