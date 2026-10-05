@@ -135,6 +135,23 @@ _SNAPSHOT_TABLES = {
 # Connection
 # --------------------------------------------------------------------------
 
+class _TransientTursoError(Exception):
+    """재시도해도 되는 Turso 오류(서버가 실행하지 않았다고 응답함)."""
+
+
+# Turso가 "실행하지 않았다"고 알려 주는 일시 오류 - 다시 보내도 두 번 반영될 일이 없어 재시도한다.
+# 2026-10-05 한국 뉴스 대량 저장이 `SQLite error: disk I/O error` 한 번에 20분 수집을 통째로 잃었다
+# (같은 작업을 다시 돌리면 정상). 응답이 아예 안 온 경우(타임아웃·연결 끊김)는 실제로 반영됐을 수 있어
+# 재시도하지 않는다.
+TRANSIENT_ERRORS = ("disk I/O error", "database is locked", "SQLITE_BUSY", "SQLITE_IOERR")
+TRANSIENT_HTTP = (429, 503)
+RETRY_DELAYS = (2, 5, 10)   # 초
+
+
+def _is_transient(message: str) -> bool:
+    return any(t.lower() in message.lower() for t in TRANSIENT_ERRORS)
+
+
 class _TursoConn:
     """Turso HTTP Pipeline API — sqlite3 호환 최소 래퍼."""
 
@@ -164,6 +181,17 @@ class _TursoConn:
         return {"type": "text", "value": str(v)}
 
     def execute(self, sql: str, params=()):
+        import time as _time
+        for attempt, delay in enumerate((*RETRY_DELAYS, None)):
+            try:
+                return self._execute_once(sql, params)
+            except _TransientTursoError as e:
+                if delay is None:
+                    raise ValueError(str(e)) from None
+                print(f"[turso] 일시 오류({e}) - {delay}초 뒤 재시도 {attempt + 1}/{len(RETRY_DELAYS)}", flush=True)
+                _time.sleep(delay)
+
+    def _execute_once(self, sql: str, params=()):
         import requests as _req
         stmt: dict = {"sql": sql}
         if params:
@@ -173,6 +201,8 @@ class _TursoConn:
             {"type": "close"},
         ]}
         r = _req.post(self._url, headers=self._headers, json=payload, timeout=30)
+        if r.status_code in TRANSIENT_HTTP:
+            raise _TransientTursoError(f"HTTP {r.status_code}")
         if r.status_code >= 400:
             # raise_for_status()는 응답 본문을 버려 원인 파악이 어려움 — Turso가 돌려준
             # 실제 에러 메시지(어떤 statement/인자가 문제인지)를 그대로 노출한다.
@@ -184,7 +214,10 @@ class _TursoConn:
         data = r.json()
         res = data["results"][0]
         if res["type"] == "error":
-            raise ValueError(res["error"]["message"])
+            msg = res["error"]["message"]
+            if _is_transient(msg):
+                raise _TransientTursoError(msg)
+            raise ValueError(msg)
         rs = res.get("response", {}).get("result", {})
         self._rows = rs.get("rows", [])
         return self

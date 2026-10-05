@@ -171,3 +171,28 @@ def insert_review(conn, observation_id: int, checkpoint: int, reviewed_at: str, 
         (observation_id, checkpoint, reviewed_at, week_start,
          json.dumps(snapshot, ensure_ascii=False), json.dumps(results)),
     )
+
+
+def load_refill_candidates(conn) -> list[dict]:
+    """종목 회고 중 시세 조회 실패로 수익률이 빈 것(아직 판단 전). 다음 주 회고 작업이 빈 값만 채운다."""
+    rows = conn.execute(
+        "SELECT r.observation_id, r.checkpoint, r.reviewed_at, r.snapshot, o.created_at, o.market, o.ticker, o.expects "
+        "FROM observation_reviews r JOIN observations o ON o.id = r.observation_id "
+        "WHERE o.kind = 'stock' AND r.verdict IS NULL").fetchall()
+    out = []
+    for oid, cp, reviewed_at, snap, created, market, ticker, expects in rows:
+        snap_d = json.loads(snap or "{}")
+        if snap_d.get("ret_since") is not None and snap_d.get("index_ret_since") is not None:
+            continue
+        out.append({"observation_id": oid, "checkpoint": cp, "reviewed_at": reviewed_at, "snapshot": snap_d,
+                    "created_at": created, "market": market, "ticker": ticker, "expects": json.loads(expects or "[]")})
+    return out
+
+
+def fill_review_returns(conn, observation_id: int, checkpoint: int, snapshot: dict, results: dict) -> None:
+    """빈 수익률을 채운 snapshot과 다시 낸 기대 결과로 갱신 - 판단 전인 회고만(사람이 판단한 뒤엔 건드리지 않는다)."""
+    conn.execute(
+        "UPDATE observation_reviews SET snapshot = ?, expect_results = ? "
+        "WHERE observation_id = ? AND checkpoint = ? AND verdict IS NULL",
+        (json.dumps(snapshot, ensure_ascii=False), json.dumps(results), observation_id, checkpoint),
+    )

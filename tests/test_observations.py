@@ -2,8 +2,8 @@
 import json
 import sqlite3
 
-from src.db.observations import (due_checkpoints, ensure_schema, expect_results, insert_review,
-                                 load_open_observations)
+from src.db.observations import (due_checkpoints, ensure_schema, expect_results, fill_review_returns,
+                                 insert_review, load_open_observations, load_refill_candidates)
 
 
 def test_due_checkpoints():
@@ -48,3 +48,37 @@ def test_down_expects_and_legacy_earn_hold():
              "themes": [{"news_arrow": "down"}, {"news_arrow": "up1"}]}
     assert expect_results("stock", ["price_down", "earn_down", "news_down", "earn_up"], stock) == \
         {"price_down": True, "earn_down": True, "news_down": True, "earn_up": False}
+
+
+def test_refill_only_missing_and_unjudged():
+    conn = sqlite3.connect(":memory:")
+    ensure_schema(conn)
+    for i, t in enumerate(["AAA", "BBB", "CCC"], start=1):
+        conn.execute("INSERT INTO observations (created_at, kind, market, ticker, hypothesis, expects, week_start, snapshot) "
+                     "VALUES ('2026-10-05T01:00', 'stock', 'US', ?, 'h', '[\"price_up\"]', '2026-09-28', '{}')", (t,))
+    insert_review(conn, 1, 4, "2026-11-01T23:00", "2026-10-26", {"ret_since": None, "index_ret_since": 0.01}, {"price_up": None})
+    insert_review(conn, 2, 4, "2026-11-01T23:00", "2026-10-26", {"ret_since": 0.05, "index_ret_since": 0.01}, {"price_up": True})
+    insert_review(conn, 3, 4, "2026-11-01T23:00", "2026-10-26", {"ret_since": None, "index_ret_since": None}, {"price_up": None})
+    conn.execute("UPDATE observation_reviews SET verdict = 'unclear' WHERE observation_id = 3")
+    cands = load_refill_candidates(conn)
+    assert [c["observation_id"] for c in cands] == [1]          # 값 있는 2, 판단 끝난 3은 제외
+    fill_review_returns(conn, 1, 4, {"ret_since": 0.03, "index_ret_since": 0.01}, {"price_up": True})
+    assert conn.execute("SELECT expect_results FROM observation_reviews WHERE observation_id = 1").fetchone()[0] == '{"price_up": true}'
+    assert load_refill_candidates(conn) == []
+
+
+def test_return_since_uses_until(monkeypatch):
+    import sys, types
+    from datetime import date
+    import pandas as pd
+    idx = pd.to_datetime(["2026-10-02", "2026-10-05", "2026-10-30", "2026-11-06"])
+    fake = types.SimpleNamespace(Ticker=lambda s: types.SimpleNamespace(
+        history=lambda **k: pd.DataFrame({"Close": [100.0, 102.0, 110.0, 120.0]}, index=idx)))
+    monkeypatch.setitem(sys.modules, "yfinance", fake)
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location("ro", Path(__file__).resolve().parent.parent / "scripts" / "review_observations.py")
+    ro = importlib.util.module_from_spec(spec); spec.loader.exec_module(ro)
+    assert abs(ro.return_since("X", date(2026, 10, 5)) - (120 / 102 - 1)) < 1e-9          # 오늘(마지막)까지
+    assert abs(ro.return_since("X", date(2026, 10, 5), date(2026, 11, 1)) - (110 / 102 - 1)) < 1e-9   # 회고일 직전 종가
+    assert abs(ro.return_since("X", date(2026, 10, 4)) - (120 / 100 - 1)) < 1e-9          # 작성일 직전 거래일

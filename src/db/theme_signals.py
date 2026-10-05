@@ -205,20 +205,38 @@ def insert_theme_news_bulk(conn, theme_id: str, market: str, week_start: str,
     if not articles:
         return
     for i in range(0, len(articles), chunk_size):
-        chunk = articles[i:i + chunk_size]
-        placeholders = ", ".join(["(?, ?, ?, ?, ?, ?, ?, ?)"] * len(chunk))
-        params: list = []
-        for a in chunk:
-            params.extend([
-                theme_id, market, a["_url_hash"], a["title"], a["url"],
-                a["published_at"], a["source"], week_start,
-            ])
+        _insert_news_chunk(conn, theme_id, market, week_start, articles[i:i + chunk_size])
+
+
+NEWS_MIN_CHUNK = 25
+
+
+def _insert_news_chunk(conn, theme_id: str, market: str, week_start: str, chunk: list[dict]) -> None:
+    """한 묶음 저장. 실패하면(연결 계층 재시도까지 다 실패) 반으로 나눠 다시 - 큰 INSERT 하나 때문에
+    그 테마·주 기사 전부를 잃지 않게(2026-10-05). INSERT OR IGNORE라 일부가 먼저 들어갔어도 다시 보내도 된다.
+    NEWS_MIN_CHUNK보다 작아져도 실패하면 그대로 올린다(수집 실패로 드러나야 한다)."""
+    placeholders = ", ".join(["(?, ?, ?, ?, ?, ?, ?, ?)"] * len(chunk))
+    params: list = []
+    for a in chunk:
+        params.extend([
+            theme_id, market, a["_url_hash"], a["title"], a["url"],
+            a["published_at"], a["source"], week_start,
+        ])
+    try:
         conn.execute(
             "INSERT OR IGNORE INTO theme_news "
             "(theme_id, market, url_hash, title, url, published_at, source, week_start) "
             f"VALUES {placeholders}",
             tuple(params),
         )
+    except Exception as e:
+        if len(chunk) <= NEWS_MIN_CHUNK:
+            raise
+        half = len(chunk) // 2
+        print(f"[theme_news] {theme_id}({market}) {len(chunk)}건 저장 실패({type(e).__name__}) - "
+              f"{half}·{len(chunk) - half}건으로 나눠 다시", flush=True)
+        _insert_news_chunk(conn, theme_id, market, week_start, chunk[:half])
+        _insert_news_chunk(conn, theme_id, market, week_start, chunk[half:])
 
 
 # 수집원이 바뀐 주(월요일). 이 주 이전 이력은 같은 시장이라도 규모가 달라 기준선에 잇지 않는다.
