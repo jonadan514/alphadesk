@@ -34,6 +34,8 @@ interface Candidate {
   op_margin_q_now?: number | null;
   op_margin_q_change?: number | null;
   op_margin_q_status?: "개선" | "악화" | "유지" | null;
+  // 최근 100일 안 실적 발표의 EPS 서프라이즈(2026-10-05, earnings_surprise)
+  surprise?: { pct: number; date: string; estimate: number | null; reported: number | null } | null;
   growth_tier?: string | null;   // 성장 / 정체 / 역성장
   // 유니버스 출처. 미국만 값이 있고("sp500"/"sp400") 한국은 null이다.
   // 표에는 넣지 않는다 - 종목을 고를 때 쓰는 정보가 아니라 "이 후보가 어디서
@@ -737,6 +739,17 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                   </span>
                 )}
               </div>
+              {c.surprise && (
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                  최근 실적 발표 {Number(c.surprise.date.slice(5, 7))}/{Number(c.surprise.date.slice(8, 10))}: EPS 추정치 대비{" "}
+                  <span style={{ color: c.surprise.pct > 0 ? GOOD : c.surprise.pct < 0 ? CAUTION : TEXT_MUTED }}>
+                    {c.surprise.pct > 0 ? "+" : ""}{c.surprise.pct.toFixed(1)}%
+                  </span>
+                  {c.surprise.estimate != null && c.surprise.reported != null && (
+                    <span style={{ color: TEXT_MUTED }}> (추정 {c.surprise.estimate} → 실제 {c.surprise.reported})</span>
+                  )}
+                </p>
+              )}
               {c.op_margin_q_now != null && (
                 <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
                   최근 분기 영업이익률 {(c.op_margin_q_now * 100).toFixed(1)}%

@@ -53,6 +53,7 @@ interface MemberRow {
   om_now?: number | null;
   om_change?: number | null;
   om_status?: string | null;
+  surprise?: { pct: number; date: string; estimate: number | null; reported: number | null } | null;
   wl_name: string | null;
   valuation_tier: string | null;
   growth_tier: string | null;
@@ -241,6 +242,8 @@ function ThemeHistory() {
     return acc;
   }, {} as Record<string, number>);
   const hasMargin = members.some((m) => m.om_status != null || m.om_now != null);
+  const withSurprise = members.filter((m) => m.surprise);
+  const surpriseBeat = withSurprise.filter((m) => (m.surprise?.pct ?? 0) > 0).length;
   const earnCounts = members.reduce((acc, m) => {
     const k = m.earn_status ?? "insufficient";
     acc[k] = (acc[k] ?? 0) + 1;
@@ -392,6 +395,7 @@ function ThemeHistory() {
                   {data.members_week && `${md(data.members_week)} 주 · `}사업 소속(직접·부분) {members.length}개사 · 4주 수익률 높은 순 ·
                   실적 중앙값 초과 {earnCounts.improved ?? 0} / 미달 {earnCounts.not_improved ?? 0} / 데이터부족 {earnCounts.insufficient ?? 0}
                   {hasMargin && <> · 영업이익률(전년 같은 분기 대비) 개선 {omCounts["개선"] ?? 0} / 유지 {omCounts["유지"] ?? 0} / 악화 {omCounts["악화"] ?? 0}</>}
+                  {withSurprise.length > 0 && <> · 최근 100일 실적 발표 {withSurprise.length}개사 중 추정치 상회 {surpriseBeat}</>}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-[13px]" style={{ minWidth: 560 }}>
@@ -402,6 +406,7 @@ function ThemeHistory() {
                         <th className="py-2 text-right font-normal">매출 YoY</th>
                         <th className="py-2 text-left font-normal pl-4">실적</th>
                         {hasMargin && <th className="py-2 text-right font-normal" title="최근 분기 영업이익률과 1년 전 같은 분기 대비 차이 (±1%p 이상이면 개선/악화)">영업이익률</th>}
+                        {withSurprise.length > 0 && <th className="py-2 pl-3 text-right font-normal" title="최근 100일 안에 발표한 실적의 EPS 추정치 대비 차이">서프라이즈</th>}
                         <th className="py-2 pl-4 text-left font-normal">워치리스트</th>
                       </tr>
                     </thead>
@@ -436,6 +441,19 @@ function ThemeHistory() {
                                     {m.om_change >= 0 ? "+" : ""}{(m.om_change * 100).toFixed(1)}%p
                                   </span>
                                 )}
+                              </td>
+                            )}
+                            {withSurprise.length > 0 && (
+                              <td className="py-2 pl-3 text-right whitespace-nowrap" style={{ fontFamily: MONO }}
+                                title={m.surprise ? `${m.surprise.date} 발표 · EPS 추정 ${m.surprise.estimate ?? "-"} → 실제 ${m.surprise.reported ?? "-"}` : "최근 100일 안 발표 없음"}>
+                                {m.surprise ? (
+                                  <>
+                                    <span style={{ color: m.surprise.pct > 0 ? GOOD : m.surprise.pct < 0 ? DANGER : MUTED }}>
+                                      {m.surprise.pct > 0 ? "+" : ""}{m.surprise.pct.toFixed(1)}%
+                                    </span>
+                                    <span className="ml-1 text-[10px]" style={{ color: FAINT }}>{md(m.surprise.date)}</span>
+                                  </>
+                                ) : <span style={{ color: FAINT }}>-</span>}
                               </td>
                             )}
                             <td className="py-2 pl-4 text-[12px]" style={{ color: m.in_watchlist ? ACCENT : FAINT }}>

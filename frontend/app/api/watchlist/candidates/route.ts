@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/src/lib/db";
+import { recentSurprises } from "@/src/lib/surprises";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,11 @@ export async function GET(request: Request) {
     // 모르는 것을 "신규"로 단정하면 첫 주에 275종목이 전부 새것처럼 보인다.
     await attachNewFlags(client, candidates, market);
     await attachThemes(client, candidates, market);
+    // 종목별 최근 실적 서프라이즈(최근 100일 발표만, 시장별 조회)
+    for (const mkt of Array.from(new Set(candidates.map((c) => c.market as string)))) {
+      const sp = await recentSurprises(client, mkt, candidates.filter((c) => c.market === mkt).map((c) => c.symbol as string));
+      candidates.filter((c) => c.market === mkt).forEach((c) => { c.surprise = sp[c.symbol as string] ?? null; });
+    }
 
     const lastScreened = (candidates[0] as any)?.screened_at ?? null;
     return NextResponse.json({ candidates, screened_at: lastScreened });
