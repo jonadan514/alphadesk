@@ -42,7 +42,7 @@ interface Candidate {
   first_seen?: string | null;   // 이력상 처음 후보가 된 날
   is_reentry?: boolean;         // 예전에 후보였다가 빠진 뒤 다시 들어온 것
   // 사업 소속(direct/partial) 테마와 그 테마의 이번 주 레이더 라벨·최근 분기 분류(2026-10-04)
-  themes?: { theme_id: string; label: string | null; quarterly: string | null }[];
+  themes?: { theme_id: string; label: string | null; quarterly: string | null; earn_arrow?: string | null; price_arrow?: string | null }[];
 }
 
 // "테마 흐름과 겹침"의 기준: 펀더멘털이 먼저 움직인 테마. 레이더 Quiet 단계 라벨이거나
@@ -50,8 +50,15 @@ interface Candidate {
 const FLOW_LABELS = new Set(["Quiet Strength", "Quiet Recovery"]);
 // 시장 인식 소속 표시색 - 테마 레이더의 LINKAGE_STYLE.perceived와 같은 색
 const PERCEIVED_FG = "#d4a95a";
-const isFlowTheme = (t: { label: string | null; quarterly: string | null }) =>
+type ThemeRef = { label: string | null; quarterly: string | null; earn_arrow?: string | null; price_arrow?: string | null };
+const isFlowTheme = (t: ThemeRef) =>
   (t.label != null && FLOW_LABELS.has(t.label)) || t.quarterly === "조용한 변화";
+// 라벨이 하나도 없는 동안(뉴스 기준선 4주 쌓이는 중)의 대체 기준: 실적 ↑인데 주가는 ↑ 아님(→·↓).
+// Quiet 라벨의 실적·주가 조건과 같고 뉴스 조건만 빠진 것 - 뉴스를 못 보는 동안 임시로 쓴다(2026-10-05 사용자 결정).
+const arrowText = (a?: string | null) =>
+  a === "up2" ? "↑↑" : a === "up1" ? "↑" : a === "flat" ? "→" : a === "down" ? "↓" : "–";
+const isInterimFlow = (t: ThemeRef) =>
+  (t.earn_arrow === "up1" || t.earn_arrow === "up2") && (t.price_arrow === "flat" || t.price_arrow === "down");
 
 // 조합 보기 - 기존 토글 여러 개를 한 번에 거는 지름길. 순위가 아니라 "이 조합만" 보는 것.
 type PresetKey = "cheap_growth" | "new_growth" | "cheap_decline";
@@ -975,15 +982,17 @@ export default function WatchlistPage() {
     load();
   };
 
-  // 테마 흐름 판정은 현재 시장 범위에서 한다. 흐름 테마가 하나도 없으면(뉴스 기준선이 쌓이기 전 등)
-  // "어느 테마에든 사업 소속인 종목"으로 대신하고 화면에 그렇게 적는다 - 빈 목록을 보여 주지 않는다.
+  // 테마 흐름 판정은 현재 시장 범위에서 한다. 기준은 세 단계로 내려간다:
+  //   label   - Quiet 라벨 또는 분기 "조용한 변화" 테마 (본래 기준)
+  //   interim - 그런 테마가 없으면 "실적 ↑·주가 ↑ 아님" 테마 (라벨 전 대체 기준)
+  //   any     - 그것도 없으면 어느 테마에든 사업 소속 (빈 목록을 보여 주지 않는다)
+  // 어느 기준인지 버튼 이름과 안내 문구에 그대로 적는다.
   const inMarket = candidates.filter((c) => marketFilter === "ALL" || c.market === marketFilter);
   const themesKnown = candidates.some((c) => Array.isArray(c.themes));
-  const flowCount = inMarket.filter((c) => (c.themes ?? []).some(isFlowTheme)).length;
-  const themeFallback = flowCount === 0;
-  const inTheme = (c: Candidate) => themeFallback
-    ? (c.themes ?? []).length > 0
-    : (c.themes ?? []).some(isFlowTheme);
+  const countBy = (f: (t: ThemeRef) => boolean) => inMarket.filter((c) => (c.themes ?? []).some(f)).length;
+  const flowMode: "label" | "interim" | "any" = countBy(isFlowTheme) > 0 ? "label" : countBy(isInterimFlow) > 0 ? "interim" : "any";
+  const flowTest = flowMode === "label" ? isFlowTheme : flowMode === "interim" ? isInterimFlow : null;
+  const inTheme = (c: Candidate) => flowTest ? (c.themes ?? []).some(flowTest) : (c.themes ?? []).length > 0;
   const themeCount = inMarket.filter(inTheme).length;
   const presetCounts = Object.fromEntries(PRESETS.map((p) => [p.key, inMarket.filter(p.test).length])) as Record<PresetKey, number>;
   const activePreset = PRESETS.find((p) => p.key === preset) ?? null;
@@ -1176,15 +1185,17 @@ export default function WatchlistPage() {
               <span style={{ fontSize: 12, color: TEXT_SECONDARY, marginRight: 2 }}>좁혀 보기</span>
               {themesKnown && (
                 <button onClick={() => setThemeOnly((v) => !v)}
-                  title={themeFallback
-                    ? "지금은 Quiet 라벨·분기 '조용한 변화' 테마가 없어, 어느 테마에든 사업 소속(직접·부분)인 종목을 보여 줍니다."
-                    : "레이더 Quiet 단계(Quiet Strength·Recovery) 또는 분기 '조용한 변화' 테마에 사업 소속인 종목"}
+                  title={flowMode === "any"
+                    ? "흐름 테마가 없어, 어느 테마에든 사업 소속(직접·부분)인 종목을 보여 줍니다."
+                    : flowMode === "interim"
+                      ? "라벨이 아직 없어(뉴스 기준선 쌓는 중) 실적 ↑인데 주가는 ↑ 아닌 테마에 사업 소속인 종목을 보여 줍니다."
+                      : "레이더 Quiet 단계(Quiet Strength·Recovery) 또는 분기 '조용한 변화' 테마에 사업 소속인 종목"}
                   style={{
                     background: themeOnly ? ACCENT + "20" : "transparent",
                     color: themeOnly ? ACCENT : TEXT_MUTED,
                     border: `1px solid ${themeOnly ? ACCENT + "50" : BORDER_CTRL}`,
                     padding: "4px 12px", fontSize: 12, cursor: "pointer",
-                  }}>{themeFallback ? "테마 소속만" : "테마 흐름과 겹치는 종목만"} ({themeCount})</button>
+                  }}>{flowMode === "any" ? "테마 소속만" : flowMode === "interim" ? "실적 먼저 움직인 테마만" : "테마 흐름과 겹치는 종목만"} ({themeCount})</button>
               )}
               {PRESETS.filter((p) => (p.key === "new_growth" ? newKnown : tierKnown) && growthKnown).map((p) => (
                 <button key={p.key} title={p.note}
@@ -1198,9 +1209,11 @@ export default function WatchlistPage() {
               ))}
             </div>
           )}
-          {themeOnly && themeFallback && (
+          {themeOnly && flowMode !== "label" && (
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginBottom: 10 }}>
-              지금은 Quiet 라벨이나 분기 &quot;조용한 변화&quot; 테마가 없어(뉴스 기준선이 쌓이는 중) 어느 테마에든 사업 소속인 종목으로 대신 보여 줍니다.
+              {flowMode === "interim"
+                ? <>라벨이 아직 없어(뉴스 기준선이 쌓이는 중) <b style={{ color: TEXT_PRIMARY }}>실적 ↑인데 주가는 → 또는 ↓인 테마</b>에 사업 소속인 종목을 보여 줍니다. Quiet 라벨 조건에서 뉴스만 뺀 임시 기준입니다.</>
+                : <>지금은 흐름 테마가 없어 어느 테마에든 사업 소속인 종목으로 대신 보여 줍니다.</>}
             </div>
           )}
           {activePreset && (
@@ -1378,11 +1391,12 @@ export default function WatchlistPage() {
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 3 }}>
                               {(c.themes ?? []).slice(0, 3).map((t) => (
                                 <span key={t.theme_id}
-                                  title={[t.label && `레이더: ${t.label}`, t.quarterly && `분기: ${t.quarterly}`].filter(Boolean).join(" · ") || "이번 주 라벨 없음"}
+                                  title={[t.label && `레이더: ${t.label}`, t.quarterly && `분기: ${t.quarterly}`,
+                                          `실적 ${arrowText(t.earn_arrow)} · 주가 ${arrowText(t.price_arrow)}`].filter(Boolean).join(" · ")}
                                   style={{
                                     fontSize: 10, padding: "0 5px", whiteSpace: "nowrap",
-                                    color: isFlowTheme(t) ? ACCENT : TEXT_MUTED,
-                                    border: `1px solid ${isFlowTheme(t) ? ACCENT + "60" : BORDER_CTRL}`,
+                                    color: flowTest?.(t) ? ACCENT : TEXT_MUTED,
+                                    border: `1px solid ${flowTest?.(t) ? ACCENT + "60" : BORDER_CTRL}`,
                                   }}>{themeName(t.theme_id).ko}</span>
                               ))}
                               {(c.themes ?? []).length > 3 && <span style={{ fontSize: 10, color: TEXT_MUTED }}>+{(c.themes ?? []).length - 3}</span>}

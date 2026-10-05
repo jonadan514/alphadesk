@@ -158,7 +158,7 @@ async function attachThemes(
             SELECT theme_id, MAX(run_id) AS run_id FROM theme_members
             WHERE market = ? AND approved = 1 GROUP BY theme_id
           )
-          SELECT tm.ticker, tm.theme_id, ts.label
+          SELECT tm.ticker, tm.theme_id, ts.label, ts.earn_arrow, ts.price_arrow
           FROM theme_members tm
           JOIN latest_runs lr ON lr.theme_id = tm.theme_id AND lr.run_id = tm.run_id
           LEFT JOIN theme_signals ts ON ts.theme_id = tm.theme_id AND ts.market = ?
@@ -182,10 +182,13 @@ async function attachThemes(
         q.rows.forEach((r) => { quarterly[r[0] as string] = (r[1] as string | null) ?? null; });
       } catch { /* 분기 표 없음 */ }
 
-      const byTicker: Record<string, { theme_id: string; label: string | null; quarterly: string | null }[]> = {};
+      // earn_arrow·price_arrow: 라벨이 없는 동안(뉴스 기준선 쌓이는 중) 화면이 "실적 ↑·주가 ↑ 아님"을 대체 기준으로 쓴다
+      type T = { theme_id: string; label: string | null; quarterly: string | null; earn_arrow: string | null; price_arrow: string | null };
+      const byTicker: Record<string, T[]> = {};
       res.rows.forEach((r) => {
         const t = r[0] as string, tid = r[1] as string;
-        (byTicker[t] ??= []).push({ theme_id: tid, label: (r[2] as string | null) ?? null, quarterly: quarterly[tid] ?? null });
+        (byTicker[t] ??= []).push({ theme_id: tid, label: (r[2] as string | null) ?? null, quarterly: quarterly[tid] ?? null,
+                                    earn_arrow: (r[3] as string | null) ?? null, price_arrow: (r[4] as string | null) ?? null });
       });
       candidates.filter((c) => c.market === mkt).forEach((c) => { c.themes = byTicker[c.symbol as string] ?? []; });
     } catch { /* 테마 표 조회 실패 - 빈 배열 유지 */ }
