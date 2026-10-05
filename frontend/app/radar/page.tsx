@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { themeName } from "@/src/lib/themeNames";
 import { useMarket } from "@/src/contexts/MarketContext";
 import { krStockName } from "@/src/lib/krStockNames";
+import Link from "next/link";
 
 // globals.css의 앱 전역 토큰을 그대로 쓴다 (워치리스트 페이지와 같은 터미널·앰버 룩).
 const ACCENT = "var(--accent)";
@@ -429,6 +430,12 @@ function ThemeCard({ signal, market, compact = false }:
 
       {open && (
         <div className="px-4 pb-4" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="mt-3 flex justify-end">
+            <Link href={`/radar/theme?id=${encodeURIComponent(signal.theme_id)}&market=${market}`}
+              className="text-[12px] font-semibold" style={{ color: ACCENT }}>
+              흐름 이력 보기 →
+            </Link>
+          </div>
           <div className="my-3 grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
             <div className="rounded-lg px-3 py-2 text-[13px]" style={{ background: "var(--bg-inset)", border: "1px solid var(--border)", color: MUTED }}>
               {signal.earn_arrow === "na" ? (

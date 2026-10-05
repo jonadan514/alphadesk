@@ -25,7 +25,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from src.db.data_store import get_db
-from src.db.theme_signals import ensure_schema, signal_week_monday, get_approved_theme_members, upsert_price_signal
+from src.db.theme_signals import (ensure_schema, signal_week_monday, get_approved_theme_members,
+                                  upsert_member_prices, upsert_price_signal)
 from analyzers.theme_price import compute_price_signal
 from collectors.theme_price_collector import compute_price_batch
 from collectors.kr_kospi_list import yf_suffix as kr_yf_suffix
@@ -136,6 +137,9 @@ def main() -> None:
             result["median_ret"], result["index_ret"], result["excess"], result["arrow"],
             len(members), run_id, now, result.get("volume_ratio"),
         )
+        # 기업별 수익률도 같은 주 키로 남긴다(테마 흐름 이력 화면 - 어느 기업이 흐름을 만들었나)
+        upsert_member_prices(conn, [(theme_id, market, week_start, t, r, now)
+                                    for t, r in returns_by_ticker.items()])
         conn.commit()
 
     conn.close()

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { themeName } from "@/src/lib/themeNames";
 import { useMarket } from "@/src/contexts/MarketContext";
 import { krStockName } from "@/src/lib/krStockNames";
@@ -432,6 +433,12 @@ function ThemeRow({ theme, market, isNa }: { theme: ThemeQuarterly; market: stri
 
       {open && (
         <div className="px-4 pb-4" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="mt-3 flex justify-end">
+            <Link href={`/radar/theme?id=${encodeURIComponent(theme.theme_id)}&market=${market}`}
+              className="text-[12px] font-semibold" style={{ color: ACCENT }}>
+              주별 흐름 이력 보기 →
+            </Link>
+          </div>
           <div className="my-3">
             <MembersTable members={members ?? []} loading={loadingMembers} market={market} />
           </div>

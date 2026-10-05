@@ -117,11 +117,62 @@ CREATE TABLE IF NOT EXISTS earnings_surprise (
 """
 
 
+# 테마 소속 기업별 주간 값 (2026-10-05, 테마 흐름 이력 화면의 "이번 흐름을 만든 기업").
+# theme_signals는 테마 중앙값만 남겨서 어느 기업이 흐름을 만들었는지 볼 수 없었다. 주가·실적 잡이
+# 테마 중앙값을 낼 때 이미 계산하는 기업별 값을 같은 주 키로 같이 남긴다 - 새 조회 없음.
+# 열은 축별로 나눠 쓴다(theme_signals와 같은 방식 - 주가 잡은 price_*, 실적 잡은 rev_*/earn_*만 갱신).
+THEME_MEMBER_SIGNALS_DDL = """
+CREATE TABLE IF NOT EXISTS theme_member_signals (
+  theme_id     TEXT NOT NULL,
+  market       TEXT NOT NULL,
+  week_start   TEXT NOT NULL,
+  ticker       TEXT NOT NULL,
+  price_ret    REAL,     -- 20거래일 수익률 (theme_price_collector와 같은 창)
+  rev_yoy      REAL,     -- 최근 분기 매출 전년동기 대비
+  rev_quarter  TEXT,     -- rev_yoy의 분기 (예: 2026-Q2)
+  earn_status  TEXT,     -- improved / not_improved / insufficient (시장 중앙값 기준)
+  computed_at  TEXT,
+  PRIMARY KEY (theme_id, market, week_start, ticker)
+)
+"""
+
+
+def _upsert_member_rows(conn, cols: tuple[str, ...], rows: list[tuple], chunk_size: int = 100) -> None:
+    """rows: (theme_id, market, week_start, ticker, *cols 값, computed_at). 한 INSERT에 여러 행을 묶는다
+    (insert_theme_news_bulk와 같은 이유 - Turso HTTP 왕복 수)."""
+    if not rows:
+        return
+    all_cols = ("theme_id", "market", "week_start", "ticker", *cols, "computed_at")
+    one = "(" + ", ".join("?" * len(all_cols)) + ")"
+    updates = ", ".join(f"{c} = excluded.{c}" for c in (*cols, "computed_at"))
+    for i in range(0, len(rows), chunk_size):
+        chunk = rows[i:i + chunk_size]
+        params: list = []
+        for r in chunk:
+            params.extend(r)
+        conn.execute(
+            f"INSERT INTO theme_member_signals ({', '.join(all_cols)}) VALUES {', '.join([one] * len(chunk))} "
+            f"ON CONFLICT(theme_id, market, week_start, ticker) DO UPDATE SET {updates}",
+            tuple(params),
+        )
+
+
+def upsert_member_prices(conn, rows: list[tuple]) -> None:
+    """rows: (theme_id, market, week_start, ticker, price_ret, computed_at)"""
+    _upsert_member_rows(conn, ("price_ret",), rows)
+
+
+def upsert_member_earnings(conn, rows: list[tuple]) -> None:
+    """rows: (theme_id, market, week_start, ticker, rev_yoy, rev_quarter, earn_status, computed_at)"""
+    _upsert_member_rows(conn, ("rev_yoy", "rev_quarter", "earn_status"), rows)
+
+
 def ensure_schema(conn) -> None:
     conn.execute(THEME_NEWS_DDL)
     conn.execute(THEME_SIGNALS_DDL)
     conn.execute(EARNINGS_SURPRISE_DDL)
     conn.execute(THEME_NEWS_WEEKLY_DDL)
+    conn.execute(THEME_MEMBER_SIGNALS_DDL)
     for name, coltype in LATE_COLUMNS:
         try:
             conn.execute(f"ALTER TABLE theme_signals ADD COLUMN {name} {coltype}")

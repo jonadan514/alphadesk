@@ -31,8 +31,9 @@ sys.path.insert(0, str(ROOT / "src"))
 from src.db.data_store import get_db
 from src.db.fundamentals_cache import ensure_schema as ensure_fundamentals_schema, get_cached_financials_bulk
 from src.db.theme_signals import (ensure_schema, signal_week_monday, get_approved_theme_members, get_surprises,
-                                   upsert_earn_signal)
-from analyzers.theme_earnings import compute_earn_signal, reference_growth_for_market
+                                   upsert_earn_signal, upsert_member_earnings)
+from analyzers.theme_earnings import (classify_company_earnings, compute_earn_signal,
+                                      reference_growth_for_market, yoy_growth)
 from collectors.watchlist_collector import get_kr_universe, get_us_universe
 from collectors.earnings_surprise_collector import summarize_theme
 
@@ -167,6 +168,14 @@ def main() -> None:
             result["ratio"], result["arrow"], result["as_of"],
             result["members"], run_id, now, surprise,
         )
+        # 기업별 매출 성장률·판정도 같은 주 키로 남긴다(테마 흐름 이력 화면). 판정 기준은 테마 집계와 같은 값.
+        ref = reference_by_market.get(market)
+        member_rows = []
+        for m in members:
+            rev = revenue_by_ticker.get(m["ticker"])
+            status, q_label = classify_company_earnings(rev, 0.0 if ref is None else ref)
+            member_rows.append((theme_id, market, week_start, m["ticker"], yoy_growth(rev), q_label, status, now))
+        upsert_member_earnings(conn, member_rows)
         conn.commit()
 
     conn.close()
