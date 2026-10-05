@@ -1,0 +1,55 @@
+"""fetch_kr_treasury_pykrx.py가 만든 JSON을 kr_rates 표에 저장한다 (2026-10-05).
+
+kr_rates(date, key, value): key는 kr3y / kr10y, value는 %. 같은 날·같은 만기는 최신 값으로 덮는다
+(장 마감 뒤 최종호가가 확정되기 전 값을 고치는 것 - 지난 날짜의 확정값은 다시 와도 같은 값).
+
+    python scripts/save_kr_treasury.py --in data/kr_treasury.json
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from src.db.data_store import get_db
+
+KR_RATES_DDL = """
+CREATE TABLE IF NOT EXISTS kr_rates (
+  date   TEXT NOT NULL,
+  key    TEXT NOT NULL,
+  value  REAL,
+  PRIMARY KEY (date, key)
+)
+"""
+
+
+def save(conn, items: dict[str, list[dict]]) -> int:
+    conn.execute(KR_RATES_DDL)
+    rows = [(r["date"], key, r["value"]) for key, vals in items.items() for r in vals if r.get("value") is not None]
+    for i in range(0, len(rows), 100):
+        chunk = rows[i:i + 100]
+        conn.execute("INSERT OR REPLACE INTO kr_rates (date, key, value) VALUES " + ", ".join(["(?, ?, ?)"] * len(chunk)),
+                     tuple(v for r in chunk for v in r))
+    conn.commit()
+    return len(rows)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--in", dest="path", default="data/kr_treasury.json")
+    args = ap.parse_args()
+    p = Path(args.path)
+    if not p.exists():
+        print(f"[kr-treasury] {p} 없음 - 수집 단계가 실패했다. 저장 건너뜀", flush=True)
+        return 0
+    n = save(get_db(), json.loads(p.read_text(encoding="utf-8"))["items"])
+    print(f"[kr-treasury] {n}행 저장", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
