@@ -126,6 +126,14 @@ def main() -> int:
             print(f"  {m} 3년 {g or '데이터부족'} / 분기 {q or '데이터부족'}: {n}")
     except Exception as e:
         print(f"  조회 실패 {e}")
+    print("== 6. 최근 4개 분기 합 비교(1년, 연속 8분기 필요) ==")
+    try:
+        rows = conn.execute("SELECT market, growth_tier, rev_ttm_tier, COUNT(*) FROM watchlist_candidates "
+                            "GROUP BY 1, 2, 3 ORDER BY 1, 2, 3").fetchall()
+        for m, g, t, n in rows:
+            print(f"  {m} 3년 {g or '데이터부족'} / 1년 {t or '데이터부족'}: {n}")
+    except Exception as e:
+        print(f"  조회 실패 {e}")
     conn.close()
     return 0
 
