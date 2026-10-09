@@ -14,16 +14,23 @@ fundamentals_cache는 원래 연간 재무제표만 캐시한다(Phase 0). 실�
 데이터는 신선도 주기가 다르고, fetch_status를 공유하면 주간 예산제 선정
 로직(select_refresh_targets)이 "이미 갱신됐다"고 착각할 위험이 있다.
 
+2026-10-09: 대상을 "테마 소속 + 워치리스트 후보 + 내 워치리스트"로 넓혔다(--scope all, 기본).
+워치리스트 분기 영업이익률(compute_watchlist_valuation.py)도 이 캐시를 읽는데, 테마 소속이 아닌
+미국 후보 173종목이 비어 있었다. 매주 자동으로 돌기 때문에(토요일) 이미 최신 분기가 있는 종목은
+건너뛴다 - 마지막 분기 말일이 FRESH_DAYS 안이면 다음 분기는 아직 끝나지도 않았다.
+
 Usage:
-  python scripts/backfill_quarterly_financials.py              # US+KR 둘 다
+  python scripts/backfill_quarterly_financials.py              # US+KR 둘 다, 테마+워치리스트
   python scripts/backfill_quarterly_financials.py --market KR   # 한쪽만
+  python scripts/backfill_quarterly_financials.py --scope themes  # 예전처럼 테마 소속만
+  python scripts/backfill_quarterly_financials.py --force       # 최신 분기가 있어도 다시 조회
 """
 from __future__ import annotations
 
 import argparse
 import sys
 import time
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import yfinance as yf
@@ -39,6 +46,8 @@ from src.collectors.kr_kospi_list import yf_suffix as kr_yf_suffix
 
 RATE_LIMIT_BACKOFF = [60, 180, 600]
 TICKER_SLEEP_SEC = 1.0
+# 분기는 약 91일(13주). 마지막 분기 말일이 이보다 최근이면 다음 분기는 아직 끝나지 않았으니 조회할 게 없다.
+FRESH_DAYS = 88
 
 
 def _log(msg: str) -> None:
@@ -51,6 +60,39 @@ def get_approved_tickers(conn, market: str) -> list[str]:
         (market,),
     ).fetchall()
     return sorted(r[0] for r in rows)
+
+
+def get_watchlist_tickers(conn, market: str) -> list[str]:
+    """워치리스트 후보 + 내 워치리스트 종목. 표가 아직 없는 배포 시점이면 빈 목록."""
+    out: set[str] = set()
+    for table in ("watchlist_candidates", "my_watchlist"):
+        try:
+            rows = conn.execute(f"SELECT DISTINCT symbol FROM {table} WHERE market = ?", (market,)).fetchall()
+        except Exception as e:  # noqa: BLE001
+            _log(f"{market}: {table} 조회 실패({type(e).__name__}) - 건너뜀")
+            continue
+        out.update(r[0] for r in rows if r[0])
+    return sorted(out)
+
+
+def latest_quarter_ends(conn, market: str) -> dict[str, str]:
+    """종목별 캐시에 있는 마지막 분기 말일(YYYY-MM-DD)."""
+    rows = conn.execute(
+        "SELECT ticker, MAX(period_end) FROM fundamentals_cache "
+        "WHERE market = ? AND statement = 'income_quarterly' GROUP BY ticker",
+        (market,),
+    ).fetchall()
+    return {r[0]: r[1] for r in rows if r[1]}
+
+
+def select_targets(tickers: list[str], latest: dict[str, str], today: date,
+                   force: bool = False) -> tuple[list[str], int]:
+    """조회할 종목과 건너뛴 수. 캐시가 없거나 마지막 분기 말일이 FRESH_DAYS보다 오래된 종목만 조회."""
+    if force:
+        return list(tickers), 0
+    cutoff = (today - timedelta(days=FRESH_DAYS)).isoformat()
+    todo = [t for t in tickers if (latest.get(t) or "") < cutoff]
+    return todo, len(tickers) - len(todo)
 
 
 def yf_symbol_candidates(ticker: str, market: str) -> list[str]:
@@ -98,6 +140,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--market", choices=["US", "KR"], default=None,
                          help="비우면 US+KR 둘 다")
+    parser.add_argument("--scope", choices=["all", "themes"], default="all",
+                        help="all=테마 소속+워치리스트(기본), themes=테마 소속만")
+    parser.add_argument("--force", action="store_true", help="최신 분기가 있어도 다시 조회")
     args = parser.parse_args()
     markets = [args.market] if args.market else ["US", "KR"]
 
@@ -106,11 +151,15 @@ def main() -> None:
 
     overall = {"ok": 0, "no_data": 0, "rate_limited": 0}
     for market in markets:
-        tickers = get_approved_tickers(conn, market)
-        if not tickers:
-            _log(f"{market}: 승인된 테마 매핑 종목이 없음 - 건너뜀")
+        theme_tickers = get_approved_tickers(conn, market)
+        wl_tickers = get_watchlist_tickers(conn, market) if args.scope == "all" else []
+        all_tickers = sorted(set(theme_tickers) | set(wl_tickers))
+        if not all_tickers:
+            _log(f"{market}: 대상 종목이 없음 - 건너뜀")
             continue
-        _log(f"{market}: 대상 종목 {len(tickers)}개 (승인된 매핑)")
+        tickers, skipped = select_targets(all_tickers, latest_quarter_ends(conn, market), date.today(), args.force)
+        _log(f"{market}: 대상 {len(all_tickers)}종목(테마 {len(theme_tickers)}, 워치리스트 {len(wl_tickers)}, 겹침 제외) "
+             f"- 최신 분기 있어 건너뜀 {skipped}, 조회 {len(tickers)}")
 
         stats = {"ok": 0, "no_data": 0, "rate_limited": 0}
         now = datetime.utcnow().isoformat()
