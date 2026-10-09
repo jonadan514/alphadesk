@@ -62,3 +62,14 @@ def test_kr_treasury_in_rates_line():
          "usdkrw": {"value": 1386.4, "chg_1w": -12.3}}
     text = g.build_telegram_summary(_briefing(macro=m))
     assert "미 10년물 4.12% (+0.08%p) · 국고채 3년 3.94% (-0.05%p) · 원/달러 1,386원 (-12원)" in text
+
+
+def test_dxy_and_wti_in_rates_line():
+    m = {"us10y": {"value": 4.12, "chg_1w": 0.08}, "usdkrw": {"value": 1386.4, "chg_1w": -12.3},
+         "dxy": {"value": 99.84, "chg_1w": 0.62}, "wti": {"value": 61.5, "chg_1w": -1.5}}
+    text = g.build_telegram_summary(_briefing(macro=m))
+    # 61.5 - (-1.5) = 63.0 -> -1.5/63.0 = -2.4%
+    assert "금리·환율·유가 미 10년물 4.12% (+0.08%p) · 원/달러 1,386원 (-12원) · 달러인덱스 99.8 (+0.6) · WTI $61.5 (-2.4%)" in text
+    # 유가가 없으면 예전 이름 그대로
+    m2 = {k: v for k, v in m.items() if k != "wti"}
+    assert "금리·환율 미 10년물" in g.build_telegram_summary(_briefing(macro=m2))

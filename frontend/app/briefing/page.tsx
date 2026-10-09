@@ -29,7 +29,9 @@ interface Briefing {
   gpt_comment: string;
   theme_labels?: ThemeLabelChanges;
   // 금리·환율 1주 변화(2026-10-05부터, macro_snapshot 그대로). 예전 브리핑엔 없다.
-  macro?: { as_of?: string; us10y?: MacroItem | null; kr3y?: MacroItem | null; usdkrw?: MacroItem | null } | null;
+  // dxy·wti는 2026-10-09부터
+  macro?: { as_of?: string; us10y?: MacroItem | null; kr3y?: MacroItem | null; usdkrw?: MacroItem | null;
+            dxy?: MacroItem | null; wti?: MacroItem | null } | null;
 }
 interface MacroItem { value: number | null; chg_1w: number | null }
 
@@ -95,6 +97,15 @@ function BriefingCard({ b, defaultOpen }: { b: Briefing; defaultOpen: boolean })
               fmt={(v) => `${v.toFixed(2)}%`} chgFmt={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%p`} />
             <MacroRow label="원/달러" m={b.macro?.usdkrw}
               fmt={(v) => `${Math.round(v).toLocaleString()}원`} chgFmt={(v) => `${v >= 0 ? "+" : ""}${Math.round(v).toLocaleString()}원`} />
+            <MacroRow label="달러인덱스" m={b.macro?.dxy}
+              fmt={(v) => v.toFixed(1)} chgFmt={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`} />
+            <MacroRow label="WTI 유가" m={b.macro?.wti}
+              fmt={(v) => `$${v.toFixed(1)}`}
+              chgFmt={(v) => {
+                const base = (b.macro?.wti?.value ?? 0) - v;
+                const pct = base ? ` (${v / base >= 0 ? "+" : ""}${(v / base * 100).toFixed(1)}%)` : "";
+                return `${v >= 0 ? "+" : "-"}$${Math.abs(v).toFixed(2)}${pct}`;
+              }} />
           </div>
 
           {/* 테마 레이더 라벨 변동 — 라벨 계산은 별도 워크플로우라 이 브리핑보다 늦게

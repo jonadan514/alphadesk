@@ -112,11 +112,20 @@ def get_macro_week() -> dict | None:
     if not rows:
         return None
     items = rows[0]["_data"].get("items") or {}
-    pick = {k: items.get(k) for k in ("us10y", "usdkrw")}
+    # dxy(달러인덱스)·wti(유가)는 2026-10-09 추가 - 원/달러가 달러 강세 탓인지, 에너지 테마 해석용
+    pick = {k: items.get(k) for k in ("us10y", "usdkrw", "dxy", "wti")}
     pick["kr3y"] = get_kr_rate_week("kr3y")
     if not any(v and v.get("value") is not None for v in pick.values()):
         return None
     return {"as_of": rows[0]["_data"].get("date") or rows[0].get("date"), **pick}
+
+
+def _pct_chg(item: dict) -> str:
+    """유가처럼 수준보다 변화율이 읽기 쉬운 값 - 저장된 값과 1주 차이로 1주 전 대비 %를 낸다."""
+    v, c = item.get("value"), item.get("chg_1w")
+    if v is None or c is None or v - c == 0:
+        return ""
+    return f" ({c / (v - c) * 100:+.1f}%)"
 
 
 def get_kr_rate_week(key: str) -> dict | None:
@@ -382,8 +391,16 @@ def build_telegram_summary(b: dict) -> str:
     if fx.get("value") is not None:
         chg = f" ({fx['chg_1w']:+,.0f}원)" if fx.get("chg_1w") is not None else ""
         rates.append(f"원/달러 {fx['value']:,.0f}원{chg}")
+    dx = mc.get("dxy") or {}
+    if dx.get("value") is not None:
+        chg = f" ({dx['chg_1w']:+.1f})" if dx.get("chg_1w") is not None else ""
+        rates.append(f"달러인덱스 {dx['value']:.1f}{chg}")
+    oil = mc.get("wti") or {}
+    if oil.get("value") is not None:
+        rates.append(f"WTI ${oil['value']:.1f}{_pct_chg(oil)}")
     if rates:
-        lines.append("금리·환율 " + " · ".join(rates))
+        label = "금리·환율·유가" if oil.get("value") is not None else "금리·환율"
+        lines.append(f"{label} " + " · ".join(rates))
 
     # 테마 레이더 - 이 툴의 중심이라 라벨이 없어도 상태를 한 줄은 쓴다
     tl = b.get("theme_labels") or {}
