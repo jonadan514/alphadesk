@@ -133,25 +133,14 @@ MARGIN_STEP = 0.01
 YEAR_AGO_DAYS = (330, 400)     # "1년 전 같은 분기"로 인정하는 날짜 간격
 
 
-def quarterly_margin_change(q_df) -> dict | None:
-    """분기 손익 DataFrame(열 = 분기말, 최신이 앞)에서 최신 분기와 1년 전 같은 분기 영업이익률을 비교.
-
-    반환: {now, year_ago, change, quarter, status} - status는 "개선"/"악화"/"유지"(±MARGIN_STEP).
-    매출이 0 이하이거나 1년 전 분기가 없으면 None(데이터부족 - 탈락 아님). 적자 폭이 줄어도 이익률이 오르면 개선."""
+def _latest_and_year_ago(q_df):
+    """분기 손익 DataFrame(열 = 분기말, 최신이 앞)에서 (최신 분기 열, 1년 전 같은 분기 열, 최신 분기말 Timestamp).
+    1년 전 분기가 없으면 None."""
     if q_df is None or getattr(q_df, "empty", True):
         return None
     cols = list(q_df.columns)
     if not cols:
         return None
-
-    def margin(col):
-        data = q_df[col].to_dict()
-        rev = _pick(data, REVENUE_KEYS)
-        oi = _pick(data, OPERATING_INCOME_KEYS)
-        if rev is None or oi is None or rev != rev or oi != oi or rev <= 0:
-            return None
-        return oi / rev
-
     latest = cols[0]
     try:
         import pandas as pd
@@ -161,13 +150,58 @@ def quarterly_margin_change(q_df) -> dict | None:
         return None
     if prior is None:
         return None
+    return latest, prior, t0
+
+
+def _quarter_label(t0) -> str:
+    return f"{t0.year}-Q{(t0.month - 1) // 3 + 1}"
+
+
+def quarterly_margin_change(q_df) -> dict | None:
+    """분기 손익 DataFrame(열 = 분기말, 최신이 앞)에서 최신 분기와 1년 전 같은 분기 영업이익률을 비교.
+
+    반환: {now, year_ago, change, quarter, status} - status는 "개선"/"악화"/"유지"(±MARGIN_STEP).
+    매출이 0 이하이거나 1년 전 분기가 없으면 None(데이터부족 - 탈락 아님). 적자 폭이 줄어도 이익률이 오르면 개선."""
+    pair = _latest_and_year_ago(q_df)
+    if pair is None:
+        return None
+    latest, prior, t0 = pair
+
+    def margin(col):
+        data = q_df[col].to_dict()
+        rev = _pick(data, REVENUE_KEYS)
+        oi = _pick(data, OPERATING_INCOME_KEYS)
+        if rev is None or oi is None or rev != rev or oi != oi or rev <= 0:
+            return None
+        return oi / rev
+
     now, ago = margin(latest), margin(prior)
     if now is None or ago is None:
         return None
     change = now - ago
     status = "개선" if change >= MARGIN_STEP else "악화" if change <= -MARGIN_STEP else "유지"
-    q = (t0.month - 1) // 3 + 1
-    return {"now": now, "year_ago": ago, "change": change, "quarter": f"{t0.year}-Q{q}", "status": status}
+    return {"now": now, "year_ago": ago, "change": change, "quarter": _quarter_label(t0), "status": status}
+
+
+def quarterly_revenue_yoy(q_df) -> dict | None:
+    """최신 분기 매출 ÷ 1년 전 같은 분기 매출 - 1 (2026-10-09).
+
+    연간 3년 CAGR(growth_tier)은 업황이 막 바뀐 기업을 늦게 잡는다(예: 직전 호황 고점이 3년 전이면 "정체").
+    그 판정은 그대로 두고 "지금 흐름"을 옆에 따로 보여 주려는 값이다 - 둘을 합치지 않는다(원칙 1).
+    tier는 3년 판정과 같은 절대 경계(0% / FLAT_UPPER)를 그대로 쓴다.
+    반환: {yoy, quarter, tier}. 1년 전 분기가 없거나 매출이 0 이하면 None(데이터부족).
+
+    최근 4분기 합 대 직전 4분기 합(TTM)이 더 안정적이지만 무료 분기 데이터가 5-6분기뿐이라 아직 계산할 수 없다."""
+    pair = _latest_and_year_ago(q_df)
+    if pair is None:
+        return None
+    latest, prior, t0 = pair
+    now = _pick(q_df[latest].to_dict(), REVENUE_KEYS)
+    ago = _pick(q_df[prior].to_dict(), REVENUE_KEYS)
+    if now is None or ago is None or now != now or ago != ago or now <= 0 or ago <= 0:
+        return None
+    yoy = now / ago - 1
+    return {"yoy": yoy, "quarter": _quarter_label(t0), "tier": growth_tier(yoy)}
 
 
 def growth_tier(cagr: float | None) -> str | None:

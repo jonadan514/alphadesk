@@ -34,6 +34,10 @@ interface Candidate {
   op_margin_q_now?: number | null;
   op_margin_q_change?: number | null;
   op_margin_q_status?: "개선" | "악화" | "유지" | null;
+  // 최근 분기 매출 전년동기 대비(2026-10-09) - 3년 판정(growth_tier)과 따로 보여 주는 "지금 흐름". 같은 0%/10% 경계.
+  rev_q_yoy?: number | null;
+  rev_q_tier?: string | null;
+  rev_q_quarter?: string | null;
   // 최근 100일 안 실적 발표의 EPS 서프라이즈(2026-10-05, earnings_surprise)
   surprise?: { pct: number; date: string; estimate: number | null; reported: number | null } | null;
   // yfinance 기업 정보에서 꺼낸 사실 값(수집 시점 기준) - 애널리스트 수, 52주 고점·저점 대비
@@ -189,14 +193,17 @@ const INDICATOR_INFO = {
     ],
   },
   growth: {
-    title: "성장 위치 (매출 3년 CAGR 기준)",
+    title: "성장 위치 (매출 3년 CAGR · 최근 분기)",
     desc: "연차 재무제표의 최근 4개 회계연도(정확히 3년 간격)로 매출 연평균성장률(CAGR)을 구합니다. "
         + "밸류(PSR)는 후보들 중 상대적인 순위지만, 성장은 절대 기준입니다 - 후보 대부분이 "
         + "이미 성장 중이라 순위로 나누면 +3% 성장 기업에 '역성장' 라벨이 붙기 때문입니다. "
         + "역성장이 재무 부실을 뜻하지는 않습니다 - 무차입 흑자 기업도 매출이 줄 수 있고, "
-        + "함정 필터가 걸러내지 못하는 부분을 보여주는 것이 이 지표의 목적입니다.",
+        + "함정 필터가 걸러내지 못하는 부분을 보여주는 것이 이 지표의 목적입니다. "
+        + "옆의 '분기' 배지는 최근 분기 매출을 1년 전 같은 분기와 비교한 같은 경계의 판정입니다 - "
+        + "3년 기준은 업황이 막 바뀐 기업(예: 3년 전이 직전 호황 고점)을 늦게 잡으므로 지금 흐름을 따로 보여 줍니다. "
+        + "두 판정은 합치지 않고, 필터·정렬은 3년 기준을 씁니다.",
     levels: [
-      { range: "성장", color: GOOD, label: "3년 CAGR 10% 이상" },
+      { range: "성장", color: GOOD, label: "3년 CAGR(또는 분기 전년동기) 10% 이상" },
       { range: "정체", color: WARN, label: "0% ~ 10%" },
       { range: "역성장", color: CAUTION, label: "0% 미만 - 매출이 3년간 줄었다" },
       { range: "-", color: TEXT_FAINT, label: "회계기간 부족 등으로 계산 불가" },
@@ -292,15 +299,18 @@ const GROWTH_TIER_COLOR: Record<string, string> = {
   "정체": WARN,
   "역성장": CAUTION,
 };
-function GrowthBadge({ tier }: { tier?: string | null }) {
-  if (!tier) return <span style={{ color: TEXT_FAINT }}>-</span>;
+// prefix: "3년"(연간 3년 CAGR 판정) / "분기"(최근 분기 매출 전년동기 판정) - 기준이 다른 두 판정을 나란히 둘 때 구분용.
+function GrowthBadge({ tier, prefix, title }: { tier?: string | null; prefix?: string; title?: string }) {
+  if (!tier) return prefix ? null : <span style={{ color: TEXT_FAINT }}>-</span>;
   const color = GROWTH_TIER_COLOR[tier] ?? TEXT_SECONDARY;
   return (
-    <span style={{ background: color + "20", color, border: `1px solid ${color}40`, padding: "1px 6px", fontSize: 11, whiteSpace: "nowrap" }}>
-      {tier}
+    <span title={title} style={{ background: color + "20", color, border: `1px solid ${color}40`, padding: "1px 6px", fontSize: 11, whiteSpace: "nowrap" }}>
+      {prefix && <span style={{ opacity: 0.75 }}>{prefix} </span>}{tier}
     </span>
   );
 }
+
+const quarterLabel = (q?: string | null) => (q ? `${q.slice(2, 4)}년 ${q.slice(-1)}분기` : "최근 분기");
 
 // 성장률은 음수도 흔해 부호를 항상 보여준다(밸류처럼 항상 양수인 배수와 다르다).
 const fmtGrowthPct = (v?: number | null) =>
@@ -727,9 +737,10 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                 밸류는 후보들 중 상대 순위, 성장은 절대 기준(0%/10%) -
                 무차입 흑자인데 매출이 줄어드는 가치 함정을 밸류만으로는 못 본다. */}
             <div className="p-3 mt-3" style={insetCard}>
-              <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>성장 위치 (매출 3년 CAGR, 절대 기준)</p>
+              <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>성장 위치 (매출 3년 CAGR · 최근 분기, 절대 기준)</p>
               <div className="flex items-center gap-2 flex-wrap">
-                <GrowthBadge tier={c.growth_tier} />
+                <GrowthBadge tier={c.growth_tier} prefix={c.rev_q_tier ? "3년" : undefined} />
+                <GrowthBadge tier={c.rev_q_tier} prefix="분기" />
                 <span className="text-[12px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
                   3년 {fmtGrowthPct(c.revenue_cagr_3y)}
                   <span style={{ color: TEXT_MUTED }}> · </span>
@@ -760,6 +771,15 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                   )}
                 </p>
               )}
+              {c.rev_q_yoy != null && (
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                  {quarterLabel(c.rev_q_quarter)} 매출 1년 전 같은 분기 대비{" "}
+                  <span style={{ color: c.rev_q_yoy >= 0 ? NUM : CAUTION }}>{fmtGrowthPct(c.rev_q_yoy)}</span>
+                  {c.rev_q_tier && c.growth_tier && c.rev_q_tier !== c.growth_tier && (
+                    <span style={{ color: TEXT_MUTED }}> - 3년 기준({c.growth_tier})과 다름: 최근 업황 변화가 아직 연간 실적에 반영되기 전일 수 있습니다</span>
+                  )}
+                </p>
+              )}
               {c.op_margin_q_now != null && (
                 <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
                   최근 분기 영업이익률 {(c.op_margin_q_now * 100).toFixed(1)}%
@@ -772,7 +792,7 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
               )}
               <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>
                 {c.growth_tier
-                  ? "연차 재무제표 최근 4개 회계연도(정확히 3년 간격) 기준. 후보들 중 순위가 아니라 절대 기준입니다."
+                  ? "3년: 연차 재무제표 최근 4개 회계연도(정확히 3년 간격). 분기: 최근 분기 매출을 1년 전 같은 분기와 비교. 둘 다 0%/10% 절대 기준이고 합치지 않습니다."
                   : "회계기간이 부족하거나 간격이 맞지 않아 계산할 수 없습니다."}
               </p>
             </div>
@@ -1457,7 +1477,11 @@ export default function WatchlistPage() {
                           <div style={{ marginTop: 2 }}><ValuationNumbers psr={c.psr} per={c.per} /></div>
                         </td>
                         <td style={{ padding: "8px 8px" }}>
-                          <div><GrowthBadge tier={c.growth_tier} /></div>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            <GrowthBadge tier={c.growth_tier} prefix={c.rev_q_tier ? "3년" : undefined} title="연간 매출 3년 CAGR 기준" />
+                            <GrowthBadge tier={c.rev_q_tier} prefix="분기"
+                              title={`${quarterLabel(c.rev_q_quarter)} 매출, 1년 전 같은 분기 대비 ${fmtGrowthPct(c.rev_q_yoy)}`} />
+                          </div>
                           <div style={{ marginTop: 2 }}><GrowthNumbers cagr3y={c.revenue_cagr_3y} yoy={c.revenue_yoy} /></div>
                           {(c.op_margin_q_status === "개선" || c.op_margin_q_status === "악화") && (
                             <div style={{ marginTop: 2, fontSize: 11, color: c.op_margin_q_status === "개선" ? GOOD : CAUTION, whiteSpace: "nowrap" }}

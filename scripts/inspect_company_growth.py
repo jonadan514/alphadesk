@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from src.analyzers.company_growth import (REVENUE_KEYS, growth_tier, quarterly_margin_change,
+from src.analyzers.company_growth import (REVENUE_KEYS, growth_tier, quarterly_margin_change, quarterly_revenue_yoy,
                                           revenue_cagr, revenue_yoy)
 from src.db.data_store import get_db
 from src.db.fundamentals_cache import get_cached_financials_bulk
@@ -62,12 +62,13 @@ def main() -> int:
                 op = s["Operating Income"] if "Operating Income" in s.index and s["Operating Income"] == s["Operating Income"] else None
                 print(f"         {col.strftime('%Y-%m-%d')}  {_t(rev):>10}  {_t(op):>10}")
             print(f"  -> 분기 이익률 {quarterly_margin_change(q)}")
+            print(f"  -> 분기 매출 전년동기 {quarterly_revenue_yoy(q)}")
         raw = select_quarters_bulk(conn, [t], args.market).get(t, [])
         print(f"  [quarterly_financials_raw] {len(raw)}개 분기")
         for r in raw[:10]:
             print(f"         {r['fiscal_year']}Q{r['fiscal_quarter']}  {_t(r.get('revenue')):>10}  {_t(r.get('operating_income')):>10}  ({r.get('source')})")
         row = conn.execute(
-            "SELECT revenue_cagr_3y, revenue_yoy, growth_tier, op_margin_q_status "
+            "SELECT revenue_cagr_3y, revenue_yoy, growth_tier, op_margin_q_status, rev_q_yoy, rev_q_tier "
             "FROM watchlist_candidates WHERE market = ? AND symbol = ?", (args.market, t)).fetchall()
         print(f"  [watchlist_candidates 저장값] {row[0] if row else '후보 아님'}")
     conn.close()

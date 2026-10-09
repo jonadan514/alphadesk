@@ -56,7 +56,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from src.analyzers.company_growth import (quarterly_margin_change,
+from src.analyzers.company_growth import (quarterly_margin_change, quarterly_revenue_yoy,
                                            growth_tier as calc_growth_tier,
                                            operating_margin_direction,
                                            revenue_cagr, revenue_yoy)
@@ -75,12 +75,15 @@ LATE_COLUMNS = [
     ("op_margin_direction", "TEXT"), ("growth_tier", "TEXT"),
     # 분기 영업이익률 전년동기 비교(2026-10-05) - 연간 3년 비교(op_margin_direction)보다 이른 신호
     ("op_margin_q_now", "REAL"), ("op_margin_q_change", "REAL"), ("op_margin_q_status", "TEXT"),
+    # 최근 분기 매출 전년동기 대비(2026-10-09) - 3년 CAGR 판정 옆에 따로 보여 주는 "지금 흐름"
+    ("rev_q_yoy", "REAL"), ("rev_q_tier", "TEXT"), ("rev_q_quarter", "TEXT"),
 ]
 
 UPDATE_SQL = (
     "UPDATE watchlist_candidates SET psr = ?, per = ?, valuation_tier = ?, "
     "revenue_cagr_3y = ?, revenue_yoy = ?, op_margin_direction = ?, growth_tier = ?, "
-    "op_margin_q_now = ?, op_margin_q_change = ?, op_margin_q_status = ? "
+    "op_margin_q_now = ?, op_margin_q_change = ?, op_margin_q_status = ?, "
+    "rev_q_yoy = ?, rev_q_tier = ?, rev_q_quarter = ? "
     "WHERE market = ? AND symbol = ?"
 )
 BATCH = 50   # push_to_turso()와 같은 크기
@@ -130,7 +133,8 @@ def income_periods(financials_df) -> list[tuple[str, dict]]:
 
 
 def write_updates(conn, market: str, updates: list[tuple]) -> None:
-    """updates: (psr, per, tier, cagr_3y, yoy, op_dir, growth_tier, om_now, om_change, om_status, symbol) 목록.
+    """updates: (psr, per, tier, cagr_3y, yoy, op_dir, growth_tier, om_now, om_change, om_status,
+    rq_yoy, rq_tier, rq_quarter, symbol) 목록.
 
     후보가 시장당 100종목이 넘어서 _TursoConn.execute()로 한 줄씩 보내면 UPDATE 하나마다
     HTTP 왕복이 생긴다 - push_to_turso()와 같이 pipeline 배치로 묶는다.
@@ -166,6 +170,7 @@ def run(conn, markets: list[str]) -> None:
         yoy_by_ticker: dict[str, float | None] = {}
         op_dir_by_ticker: dict[str, str | None] = {}
         om_by_ticker: dict[str, dict] = {}
+        rq_by_ticker: dict[str, dict] = {}
         for c in candidates:
             sym = c["symbol"]
             quarters = quarters_by_ticker.get(sym, [])
@@ -178,6 +183,7 @@ def run(conn, markets: list[str]) -> None:
             yoy_by_ticker[sym] = revenue_yoy(periods)
             op_dir_by_ticker[sym] = operating_margin_direction(periods)
             om_by_ticker[sym] = (quarterly_margin_change(cached.get("financials_quarterly")) if cached else None) or {}
+            rq_by_ticker[sym] = (quarterly_revenue_yoy(cached.get("financials_quarterly")) if cached else None) or {}
 
         # 밸류: 같은 시장 후보 전체 안에서 3등분(위 모듈 설명 참고 - 분기 화면은 테마 안에서 나눈다).
         tiers = theme_valuation_tiers(psr_by_ticker)
@@ -190,6 +196,8 @@ def run(conn, markets: list[str]) -> None:
              op_dir_by_ticker[c["symbol"]], growth_tiers[c["symbol"]],
              om_by_ticker[c["symbol"]].get("now"), om_by_ticker[c["symbol"]].get("change"),
              om_by_ticker[c["symbol"]].get("status"),
+             rq_by_ticker[c["symbol"]].get("yoy"), rq_by_ticker[c["symbol"]].get("tier"),
+             rq_by_ticker[c["symbol"]].get("quarter"),
              c["symbol"])
             for c in candidates
         ])
