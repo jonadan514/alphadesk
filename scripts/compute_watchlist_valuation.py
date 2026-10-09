@@ -56,7 +56,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from src.analyzers.company_growth import (quarterly_margin_change, quarterly_revenue_yoy,
+from src.analyzers.company_growth import (quarterly_margin_change, quarterly_revenue_yoy, ttm_revenue_yoy,
                                            growth_tier as calc_growth_tier,
                                            operating_margin_direction,
                                            revenue_cagr, revenue_yoy)
@@ -77,13 +77,16 @@ LATE_COLUMNS = [
     ("op_margin_q_now", "REAL"), ("op_margin_q_change", "REAL"), ("op_margin_q_status", "TEXT"),
     # 최근 분기 매출 전년동기 대비(2026-10-09) - 3년 CAGR 판정 옆에 따로 보여 주는 "지금 흐름"
     ("rev_q_yoy", "REAL"), ("rev_q_tier", "TEXT"), ("rev_q_quarter", "TEXT"),
+    # 최근 4개 분기 합 대 직전 4개 분기 합(TTM, 2026-10-09) - quarterly_financials_raw 연속 8분기가 있을 때만
+    ("rev_ttm_yoy", "REAL"), ("rev_ttm_tier", "TEXT"), ("rev_ttm_quarter", "TEXT"),
 ]
 
 UPDATE_SQL = (
     "UPDATE watchlist_candidates SET psr = ?, per = ?, valuation_tier = ?, "
     "revenue_cagr_3y = ?, revenue_yoy = ?, op_margin_direction = ?, growth_tier = ?, "
     "op_margin_q_now = ?, op_margin_q_change = ?, op_margin_q_status = ?, "
-    "rev_q_yoy = ?, rev_q_tier = ?, rev_q_quarter = ? "
+    "rev_q_yoy = ?, rev_q_tier = ?, rev_q_quarter = ?, "
+    "rev_ttm_yoy = ?, rev_ttm_tier = ?, rev_ttm_quarter = ? "
     "WHERE market = ? AND symbol = ?"
 )
 BATCH = 50   # push_to_turso()와 같은 크기
@@ -134,7 +137,7 @@ def income_periods(financials_df) -> list[tuple[str, dict]]:
 
 def write_updates(conn, market: str, updates: list[tuple]) -> None:
     """updates: (psr, per, tier, cagr_3y, yoy, op_dir, growth_tier, om_now, om_change, om_status,
-    rq_yoy, rq_tier, rq_quarter, symbol) 목록.
+    rq_yoy, rq_tier, rq_quarter, ttm_yoy, ttm_tier, ttm_quarter, symbol) 목록.
 
     후보가 시장당 100종목이 넘어서 _TursoConn.execute()로 한 줄씩 보내면 UPDATE 하나마다
     HTTP 왕복이 생긴다 - push_to_turso()와 같이 pipeline 배치로 묶는다.
@@ -171,10 +174,12 @@ def run(conn, markets: list[str]) -> None:
         op_dir_by_ticker: dict[str, str | None] = {}
         om_by_ticker: dict[str, dict] = {}
         rq_by_ticker: dict[str, dict] = {}
+        ttm_by_ticker: dict[str, dict] = {}
         for c in candidates:
             sym = c["symbol"]
             quarters = quarters_by_ticker.get(sym, [])
             psr_by_ticker[sym] = calc_psr(c["market_cap"], quarters)
+            ttm_by_ticker[sym] = ttm_revenue_yoy(quarters) or {}
             per_by_ticker[sym] = calc_per(c["market_cap"], quarters)
 
             cached = financials_by_ticker.get(sym)
@@ -198,12 +203,16 @@ def run(conn, markets: list[str]) -> None:
              om_by_ticker[c["symbol"]].get("status"),
              rq_by_ticker[c["symbol"]].get("yoy"), rq_by_ticker[c["symbol"]].get("tier"),
              rq_by_ticker[c["symbol"]].get("quarter"),
+             ttm_by_ticker[c["symbol"]].get("yoy"), ttm_by_ticker[c["symbol"]].get("tier"),
+             ttm_by_ticker[c["symbol"]].get("quarter"),
              c["symbol"])
             for c in candidates
         ])
 
         have_psr = sum(1 for v in psr_by_ticker.values() if v is not None)
         have_per = sum(1 for v in per_by_ticker.values() if v is not None)
+        have_ttm = sum(1 for v in ttm_by_ticker.values() if v.get("yoy") is not None)
+        _log(f"{market}: 최근 4분기 매출 비교(연속 8분기) 가능 {have_ttm}종목")
         _log(f"{market}: 후보 {len(candidates)}종목 / PSR {have_psr} / PER {have_per}"
              f" (PER은 흑자 기업만) / 분기 재무 있는 종목 {len(quarters_by_ticker)}")
         if have_psr:

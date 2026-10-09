@@ -15,6 +15,11 @@ Usage:
   python scripts/collect_kr_quarterly_financials.py --tickers 005930 086520   # 몇 종목만 + 표 출력
   python scripts/collect_kr_quarterly_financials.py                           # KR 유니버스 전체
   python scripts/collect_kr_quarterly_financials.py --offset 220 --limit 220  # 이어서 한 구간만
+  python scripts/collect_kr_quarterly_financials.py --watchlist --years 3     # 워치리스트만, 3개 연도 보고서
+
+2026-10-09: --watchlist(워치리스트 후보 + 내 워치리스트)와 --years 추가. 최근 4개 분기 합을
+직전 4개 분기 합과 비교(company_growth.ttm_revenue_yoy)하려면 연속 8분기가 필요해 재작년 보고서까지 받는다(--years 3).
+매주 토요일 자동 실행은 --watchlist --years 2(올해·작년 보고서) - 새 분기만 이어 붙이면 된다.
 """
 from __future__ import annotations
 
@@ -44,20 +49,35 @@ def _log(msg: str) -> None:
     print(f"[dart-fin] {msg}", flush=True)
 
 
-def collect_one(corp_code: str, today: date) -> dict:
+def collect_one(corp_code: str, today: date, years: int = 2) -> dict:
     reports: dict = {}
-    for year in (today.year, today.year - 1):
+    for year in range(today.year, today.year - years, -1):
         for code in REPORT_CODES:
             reports[(year, code)] = dart.fetch_key_accounts(corp_code, year, code)
             time.sleep(CALL_SLEEP)
     values = quarterly_values(reports)
-    if len(latest_quarters(values)) < 5:
+    if len(latest_quarters(values)) < 5 and years < 3:
         year = today.year - 2
         for code in REPORT_CODES:
             reports[(year, code)] = dart.fetch_key_accounts(corp_code, year, code)
             time.sleep(CALL_SLEEP)
         values = quarterly_values(reports)
     return values
+
+
+def watchlist_tickers() -> list[str]:
+    """워치리스트 후보 + 내 워치리스트(KR). 표가 없으면 그 표만 건너뛴다.
+    테마 소속(약 425종목)은 넣지 않는다 - 3개 연도면 종목당 약 24초라 Actions 제한(180분)을 넘고, 4분기 합 비교는 워치리스트 화면만 쓴다."""
+    conn = get_db()
+    out: set[str] = set()
+    for sql in ("SELECT symbol FROM watchlist_candidates WHERE market = 'KR'",
+                "SELECT symbol FROM my_watchlist WHERE market = 'KR'"):
+        try:
+            out.update(r[0] for r in conn.execute(sql).fetchall() if r[0])
+        except Exception as e:  # noqa: BLE001
+            _log(f"대상 조회 실패({type(e).__name__}) - 건너뜀: {sql[:50]}")
+    conn.close()
+    return sorted(out)
 
 
 def fmt_eok(v) -> str:
@@ -70,10 +90,15 @@ def main() -> int:
     ap.add_argument("--tickers", nargs="*", default=None, help="종목코드 몇 개만 (확인용)")
     ap.add_argument("--offset", type=int, default=0, help="유니버스 정렬 순서에서 이만큼 건너뛴다")
     ap.add_argument("--limit", type=int, default=None, help="offset부터 N개만")
+    ap.add_argument("--watchlist", action="store_true",
+                    help="유니버스 전체 대신 워치리스트 후보 + 내 워치리스트(KR)")
+    ap.add_argument("--years", type=int, default=2, help="받을 사업연도 수(올해부터 거꾸로). 연속 8분기에는 3")
     args = ap.parse_args()
 
     universe = {i["symbol"]: i for i in json.loads(UNIVERSE.read_text(encoding="utf-8"))["items"]}
     tickers = args.tickers or sorted(universe)
+    if args.watchlist and not args.tickers:
+        tickers = watchlist_tickers()
     if args.offset or args.limit:
         end = args.offset + args.limit if args.limit else None
         tickers = tickers[args.offset:end]
@@ -97,7 +122,7 @@ def main() -> int:
             _log(f"  {t} {universe.get(t, {}).get('name', '')}: DART 기업코드 없음")
             continue
         try:
-            values = collect_one(cc, today)
+            values = collect_one(cc, today, args.years)
         except dart.DartKeyError:
             raise
         except Exception as e:  # noqa: BLE001 - 한 종목 실패로 전체를 멈추지 않는다

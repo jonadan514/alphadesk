@@ -21,6 +21,8 @@ const FULL_COLS = `${GROWTH_COLS}, universe_source`;
 const MARGIN_COLS = `${FULL_COLS}, op_margin_q_now, op_margin_q_change, op_margin_q_status`;
 // 최근 분기 매출 전년동기 대비(2026-10-09) - 위보다도 늦게 붙은 열이라 그 바깥 계층.
 const REVQ_COLS = `${MARGIN_COLS}, rev_q_yoy, rev_q_tier, rev_q_quarter`;
+// 최근 4개 분기 합 대 직전 4개 분기 합(2026-10-09) - 가장 바깥 계층.
+const TTM_COLS = `${REVQ_COLS}, rev_ttm_yoy, rev_ttm_tier, rev_ttm_quarter`;
 
 export async function GET(request: Request) {
   try {
@@ -48,7 +50,8 @@ export async function GET(request: Request) {
     // 그걸 **빈 목록**으로 바꿔 버려서 후보 275종목이 0종목으로 보인다. 컬럼
     // 계층(전체 -> 성장 -> 밸류 -> 기본)을 하나씩 낮춰가며 재시도해 목록 자체는
     // 항상 뜨게 한다.
-    const res = await client.execute({ sql: REVQ_COLS + tail, args })
+    const res = await client.execute({ sql: TTM_COLS + tail, args })
+      .catch(async () => await client.execute({ sql: REVQ_COLS + tail, args }))
       .catch(async () => await client.execute({ sql: MARGIN_COLS + tail, args }))
       .catch(async () => await client.execute({ sql: FULL_COLS + tail, args }))
       .catch(async () => await client.execute({ sql: GROWTH_COLS + tail, args })

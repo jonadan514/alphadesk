@@ -204,6 +204,31 @@ def quarterly_revenue_yoy(q_df) -> dict | None:
     return {"yoy": yoy, "quarter": _quarter_label(t0), "tier": growth_tier(yoy)}
 
 
+def ttm_revenue_yoy(quarters: list[dict]) -> dict | None:
+    """최근 4개 분기 매출 합 ÷ 그 직전 4개 분기 매출 합 - 1 (2026-10-09, "최근 1년" 판정).
+
+    quarters: quarterly_financials_raw에서 고른 분기 레코드(fiscal_year, fiscal_quarter, revenue).
+    최신 분기부터 연속 8개 분기가 모두 있어야 한다 - 하나라도 빠지면 None(데이터부족, 있는 것만으로 합 내지 않는다,
+    company_valuation._last_4q_sum과 같은 엄격함). 한 분기 비교(quarterly_revenue_yoy)보다 계절성·일회성에 덜 흔들린다.
+    반환: {yoy, quarter(최신 분기 'YYYY-Qn'), tier}."""
+    if not quarters:
+        return None
+    qmap = {(int(q["fiscal_year"]), int(q["fiscal_quarter"])): q for q in quarters}
+    y, q = max(qmap)
+    keys = []
+    for i in range(8):
+        idx = y * 4 + (q - 1) - i
+        keys.append((idx // 4, idx % 4 + 1))
+    revs = [(qmap.get(k) or {}).get("revenue") for k in keys]
+    if any(v is None or v != v for v in revs):
+        return None
+    now, ago = sum(revs[:4]), sum(revs[4:])
+    if now <= 0 or ago <= 0:
+        return None
+    yoy = now / ago - 1
+    return {"yoy": yoy, "quarter": f"{y}-Q{q}", "tier": growth_tier(yoy)}
+
+
 def growth_tier(cagr: float | None) -> str | None:
     """절대 기준 3분류 (SPEC 4-3) - 순위가 아니라 고정된 경계값과 비교한다.
     데이터부족(None)은 그대로 None으로 돌려준다 - "역성장"으로 묶지 않는다(원칙 4).

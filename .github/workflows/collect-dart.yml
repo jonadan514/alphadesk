@@ -2,11 +2,14 @@ name: Collect DART
 
 # 분기 재설계(docs/REDESIGN_SPEC.md 4-1). 한국 분기 재무와 사업정보 보강을 DART에서 받는다.
 # DART_API_KEY는 저장소 Secrets에 둔다.
+# 2026-10-09: 매주 토요일 워치리스트 종목 분기 재무 자동 갱신(mode=watchlist, 올해·작년 보고서) - 최근 4개 분기 합 비교용.
 on:
+  schedule:
+    - cron: "0 21 * * 6"   # 토요일 21:00 UTC (일요일 06:00 KST) - 일요일 밤 워치리스트 계산 전
   workflow_dispatch:
     inputs:
       mode:
-        description: "sample(몇 종목 표로 확인) / financials(유니버스 전체 재무) / profiles(사업정보 없는 종목 보강) / profiles-refresh(DART로 채운 것 다시 받기)"
+        description: "sample(몇 종목 표로 확인) / financials(유니버스 전체 재무) / watchlist(워치리스트 종목 재무) / profiles(사업정보 없는 종목 보강) / profiles-refresh(DART로 채운 것 다시 받기)"
         required: true
         default: "sample"
       tickers:
@@ -17,6 +20,10 @@ on:
         description: "financials 모드 - 유니버스 정렬 순서에서 이만큼 건너뛴다 (구간 실행용)"
         required: false
         default: "0"
+      years:
+        description: "financials·watchlist 모드 - 받을 사업연도 수(연속 8분기에는 3)"
+        required: false
+        default: "2"
       limit:
         description: "financials 모드 - offset부터 몇 종목만 (비우면 끝까지, 664종목 전체는 약 173분 예상 - 180분 제한에 거의 닿아 구간을 나누는 걸 권장)"
         required: false
@@ -44,7 +51,9 @@ jobs:
           TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
           PYTHONUNBUFFERED: "1"
         run: |
-          case "${{ inputs.mode }}" in
+          case "${{ inputs.mode || 'watchlist' }}" in
+            watchlist)
+              python scripts/collect_kr_quarterly_financials.py --watchlist --years ${{ inputs.years || '2' }} ;;
             sample)
               python scripts/collect_kr_quarterly_financials.py --tickers ${{ inputs.tickers }}
               python scripts/fill_kr_profiles_from_dart.py --tickers ${{ inputs.tickers }} ;;

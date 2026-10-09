@@ -34,3 +34,32 @@ def test_insufficient_is_none_not_shrinking():
     assert quarterly_revenue_yoy(None) is None
     assert quarterly_revenue_yoy(_df([("2026-06-30", 100), ("2026-03-31", 90)])) is None   # 1년 전 분기 없음
     assert quarterly_revenue_yoy(_df([("2026-06-30", 100), ("2025-06-30", 0)])) is None    # 기준 매출 0
+
+
+# ---- 최근 4개 분기 합 대 직전 4개 분기 합 (company_growth.ttm_revenue_yoy) ----
+from src.analyzers.company_growth import ttm_revenue_yoy  # noqa: E402
+
+
+def _q(rows):
+    """rows: [(연도, 분기, 매출)]"""
+    return [{"fiscal_year": y, "fiscal_quarter": q, "revenue": r} for y, q, r in rows]
+
+
+def test_ttm_needs_eight_consecutive_quarters():
+    eight = _q([(2026, 2, 171.5), (2026, 1, 133.9), (2025, 4, 93.8), (2025, 3, 86.1),
+                (2025, 2, 74.6), (2025, 1, 79.1), (2024, 4, 75.8), (2024, 3, 79.1)])
+    r = ttm_revenue_yoy(eight)
+    now, ago = 171.5 + 133.9 + 93.8 + 86.1, 74.6 + 79.1 + 75.8 + 79.1
+    assert abs(r["yoy"] - (now / ago - 1)) < 1e-9 and r["tier"] == "성장" and r["quarter"] == "2026-Q2"
+    assert ttm_revenue_yoy(eight[:7]) is None                      # 7개뿐
+    gap = [x for x in eight if (x["fiscal_year"], x["fiscal_quarter"]) != (2025, 1)]
+    assert ttm_revenue_yoy(gap + _q([(2024, 2, 70)])) is None      # 중간이 빠짐 - 있는 것만으로 합 내지 않음
+
+
+def test_ttm_crosses_year_boundary_and_handles_missing_value():
+    rows = _q([(2026, 1, 10), (2025, 4, 10), (2025, 3, 10), (2025, 2, 10),
+               (2025, 1, 10), (2024, 4, 10), (2024, 3, 10), (2024, 2, 10)])
+    assert ttm_revenue_yoy(rows)["tier"] == "정체"   # 0%
+    rows[5]["revenue"] = None
+    assert ttm_revenue_yoy(rows) is None
+    assert ttm_revenue_yoy([]) is None

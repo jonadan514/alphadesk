@@ -38,6 +38,10 @@ interface Candidate {
   rev_q_yoy?: number | null;
   rev_q_tier?: string | null;
   rev_q_quarter?: string | null;
+  // 최근 4개 분기 합 대 직전 4개 분기 합(2026-10-09) - 연속 8분기가 있을 때만(지금은 한국 DART 종목)
+  rev_ttm_yoy?: number | null;
+  rev_ttm_tier?: string | null;
+  rev_ttm_quarter?: string | null;
   // 최근 100일 안 실적 발표의 EPS 서프라이즈(2026-10-05, earnings_surprise)
   surprise?: { pct: number; date: string; estimate: number | null; reported: number | null } | null;
   // yfinance 기업 정보에서 꺼낸 사실 값(수집 시점 기준) - 애널리스트 수, 52주 고점·저점 대비
@@ -199,7 +203,7 @@ const INDICATOR_INFO = {
         + "이미 성장 중이라 순위로 나누면 +3% 성장 기업에 '역성장' 라벨이 붙기 때문입니다. "
         + "역성장이 재무 부실을 뜻하지는 않습니다 - 무차입 흑자 기업도 매출이 줄 수 있고, "
         + "함정 필터가 걸러내지 못하는 부분을 보여주는 것이 이 지표의 목적입니다. "
-        + "옆의 '분기' 배지는 최근 분기 매출을 1년 전 같은 분기와 비교한 같은 경계의 판정입니다 - "
+        + "옆의 '1년' 배지는 최근 4개 분기 매출 합을 그 전 4개 분기와, '분기' 배지는 최근 분기를 1년 전 같은 분기와 비교한 같은 경계의 판정입니다(1년이 있으면 그것을 보여 줌) - "
         + "3년 기준은 업황이 막 바뀐 기업(예: 3년 전이 직전 호황 고점)을 늦게 잡으므로 지금 흐름을 따로 보여 줍니다. "
         + "두 판정은 합치지 않고, 필터·정렬은 3년 기준을 씁니다.",
     levels: [
@@ -739,12 +743,13 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
             <div className="p-3 mt-3" style={insetCard}>
               <p className={eyebrow + " mb-1"} style={{ color: TEXT_SECONDARY }}>성장 위치 (매출 3년 CAGR · 최근 분기, 절대 기준)</p>
               <div className="flex items-center gap-2 flex-wrap">
-                <GrowthBadge tier={c.growth_tier} prefix={c.rev_q_tier ? "3년" : undefined} />
+                <GrowthBadge tier={c.growth_tier} prefix={c.rev_q_tier || c.rev_ttm_tier ? "3년" : undefined} />
+                <GrowthBadge tier={c.rev_ttm_tier} prefix="1년" />
                 <GrowthBadge tier={c.rev_q_tier} prefix="분기" />
                 <span className="text-[12px]" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
                   3년 {fmtGrowthPct(c.revenue_cagr_3y)}
                   <span style={{ color: TEXT_MUTED }}> · </span>
-                  1년 {fmtGrowthPct(c.revenue_yoy)}
+                  직전 회계연도 {fmtGrowthPct(c.revenue_yoy)}
                 </span>
                 {c.op_margin_direction && (
                   <span className="text-[12px]" style={{ color: c.op_margin_direction === "개선" ? GOOD : CAUTION }}>
@@ -771,11 +776,17 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
                   )}
                 </p>
               )}
+              {c.rev_ttm_yoy != null && (
+                <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
+                  최근 1년({quarterLabel(c.rev_ttm_quarter)}까지 4개 분기) 매출, 그 전 4개 분기 대비{" "}
+                  <span style={{ color: c.rev_ttm_yoy >= 0 ? NUM : CAUTION }}>{fmtGrowthPct(c.rev_ttm_yoy)}</span>
+                </p>
+              )}
               {c.rev_q_yoy != null && (
                 <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY, fontVariantNumeric: "tabular-nums" }}>
                   {quarterLabel(c.rev_q_quarter)} 매출 1년 전 같은 분기 대비{" "}
                   <span style={{ color: c.rev_q_yoy >= 0 ? NUM : CAUTION }}>{fmtGrowthPct(c.rev_q_yoy)}</span>
-                  {c.rev_q_tier && c.growth_tier && c.rev_q_tier !== c.growth_tier && (
+                  {(c.rev_ttm_tier ?? c.rev_q_tier) && c.growth_tier && (c.rev_ttm_tier ?? c.rev_q_tier) !== c.growth_tier && (
                     <span style={{ color: TEXT_MUTED }}> - 3년 기준({c.growth_tier})과 다름: 최근 업황 변화가 아직 연간 실적에 반영되기 전일 수 있습니다</span>
                   )}
                 </p>
@@ -792,7 +803,7 @@ function DetailModal({ c, inList, note, onAdd, onSaveNote, onClose }: {
               )}
               <p className="text-[12px] mt-1" style={{ color: TEXT_SECONDARY }}>
                 {c.growth_tier
-                  ? "3년: 연차 재무제표 최근 4개 회계연도(정확히 3년 간격). 분기: 최근 분기 매출을 1년 전 같은 분기와 비교. 둘 다 0%/10% 절대 기준이고 합치지 않습니다."
+                  ? "3년: 연차 재무제표 최근 4개 회계연도(정확히 3년 간격). 1년: 최근 4개 분기 매출 합을 그 전 4개 분기와 비교(연속 8분기가 있을 때만). 분기: 최근 분기 매출을 1년 전 같은 분기와 비교. 모두 0%/10% 절대 기준이고 합치지 않습니다."
                   : "회계기간이 부족하거나 간격이 맞지 않아 계산할 수 없습니다."}
               </p>
             </div>
@@ -1478,9 +1489,13 @@ export default function WatchlistPage() {
                         </td>
                         <td style={{ padding: "8px 8px" }}>
                           <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                            <GrowthBadge tier={c.growth_tier} prefix={c.rev_q_tier ? "3년" : undefined} title="연간 매출 3년 CAGR 기준" />
-                            <GrowthBadge tier={c.rev_q_tier} prefix="분기"
-                              title={`${quarterLabel(c.rev_q_quarter)} 매출, 1년 전 같은 분기 대비 ${fmtGrowthPct(c.rev_q_yoy)}`} />
+                            <GrowthBadge tier={c.growth_tier} prefix={c.rev_q_tier || c.rev_ttm_tier ? "3년" : undefined} title="연간 매출 3년 CAGR 기준" />
+                            {/* 지금 흐름: 최근 4개 분기 합 비교가 있으면 그것(덜 흔들림), 없으면 최근 한 분기 비교 */}
+                            {c.rev_ttm_tier
+                              ? <GrowthBadge tier={c.rev_ttm_tier} prefix="1년"
+                                  title={`최근 4개 분기 매출 합, 그 전 4개 분기 대비 ${fmtGrowthPct(c.rev_ttm_yoy)} (최근 분기 단독 ${fmtGrowthPct(c.rev_q_yoy)})`} />
+                              : <GrowthBadge tier={c.rev_q_tier} prefix="분기"
+                                  title={`${quarterLabel(c.rev_q_quarter)} 매출, 1년 전 같은 분기 대비 ${fmtGrowthPct(c.rev_q_yoy)}`} />}
                           </div>
                           <div style={{ marginTop: 2 }}><GrowthNumbers cagr3y={c.revenue_cagr_3y} yoy={c.revenue_yoy} /></div>
                           {(c.op_margin_q_status === "개선" || c.op_margin_q_status === "악화") && (
