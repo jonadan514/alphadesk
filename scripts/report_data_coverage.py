@@ -118,6 +118,14 @@ def main() -> int:
             print(f"  {label}: " + ", ".join(f"{m} {st or '데이터부족'} {n}" for m, st, n in rows))
         except Exception as e:
             print(f"  {label}: 조회 실패 {e}")
+    print("== 5. 성장 판정 3년 vs 최근 분기 매출 전년동기 (2026-10-09 추가) ==")
+    try:
+        rows = conn.execute("SELECT market, growth_tier, rev_q_tier, COUNT(*) FROM watchlist_candidates "
+                            "GROUP BY 1, 2, 3 ORDER BY 1, 2, 3").fetchall()
+        for m, g, q, n in rows:
+            print(f"  {m} 3년 {g or '데이터부족'} / 분기 {q or '데이터부족'}: {n}")
+    except Exception as e:
+        print(f"  조회 실패 {e}")
     conn.close()
     return 0
 
