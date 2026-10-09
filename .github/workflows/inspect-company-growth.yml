@@ -1,0 +1,35 @@
+name: Inspect Company Growth
+
+# 읽기 전용 - 종목 몇 개의 성장 판정 근거(연간·분기 매출·영업이익, 3년 CAGR, 저장값)를 로그로 본다.
+on:
+  workflow_dispatch:
+    inputs:
+      market:
+        description: "KR / US"
+        required: true
+        default: "KR"
+      tickers:
+        description: "종목코드 공백 구분"
+        required: true
+        default: "005930 000660"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - name: Inspect
+        env:
+          TURSO_DATA_URL: ${{ secrets.TURSO_DATA_URL }}
+          TURSO_DATA_TOKEN: ${{ secrets.TURSO_DATA_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/inspect_company_growth.py --market ${{ inputs.market }} --tickers ${{ inputs.tickers }}
